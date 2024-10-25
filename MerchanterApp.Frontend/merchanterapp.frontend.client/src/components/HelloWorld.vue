@@ -54,7 +54,7 @@
             async fetchData() {
                 this.post = null;
                 this.loading = true;
-
+                
                 var response = await axios.get('http://localhost:5555/api/Product/GetProducts',{
                     headers: {
                         Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyTmFtZSI6InFwYmlsaXNpbSIsImN1c3RvbWVySWQiOiIxIiwibmJmIjoxNzI5ODc3NjQ1LCJleHAiOjE3Mjk5MDc2NDUsImlzcyI6IkNhbiDDlnprYXltYWsiLCJhdWQiOiJDZXJlcyJ9.uCmVFw6pR5m9GjQzPa2e0UfQSnxGxIbD5DU1INl_ijI"
