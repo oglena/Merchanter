@@ -1,6 +1,0 @@
-@MerchanterApp.Frontend.Server_HostAddress = http://localhost:5010
-
-GET {{MerchanterApp.Frontend.Server_HostAddress}}/
-Accept: application/json
-
-###
