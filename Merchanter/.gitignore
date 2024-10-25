@@ -9,7 +9,10 @@
 *.user
 *.userosscache
 *.sln.docstates
+
+## Added by Can
 Constants.cs
+##
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
