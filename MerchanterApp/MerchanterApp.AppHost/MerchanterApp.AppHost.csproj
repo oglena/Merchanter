@@ -12,7 +12,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Merchanter.ServerService\Merchanter.ServerService.csproj" />
     <ProjectReference Include="..\..\MerchanterApp.CMS\MerchanterApp.CMS.csproj" />
-    <ProjectReference Include="..\..\MerchanterApp.Frontend\MerchanterApp.Frontend.Server\MerchanterApp.Frontend.Server.csproj" />
     <ProjectReference Include="..\MerchanterApp.ApiService\MerchanterApp.ApiService.csproj" />
     <!--<ProjectReference Include="..\MerchanterApp.Web\MerchanterApp.Web.csproj" />-->
   </ItemGroup>
