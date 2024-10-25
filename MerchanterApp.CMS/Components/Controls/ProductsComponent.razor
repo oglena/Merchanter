@@ -1,0 +1,398 @@
+﻿<div class="container-fluid">
+
+    @if (advancedSearchActive)
+    {
+        <div class="row mt-3 p-1 text-center text-light bg-dark rounded-top"><h5>Advanced Search</h5></div>
+        <div class="row align-items-center bg-dark text-light p-2 rounded-bottom">
+            <div class="col-3">
+                @if (brands != null)
+                {
+                    <table class="w-100">
+                        <tr>
+                            <td class="text-end">Brand:&nbsp;</td>
+                            <td>
+                                <select class="form-select" aria-label="Brand">
+                                    <option value="0">All Brands</option>
+                                    @foreach (var item in brands)
+                                    {
+                                        <option value="@item.id">@item.brand_name</option>
+                                    }
+                                </select>
+                            </td>
+                        </tr>
+                    </table>
+                }
+            </div>
+            <div class="col-3">
+                <table class="w-100">
+                    <tr>
+                        <td class="text-end">Stock Status:&nbsp;</td>
+                        <td>
+                            <select class="form-select" aria-label="Stock Status">
+                                <option value="0">All Products</option>
+                                <option value="true">In Stock</option>
+                                <option value="false">Out of Stock</option>
+                            </select>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            @if (products != null)
+            {
+                <div class="col-3">
+                    <table class="w-100">
+                        <tr>
+                            <td class="allign-content-start text-end">Other Sources Status&nbsp;</td>
+                            <td>
+                                <select class="form-select" aria-label="Other Sources Status">
+                                    <option value="0">All Statuses</option>
+                                    <option value="true">Enabled</option>
+                                    <option value="false">Disabled</option>
+                                </select>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                @* <div class="col-3">
+                    @if (work_sources != null)
+                    {
+                        @work_sources?.Where(x => x.is_active).Where(x => x.type == "PRODUCT").Select(x => x.name).ToList().Count
+                    }
+                    <table class="w-100">
+                        <tr>
+                            <td class="allign-content-start text-end">Other Sources &nbsp;</td>
+                            <td>
+                                <select class="form-select" aria-label="Brand">
+                                    <option value="0">All Sources</option>
+                                    @foreach (var item in products.Where(x => x.extension.is_xml_enabled == true).DistinctBy(x => x.extension.xml_sources).ToList())
+                                    {
+                                        <option value="@item.extension.xml_sources">@item.extension.xml_sources</option>
+                                    }
+                                </select>
+                            </td>
+                        </tr>
+                    </table>
+                </div> *@
+            }
+            else
+            {
+                <div class="col-6">
+                    <span>No additional source</span>
+                </div>
+            }
+        </div>
+    }
+
+    <div class="row mt-3 align-items-center">
+        <div class="col-8 ps-2">
+            <input type="text" class="form-control fs-5 w-100" @bind-value="searchparam" @onkeyup="EnterProductSearch"
+            placeholder="Search for product name, sku or barcode">
+        </div>
+        <div class="col-1 ps-2 text-end">
+            <button type="button" class="btn btn-outline-primary w-100" @onclick="SearchProducts">Search</button>
+        </div>
+        <div class="col-2 ps-2 text-end">
+            <button type="button" class="btn btn-outline-primary w-100" @onclick="()=>advancedSearchActive = !advancedSearchActive">@(advancedSearchActive ? "Advanced Search Active" : "Advanced Search") </button>
+        </div>
+        <div class="col-1 ps-2 text-end">
+            <a href="javascript:void(0);" class="btn btn-outline-danger w-100" @onclick="ClearProducts">Clear</a>
+        </div>
+    </div>
+
+    @if (selected_products.Count > 0)
+    {
+        <div class="row mt-3 p-2 bg-dark rounded">
+            <div class="col-10">
+                <span class="text-light fs-6">Selected Products:&nbsp; @((MarkupString)string.Join("&nbsp;", selected_products.Select(x => "<a class='btn btn-light p-2 m-1' href='#' target='_blank'>" + x.sku + "</a>")))</span>
+            </div>
+            <div class="col-2 text-end">
+                <button type="button" class="btn btn-outline-primary m-1" @onclick="SearchSelected">Search Selected</button>
+                <button type="button" class="btn btn-outline-danger m-1">Delete Selected</button>
+            </div>
+        </div>
+    }
+
+    <div class="row mt-3">
+        @if (products != null)
+        {
+            <table class="table table-responsive">
+                <thead>
+                    <tr>
+                        <th scope="col"></th>
+                        <th scope="col">#ID</th>
+                        <th scope="col">Actions</th>
+                        <th scope="col" class="w25">Product Name</th>
+                        <th scope="col">Sku</th>
+                        <th scope="col">Barcode</th>
+                        <th scope="col">Brand</th>
+                        <th scope="col">Other Sources</th>
+                        <th scope="col">Qty's</th>
+                        <th scope="col">Prices</th>
+                        <th scope="col">Last Update Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in products)
+                    {
+                        <tr>
+                            <td class="align-content-center">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" @onchange="(e) => TableItemSelected(item, e)"
+                                    checked="@(selected_products.Where(x=>x.id == item.id).Any())">
+                                </div>
+                            </td>
+                            <th class="table-primary align-content-center text-nowrap" scope="row">@item.id</th>
+                            <td class="align-content-center">
+                                <div class="container">
+                                    <div class="row p-1"><button type="button" class="btn btn-secondary btn-sm">History</button></div>
+                                    <div class="row p-1"><button type="button" class="btn btn-primary btn-sm">Edit</button></div>
+                                </div>
+                            </td>
+                            <td class="align-content-center">@item.name</td>
+                            <td class="align-content-center"><span class="text-nowrap">@item.sku</span></td>
+                            <td class="align-content-center"><span class="text-nowrap">@item.barcode</span></td>
+                            <td class="align-content-center"><span class="text-nowrap">@item.brand.brand_name</span></td>
+                            <td class="align-content-center">
+                                <span class="text-nowrap">Status:&nbsp; @(item.extension.is_xml_enabled ? "Enabled" : "Disabled")</span><br />
+                                @if (item.extension.is_xml_enabled)
+                                {
+                                    <span class="text-nowrap">Sources:&nbsp; @(string.Join(",", item.extension.xml_sources))</span>
+                                }
+                            </td>
+                            <td class="align-content-center">
+                                <span class="text-nowrap">Total:&nbsp;@item.total_qty</span><br />
+                                @foreach (var source_item in item.sources)
+                                {
+                                    <span class="text-nowrap @(!source_item.is_active ? " text-muted" : "")">@source_item.name:&nbsp;@source_item.qty</span>
+                                    <br />
+                                }
+                            </td>
+                            <td class="align-content-center">
+                                <span class="text-nowrap">Price:&nbsp;@(Math.Round(item.price, 2, MidpointRounding.AwayFromZero))&nbsp;@item.currency</span><br />
+                                <span class="text-nowrap">Special Price:&nbsp;@(Math.Round(item.special_price, 2, MidpointRounding.AwayFromZero))&nbsp;@item.currency</span><br />
+                                <span class="text-nowrap">Custom Price:&nbsp;@(Math.Round(item.custom_price, 2, MidpointRounding.AwayFromZero))&nbsp;@item.currency</span>
+                            </td>
+                            <td class="align-content-center"><span class="text-nowrap">@item.update_date?.ToString("dd.MM.yyyy HH:mm")</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <span class="text-center mt-3 fs-3">@loading_text</span>
+        }
+    </div>
+    <div class="row p-1 align-items-center bg-dark text-light sticky-bottom">
+        <div class="col-1">
+            <select class="form-select form-select-sm" aria-label="Search for products page count" @onchange="PagerItemCountChanged">
+                <option class="text-info" value="@pageItemsCount">@pageItemsCount</option>
+                @foreach (var item in pagerCountItems)
+                {
+                    <option value="@item">@item.ToString()</option>
+                }
+            </select>
+        </div>
+        <div class="col-1">
+            <span class="fs-6">Page:&nbsp;@(currentPage + 1)/@totalPages</span>
+        </div>
+        <div class="col-8 text-end">
+            <span class="fst-italic text-info fs-6">@pager_message</span>
+        </div>
+        <div class="col-2 text-end">
+            <button type="button" class="btn btn-secondary btn-sm" @onclick="PreviousPage">Prev</button>
+            <button type="button" class="btn btn-secondary btn-sm" @onclick="NextPage">Next</button>
+        </div>
+    </div>
+</div>
+@code {
+    [Inject, CascadingParameter]
+    IHttpContextAccessor HttpContextAccessor { get; set; }
+    [Inject]
+    private Services.MerchanterService merchanterService { get; set; }
+    private IQueryable<Product>? products { get; set; }
+    private List<Brand>? brands { get; set; }
+    private List<Product> selected_products { get; set; } = new List<Product>();
+
+    private string searchparam { get; set; } = string.Empty;
+    private string pager_message { get; set; } = string.Empty;
+    private int? totalItemsCount { get; set; }
+    private int currentPage { get; set; } = 0;
+    private int pageItemsCount { get; set; } = 50;
+    private int? totalPages { get; set; } = 1;
+    private List<int> pagerCountItems { get; set; } = new List<int>() { 50, 100, 500, 1000 };
+    private string loading_text = "Products Loading...";
+    private bool advancedSearchActive { get; set; } = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (HttpContextAccessor.HttpContext != null && merchanterService != null)
+            {
+                //products = null;
+                int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst("customerId")?.Value, out int customer_id);
+                await Task.Run(() =>
+                {
+                    products = merchanterService?.db_helper?.GetProducts(customer_id, pageItemsCount, 0, true)?.AsQueryable<Product>();
+                    brands = merchanterService?.db_helper?.GetBrands(customer_id);
+                    totalPages = (int)Math.Round((double)merchanterService.db_helper.GetProductsCount(customer_id) / (double)pageItemsCount, 0, MidpointRounding.AwayFromZero) + 1;
+                });
+            }
+            StateHasChanged();
+        }
+        await Task.CompletedTask;
+    }
+
+    private async Task SearchProducts()
+    {
+        if (products != null && merchanterService != null)
+        {
+            int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst("customerId")?.Value, out int customer_id);
+            if (!string.IsNullOrWhiteSpace(searchparam))
+            {
+                //products = null;
+                await Task.Run(() =>
+                {
+                    products = merchanterService?.db_helper?.SearchProducts(customer_id, searchparam, true)?.AsQueryable<Product>
+                        ();
+                    totalPages = (int)Math.Round((double)products.Count() / (double)pageItemsCount, 0, MidpointRounding.AwayFromZero) + 1;
+                });
+            }
+            else
+            {
+                //products = null;
+                await Task.Run(() =>
+                {
+                    products = merchanterService?.db_helper?.GetProducts(customer_id, pageItemsCount, currentPage, true)?.AsQueryable<Product>
+                        ();
+                    totalPages = (int)Math.Round((double)merchanterService.db_helper.GetProductsCount(customer_id) / (double)pageItemsCount, 0, MidpointRounding.AwayFromZero) + 1;
+                });
+            }
+            StateHasChanged();
+            loading_text = "Products Loading...";
+        }
+    }
+
+    private async Task SearchSelected()
+    {
+        if (selected_products != null && selected_products.Count > 0 && merchanterService != null)
+        {
+            int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst("customerId")?.Value, out int customer_id);
+            //products = null;
+            await Task.Run(() =>
+            {
+                List<Product>
+                    temp_products = new List<Product>
+                        ();
+                foreach (var item in selected_products)
+                {
+                    var temp_product = merchanterService.db_helper.GetProductBySku(customer_id, item.sku);
+                    if (temp_product != null)
+                        temp_products.Add(temp_product);
+                }
+                products = temp_products?.AsQueryable<Product>
+                    ();
+                currentPage = 0;
+                totalPages = (int)Math.Round((double)products.Count() / (double)pageItemsCount, 0, MidpointRounding.AwayFromZero) + 1;
+            });
+            StateHasChanged();
+            loading_text = "Products Loading...";
+        }
+    }
+
+    private void TableItemSelected(Product item, ChangeEventArgs e)
+    {
+        if (e.Value != null)
+        {
+            if ((bool)e.Value)
+            {
+                if (!selected_products.Where(x => x.id == item.id).Any())
+                    selected_products.Add(item);
+            }
+            else
+            {
+                if (selected_products.Where(x => x.id == item.id).Any())
+                    selected_products.Remove(selected_products.Where(x => x.id == item.id).FirstOrDefault());
+            }
+            if (selected_products.Count == 0)
+                ClearProducts();
+
+            StateHasChanged();
+        }
+    }
+
+    private async Task ClearProducts()
+    {
+        searchparam = string.Empty;
+        currentPage = 0;
+        loading_text = "Navigating to first page...";
+        pager_message = string.Empty;
+        advancedSearchActive = false;
+        selected_products.Clear();
+        await SearchProducts();
+    }
+
+    private async Task PreviousPage()
+    {
+        if (currentPage > 0)
+        {
+            currentPage -= 1;
+            pager_message = string.Empty;
+            loading_text = "Navigating to previous page";
+            await SearchProducts();
+        }
+        else
+        {
+            pager_message = "You're at FIRST page.";
+        }
+    }
+
+    private async Task NextPage()
+    {
+        if (totalPages > (currentPage + 1))
+        {
+            currentPage += 1;
+            pager_message = string.Empty;
+            loading_text = "Navigating to next page";
+            await SearchProducts();
+        }
+        else
+        {
+            pager_message = "You're at LAST page.";
+        }
+    }
+
+    private async void EnterProductSearch(KeyboardEventArgs e)
+    {
+        if (e.Code == "Enter" || e.Code == "NumpadEnter")
+        {
+            //if( !string.IsNullOrWhiteSpace( searchparam ) ) {
+            await SearchProducts();
+            //}
+        }
+    }
+
+    private async void PagerItemCountChanged(ChangeEventArgs e)
+    {
+        if (e.Value != null)
+        {
+            int.TryParse(e.Value.ToString(), out int changed_val);
+            if (changed_val != pageItemsCount)
+            {
+                pageItemsCount = changed_val;
+                int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst("customerId")?.Value, out int customer_id);
+                totalPages = (int)Math.Round((double)merchanterService.db_helper.GetProductsCount(customer_id) / (double)pageItemsCount, 0, MidpointRounding.AwayFromZero) + 1;
+                if (HttpContextAccessor.HttpContext != null)
+                {
+                    await SearchProducts();
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,87 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.34928.147
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Merchanter", "Merchanter.csproj", "{F0085F2C-3CC7-4CEA-9E1B-B9DB11656874}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MerchanterServer", "..\MerchanterServer\MerchanterServer.csproj", "{7D85DFDC-9964-4E14-B66D-911F68C907CC}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ShipmentHelpers", "..\ShipmentHelpers\ShipmentHelpers.csproj", "{247AA11D-A72E-4D70-8A10-EEBD257F4FC8}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MerchanterHelpers", "..\MerchanterHelpers\MerchanterHelpers.csproj", "{88B252DD-7C90-4DB5-9A34-064B2DB42B2A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MerchanterApp.AppHost", "..\MerchanterApp\MerchanterApp.AppHost\MerchanterApp.AppHost.csproj", "{4E98A1A5-6B0A-4349-B76B-AAD2D82F43DC}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MerchanterApp.ServiceDefaults", "..\MerchanterApp\MerchanterApp.ServiceDefaults\MerchanterApp.ServiceDefaults.csproj", "{1D67A9D2-6A3F-4B17-8E11-8EBD3C01F227}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MerchanterApp.ApiService", "..\MerchanterApp\MerchanterApp.ApiService\MerchanterApp.ApiService.csproj", "{7C8C56FB-6350-4FFF-8347-593E0FE7DA54}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MerchanterApp.CMS", "..\MerchanterApp.CMS\MerchanterApp.CMS.csproj", "{22D1D136-C0F0-4664-8638-9F24C8D97F25}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Merchanter.ServerService", "..\Merchanter.ServerService\Merchanter.ServerService.csproj", "{EDD0A50E-7F3B-4499-BBBB-394970002DFB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MerchanterApp.Frontend.Server", "..\MerchanterApp.Frontend\MerchanterApp.Frontend.Server\MerchanterApp.Frontend.Server.csproj", "{6687C5EF-E4C3-497E-9D5C-20CDD2975118}"
+EndProject
+Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "merchanterapp.frontend.client", "..\MerchanterApp.Frontend\merchanterapp.frontend.client\merchanterapp.frontend.client.esproj", "{7303F5B8-99EA-4526-9901-9859E7340710}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F0085F2C-3CC7-4CEA-9E1B-B9DB11656874}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F0085F2C-3CC7-4CEA-9E1B-B9DB11656874}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F0085F2C-3CC7-4CEA-9E1B-B9DB11656874}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F0085F2C-3CC7-4CEA-9E1B-B9DB11656874}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7D85DFDC-9964-4E14-B66D-911F68C907CC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D85DFDC-9964-4E14-B66D-911F68C907CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D85DFDC-9964-4E14-B66D-911F68C907CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7D85DFDC-9964-4E14-B66D-911F68C907CC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{247AA11D-A72E-4D70-8A10-EEBD257F4FC8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{247AA11D-A72E-4D70-8A10-EEBD257F4FC8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{247AA11D-A72E-4D70-8A10-EEBD257F4FC8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{247AA11D-A72E-4D70-8A10-EEBD257F4FC8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{88B252DD-7C90-4DB5-9A34-064B2DB42B2A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{88B252DD-7C90-4DB5-9A34-064B2DB42B2A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{88B252DD-7C90-4DB5-9A34-064B2DB42B2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{88B252DD-7C90-4DB5-9A34-064B2DB42B2A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4E98A1A5-6B0A-4349-B76B-AAD2D82F43DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4E98A1A5-6B0A-4349-B76B-AAD2D82F43DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4E98A1A5-6B0A-4349-B76B-AAD2D82F43DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4E98A1A5-6B0A-4349-B76B-AAD2D82F43DC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1D67A9D2-6A3F-4B17-8E11-8EBD3C01F227}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1D67A9D2-6A3F-4B17-8E11-8EBD3C01F227}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1D67A9D2-6A3F-4B17-8E11-8EBD3C01F227}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1D67A9D2-6A3F-4B17-8E11-8EBD3C01F227}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C8C56FB-6350-4FFF-8347-593E0FE7DA54}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C8C56FB-6350-4FFF-8347-593E0FE7DA54}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C8C56FB-6350-4FFF-8347-593E0FE7DA54}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C8C56FB-6350-4FFF-8347-593E0FE7DA54}.Release|Any CPU.Build.0 = Release|Any CPU
+		{22D1D136-C0F0-4664-8638-9F24C8D97F25}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{22D1D136-C0F0-4664-8638-9F24C8D97F25}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{22D1D136-C0F0-4664-8638-9F24C8D97F25}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{22D1D136-C0F0-4664-8638-9F24C8D97F25}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EDD0A50E-7F3B-4499-BBBB-394970002DFB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EDD0A50E-7F3B-4499-BBBB-394970002DFB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EDD0A50E-7F3B-4499-BBBB-394970002DFB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EDD0A50E-7F3B-4499-BBBB-394970002DFB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6687C5EF-E4C3-497E-9D5C-20CDD2975118}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6687C5EF-E4C3-497E-9D5C-20CDD2975118}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6687C5EF-E4C3-497E-9D5C-20CDD2975118}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6687C5EF-E4C3-497E-9D5C-20CDD2975118}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7303F5B8-99EA-4526-9901-9859E7340710}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7303F5B8-99EA-4526-9901-9859E7340710}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7303F5B8-99EA-4526-9901-9859E7340710}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{7303F5B8-99EA-4526-9901-9859E7340710}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7303F5B8-99EA-4526-9901-9859E7340710}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7303F5B8-99EA-4526-9901-9859E7340710}.Release|Any CPU.Deploy.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {BE6CFB6C-950B-46D2-8BA1-04367BE16D29}
+	EndGlobalSection
+EndGlobal

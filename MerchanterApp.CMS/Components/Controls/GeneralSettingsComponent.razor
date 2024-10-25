@@ -1,0 +1,131 @@
+﻿<h3>General Settings</h3>
+
+@if( settings_general != null ) {
+    <div class="container-fluid w-50 m-0 mt-3">
+        <EditForm class="row" Model="settings_general" OnValidSubmit="Submit" FormName="GeneralSettingsForm">
+            <div class="row">
+                <div class="col-12">
+                    <label class="form-label">Customer Identity</label>
+                    <InputNumber type="text" class="form-control w-25" @bind-Value="settings_general.customer_id" disabled readonly></InputNumber>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12 mt-3">
+                    <label class="form-label">Company Name</label>
+                    <InputText type="text" class="form-control" @bind-Value="settings_general.company_name"></InputText>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-4 mt-3">
+                    <label class="form-label">TL Rate</label>
+                    <InputNumber type="text" class="form-control" @bind-Value="settings_general.rate_TL" disabled readonly></InputNumber>
+                </div>
+                <div class="col-4 mt-3">
+                    <label class="form-label">USD Rate</label>
+                    <InputNumber type="text" class="form-control" @bind-Value="settings_general.rate_USD"></InputNumber>
+                </div>
+                <div class="col-4 mt-3">
+                    <label class="form-label">EUR Rate</label>
+                    <InputNumber type="text" class="form-control" @bind-Value="settings_general.rate_EUR"></InputNumber>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6 mt-3">
+                    <label class="form-label">Days to Order Sync</label>
+                    <InputNumber type="text" class="form-control" @bind-Value="settings_general.daysto_ordersync"></InputNumber>
+                </div>
+                <div class="col-6 mt-3">
+                    <label class="form-label">Days to Invoice Sync</label>
+                    <InputNumber type="text" class="form-control" @bind-Value="settings_general.daysto_invoicesync"></InputNumber>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12 mt-3">
+                    <div class="row mt-3 form-check form-switch">
+                        <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="settings_general.xml_qty_addictive_enable"></InputCheckbox>
+                        <label class="form-check-label">Other Sources Additive Status</label>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12 mt-3">
+                    <div class="row mt-3"><span>Shipment Company Statuses</span></div>
+                    <div class="row mt-3 form-check form-switch">
+                        <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="settings_general.yurtici_kargo"></InputCheckbox>
+                        <label class="form-check-label">Yurtiçi Kargo</label>
+                    </div>
+                    <div class="row mt-3 form-check form-switch">
+                        <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="settings_general.mng_kargo"></InputCheckbox>
+                        <label class="form-check-label">MNG Kargo</label>
+                    </div>
+                    <div class="row mt-3 form-check form-switch">
+                        <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="settings_general.aras_kargo"></InputCheckbox>
+                        <label class="form-check-label">Aras Kargo</label>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </div>
+            @if( !string.IsNullOrWhiteSpace( save_message ) ) {
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <span class="alert alert-@message_type">@save_message</span>
+                    </div>
+                </div>
+            }
+        </EditForm>
+    </div>
+}
+@code {
+    [Inject, CascadingParameter]
+    IHttpContextAccessor HttpContextAccessor { get; set; }
+    [Inject]
+    private Services.MerchanterService merchanterService { get; set; }
+
+    [SupplyParameterFromForm( FormName = "GeneralSettingsForm" )]
+    public SettingsGeneral? settings_general { get; set; }
+
+    public string save_message { get; set; } = "";
+    public string message_type { get; set; } = "success";
+
+    protected override async Task OnAfterRenderAsync( bool firstRender ) {
+        if( firstRender ) {
+            if( HttpContextAccessor.HttpContext != null && merchanterService != null ) {
+                int.TryParse( HttpContextAccessor?.HttpContext?.User?.FindFirst( Variables.customer_customer_id )?.Value, out int customer_id );
+                if( merchanterService.global != null ) {
+                    settings_general = merchanterService?.global?.settings;
+                }
+                else {
+                    merchanterService.global = merchanterService?.db_helper?.LoadSettings( customer_id );
+                    settings_general ??= merchanterService?.global?.settings;
+                }
+            }
+            StateHasChanged();
+        }
+        await Task.CompletedTask;
+    }
+
+    private void Submit() {
+        if( settings_general != null ) {
+            int.TryParse( HttpContextAccessor?.HttpContext?.User?.FindFirst( Variables.customer_customer_id )?.Value, out int customer_id );
+            if( merchanterService.db_helper.SaveCustomerSettings( customer_id, settings_general ) ) {
+                save_message = "Save Success";
+                message_type = "success";
+            }
+            else {
+                save_message = "Save Fail";
+                message_type = "danger";
+            }
+            StateHasChanged();
+        }
+    }
+}

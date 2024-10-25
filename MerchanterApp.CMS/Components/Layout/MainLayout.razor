@@ -1,0 +1,43 @@
+﻿@inherits LayoutComponentBase
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu @rendermode="InteractiveServer" />
+    </div>
+
+    <main>
+        <div class="top-row px-4">
+            <div class="w-50 text-start fs-6">
+                @if( HttpContext != null && HttpContext.User.Identity != null &&
+                HttpContext.User.Identity.IsAuthenticated ) {
+                    <a role="button" class="btn btn-outline-secondary" href="account/profile">Profile</a>
+                    <a role="button" class="btn btn-outline-secondary" href="account/users">Users & Permissions</a>
+                    <a role="button" class="btn btn-outline-secondary" href="account/logs">System Logs</a>
+                    <span class="d-none">@(HttpContext.User.FindFirst( "customerStatus" )?.Value == "True" ? "Licensed Customer" : "Unlicensed Customer")</span>
+                }
+            </div>
+            <div class="w-50 text-end fs-6">
+                @if( HttpContext != null && HttpContext.User.Identity != null &&
+                HttpContext.User.Identity.IsAuthenticated ) {
+                    <span class="fs-6">Welcome, @HttpContext.User.Identity.Name</span>
+                    <a role="button" class="btn btn-outline-secondary" href="/account/logout">Logout</a>
+                }
+            </div>
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
+
+@code {
+    [CascadingParameter]
+    protected HttpContext HttpContext { get; set; }
+}

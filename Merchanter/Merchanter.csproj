@@ -1,0 +1,46 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BouncyCastle.Cryptography" Version="2.4.0" />
+    <PackageReference Include="itext" Version="8.0.5" />
+    <PackageReference Include="itext.bouncy-castle-adapter" Version="8.0.5" />
+    <PackageReference Include="itext7.pdfhtml" Version="5.0.5" />
+    <PackageReference Include="MySql.Data" Version="9.1.0" />
+    <PackageReference Include="RestSharp" Version="112.0.0" />
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="NetOpenX.Rest.Client">
+      <HintPath>bin\Debug\net8.0\NetOpenX.Rest.Client.dll</HintPath>
+    </Reference>
+    <Reference Include="NetOpenX.Rest.Core">
+      <HintPath>bin\Debug\net8.0\NetOpenX.Rest.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="NetOpenX.Rest.Model">
+      <HintPath>bin\Debug\net8.0\NetOpenX.Rest.Model.dll</HintPath>
+    </Reference>
+    <Reference Include="NetOpenX.Rest.Netsis">
+      <HintPath>bin\Debug\net8.0\NetOpenX.Rest.Netsis.dll</HintPath>
+    </Reference>
+    <Reference Include="NetOpenX.Rest.Service">
+      <HintPath>bin\Debug\net8.0\NetOpenX.Rest.Service.dll</HintPath>
+    </Reference>
+    <Reference Include="NetOpenX.Rest.Utils">
+      <HintPath>bin\Debug\net8.0\NetOpenX.Rest.Utils.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Net.Http.Formatting">
+      <HintPath>bin\Debug\net8.0\System.Net.Http.Formatting.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Http">
+      <HintPath>bin\Debug\net8.0\System.Web.Http.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

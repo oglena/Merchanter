@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "MerchanterServer": {
+      "commandName": "Project",
+      "commandLineArgs": "1"
+    }
+  }
+}
