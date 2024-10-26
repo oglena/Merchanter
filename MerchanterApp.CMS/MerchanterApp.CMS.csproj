@@ -16,7 +16,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Components\Controls\" />
     <Folder Include="Components\Pages\Catalog\" />
     <Folder Include="Components\Pages\Customer\" />
     <Folder Include="Components\Pages\Settings\" />

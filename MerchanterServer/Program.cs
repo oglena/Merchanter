@@ -110,7 +110,7 @@ while( true ) {
     }
     #endregion
 
-    //Constants.is_local = true;
+    Constants.is_local = true;
     if( Helper.global != null && Constants.is_local ) {
         Helper.global.netsis.rest_url = "http://88.247.120.127:7070/";
         Helper.global.entegra.api_url = "http://88.247.120.127:5421/";

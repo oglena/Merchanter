@@ -17,16 +17,16 @@ builder.Services.AddServerSideBlazor().AddCircuitOptions( o => {
     o.DetailedErrors = true;
 } );
 
-builder.Services.AddAuthentication( Variables.admin_cookie ).AddCookie( Variables.admin_cookie, options => {
-    options.Cookie.Name = Variables.admin_cookie;
+builder.Services.AddAuthentication( Variables.auth_cookie ).AddCookie( Variables.auth_cookie, options => {
+    options.Cookie.Name = Variables.auth_cookie;
     options.LoginPath = "/Account/Login";
     options.LogoutPath = "/Account/Logout";
     options.AccessDeniedPath = "/Account/AccessDenied";
 } );
 
 builder.Services.AddAuthorization( options => {
-    options.AddPolicy( Variables.admin_admin, policy => policy.RequireRole( Variables.admin_admin ) );
-    options.AddPolicy( Variables.admin_admin_id, policy => policy.RequireClaim( Variables.admin_admin_id ) );
+    options.AddPolicy( Variables.admin_role, policy => policy.RequireRole( Variables.admin_role ) );
+    options.AddPolicy( Variables.admin_id, policy => policy.RequireClaim( Variables.admin_id ) );
 } );
 builder.Services.AddCascadingAuthenticationState();
 

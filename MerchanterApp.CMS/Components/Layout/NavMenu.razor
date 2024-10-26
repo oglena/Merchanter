@@ -15,7 +15,7 @@
                 </NavLink>
             </li>
 
-            <AuthorizeView Roles="AdminAdmin">
+            <AuthorizeView Roles="@Variables.admin_role">
                 <Authorized>
                     <li class="nav-item">
                         <NavLink class="nav-link" href="javascript:void(0);" @onclick="()=>expandSalesSubNav = !expandSalesSubNav">
@@ -32,54 +32,11 @@
                 </Authorized>
             </AuthorizeView>
 
-            @* <AuthorizeView Roles="AdminAdmin">
-                <Authorized>
-                    <li class="nav-item">
-                        <NavLink class="nav-link" href="javascript:void(0);" @onclick="()=>expandCatalogSubNav = !expandCatalogSubNav">
-                            <span aria-hidden="true"><i class="bi bi-list"></i>Catalog</span>
-                        </NavLink>
-                        @if( expandCatalogSubNav ) {
-                            <div class="container-fluid">
-                                <NavLink class="nav-link" href="catalog/products" Match="NavLinkMatch.All">
-                                    <span aria-hidden="true"><i class="bi bi-list-columns"></i> Products</span>
-                                </NavLink>
-                                <NavLink class="nav-link" href="catalog/categories" Match="NavLinkMatch.All">
-                                    <span aria-hidden="true"><i class="bi bi-tree"></i> Categories</span>
-                                </NavLink>
-                                <NavLink class="nav-link" href="catalog/brands" Match="NavLinkMatch.All">
-                                    <span aria-hidden="true"><i class="bi bi-tag"></i> Brands</span>
-                                </NavLink>
-                            </div>
-                        }
-                    </li>
-                </Authorized>
-            </AuthorizeView> *@
-
-            @* <AuthorizeView Roles="AdminAdmin">
-                <Authorized>
-                    <li class="nav-item">
-                        <NavLink class="nav-link" href="javascript:void(0);" @onclick="()=>expandSettingsSubNav = !expandSettingsSubNav">
-                            <span aria-hidden="true"><i class="bi bi-gear"></i>Settings</span>
-                        </NavLink>
-                        @if( expandSettingsSubNav ) {
-                            <div class="container-fluid">
-                                <NavLink class="nav-link expand-menu" href="settings/general" Match="NavLinkMatch.All">
-                                    <span aria-hidden="true"><i class="bi bi-gear-wide"></i>General</span>
-                                </NavLink>
-                                <NavLink class="nav-link expand-menu" href="settings/source-assignments" Match="NavLinkMatch.All">
-                                    <span aria-hidden="true"><i class="bi bi-building-gear"></i>Source Assignments</span>
-                                </NavLink>
-                            </div>
-                        }
-                    </li>
-                </Authorized>
-            </AuthorizeView> *@
-
-            <li class="nav-item">
+            @* <li class="nav-item">
                 <NavLink class="nav-link" href="weather" Match="NavLinkMatch.All">
                     <span aria-hidden="true"><i class="bi bi-cloud-lightning"></i> Weather</span>
                 </NavLink>
-            </li>
+            </li> *@
         </ul>
     </nav>
 </div>

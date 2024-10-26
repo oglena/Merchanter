@@ -1,7 +1,6 @@
 ﻿@page "/account/login"
 @layout LoginLayout
 
-@using System.Text.Json
 @using System.Text.Json.Serialization
 @using Merchanter.ServerService.Models
 @using Newtonsoft.Json
@@ -92,18 +91,19 @@
                             tokenDetails = JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
                             if (tokenDetails != null)
                             {
-                                if (tokenDetails.TryGetValue("authToken", out string? token) && token != null)
+                                if (tokenDetails.TryGetValue(Variables.auth_token, out string? token) && token != null)
                                 {
-                                    await HttpContextAccessor.HttpContext.SignInAsync(Variables.admin_cookie,
+                                    login_message = "Authenticating";
+                                    await HttpContextAccessor.HttpContext.SignInAsync(Variables.auth_cookie,
                                         new ClaimsPrincipal(
                                             new ClaimsIdentity(
                                                 new List<Claim>() {
-                                                    new Claim(Variables.admin_admin_id, admin.admin.id.ToString()),
+                                                    new Claim(Variables.admin_id, admin.admin.id.ToString()),
                                                     new Claim(ClaimTypes.Name , admin.admin.name),
-                                                    new Claim(ClaimTypes.Role, Variables.admin_admin),
+                                                    new Claim(ClaimTypes.Role, Variables.admin_role/* TODO: add admin role*/),
                                                     new Claim("rememberMe", admin.remember_me.ToString()),
-                                                    new Claim("AuthToken", token)
-                                                        }, Variables.admin_cookie)));
+                                                    new Claim(Variables.auth_token, token)
+                                                            }, Variables.auth_cookie)));
                                     navigationManager.NavigateTo("/");
                                 }
                             }

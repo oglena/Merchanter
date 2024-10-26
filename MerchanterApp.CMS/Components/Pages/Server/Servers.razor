@@ -1,6 +1,11 @@
-﻿@page "/server/servers"
+﻿@attribute [Authorize]
+@page "/server/servers"
+@using MerchanterApp.CMS.Components.Controls;
 
+<PageTitle>Servers | Merchanter</PageTitle>
 <h3>Servers</h3>
+
+<ServerComponent @rendermode="InteractiveServer" />
 
 @code {
 
