@@ -1,0 +1,12 @@
+﻿@page "/Account/User/{CID}/Logs"
+
+<PageTitle>User [@CID] Logs | Merchanter</PageTitle>
+
+<h3>System Logs for @CID</h3>
+
+@code {
+    [Parameter]
+    public string? CID { get; set; }
+    public int customer_id = 0;
+
+}

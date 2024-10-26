@@ -1,0 +1,350 @@
+﻿@page "/account/user/{CID?}"
+@rendermode InteractiveServer
+
+@using MerchanterApp.CMS.Components.Controls
+@using Merchanter.ServerService.Classes
+@using System.Text.Json.Serialization
+@using Merchanter.ServerService.Models
+@using Newtonsoft.Json
+@using System.Text
+@inject IHttpClientFactory ClientFactory
+@inject NavigationManager navigationManager
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IToastService toastService
+
+<PageTitle>Customer [@CID] | Merchanter</PageTitle>
+
+@if (customer != null && customer_id > 0)
+{
+    <BlazoredToasts Position="Blazored.Toast.Configuration.ToastPosition.TopRight" Timeout="3" />
+    <EditForm Model="customer" Context="formContext" class="container-fluid">
+        <div class="container-fluid">
+            <div class="row mt-3">
+                <div class="col-12 ps-2">
+                    <h3>
+                        User: @customer_id&nbsp;&nbsp;&nbsp;
+                        <a href="@("Account/User/" + customer.customer_id.ToString() + "/Logs")" class="btn btn-primary">Show Log</a>
+                        <button type="submit" class="btn btn-outline-primary" @onclick="@(() => RefreshCustomer())">Refresh User</button>
+                        <button type="submit" class="btn btn-outline-success" @onclick="@(() => SaveCustomer(customer))">Save</button>
+                    </h3>
+                </div>
+            </div>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(@page_message))
+        {
+            <hr />
+            <span>@page_message</span>
+        }
+        <hr />
+
+
+        <div class="container-fluid">
+            <div class="row mt-3">
+                <div class="col-12 ps-2 mb-3">
+                    <label for="user_name" class="form-label">User Name</label>
+                    <InputText type="text" class="form-control" placeholder="User Name cannot be empty!" @bind-Value="customer.user_name" />
+                </div>
+                <div class="col-12 ps-2 mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <InputText type="text" class="form-control" placeholder="Password cannot be empty!" @bind-Value="customer.password" />
+                </div><div class="col-12 ps-2 mb-3">
+                    <div class="form-check form-switch mt-2">
+                        <label class="form-check-label">&nbsp;Customer Status</label>
+                        <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.status"></InputCheckbox>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12 ps-2 mb-3">
+                    <table class="table table-responsive table-hover">
+                        <thead>
+                            <tr>
+                                <th>
+                                    Worker Status
+                                </th>
+                                <th>
+                                    Period
+                                </th>
+                                <th>
+                                    Is Working
+                                </th>
+                                <th>
+                                    Last Worked
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="table-group-divider">
+                            <tr>
+                                <td>
+                                    <div class="form-check form-switch mt-2">
+                                        <label class="form-check-label">&nbsp;Product Sync Status</label>
+                                        <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.product_sync_status"></InputCheckbox>
+                                    </div>
+                                </td>
+                                <td>
+                                    <InputNumber type="text" class="form-control" placeholder="Password cannot be empty!" @bind-Value="customer.product_sync_timer" />
+                                </td>
+                                <td>
+                                    <div class="form-check form-switch mt-2">
+                                        <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.is_productsync_working"></InputCheckbox>
+                                    </div>
+                                </td>
+                                <td>
+                                    <InputDate Type="InputDateType.DateTimeLocal" class="form-control form-control-sm col-4" @bind-Value:format="dd/MM/yyyy hh:MM:ss" @bind-Value="customer.last_product_sync_date"></InputDate>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="form-check form-switch mt-2">
+                                        <label class="form-check-label">&nbsp;Order Sync Status</label>
+                                        <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.order_sync_status"></InputCheckbox>
+                                    </div>
+                                </td>
+                                <td>
+                                    <InputNumber type="text" class="form-control" placeholder="Password cannot be empty!" @bind-Value="customer.order_sync_timer" />
+                                </td>
+                                <td>
+                                    <div class="form-check form-switch mt-2">
+                                        <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.is_ordersync_working"></InputCheckbox>
+                                    </div>
+                                </td>
+                                <td>
+                                    <InputDate Type="InputDateType.DateTimeLocal" class="form-control form-control-sm col-4" format-value="yyyy-MM-dd hh:MM:ss" @bind-Value="customer.last_order_sync_date"></InputDate>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="form-check form-switch mt-2">
+                                        <label class="form-check-label">&nbsp;Notification Sync Status</label>
+                                        <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.notification_sync_status"></InputCheckbox>
+                                    </div>
+                                </td>
+                                <td>
+                                    <InputNumber type="text" class="form-control" placeholder="Password cannot be empty!" @bind-Value="customer.notification_sync_timer" />
+                                </td>
+                                <td>
+                                    <div class="form-check form-switch mt-2">
+                                        <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.is_notificationsync_working"></InputCheckbox>
+                                    </div>
+                                </td>
+                                <td>
+                                    <InputDate Type="InputDateType.DateTimeLocal" class="form-control form-control-sm col-4" format-value="yyyy-MM-dd hh:MM:ss" @bind-Value="customer.last_notification_sync_date"></InputDate>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="form-check form-switch mt-2">
+                                        <label class="form-check-label">&nbsp;XML Sync Status</label>
+                                        <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.xml_sync_status"></InputCheckbox>
+                                    </div>
+                                </td>
+                                <td>
+                                    <InputNumber type="text" class="form-control" placeholder="Password cannot be empty!" @bind-Value="customer.xml_sync_timer" />
+                                </td>
+                                <td>
+                                    <div class="form-check form-switch mt-2">
+                                        <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.is_xmlsync_working"></InputCheckbox>
+                                    </div>
+                                </td>
+                                <td>
+                                    <InputDate Type="InputDateType.DateTimeLocal" class="form-control form-control-sm col-4" format-value="yyyy-MM-dd hh:MM:ss" @bind-Value="customer.last_xml_sync_date"></InputDate>
+                                    @* <label class="form-check-label">@customer.last_xml_sync_date</label> *@
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="form-check form-switch mt-2">
+                                        <label class="form-check-label">&nbsp;Invoice Sync Status</label>
+                                        <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.invoice_sync_status"></InputCheckbox>
+                                    </div>
+                                </td>
+                                <td>
+                                    <InputNumber type="text" class="form-control" placeholder="Password cannot be empty!" @bind-Value="customer.invoice_sync_timer" />
+                                </td>
+                                <td>
+                                    <div class="form-check form-switch mt-2">
+                                        <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.is_invoicesync_working"></InputCheckbox>
+                                    </div>
+                                </td>
+                                <td>
+                                    <InputDate Type="InputDateType.DateTimeLocal" class="form-control form-control-sm col-4" format-value="yyyy-MM-dd hh:MM:ss" @bind-Value="customer.last_invoice_sync_date"></InputDate>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </EditForm>
+}
+else
+{
+    @loading
+}
+
+@code {
+    [Parameter]
+    public string? CID { get; set; }
+    public int customer_id = 0;
+    public Customer? customer { get; set; }
+
+    private string loading = "Loading...";
+    private string page_message = string.Empty;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (int.TryParse(CID, out customer_id))
+        {
+            int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
+            if (admin_id > 0)
+            {
+                string? token = HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value;
+
+                if (!string.IsNullOrWhiteSpace(token))
+                {
+                    using (HttpClient httpClient = new HttpClient())
+                    {
+                        httpClient.BaseAddress = new Uri("http://localhost:5444/");
+                        httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
+                        using HttpResponseMessage response = await httpClient.GetAsync("api/Customer/" + CID + "/GetCustomer");
+
+                        if (response.IsSuccessStatusCode)
+                        {
+                            var base_respond = JsonConvert.DeserializeObject<BaseResponseModel>(response.Content.ReadAsStringAsync().Result);
+                            if (base_respond != null && base_respond.Success && base_respond.Data != null)
+                            {
+                                customer = JsonConvert.DeserializeObject<Customer>(base_respond.Data.ToString());
+                                if (customer == null)
+                                    page_message = "Customer not found.";
+
+                                loading = string.Empty;
+                            }
+                            else
+                            {
+                                page_message = "ServerAPI Data failed.";
+                            }
+                        }
+                        else
+                        {
+                            page_message = "ServerAPI failed.";
+                        }
+                    }
+                }
+                else
+                {
+                    page_message = "Customer login failed.";
+                }
+            }
+            else
+            {
+                navigationManager.NavigateTo("/account/login", true);
+            }
+        }
+    }
+
+
+    private async Task RefreshCustomer()
+    {
+        try
+        {
+            if (int.TryParse(CID, out customer_id))
+            {
+                int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
+                if (admin_id > 0)
+                {
+                    string? token = HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value;
+                    if (!string.IsNullOrWhiteSpace(token))
+                    {
+                        using (HttpClient httpClient = new HttpClient())
+                        {
+                            httpClient.BaseAddress = new Uri("http://localhost:5444/");
+                            httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
+                            using HttpResponseMessage response = await httpClient.GetAsync("api/Customer/" + CID + "/GetCustomer");
+
+                            if (response.IsSuccessStatusCode)
+                            {
+                                customer = null;
+                                var base_respond = JsonConvert.DeserializeObject<BaseResponseModel>(response.Content.ReadAsStringAsync().Result);
+                                if (base_respond != null && base_respond.Success && base_respond.Data != null)
+                                {
+                                    customer = JsonConvert.DeserializeObject<Customer>(base_respond.Data.ToString());
+                                    if (customer == null)
+                                        page_message = "Customer not found.";
+                                    else
+                                    {
+                                        toastService.ShowSuccess("Customers Refreshed");
+                                    }
+
+                                    loading = string.Empty;
+                                }
+                                else
+                                {
+                                    page_message = "ServerAPI Data failed.";
+                                }
+                            }
+                            else
+                            {
+                                page_message = "ServerAPI failed.";
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch
+        {
+
+        }
+    }
+
+
+    private async Task SaveCustomer(Customer _customer)
+    {
+        try
+        {
+            if (int.TryParse(CID, out customer_id))
+            {
+                int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
+                if (admin_id > 0)
+                {
+                    string? token = HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value;
+                    if (!string.IsNullOrWhiteSpace(token))
+                    {
+                        using (HttpClient httpClient = new HttpClient())
+                        {
+                            httpClient.BaseAddress = new Uri("http://localhost:5444/");
+                            httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
+                            using HttpResponseMessage response = await httpClient.PutAsync("api/Customer/" + CID + "/SaveCustomer", new StringContent(JsonConvert.SerializeObject(_customer), Encoding.UTF8, "application/json"));
+                            if (response.IsSuccessStatusCode)
+                            {
+                                customer = null;
+                                var base_respond = JsonConvert.DeserializeObject<BaseResponseModel>(response.Content.ReadAsStringAsync().Result);
+                                if (base_respond != null && base_respond.Success && base_respond.Data != null)
+                                {
+                                    customer = JsonConvert.DeserializeObject<Customer>(base_respond.Data.ToString());
+                                    if (customer == null)
+                                        page_message = "Customer not found.";
+                                    else
+                                    {
+                                        toastService.ShowInfo("Saved Successfully");
+                                    }
+
+                                    loading = string.Empty;
+                                }
+                                else
+                                {
+                                    page_message = "ServerAPI Data failed.";
+                                }
+                            }
+                            else
+                            {
+                                page_message = "ServerAPI failed.";
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch { }
+    }
+}

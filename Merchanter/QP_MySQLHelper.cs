@@ -36,11 +36,11 @@ namespace Merchanter {
                 //1045: Invalid user name and/or password.
                 switch( ex.Number ) {
                     case 0:
-                        Log.It( ex );
+                        Console.WriteLine( ex );
                         break;
 
                     case 1045:
-                        Log.It( ex );
+                        Console.WriteLine( ex );
                         break;
                 }
                 return false;
@@ -53,7 +53,7 @@ namespace Merchanter {
                 return true;
             }
             catch( MySqlException ex ) {
-                Log.It( ex );
+                Console.WriteLine( ex );
                 return false;
             }
         }

@@ -1,6 +1,7 @@
 ﻿using Merchanter.Classes;
 using Merchanter.Classes.Settings;
 using MySql.Data.MySqlClient;
+using static Org.BouncyCastle.Asn1.Cmp.Challenge;
 
 namespace Merchanter {
     public class DbHelper {
@@ -202,6 +203,94 @@ namespace Merchanter {
                 return null;
             }
         }
+
+        public List<Customer> GetCustomers() {
+            try {
+                if( state != System.Data.ConnectionState.Open )
+                    connection.Open();
+                string _query = "SELECT * FROM customer";
+                Customer c = null;
+                MySqlCommand cmd = new MySqlCommand( _query, connection );
+                MySqlDataReader dataReader = cmd.ExecuteReader( System.Data.CommandBehavior.CloseConnection );
+                List<Customer> customers = new List<Customer>();
+                while( dataReader.Read() ) {
+                    customers.Add( new Customer {
+                        customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
+                        user_name = dataReader[ "user_name" ].ToString(),
+                        password = dataReader[ "password" ].ToString(),
+                        status = Convert.ToBoolean( int.Parse( dataReader[ "status" ].ToString() ) ),
+                        product_sync_status = Convert.ToBoolean( int.Parse( dataReader[ "product_sync_status" ].ToString() ) ),
+                        order_sync_status = Convert.ToBoolean( int.Parse( dataReader[ "order_sync_status" ].ToString() ) ),
+                        xml_sync_status = Convert.ToBoolean( int.Parse( dataReader[ "xml_sync_status" ].ToString() ) ),
+                        invoice_sync_status = Convert.ToBoolean( int.Parse( dataReader[ "invoice_sync_status" ].ToString() ) ),
+                        notification_sync_status = Convert.ToBoolean( int.Parse( dataReader[ "notification_sync_status" ].ToString() ) ),
+                        product_sync_timer = int.Parse( dataReader[ "product_sync_timer" ].ToString() ),
+                        order_sync_timer = int.Parse( dataReader[ "order_sync_timer" ].ToString() ),
+                        xml_sync_timer = int.Parse( dataReader[ "xml_sync_timer" ].ToString() ),
+                        invoice_sync_timer = int.Parse( dataReader[ "invoice_sync_timer" ].ToString() ),
+                        notification_sync_timer = int.Parse( dataReader[ "notification_sync_timer" ].ToString() ),
+                        last_product_sync_date = !string.IsNullOrWhiteSpace( dataReader[ "last_product_sync_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "last_product_sync_date" ].ToString() ) : null,
+                        last_order_sync_date = !string.IsNullOrWhiteSpace( dataReader[ "last_order_sync_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "last_order_sync_date" ].ToString() ) : null,
+                        last_xml_sync_date = !string.IsNullOrWhiteSpace( dataReader[ "last_xml_sync_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "last_xml_sync_date" ].ToString() ) : null,
+                        last_invoice_sync_date = !string.IsNullOrWhiteSpace( dataReader[ "last_invoice_sync_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "last_invoice_sync_date" ].ToString() ) : null,
+                        last_notification_sync_date = !string.IsNullOrWhiteSpace( dataReader[ "last_notification_sync_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "last_notification_sync_date" ].ToString() ) : null,
+                        is_productsync_working = Convert.ToBoolean( int.Parse( dataReader[ "is_productsync_working" ].ToString() ) ),
+                        is_ordersync_working = Convert.ToBoolean( int.Parse( dataReader[ "is_ordersync_working" ].ToString() ) ),
+                        is_xmlsync_working = Convert.ToBoolean( int.Parse( dataReader[ "is_xmlsync_working" ].ToString() ) ),
+                        is_invoicesync_working = Convert.ToBoolean( int.Parse( dataReader[ "is_invoicesync_working" ].ToString() ) ),
+                        is_notificationsync_working = Convert.ToBoolean( int.Parse( dataReader[ "is_notificationsync_working" ].ToString() ) ),
+                    } );
+                }
+                dataReader.Close();
+                if( state == System.Data.ConnectionState.Open )
+                    connection.Close();
+                return customers;
+            }
+            catch( Exception ex ) {
+                OnError( ex.Message );
+                return null;
+            }
+        }
+
+        public Customer SaveCustomer( int _customer_id, Customer _customer ) {
+            try {
+                if( state != System.Data.ConnectionState.Open )
+                    connection.Open();
+                object val; int inserted_id;
+                string _query = "START TRANSACTION;" + 
+                    "UPDATE customer SET customer_id=LAST_INSERT_ID(@customer_id),user_name=@user_name,password=@password,status=@status,product_sync_status=@product_sync_status,order_sync_status=@order_sync_status,xml_sync_status=@xml_sync_status,invoice_sync_status=@invoice_sync_status,notification_sync_status=@notification_sync_status,is_productsync_working=@is_productsync_working,is_ordersync_working=@is_ordersync_working,is_xmlsync_working=@is_xmlsync_working,is_notificationsync_working=@is_notificationsync_working,is_invoicesync_working=@is_invoicesync_working WHERE customer_id=@customer_id;" +
+                    "SELECT LAST_INSERT_ID();" +
+                    "COMMIT;";
+                MySqlCommand cmd = new MySqlCommand( _query, connection );
+                cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+                cmd.Parameters.Add( new MySqlParameter( "user_name", _customer.user_name ) );
+                cmd.Parameters.Add( new MySqlParameter( "password", _customer.password ) );
+                cmd.Parameters.Add( new MySqlParameter( "status", _customer.status ) );
+                cmd.Parameters.Add( new MySqlParameter( "product_sync_status", _customer.product_sync_status ) );
+                cmd.Parameters.Add( new MySqlParameter( "order_sync_status", _customer.order_sync_status ) );
+                cmd.Parameters.Add( new MySqlParameter( "xml_sync_status", _customer.xml_sync_status ) );
+                cmd.Parameters.Add( new MySqlParameter( "invoice_sync_status", _customer.invoice_sync_status ) );
+                cmd.Parameters.Add( new MySqlParameter( "notification_sync_status", _customer.notification_sync_status ) );
+                cmd.Parameters.Add( new MySqlParameter( "is_productsync_working", _customer.is_productsync_working ) );
+                cmd.Parameters.Add( new MySqlParameter( "is_ordersync_working", _customer.is_ordersync_working ) );
+                cmd.Parameters.Add( new MySqlParameter( "is_xmlsync_working", _customer.is_xmlsync_working ) );
+                cmd.Parameters.Add( new MySqlParameter( "is_invoicesync_working", _customer.is_invoicesync_working ) );
+                cmd.Parameters.Add( new MySqlParameter( "is_notificationsync_working", _customer.is_notificationsync_working ) );
+                if( state != System.Data.ConnectionState.Open ) connection.Open();
+                val = cmd.ExecuteScalar();
+                if( state == System.Data.ConnectionState.Open ) connection.Close();
+                if( val != null ) {
+                    if( int.TryParse( val.ToString(), out inserted_id ) ) {
+                        return GetCustomer( inserted_id );
+                    }
+                }
+                return null;
+            }
+            catch( Exception ex ) {
+                OnError( ex.Message );
+                return null;
+            }
+        }
         #endregion
 
         #region Admin
@@ -233,7 +322,41 @@ namespace Merchanter {
                 OnError( ex.Message );
                 return null;
             }
-        } 
+        }
+        #endregion
+
+        #region Log
+        public List<Log> GetLogs( int _customer_id, int _items_per_page, int _current_page_index ) {
+            try {
+                if( state != System.Data.ConnectionState.Open ) connection.Open();
+                string _query = "SELECT * FROM log WHERE customer_id=@customer_id ORDER BY id DESC LIMIT @start,@end";
+                List<Log> list = new List<Log>();
+                MySqlCommand cmd = new MySqlCommand( _query, connection );
+                cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+                cmd.Parameters.Add( new MySqlParameter( "start", _items_per_page * (_current_page_index) ) );
+                cmd.Parameters.Add( new MySqlParameter( "end", _items_per_page ) );
+                MySqlDataReader dataReader = cmd.ExecuteReader();
+                while( dataReader.Read() ) {
+                    Log l = new Log {
+                        id = int.Parse( dataReader[ "id" ].ToString() ),
+                        customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
+                        worker = dataReader[ "worker" ].ToString(),
+                        title = dataReader[ "title" ].ToString(),
+                        message = dataReader[ "message" ].ToString(),
+                        update_date = !string.IsNullOrWhiteSpace( dataReader[ "update_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "update_date" ].ToString() ) : null,
+                    };
+                    list.Add( l );
+                }
+                dataReader.Close();
+
+
+                return list;
+            }
+            catch( Exception ex ) {
+                OnError( ex.Message );
+                return null;
+            }
+        }
         #endregion
 
         #region Settings

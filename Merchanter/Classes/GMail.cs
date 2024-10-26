@@ -20,7 +20,7 @@ namespace Merchanter.Classes {
                 smtp.Credentials = cred;
 
                 smtp.Send( mail );
-                Log.It( "Email sent." + _email_account + Environment.NewLine + "Subject: " + _email_subject + Environment.NewLine + "Content: " + _email_content );
+                Console.WriteLine( "Email sent." + _email_account + Environment.NewLine + "Subject: " + _email_subject + Environment.NewLine + "Content: " + _email_content );
                 return true;
             }
             catch {
@@ -48,7 +48,7 @@ namespace Merchanter.Classes {
                     Credentials = cred
                 };
                 smtp.Send( mail );
-                Log.It( "Email sent." + _email_account + Environment.NewLine + "Subject: " + _email_subject + Environment.NewLine + "Content: " + _email_content );
+                Console.WriteLine( "Email sent." + _email_account + Environment.NewLine + "Subject: " + _email_subject + Environment.NewLine + "Content: " + _email_content );
                 return true;
             }
             catch {

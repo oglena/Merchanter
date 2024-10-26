@@ -26,5 +26,39 @@ namespace Merchanter.ServerService.Controllers {
                 return BadRequest();
             }
         }
+
+        [HttpGet( "{CID}/StartServer" )]
+        [Authorize]
+        public async Task<ActionResult<BaseResponseModel>> StartServer( string CID ) {
+            int customer_id;
+            if( int.TryParse( CID, out customer_id ) && customer_id > 0 ) {
+                MerchanterServer started_server = await serverService.StartServer( customer_id );
+                if( started_server != null ) {
+                    return Ok( new BaseResponseModel() { Success = started_server != null, Data = started_server != null ? started_server : new(), ErrorMessage = started_server != null ? "" : "Error -1" } );
+                    //return Ok( products );
+                }
+                else {
+                    return BadRequest();
+                }
+            }
+            return BadRequest();
+        }
+
+        [HttpGet( "{CID}/StopServer" )]
+        [Authorize]
+        public async Task<ActionResult<BaseResponseModel>> StopServer( string CID ) {
+            int customer_id;
+            if( int.TryParse( CID, out customer_id ) && customer_id > 0 ) {
+                MerchanterServer stopped_server = await serverService.StopServer( customer_id );
+                if( stopped_server != null ) {
+                    return Ok( new BaseResponseModel() { Success = stopped_server != null, Data = stopped_server != null ? stopped_server : new(), ErrorMessage = stopped_server != null ? "" : "Error -1" } );
+                    //return Ok( products );
+                }
+                else {
+                    return BadRequest();
+                }
+            }
+            return BadRequest();
+        }
     }
 }

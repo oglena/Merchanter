@@ -1,3 +1,4 @@
+using Blazored.Toast;
 using Merchanter;
 using MerchanterApp.CMS;
 using MerchanterApp.CMS.Components;
@@ -29,6 +30,7 @@ builder.Services.AddAuthorization( options => {
     options.AddPolicy( Variables.admin_id, policy => policy.RequireClaim( Variables.admin_id ) );
 } );
 builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddBlazoredToast();
 
 var app = builder.Build();
 

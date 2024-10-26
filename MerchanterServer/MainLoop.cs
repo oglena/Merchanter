@@ -70,6 +70,14 @@ namespace MerchanterServer {
             }
             #endregion
 
+            #region Notification LOOP
+            notifications = db_helper.GetNotifications( customer.customer_id, false );
+            if( customer.notification_sync_status && !customer.is_notificationsync_working ) {
+                db_helper.notification.SetNotificationSyncWorking( customer.customer_id, true );
+                Task task = Task.Run( this.NotificationLoop );
+            }
+            #endregion
+
             #region Product LOOP
             if( customer.product_sync_status && !customer.is_productsync_working ) {
                 db_helper.SetProductSyncWorking( customer.customer_id, true );
@@ -112,14 +120,6 @@ namespace MerchanterServer {
             }
             else {
                 orders = db_helper.GetOrders( customer.customer_id );
-            }
-            #endregion
-
-            #region Notification LOOP
-            notifications = db_helper.GetNotifications( customer.customer_id, false );
-            if( customer.notification_sync_status && !customer.is_notificationsync_working ) {
-                db_helper.notification.SetNotificationSyncWorking( customer.customer_id, true );
-                Task task = Task.Run( this.NotificationLoop );
             }
             #endregion
 

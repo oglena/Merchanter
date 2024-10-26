@@ -1,19 +1,23 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@* <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="/">Merchanter</a>
     </div>
-</div>
+</div> *@
 
-<input type="checkbox" title="Merchanter Navigation Menu" class="navbar-toggler" />
+@* <input type="checkbox" title="Merchanter Navigation Menu" class="navbar-toggler" />
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="navbar">
         <ul class="nav nav-pills flex-column nav-link w-100">
-            <li class="nav-item">
-                <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                    <span aria-hidden="true"><i class="bi bi-house-heart"></i> Dashboard</span>
-                </NavLink>
-            </li>
+            <AuthorizeView Roles="@Variables.admin_role">
+                <Authorized>
+                    <li class="nav-item">
+                        <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                            <span aria-hidden="true"><i class="bi bi-house-heart"></i> Dashboard</span>
+                        </NavLink>
+                    </li>
+                </Authorized>
+            </AuthorizeView>
 
             <AuthorizeView Roles="@Variables.admin_role">
                 <Authorized>
@@ -21,9 +25,10 @@
                         <NavLink class="nav-link" href="javascript:void(0);" @onclick="()=>expandSalesSubNav = !expandSalesSubNav">
                             <span aria-hidden="true"><i class="bi bi-shop"></i>Servers</span>
                         </NavLink>
-                        @if( expandSalesSubNav ) {
+                        @if (expandSalesSubNav)
+                        {
                             <div class="container-fluid">
-                                <NavLink class="nav-link" href="server/servers" Match="NavLinkMatch.All">
+                                <NavLink class="nav-link" href="Server/Servers" Match="NavLinkMatch.All">
                                     <span aria-hidden="true"><i class="bi bi-currency-dollar"></i> Server List</span>
                                 </NavLink>
                             </div>
@@ -32,14 +37,24 @@
                 </Authorized>
             </AuthorizeView>
 
-            @* <li class="nav-item">
+            <AuthorizeView Roles="@Variables.admin_role">
+                <Authorized>
+                    <li class="nav-item">
+                        <NavLink class="nav-link" href="Account/Users" Match="NavLinkMatch.All">
+                            <span aria-hidden="true"><i class="bi bi-cloud-lightning"></i> Customers</span>
+                        </NavLink>
+                    </li>
+                </Authorized>
+            </AuthorizeView>
+
+             <li class="nav-item">
                 <NavLink class="nav-link" href="weather" Match="NavLinkMatch.All">
                     <span aria-hidden="true"><i class="bi bi-cloud-lightning"></i> Weather</span>
                 </NavLink>
-            </li> *@
+            </li> 
         </ul>
-    </nav>
-</div>
+    </nav> 
+</div>*@
 
 @code {
     private bool expandSettingsSubNav;

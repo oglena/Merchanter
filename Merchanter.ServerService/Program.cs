@@ -1,4 +1,5 @@
 using Merchanter;
+using Merchanter.CustomerService.Repositories;
 using Merchanter.ServerService.Classes;
 using Merchanter.ServerService.Repositories;
 using Merchanter.ServerService.Services;
@@ -54,6 +55,8 @@ builder.Services.AddScoped<ClientIpCheckActionFilter>( container => {
 builder.Services.AddScoped( x => new MerchanterService() );
 builder.Services.AddScoped<IServerService, ServerService>();
 builder.Services.AddScoped<IServerRepository, ServerRepository>();
+builder.Services.AddScoped<ICustomerService, CustomerService>();
+builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 
 // Add services to the container.
 builder.Services.AddProblemDetails();

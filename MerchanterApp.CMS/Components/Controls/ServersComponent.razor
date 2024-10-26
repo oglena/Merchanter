@@ -1,0 +1,347 @@
+﻿@using Merchanter.ServerService.Classes
+@using System.Text.Json.Serialization
+@using Merchanter.ServerService.Models
+@using Newtonsoft.Json
+@inject IHttpClientFactory ClientFactory
+@inject NavigationManager navigationManager
+@inject IHttpContextAccessor HttpContextAccessor
+
+<div class="container-fluid">
+    <div class="row mt-3">
+        <div class="col-12 ps-2">
+            <h3>Working Servers&nbsp;&nbsp;&nbsp;<button type="button" class="btn btn-outline-primary" @onclick="RefreshServers">Refresh Servers</button></h3>
+        </div>
+    </div>
+</div>
+@if (!string.IsNullOrWhiteSpace(@page_message))
+{
+    <hr />
+    <span>@page_message</span>
+}
+<hr />
+@if (servers != null)
+{
+    <div class="container-fluid">
+        <div class="row mt-3">
+            <div class="col-12 ps-2">
+                @foreach (var item in servers)
+                {
+                    @if (item.customer != null)
+                    {
+                        <div class="card" style="width: 18rem;">
+                            <div class="card-body">
+                                <h5 class="card-title"><span class="badge text-bg-success">@item.customer.user_name</span> <a class="btn btn-link text-decoration-none" href="@("Account/User/" + item.customer_id.ToString())">Edit Customer</a></h5>
+                                <hr />
+                                <p class="card-text">Customer ID:&nbsp; @item.customer_id</p>
+                                <p class="card-text">Process ID:&nbsp; @item.PID</p>
+                                <hr />
+                                @if (item.customer.product_sync_status)
+                                {
+                                    <p class="card-text">
+                                        Product Working Status:&nbsp; @(item.customer.is_productsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>"
+                        )
+                                    </p>
+                                }
+                                @if (item.customer.order_sync_status)
+                                {
+                                    <p class="card-text">Order Working Status:&nbsp; @(item.customer.is_ordersync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+
+                                }
+                                @if (item.customer.notification_sync_status)
+                                {
+                                    <p class="card-text">Notification Working Status:&nbsp; @(item.customer.is_notificationsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+
+                                }
+                                @if (item.customer.invoice_sync_status)
+                                {
+                                    <p class="card-text">Invoice Working Status:&nbsp; @(item.customer.is_invoicesync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+
+                                }
+                                @if (item.customer.xml_sync_status)
+                                {
+                                    <p class="card-text">XML Working Status:&nbsp; @(item.customer.is_xmlsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+
+                                }<hr />
+                                <p class="card-footer text-center">
+                                    <a href="@("Account/User/" + item.customer_id.ToString() + "/Logs")" class="btn btn-primary">Show Log</a>
+                                    <button type="button" class="btn btn-danger" @onclick="( () => StopServer(item.customer_id))">
+                                        Stop
+                                    </button>
+                                </p>
+                            </div>
+                        </div>
+                    }
+                }
+                @if (customers != null)
+                {
+                    @foreach (var item in customers)
+                    {
+                        @if (servers.Where(x => x.customer_id == item.customer_id).FirstOrDefault() == null)
+                        {
+                            <div class="card" style="width: 18rem;">
+                                <div class="card-body">
+                                    <h5 class="card-title"><span class="badge text-bg-danger">@item.user_name</span> <a class="btn btn-link text-decoration-none" href="@("Account/User/" + item.customer_id.ToString())">Edit Customer</a></h5>
+                                    <hr />
+                                    <p class="card-text">Customer ID:&nbsp; @item.customer_id</p>
+                                    <p class="card-text">Process ID:&nbsp; 0</p>
+                                    <hr />
+                                    <p class="card-text">Product Working Status:&nbsp; @(item.is_productsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+                                    <p class="card-text">Order Working Status:&nbsp; @(item.is_ordersync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+                                    <p class="card-text">Notification Working Status:&nbsp; @(item.is_notificationsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+                                    <p class="card-text">Invoice Working Status:&nbsp; @(item.is_invoicesync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+                                    <p class="card-text">XML Working Status:&nbsp; @(item.is_xmlsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+                                    <hr />
+                                    <p class="card-subtitle text-center">
+                                        @server_message
+                                    </p>
+                                    <p class="card-footer text-center">
+                                        <a href="@("Account/User/" + item.customer_id.ToString() + "/Logs")" class="btn btn-primary">Show Log</a>
+                                        <button type="button" class="btn btn-success" @onclick="( () => StartServer(item.customer_id))">
+                                            Start
+                                        </button>
+                                    </p>
+                                </div>
+                            </div>
+                        }
+                    }
+                }
+                else
+                {
+                    <span>@customers_loading</span>
+                }
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <span>@loading</span>
+}
+@code {
+    private List<MerchanterServer> servers { get; set; } = new List<MerchanterServer>();
+    private List<Customer>? customers { get; set; }
+    private string loading = "Loading...";
+    private string customers_loading = "Loading Customers...";
+    private string server_message = "";
+    private string page_message = "No servers working.";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && HttpContextAccessor.HttpContext != null)
+        {
+            int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
+            if (admin_id > 0)
+            {
+                string? token = HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value;
+                if (!string.IsNullOrWhiteSpace(token))
+                {
+                    using (HttpClient httpClient = new HttpClient())
+                    {
+                        httpClient.BaseAddress = new Uri("http://localhost:5444/");
+                        httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
+                        using HttpResponseMessage response = await httpClient.GetAsync("api/Server/GetServers");
+
+                        if (response.IsSuccessStatusCode)
+                        {
+                            var base_respond = JsonConvert.DeserializeObject<BaseResponseModel>(response.Content.ReadAsStringAsync().Result);
+                            if (base_respond != null && base_respond.Success && base_respond.Data != null)
+                            {
+                                servers = JsonConvert.DeserializeObject<List<MerchanterServer>>(base_respond.Data.ToString());
+                                if (servers != null && servers.Count == 0)
+                                    page_message = "No servers working.";
+                                else
+                                    page_message = string.Empty;
+
+                                loading = string.Empty;
+                            }
+                            else
+                            {
+                                page_message = "ServerAPI Data failed.";
+                            }
+                        }
+                        else
+                        {
+                            page_message = "ServerAPI failed.";
+                        }
+                    }
+
+                    using (HttpClient httpClient = new HttpClient())
+                    {
+                        httpClient.BaseAddress = new Uri("http://localhost:5444/");
+                        httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
+                        using HttpResponseMessage response = await httpClient.GetAsync("api/Customer/GetCustomers");
+
+                        if (response.IsSuccessStatusCode)
+                        {
+                            var base_respond = JsonConvert.DeserializeObject<BaseResponseModel>(response.Content.ReadAsStringAsync().Result);
+                            if (base_respond != null && base_respond.Success && base_respond.Data != null)
+                            {
+                                customers = JsonConvert.DeserializeObject<List<Customer>>(base_respond.Data.ToString());
+                                if (customers != null && customers.Count == 0)
+                                    customers_loading = "No customers found.";
+                                else
+                                    customers_loading = string.Empty;
+
+                                customers_loading = string.Empty;
+                            }
+                            else
+                            {
+                                customers_loading = "ServerAPI Data failed.";
+                            }
+                        }
+                        else
+                        {
+                            customers_loading = "ServerAPI failed.";
+                        }
+                    }
+                }
+            }
+            StateHasChanged();
+        }
+    }
+
+    private async Task RefreshServers()
+    {
+        int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
+        if (admin_id > 0)
+        {
+            string? token = HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value;
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                using (HttpClient httpClient = new HttpClient())
+                {
+                    httpClient.BaseAddress = new Uri("http://localhost:5444/");
+                    httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
+                    using HttpResponseMessage response = await httpClient.GetAsync("api/Server/GetServers");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var base_respond = JsonConvert.DeserializeObject<BaseResponseModel>(response.Content.ReadAsStringAsync().Result);
+                        if (base_respond != null && base_respond.Success && base_respond.Data != null)
+                        {
+                            servers = JsonConvert.DeserializeObject<List<MerchanterServer>>(base_respond.Data.ToString());
+                            if (servers != null && servers.Count == 0)
+                                page_message = "No servers working.";
+                            else
+                                page_message = string.Empty;
+
+                            loading = string.Empty;
+                        }
+                        else
+                        {
+                            page_message = "ServerAPI Data failed.";
+                        }
+                    }
+                    else
+                    {
+                        page_message = "ServerAPI failed.";
+                    }
+                }
+            }
+        }
+    }
+
+    private async Task StartServer(int _customer_id)
+    {
+        loading = "Trying to start server.";
+        int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
+        if (admin_id > 0)
+        {
+            string? token = HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value;
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                using (HttpClient httpClient = new HttpClient())
+                {
+                    httpClient.BaseAddress = new Uri("http://localhost:5444/");
+                    httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
+                    using HttpResponseMessage response = await httpClient.GetAsync("api/Server/" + _customer_id.ToString() + "/StartServer");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var base_respond = JsonConvert.DeserializeObject<BaseResponseModel>(response.Content.ReadAsStringAsync().Result);
+                        if (base_respond != null && base_respond.Success && base_respond.Data != null)
+                        {
+                            var started_server = JsonConvert.DeserializeObject<MerchanterServer>(base_respond.Data.ToString());
+                            if (started_server != null)
+                            {
+                                if (servers.Where(x => x.customer_id == _customer_id).FirstOrDefault() == null)
+                                {
+                                    servers.Add(new MerchanterServer()
+                                        {
+                                            customer_id = _customer_id,
+                                            PID = started_server.PID,
+                                            customer = customers?.Where(x => x.customer_id == _customer_id).FirstOrDefault()
+                                        });
+
+                                    page_message = "Server started. " + DateTime.Now.ToString();
+                                }
+                                else
+                                {
+                                    page_message = "Cannot start server.";
+                                }
+                            }
+                            else
+                            {
+                                page_message = "ServerAPI Data failed.";
+                            }
+                        }
+                        else
+                        {
+                            page_message = "ServerAPI failed.";
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private async Task StopServer(int _customer_id)
+    {
+        loading = "Trying to stop server.";
+        int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
+        if (admin_id > 0)
+        {
+            string? token = HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value;
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                using (HttpClient httpClient = new HttpClient())
+                {
+                    httpClient.BaseAddress = new Uri("http://localhost:5444/");
+                    httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
+                    using HttpResponseMessage response = await httpClient.GetAsync("api/Server/" + _customer_id.ToString() + "/StopServer");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var base_respond = JsonConvert.DeserializeObject<BaseResponseModel>(response.Content.ReadAsStringAsync().Result);
+                        if (base_respond != null && base_respond.Success && base_respond.Data != null)
+                        {
+                            var stopped_server = JsonConvert.DeserializeObject<MerchanterServer>(base_respond.Data.ToString());
+                            if (stopped_server != null)
+                            {
+                                var s = servers.Where(x => x.customer_id == _customer_id).FirstOrDefault();
+                                if (s != null)
+                                {
+                                    servers.Remove(s);
+
+                                    page_message = "Server stopped. " + DateTime.Now.ToString();
+                                }
+                                else
+                                {
+                                    page_message = "Cannot start server.";
+                                }
+                            }
+                            else
+                            {
+                                page_message = "ServerAPI Data failed.";
+                            }
+                        }
+                        else
+                        {
+                            page_message = "ServerAPI failed.";
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -20,7 +20,7 @@ namespace Merchanter {
 
                     var response = restClient.Execute( request );
                     if( response.StatusCode == System.Net.HttpStatusCode.OK ) {
-                        Log.It( "Executed!.. M:" + _method.ToString() + " | URL:'" + _url + "'" );
+                        Console.WriteLine( "Executed!.. M:" + _method.ToString() + " | URL:'" + _url + "'" );
                         return response.Content;
                     }
                     else {
@@ -30,7 +30,7 @@ namespace Merchanter {
                 else if( _method == Method.Get ) {
                     var response = restClient.Execute( request );
                     if( response.StatusCode == System.Net.HttpStatusCode.OK ) {
-                        Log.It( "Executed!.. M:" + _method.ToString() + " | URL:'" + _url + "'" );
+                        Console.WriteLine( "Executed!.. M:" + _method.ToString() + " | URL:'" + _url + "'" );
                         return response.Content;
                     }
                     else {
@@ -40,7 +40,7 @@ namespace Merchanter {
                 else if( _method == Method.Delete ) {
                     var response = restClient.Execute( request );
                     if( response.StatusCode == System.Net.HttpStatusCode.OK ) {
-                        Log.It( "Executed!.. M:" + _method.ToString() + " | URL:'" + _url + "'" );
+                        Console.WriteLine( "Executed!.. M:" + _method.ToString() + " | URL:'" + _url + "'" );
                         return response.Content;
                     }
                     else {
@@ -64,7 +64,7 @@ namespace Merchanter {
                 }
             }
             catch( Exception ex ) {
-                Log.It( ex );
+                Console.WriteLine( ex );
                 return null;
             }
         }

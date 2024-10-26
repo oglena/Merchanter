@@ -2,34 +2,70 @@
 using Merchanter.ServerService.Services;
 using System.Diagnostics;
 using System.Management;
+using Microsoft.Extensions.Configuration;
 
 namespace Merchanter.ServerService.Repositories {
     public interface IServerRepository {
         Task<List<MerchanterServer>> GetWorkingServers();
+        Task<MerchanterServer> StartServer( int _customer_id );
+        Task<MerchanterServer> StopServer( int _customer_id );
         MerchanterService merchanterService { get; set; }
     }
-    public class ServerRepository( MerchanterService merchanterService ) :IServerRepository {
+    public class ServerRepository( MerchanterService merchanterService, IConfiguration configuration ) :IServerRepository {
         public List<MerchanterServer> working_servers = new List<MerchanterServer>();
 
         MerchanterService IServerRepository.merchanterService { get; set; } = new MerchanterService();
+        private static readonly IConfiguration config = new ConfigurationBuilder().AddJsonFile( "appsettings.json" ).AddEnvironmentVariables().Build();
 
         public async Task<List<MerchanterServer>> GetWorkingServers() {
             return await GetServers();
         }
 
+        public async Task<MerchanterServer> StartServer( int _customer_id ) {
+            MerchanterServer started_server = new MerchanterServer();
+            await Task.Factory.StartNew( () => {
+                ProcessStartInfo process = new ProcessStartInfo();
+                process.WorkingDirectory = configuration[ "AppSettings:MerchanterServerFilePath" ];
+                process.FileName = "MerchanterServer.exe";
+                process.Arguments = _customer_id.ToString();
+                process.WindowStyle = ProcessWindowStyle.Normal;
+                process.UseShellExecute = true;
+                var started_process = Process.Start( process );
+                started_server = new MerchanterServer() { customer_id = _customer_id, PID = started_process != null ? started_process.Id : 0 };
+            } );
+            return started_server;
+        }
+
+        public async Task<MerchanterServer> StopServer( int _customer_id ) {
+            MerchanterServer stopped_server = new MerchanterServer();
+            await Task.Factory.StartNew( () => {
+                var processes = Process.GetProcessesByName( "MerchanterServer" );
+                foreach( var item in processes ) {
+                    if( int.TryParse( GetCustomerId( item ), out int cid ) ) {
+                        try {
+                            item.Kill();
+                            stopped_server = new MerchanterServer() { customer_id = _customer_id, PID = item.Id, customer = merchanterService.helper.GetCustomer( cid ) };
+                        }
+                        catch {
+                        }
+                    }
+                }
+            } );
+            return stopped_server;
+        }
+
         private async Task<List<MerchanterServer>> GetServers() {
             await Task.Factory.StartNew( () => {
-                working_servers = new List<MerchanterServer>() { new MerchanterServer() { customer_id = 0, PID = 0 } };
-                return working_servers;
-            } );
-            var processes = Process.GetProcessesByName( "MerchanterServer" );
-            List<MerchanterServer> servers = new List<MerchanterServer>();
-            foreach( var item in processes ) {
-                if( int.TryParse( GetCustomerId( item ), out int cid ) ) {
-                    servers.Add( new MerchanterServer() { PID = item.Id, customer_id = cid, customer = merchanterService.helper.GetCustomer( cid ) } );
+                var processes = Process.GetProcessesByName( "MerchanterServer" );
+                List<MerchanterServer> servers = new List<MerchanterServer>();
+                foreach( var item in processes ) {
+                    if( int.TryParse( GetCustomerId( item ), out int cid ) ) {
+                        servers.Add( new MerchanterServer() { PID = item.Id, customer_id = cid, customer = merchanterService.helper.GetCustomer( cid ) } );
+                    }
                 }
-            }
-            return servers;
+                working_servers = servers;
+            } );
+            return working_servers;
         }
 
         private string GetCustomerId( Process item ) {
