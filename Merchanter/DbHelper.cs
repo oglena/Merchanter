@@ -202,7 +202,9 @@ namespace Merchanter {
                 return null;
             }
         }
+        #endregion
 
+        #region Admin
         public Admin? GetAdmin( int _admin_id, string _name, string _password ) {
             try {
                 if( state != System.Data.ConnectionState.Open )
@@ -231,7 +233,7 @@ namespace Merchanter {
                 OnError( ex.Message );
                 return null;
             }
-        }
+        } 
         #endregion
 
         #region Settings

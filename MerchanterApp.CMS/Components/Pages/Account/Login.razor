@@ -1,38 +1,44 @@
 ﻿@page "/account/login"
 @layout LoginLayout
 
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@using Merchanter.ServerService.Models
+@using Newtonsoft.Json
+@inject IHttpClientFactory ClientFactory
+
 @inject NavigationManager navigationManager
 @inject IHttpContextAccessor HttpContextAccessor
-@inject Services.MerchanterService merchanterService
 
-<PageTitle>Login | Merchanter</PageTitle>
+<PageTitle>Admin Login | Merchanter</PageTitle>
 
-@if( customer.customer != null ) {
+@if (admin.admin != null)
+{
     <div class="container text-center mt-5">
         <div class="row">
             <div class="col-1 col-sm-2 col-md-4"></div>
             <div class="col-10 col-sm-8 col-md-4">
-                <EditForm method="post" FormName="LoginForm" Model="customer" OnValidSubmit="LoginSubmit">
+                <EditForm method="post" FormName="LoginForm" Model="admin.admin" OnValidSubmit="LoginSubmit">
                     <img class="mb-4" src="https://www.ceresyazilim.com/wp-content/uploads/2024/01/ceres_logo_transparent_base.png" alt="" width="200">
                     <h4 class="fw-normal">Welcome to merchanter.net!</h4>
                     <span class="text-danger">@login_message</span>
                     <DataAnnotationsValidator></DataAnnotationsValidator>
                     <ValidationSummary></ValidationSummary>
                     <div class="form-floating mb-3">
-                        <InputNumber @bind-Value="customer.customer.customer_id" class="form-control" placeholder="Enter your customer identity"></InputNumber>
-                        <label for="floatingInput">Customer Identity</label>
+                        <InputNumber @bind-Value="admin.admin.id" class="form-control" placeholder="Enter your admin identity"></InputNumber>
+                        <label for="floatingInput">Admin Identity</label>
                     </div>
                     <div class="form-floating mb-3">
-                        <InputText @bind-Value="customer.customer.user_name" class="form-control" placeholder="Enter your user name"></InputText>
-                        <label for="floatingInput">User Name</label>
+                        <InputText @bind-Value="admin.admin.name" class="form-control" placeholder="Enter your admin user name"></InputText>
+                        <label for="floatingInput">Admin User Name</label>
                     </div>
                     <div class="form-floating mb-3">
-                        <InputText type="password" @bind-Value="customer.customer.password" class="form-control" placeholder="Enter your password"></InputText>
+                        <InputText type="password" @bind-Value="admin.admin.password" class="form-control" placeholder="Enter your password"></InputText>
                         <label for="floatingPassword">Password</label>
                     </div>
                     <div class="checkbox mb-3">
                         <label>
-                            <InputCheckbox @bind-Value="customer.remember_me" ></InputCheckbox>Remember me
+                            <InputCheckbox @bind-Value="admin.remember_me"></InputCheckbox>&nbsp;Remember me
                             @* <input type="checkbox" value="remember-me" checked="@remember_me" @onchange="() => remember_me = !remember_me"> Remember me  *@
                         </label>
                     </div>
@@ -44,43 +50,73 @@
         </div>
     </div>
 }
-@code {
-    [SupplyParameterFromForm( FormName = "LoginForm" )]
-    private CustomerLogin customer { get; set; } = new CustomerLogin();
 
-    private class CustomerLogin {
-        public Customer? customer { get; set; } = new Customer();
+@code {
+    [SupplyParameterFromForm(FormName = "LoginForm")]
+    private AdminLogin admin { get; set; } = new AdminLogin();
+
+    private class AdminLogin
+    {
+        public Admin? admin { get; set; } = new Admin();
         public bool remember_me { get; set; }
     }
 
     private string login_message = string.Empty;
 
-    private async Task LoginSubmit() {
-        if( HttpContextAccessor != null && HttpContextAccessor.HttpContext != null && HttpContextAccessor.HttpContext.User.Identity != null ) {
-            if( customer.customer != null ) {
-                if( customer.customer.customer_id > 0 ) {
-                    var selected_customer = merchanterService.db_helper?.GetCustomer( customer.customer.customer_id, customer.customer.user_name, customer.customer.password );
-                    if( selected_customer != null ) {
-                        merchanterService.global = merchanterService.db_helper?.LoadSettings( selected_customer.customer_id );
-                        await HttpContextAccessor.HttpContext.SignInAsync( Variables.customer_cookie,
-                            new ClaimsPrincipal(
-                                new ClaimsIdentity(
-                                    new List<Claim>() {
-                        new Claim(Variables.customer_customer_id, selected_customer.customer_id.ToString()),
-                        new Claim(ClaimTypes.Name , selected_customer.user_name),
-                        new Claim("status", selected_customer.status.ToString()),
-                        new Claim("customerStatus", selected_customer.status.ToString()),
-                        new Claim(ClaimTypes.Role, Variables.customer_admin),
-                        new Claim("rememberMe", customer.remember_me.ToString())
-                                    }, Variables.customer_cookie ) ) );
-                        navigationManager.NavigateTo( "/" );
-                    }
-                    else {
-                        login_message = "User Name or Password is wrong.";
+    private async Task LoginSubmit()
+    {
+        if (HttpContextAccessor != null && HttpContextAccessor.HttpContext != null)
+        {
+            if (admin.admin != null)
+            {
+                if (admin.admin.id > 0)
+                {
+                    using (HttpClient httpClient = new HttpClient())
+                    {
+                        Dictionary<string, string>? tokenDetails = null;
+                        httpClient.BaseAddress = new Uri("http://localhost:5444/");
+                        using StringContent jsonContent = new(
+                            System.Text.Json.JsonSerializer.Serialize(new
+                            {
+                                adminId = admin.admin.id,
+                                name = admin.admin.name,
+                                password = admin.admin.password
+                            }),
+                            System.Text.Encoding.UTF8,
+                        "application/json");
+                        using HttpResponseMessage response = await httpClient.PostAsync(
+                            "api/Auth/Login", jsonContent);
+
+                        if (response.IsSuccessStatusCode)
+                        {
+                            tokenDetails = JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
+                            if (tokenDetails != null)
+                            {
+                                if (tokenDetails.TryGetValue("authToken", out string? token) && token != null)
+                                {
+                                    await HttpContextAccessor.HttpContext.SignInAsync(Variables.admin_cookie,
+                                        new ClaimsPrincipal(
+                                            new ClaimsIdentity(
+                                                new List<Claim>() {
+                                                    new Claim(Variables.admin_admin_id, admin.admin.id.ToString()),
+                                                    new Claim(ClaimTypes.Name , admin.admin.name),
+                                                    new Claim(ClaimTypes.Role, Variables.admin_admin),
+                                                    new Claim("rememberMe", admin.remember_me.ToString()),
+                                                    new Claim("AuthToken", token)
+                                                        }, Variables.admin_cookie)));
+                                    navigationManager.NavigateTo("/");
+                                }
+                            }
+                        }
+                        else
+                        {
+                            login_message = "User Name or Password is wrong.";
+                        }
                     }
                 }
-                else {
-                    login_message = "Customer Identity is wrong.";
+                else
+                {
+                    login_message = "Admin Identity is wrong.";
                 }
             }
         }

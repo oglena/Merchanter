@@ -15,22 +15,16 @@
                 </NavLink>
             </li>
 
-            <AuthorizeView Roles="CustomerAdmin">
+            <AuthorizeView Roles="AdminAdmin">
                 <Authorized>
                     <li class="nav-item">
                         <NavLink class="nav-link" href="javascript:void(0);" @onclick="()=>expandSalesSubNav = !expandSalesSubNav">
-                            <span aria-hidden="true"><i class="bi bi-shop"></i>Sales</span>
+                            <span aria-hidden="true"><i class="bi bi-shop"></i>Servers</span>
                         </NavLink>
                         @if( expandSalesSubNav ) {
                             <div class="container-fluid">
-                                <NavLink class="nav-link" href="sales/orders" Match="NavLinkMatch.All">
-                                    <span aria-hidden="true"><i class="bi bi-currency-dollar"></i> Orders</span>
-                                </NavLink>
-                                <NavLink class="nav-link" href="sales/shipments" Match="NavLinkMatch.All">
-                                    <span aria-hidden="true"><i class="bi bi-truck"></i> Shipments</span>
-                                </NavLink>
-                                <NavLink class="nav-link" href="sales/invoices" Match="NavLinkMatch.All">
-                                    <span aria-hidden="true"><i class="bi bi-receipt"></i> Invoices</span>
+                                <NavLink class="nav-link" href="server/servers" Match="NavLinkMatch.All">
+                                    <span aria-hidden="true"><i class="bi bi-currency-dollar"></i> Server List</span>
                                 </NavLink>
                             </div>
                         }
@@ -38,7 +32,7 @@
                 </Authorized>
             </AuthorizeView>
 
-            <AuthorizeView Roles="CustomerAdmin">
+            @* <AuthorizeView Roles="AdminAdmin">
                 <Authorized>
                     <li class="nav-item">
                         <NavLink class="nav-link" href="javascript:void(0);" @onclick="()=>expandCatalogSubNav = !expandCatalogSubNav">
@@ -59,9 +53,9 @@
                         }
                     </li>
                 </Authorized>
-            </AuthorizeView>
+            </AuthorizeView> *@
 
-            <AuthorizeView Roles="CustomerAdmin">
+            @* <AuthorizeView Roles="AdminAdmin">
                 <Authorized>
                     <li class="nav-item">
                         <NavLink class="nav-link" href="javascript:void(0);" @onclick="()=>expandSettingsSubNav = !expandSettingsSubNav">
@@ -75,17 +69,11 @@
                                 <NavLink class="nav-link expand-menu" href="settings/source-assignments" Match="NavLinkMatch.All">
                                     <span aria-hidden="true"><i class="bi bi-building-gear"></i>Source Assignments</span>
                                 </NavLink>
-                                <NavLink class="nav-link expand-menu" href="settings/erp" Match="NavLinkMatch.All">
-                                    <span aria-hidden="true"><i class="bi bi-database-gear"></i>ERP Assignments</span>
-                                </NavLink>
-                                <NavLink class="nav-link expand-menu" href="settings/ecommerce" Match="NavLinkMatch.All">
-                                    <span aria-hidden="true"><i class="bi bi-cart2"></i>E-Commerce</span>
-                                </NavLink>
                             </div>
                         }
                     </li>
                 </Authorized>
-            </AuthorizeView>
+            </AuthorizeView> *@
 
             <li class="nav-item">
                 <NavLink class="nav-link" href="weather" Match="NavLinkMatch.All">

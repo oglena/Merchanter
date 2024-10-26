@@ -22,13 +22,13 @@ namespace Merchanter.ServerService.Services {
         public async Task<UserLoginResponse> LoginUserAsync( UserLoginRequest request ) {
             UserLoginResponse response = new();
 
-            if( string.IsNullOrEmpty( request.Username ) || string.IsNullOrEmpty( request.Password ) ) {
+            if( string.IsNullOrEmpty( request.Name ) || string.IsNullOrEmpty( request.Password ) ) {
                 throw new ArgumentNullException( nameof( request ) );
             }
 
-            var admin = merchanterService.helper.GetAdmin( request.CustomerID, request.Username, request.Password );
+            var admin = merchanterService.helper.GetAdmin( request.AdminID, request.Name, request.Password );
             if( admin != null ) {
-                var generatedTokenInformation = await tokenService.GenerateToken( new GenerateTokenRequest { CustomerID = admin.id, Username = admin.name } );
+                var generatedTokenInformation = await tokenService.GenerateToken( new GenerateTokenRequest { AdminID = admin.id, Name = admin.name } );
 
                 response.AuthenticateResult = true;
                 response.AuthToken = generatedTokenInformation.Token;

@@ -11,7 +11,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Merchanter.ServerService\Merchanter.ServerService.csproj" />
     <ProjectReference Include="..\Merchanter\Merchanter.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Components\Controls\" />
+    <Folder Include="Components\Pages\Catalog\" />
+    <Folder Include="Components\Pages\Customer\" />
+    <Folder Include="Components\Pages\Settings\" />
+    <Folder Include="Services\" />
   </ItemGroup>
 
 </Project>

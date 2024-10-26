@@ -20,7 +20,7 @@
     protected override async Task OnInitializedAsync() {
         if( HttpContextAccessor != null && HttpContextAccessor.HttpContext != null && HttpContextAccessor.HttpContext.User.Identity != null ) {
             if( HttpContextAccessor.HttpContext.User.Identity.IsAuthenticated ) {
-                await HttpContextAccessor.HttpContext.SignOutAsync( Variables.customer_cookie );
+                await HttpContextAccessor.HttpContext.SignOutAsync( Variables.admin_cookie );
                 navigationManager.NavigateTo( "/account/logout", true );
             }
             else {

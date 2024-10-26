@@ -26,8 +26,8 @@ namespace Merchanter.ServerService.Services {
                     issuer: configuration[ "AppSettings:ValidIssuer" ],
                     audience: configuration[ "AppSettings:ValidAudience" ],
                     claims: new List<Claim> {
-                    new Claim("userName", request.Username),
-                    new Claim("customerId",request.CustomerID.ToString())
+                    new Claim("Name", request.Name),
+                    new Claim("adminId",request.AdminID.ToString())
                     },
                     notBefore: dateTimeNow,
                     expires: dateTimeNow.Add( TimeSpan.FromMinutes( 500 ) ),
