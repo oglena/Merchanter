@@ -6,33 +6,58 @@
 @inject NavigationManager navigationManager
 @inject IHttpContextAccessor HttpContextAccessor
 
+@if (!string.IsNullOrWhiteSpace(@page_message))
+{
+    <hr />
+    <span>@page_message</span>
+}
 <hr />
 <div class="container-fluid">
     <div class="row mt-3">
         <div class="col-12 ps-2">
-            @if (servers != null)
-            {
-                <table class="table table-responsive">
-                    <thead>
-                        <tr>
-                            <th>Customer ID</th>
-                            <th>Process ID</th>
-                        </tr>
-                    </thead>
-                    @foreach (var item in servers)
-                    {
-                        <tr>
-                            <td>@item.customer_id</td>
-                            <td>@item.PID</td>
-                        </tr>
-                    }
-                </table>
-            }
+            <button type="button" class="btn btn-outline-primary" @onclick="RefreshServers">Refresh Servers</button>
         </div>
     </div>
 </div>
+@if (servers != null)
+{
+    <div class="container-fluid">
+        <div class="row mt-3">
+            <div class="col-12 ps-2">
+                @foreach (var item in servers)
+                {
+                    @if (item.customer != null)
+                    {
+                        <div class="card" style="width: 18rem;">
+                            <div class="card-body">
+                                <h5 class="card-title">@item.customer.user_name</h5>
+                                <hr />
+                                <p class="card-text">Customer ID:&nbsp; @item.customer_id</p>
+                                <p class="card-text">Process ID:&nbsp; @item.PID</p>
+                                <hr />
+                                <p class="card-text">Product Sync:&nbsp; @(item.customer.product_sync_status ? "Enabled" : "Disabled")</p>
+                                <p class="card-text">Order Sync:&nbsp; @(item.customer.order_sync_status ? "Enabled" : "Disabled")</p>
+                                <p class="card-text">Notification Sync:&nbsp; @(item.customer.notification_sync_status ? "Enabled" : "Disabled")</p>
+                                <p class="card-text">Invoice Sync:&nbsp; @(item.customer.invoice_sync_status ? "Enabled" : "Disabled")</p>
+                                <p class="card-text">XML Sync:&nbsp; @(item.customer.xml_sync_status ? "Enabled" : "Disabled")</p>
+                                <hr />
+                                <a href="#" class="btn btn-primary">Show Log</a>
+                                <a href="#" class="btn btn-danger">Stop</a>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <span>@loading</span>
+}
 @code {
     private List<MerchanterServer>? servers { get; set; }
+    private string loading = "Loading...";
     private string page_message = string.Empty;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -47,22 +72,26 @@
                 {
                     using (HttpClient httpClient = new HttpClient())
                     {
-                        BaseResponseModel base_respond;
                         httpClient.BaseAddress = new Uri("http://localhost:5444/");
                         httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
                         using HttpResponseMessage response = await httpClient.GetAsync("api/Server/GetServers");
 
                         if (response.IsSuccessStatusCode)
                         {
-                            base_respond = JsonConvert.DeserializeObject<BaseResponseModel>(response.Content.ReadAsStringAsync().Result);
+                            var base_respond = JsonConvert.DeserializeObject<BaseResponseModel>(response.Content.ReadAsStringAsync().Result);
                             if (base_respond != null && base_respond.Success && base_respond.Data != null)
                             {
                                 servers = JsonConvert.DeserializeObject<List<MerchanterServer>>(base_respond.Data.ToString());
-                                //servers = (List<MerchanterServer>)base_respond.Data;
+                                if (servers != null && servers.Count == 0)
+                                    page_message = "No servers working.";
+                                else
+                                    page_message = string.Empty;
+
+                                loading = string.Empty;
                             }
                             else
                             {
-                                page_message = "No servers working.";
+                                page_message = "ServerAPI Data failed.";
                             }
                         }
                         else
@@ -73,6 +102,47 @@
                 }
             }
             StateHasChanged();
+        }
+    }
+
+    private async Task RefreshServers()
+    {
+        int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
+        if (admin_id > 0)
+        {
+            string? token = HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value;
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                using (HttpClient httpClient = new HttpClient())
+                {
+                    httpClient.BaseAddress = new Uri("http://localhost:5444/");
+                    httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
+                    using HttpResponseMessage response = await httpClient.GetAsync("api/Server/GetServers");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var base_respond = JsonConvert.DeserializeObject<BaseResponseModel>(response.Content.ReadAsStringAsync().Result);
+                        if (base_respond != null && base_respond.Success && base_respond.Data != null)
+                        {
+                            servers = JsonConvert.DeserializeObject<List<MerchanterServer>>(base_respond.Data.ToString());
+                            if (servers != null && servers.Count == 0)
+                                page_message = "No servers working.";
+                            else
+                                page_message = string.Empty;
+
+                            loading = string.Empty;
+                        }
+                        else
+                        {
+                            page_message = "ServerAPI Data failed.";
+                        }
+                    }
+                    else
+                    {
+                        page_message = "ServerAPI failed.";
+                    }
+                }
+            }
         }
     }
 }
