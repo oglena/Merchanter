@@ -1,6 +1,9 @@
 ﻿@page "/Account/User/Logs"
+@using MerchanterApp.CMS.Components.Controls;
 
-<h3>SystemLogs</h3>
+<PageTitle>User Logs | Merchanter</PageTitle>
+
+<CustomerLogsComponent @rendermode="InteractiveServer" />
 
 @code {
 

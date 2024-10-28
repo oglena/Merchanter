@@ -1,6 +1,7 @@
 ﻿using Merchanter.Classes;
 using Merchanter.Classes.Settings;
 using MySql.Data.MySqlClient;
+using NetOpenX.Rest.Core.Models;
 using static Org.BouncyCastle.Asn1.Cmp.Challenge;
 
 namespace Merchanter {
@@ -326,7 +327,7 @@ namespace Merchanter {
         #endregion
 
         #region Log
-        public List<Log> GetLogs( int _customer_id, int _items_per_page, int _current_page_index ) {
+        public List<Log> GetLastLogs( int _customer_id, int _items_per_page = 20, int _current_page_index = 0 ) {
             try {
                 if( state != System.Data.ConnectionState.Open ) connection.Open();
                 string _query = "SELECT * FROM log WHERE customer_id=@customer_id ORDER BY id DESC LIMIT @start,@end";
@@ -350,6 +351,48 @@ namespace Merchanter {
                 dataReader.Close();
 
 
+                return list;
+            }
+            catch( Exception ex ) {
+                OnError( ex.Message );
+                return null;
+            }
+        }
+        public List<Log> GetLastLogs( int _customer_id, Dictionary<string, string> _filters, int _items_per_page = 20, int _current_page_index = 0 ) {
+            try {
+                if( state != System.Data.ConnectionState.Open ) connection.Open();
+                string _query = "SELECT * FROM log WHERE customer_id=@customer_id";
+                string? filtered_worker = _filters.Where( x => x.Key == "filtered_worker" ).GetValue();
+                string? filtered_title = _filters.Where( x => x.Key == "filtered_title" ).GetValue();
+                string? filtered_message = _filters.Where( x => x.Key == "filtered_message" ).GetValue();
+                string? filtered_date = _filters.Where( x => x.Key == "filtered_date" ).GetValue();
+                List<Log> list = new List<Log>();
+                if(filtered_worker != null && filtered_title != null && filtered_message != null && filtered_date != null ) {
+                    _query += filtered_worker != null ? " AND worker='" + filtered_worker + "'" : string.Empty;
+                    _query += filtered_title != null ? " AND title='" + filtered_title + "'" : string.Empty;
+                    _query += filtered_message != null ? " AND message='" + filtered_message + "'" : string.Empty;
+                    //_query += filtered_date != null ? " AND update_date='" + filtered_date + "'" : string.Empty;
+                    _query += " ORDER BY id DESC LIMIT @start,@end";
+                    MySqlCommand cmd = new MySqlCommand( _query, connection );
+                    cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+                    cmd.Parameters.Add( new MySqlParameter( "start", _items_per_page * (_current_page_index) ) );
+                    cmd.Parameters.Add( new MySqlParameter( "end", _items_per_page ) );
+                    MySqlDataReader dataReader = cmd.ExecuteReader();
+                    while( dataReader.Read() ) {
+                        Log l = new Log {
+                            id = int.Parse( dataReader[ "id" ].ToString() ),
+                            customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
+                            worker = dataReader[ "worker" ].ToString(),
+                            title = dataReader[ "title" ].ToString(),
+                            message = dataReader[ "message" ].ToString(),
+                            update_date = !string.IsNullOrWhiteSpace( dataReader[ "update_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "update_date" ].ToString() ) : null,
+                        };
+                        list.Add( l );
+                    }
+                    dataReader.Close();
+
+
+                }
                 return list;
             }
             catch( Exception ex ) {

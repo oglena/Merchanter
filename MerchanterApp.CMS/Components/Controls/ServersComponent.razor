@@ -9,7 +9,7 @@
 <div class="container-fluid">
     <div class="row mt-3">
         <div class="col-12 ps-2">
-            <h3>Working Servers&nbsp;&nbsp;&nbsp;<button type="button" class="btn btn-outline-primary" @onclick="RefreshServers">Refresh Servers</button></h3>
+            <h1>Working Servers &nbsp;&nbsp;&nbsp;<button type="button" class="btn btn-outline-primary" @onclick="RefreshServers">Refresh Servers</button></h1>
         </div>
     </div>
 </div>
@@ -30,38 +30,18 @@
                     {
                         <div class="card" style="width: 18rem;">
                             <div class="card-body">
-                                <h5 class="card-title"><span class="badge text-bg-success">@item.customer.user_name</span> <a class="btn btn-link text-decoration-none" href="@("Account/User/" + item.customer_id.ToString())">Edit Customer</a></h5>
+                                <h3 class="card-title text-success">Working Server</h3>
+                                <span class="badge text-bg-success">@item.customer.user_name</span> <a class="btn btn-link text-decoration-none" href="@("Account/User/" + item.customer_id.ToString())">Edit Customer</a>
                                 <hr />
                                 <p class="card-text">Customer ID:&nbsp; @item.customer_id</p>
                                 <p class="card-text">Process ID:&nbsp; @item.PID</p>
                                 <hr />
-                                @if (item.customer.product_sync_status)
-                                {
-                                    <p class="card-text">
-                                        Product Working Status:&nbsp; @(item.customer.is_productsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>"
-                        )
-                                    </p>
-                                }
-                                @if (item.customer.order_sync_status)
-                                {
-                                    <p class="card-text">Order Working Status:&nbsp; @(item.customer.is_ordersync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
-
-                                }
-                                @if (item.customer.notification_sync_status)
-                                {
-                                    <p class="card-text">Notification Working Status:&nbsp; @(item.customer.is_notificationsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
-
-                                }
-                                @if (item.customer.invoice_sync_status)
-                                {
-                                    <p class="card-text">Invoice Working Status:&nbsp; @(item.customer.is_invoicesync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
-
-                                }
-                                @if (item.customer.xml_sync_status)
-                                {
-                                    <p class="card-text">XML Working Status:&nbsp; @(item.customer.is_xmlsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
-
-                                }<hr />
+                                <p class='card-text @(!item.customer.product_sync_status ? "text-muted" : "")'>Product Working Status:&nbsp; @(item.customer.is_productsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+                                <p class='card-text @(!item.customer.order_sync_status ? "text-muted" : "")'>Order Working Status:&nbsp; @(item.customer.is_ordersync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+                                <p class='card-text @(!item.customer.notification_sync_status ? "text-muted" : "")'>Notification Working Status:&nbsp; @(item.customer.is_notificationsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+                                <p class='card-text @(!item.customer.invoice_sync_status ? "text-muted" : "")'>Invoice Working Status:&nbsp; @(item.customer.is_invoicesync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+                                <p class='card-text @(!item.customer.xml_sync_status ? "text-muted" : "")'>XML Working Status:&nbsp; @(item.customer.is_xmlsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+                                <hr />
                                 <p class="card-footer text-center">
                                     <a href="@("Account/User/" + item.customer_id.ToString() + "/Logs")" class="btn btn-primary">Show Log</a>
                                     <button type="button" class="btn btn-danger" @onclick="( () => StopServer(item.customer_id))">
@@ -80,16 +60,17 @@
                         {
                             <div class="card" style="width: 18rem;">
                                 <div class="card-body">
-                                    <h5 class="card-title"><span class="badge text-bg-danger">@item.user_name</span> <a class="btn btn-link text-decoration-none" href="@("Account/User/" + item.customer_id.ToString())">Edit Customer</a></h5>
+                                    <h3 class="card-title text-muted">Idle Server</h3>
+                                    <span class="badge text-bg-danger">@item.user_name</span> <a class="btn btn-link text-decoration-none" href="@("Account/User/" + item.customer_id.ToString())">Edit Customer</a>
                                     <hr />
                                     <p class="card-text">Customer ID:&nbsp; @item.customer_id</p>
                                     <p class="card-text">Process ID:&nbsp; 0</p>
                                     <hr />
-                                    <p class="card-text">Product Working Status:&nbsp; @(item.is_productsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
-                                    <p class="card-text">Order Working Status:&nbsp; @(item.is_ordersync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
-                                    <p class="card-text">Notification Working Status:&nbsp; @(item.is_notificationsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
-                                    <p class="card-text">Invoice Working Status:&nbsp; @(item.is_invoicesync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
-                                    <p class="card-text">XML Working Status:&nbsp; @(item.is_xmlsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+                                    <p class='card-text @(!item.product_sync_status ? "text-muted" : "")'>Product Working Status:&nbsp; @(item.is_productsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+                                    <p class='card-text @(!item.order_sync_status ? "text-muted" : "")'>Order Working Status:&nbsp; @(item.is_ordersync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+                                    <p class='card-text @(!item.notification_sync_status ? "text-muted" : "")'>Notification Working Status:&nbsp; @(item.is_notificationsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+                                    <p class='card-text @(!item.invoice_sync_status ? "text-muted" : "")'>Invoice Working Status:&nbsp; @(item.is_invoicesync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+                                    <p class='card-text @(!item.xml_sync_status ? "text-muted" : "")'>XML Working Status:&nbsp; @(item.is_xmlsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
                                     <hr />
                                     <p class="card-subtitle text-center">
                                         @server_message
@@ -212,6 +193,36 @@ else
                 {
                     httpClient.BaseAddress = new Uri("http://localhost:5444/");
                     httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
+                    using HttpResponseMessage response = await httpClient.GetAsync("api/Customer/GetCustomers");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var base_respond = JsonConvert.DeserializeObject<BaseResponseModel>(response.Content.ReadAsStringAsync().Result);
+                        if (base_respond != null && base_respond.Success && base_respond.Data != null)
+                        {
+                            customers = JsonConvert.DeserializeObject<List<Customer>>(base_respond.Data.ToString());
+                            if (customers != null && customers.Count == 0)
+                                customers_loading = "No customers found.";
+                            else
+                                customers_loading = string.Empty;
+
+                            customers_loading = string.Empty;
+                        }
+                        else
+                        {
+                            customers_loading = "ServerAPI Data failed.";
+                        }
+                    }
+                    else
+                    {
+                        customers_loading = "ServerAPI failed.";
+                    }
+                }
+
+                using (HttpClient httpClient = new HttpClient())
+                {
+                    httpClient.BaseAddress = new Uri("http://localhost:5444/");
+                    httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
                     using HttpResponseMessage response = await httpClient.GetAsync("api/Server/GetServers");
 
                     if (response.IsSuccessStatusCode)
@@ -223,8 +234,11 @@ else
                             if (servers != null && servers.Count == 0)
                                 page_message = "No servers working.";
                             else
+                            {
                                 page_message = string.Empty;
 
+                                StateHasChanged();
+                            }
                             loading = string.Empty;
                         }
                         else

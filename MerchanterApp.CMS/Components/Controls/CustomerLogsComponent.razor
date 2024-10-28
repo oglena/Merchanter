@@ -1,0 +1,401 @@
+﻿@using Merchanter.ServerService.Classes
+@using System.Text.Json.Serialization
+@using Merchanter.ServerService.Models
+@using Newtonsoft.Json
+@using System.Text
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@inject IHttpClientFactory ClientFactory
+@inject NavigationManager navigationManager
+@inject IHttpContextAccessor HttpContextAccessor
+@inject ProtectedSessionStorage ProtectedSessionStore
+
+@if (customers != null)
+{
+    <div class="container-fluid sticky-top bg-dark text-light rounded-2 p-3" style="top:60px !important;">
+        <div class="row mt-3">
+            <div class="col-12 ps-2">
+                <h1>Customer Logs: @(!string.IsNullOrWhiteSpace(CID) && int.Parse(CID) > 0 ? CID : "N/A") &nbsp;&nbsp;&nbsp;<button type="button" class="btn btn-primary" @onclick="RefreshLogs">Refresh Logs</button></h1>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-8 ps-2">
+                <div class="form-floating">
+                    <select class="form-select text-start" aria-label="servers-select" @onchange="CustomerSelected">
+                        <option value="0" selected>Select to Show Customer Logs...</option>
+                        @foreach (var item in customers)
+                        {
+                            <option value="@item.customer_id" selected="@(item.customer_id == int.Parse(!string.IsNullOrWhiteSpace(CID) ? CID : "0"))">@item.user_name</option>
+                        }
+                    </select>
+                    <label>Available Servers</label>
+                </div>
+            </div>
+            <div class="col-4 ps-2 align-content-center text-end">
+                @if (!string.IsNullOrWhiteSpace(CID) && int.Parse(CID) > 0)
+                {
+                    <span class="badge text-bg-dark text-light">@currentPage of ? page</span>
+                    <button type="button" class="btn btn-primary btn-sm" @onclick="NextPage">Next</button>
+                    <button type="button" class="btn btn-primary btn-sm" @onclick="PreviousPage">Previous</button>
+                }
+            </div>
+        </div>
+    </div>
+    @if (true)
+    {
+        <div class="container-fluid">
+            <div class="row mt-3">
+                <div class="col-12 ps-2">
+                    <table class="table table-responsive table-hover">
+                        <thead>
+                            @if (!string.IsNullOrWhiteSpace(CID))
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="form-floating">
+                                            <select class="form-select text-start" aria-label="servers-select" @onchange="FilterWorkerChanged">
+                                                <option value="0" selected='@(filtered_worker == null || filtered_worker == "0" ? true : false)'>Select Worker...</option>
+                                                <option value="helper_instance" selected='@(filtered_worker == "helper_instance" ? true : false)'>Helper Instance</option>
+                                                <option value="customer" selected='@(filtered_worker == "customer" ? true : false)'>Customer</option>
+                                                <option value="helper_settings" selected='@(filtered_worker == "helper_settings" ? true : false)'>Helper Settings</option>
+                                                <option value="invoice" selected='@(filtered_worker == "invoice" ? true : false)'>Invoice</option>
+                                                <option value="notification" selected='@(filtered_worker == "notification" ? true : false)'>Notification</option>
+                                                <option value="order" selected='@(filtered_worker == "order" ? true : false)'>Order</option>
+                                                <option value="product" selected='@(filtered_worker == "product" ? true : false)'>Product</option>
+                                                <option value="shipment" selected='@(filtered_worker == "shipment" ? true : false)'>Shipment</option>
+                                                <option value="xml" selected='@(filtered_worker == "xml" ? true : false)'>XML</option>
+                                            </select>
+                                            <label>Worker</label>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="form-floating">
+                                            <select class="form-select text-start" aria-label="servers-select" @onchange="FilterTitleChanged">
+                                                <option value="0" selected='@(filtered_title == null || filtered_title == "0" ? true : false)'>Select Title...</option>
+                                                <option value="thread" selected='@(filtered_title == "thread" ? true : false)'>Thread</option>
+                                                <option value="helper_instance" selected='@(filtered_title == "error" ? true : false)'>Error</option>
+                                                <option value="customer" selected='@(filtered_title == "friendly_error" ? true : false)'>Friendly Error</option>
+                                                <option value="helper_settings" selected='@(filtered_title == "ftpupload" ? true : false)'>FTP Upload</option>
+                                                <option value="invoice" selected='@(filtered_title == "helper_error" ? true : false)'>Helper Error</option>
+                                                <option value="notification" selected='@(filtered_title == "info" ? true : false)'>Info</option>
+                                                <option value="order" selected='@(filtered_title == "notification" ? true : false)'>Notification</option>
+                                                <option value="product" selected='@(filtered_title == "order_complete" ? true : false)'>Order Complete</option>
+                                                <option value="shipment" selected='@(filtered_title == "order_processed" ? true : false)'>Order Processed</option>
+                                                <option value="xml" selected='@(filtered_title == "xml" ? true : false)'>XML</option>
+                                                <option value="order_shipped" selected='@(filtered_title == "order_shipped" ? true : false)'>Order Shipped</option>
+                                                <option value="order_source_error" selected='@(filtered_title == "order_source_error" ? true : false)'>Order Source Error</option>
+                                                <option value="order_update_error" selected='@(filtered_title == "order_update_error" ? true : false)'>Order Update Error</option>
+                                                <option value="product_custom_price_cannot_update" selected='@(filtered_title == "product_custom_price_cannot_update" ? true : false)'>Product Custom Price cannot Update</option>
+                                                <option value="product_custom_price_cannot_updated" selected='@(filtered_title == "product_custom_price_cannot_updated" ? true : false)'>Product Custom Price cannot Updated</option>
+                                                <option value="product_custom_price_updated" selected='@(filtered_title == "product_custom_price_updated" ? true : false)'>Product Custom Price Updated</option>
+                                                <option value="product_custom_price_update_error" selected='@(filtered_title == "product_custom_price_update_error" ? true : false)'>Product Custom Price Update Error</option>
+                                                <option value="product_price_updated" selected='@(filtered_title == "product_price_updated" ? true : false)'>Product Price Updated</option>
+                                                <option value="product_price_update_error" selected='@(filtered_title == "product_price_update_error" ? true : false)'>Product Price Update Error</option>
+                                                <option value="product_qty_updated" selected='@(filtered_title == "product_qty_updated" ? true : false)'>Product Qty Updated</option>
+                                                <option value="product_qty_update_error" selected='@(filtered_title == "product_qty_update_error" ? true : false)'>Product Qty Update Error</option>
+                                                <option value="product_special_price_updated" selected='@(filtered_title == "product_special_price_updated" ? true : false)'>Product Special Price Updated</option>
+                                                <option value="product_special_price_update_error" selected='@(filtered_title == "product_special_price_update_error" ? true : false)'>Product Special Price Update Error</option>
+                                                <option value="qp_mysqlupdate" selected='@(filtered_title == "qp_mysqlupdate" ? true : false)'>QP MySQL Update</option>
+                                                <option value="shipment_error" selected='@(filtered_title == "shipment_error" ? true : false)'>Shipment Error</option>
+                                            </select>
+                                            <label>Title</label>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="form-floating">
+                                            <input class="form-control" type="text" name="filter-message" @bind-value="@this.filtered_message" @bind-value:event="oninput"
+                                                   @onkeydown="FilterMessageChanged">
+                                            <label>Message</label>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="form-floating">
+                                            <select class="form-select text-start" aria-label="servers-select" @onchange="FilterDateChanged">
+                                                <option value="0" selected='@(filtered_date == 0 ? true : false)'>All Time...</option>
+                                                <option value="7" selected='@(filtered_date == 7 ? true : false)'>Weekly</option>
+                                                <option value="31" selected='@(filtered_date == 31 ? true : false)'>Monthly</option>
+                                            </select>
+                                            <label>Date</label>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </thead>
+                        <tbody class="table-group-divider">
+                            @foreach (var item in customer_logs)
+                            {
+                                <tr>
+                                    <td class="align-content-center">
+                                        <span class='badge @(item.worker != "helper_instance" ? "text-bg-primary" : "text-bg-secondary")'>@item.worker</span>
+                                    </td>
+                                    <td class="align-content-center">
+                                        <span class='badge @(item.title == "thread" ? "text-bg-dark" : item.title.Contains("error") ? "text-bg-danger" : (item.title == "info" || item.title == "qp_mysqlupdate") ? "text-bg-info" : "text-bg-secondary")'>@item.title</span>
+                                    </td>
+                                    <td class="align-content-center">
+                                        @item.message
+                                    </td>
+                                    <td class="align-content-center">
+                                        @item.update_date.Value.ToString()
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+}
+else
+{
+    @loading
+}
+@code {
+    [Parameter]
+    public string? CID { get; set; } = "0";
+    List<Log> customer_logs { get; set; } = new List<Log>();
+    List<Customer>? customers { get; set; }
+    private string loading = "Loading...";
+    private string page_message = "Logs not found for this customer.";
+    private int currentPage { get; set; } = 1;
+    private int pageItemsCount { get; set; } = 20;
+    private string? filtered_worker { get; set; } = "0";
+    private string? filtered_title { get; set; } = "0";
+    private int filtered_date { get; set; } = 0;
+    private string? filtered_message { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (HttpContextAccessor.HttpContext != null)
+            {
+                int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
+                if (admin_id > 0)
+                {
+                    string? token = HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value;
+                    if (!string.IsNullOrWhiteSpace(token))
+                    {
+                        using (HttpClient httpClient = new HttpClient())
+                        {
+                            httpClient.BaseAddress = new Uri("http://localhost:5444/");
+                            httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
+                            using HttpResponseMessage response = await httpClient.GetAsync("api/Customer/GetCustomers");
+
+                            if (response.IsSuccessStatusCode)
+                            {
+                                var base_respond = JsonConvert.DeserializeObject<BaseResponseModel>(response.Content.ReadAsStringAsync().Result);
+                                if (base_respond != null && base_respond.Success && base_respond.Data != null)
+                                {
+                                    customers = JsonConvert.DeserializeObject<List<Customer>>(base_respond.Data.ToString());
+                                    if (customers != null && customers.Count == 0)
+                                        page_message = "No servers working.";
+                                    else
+                                        page_message = string.Empty;
+
+                                    loading = string.Empty;
+                                }
+                                else
+                                {
+                                    page_message = "ServerAPI Data failed.";
+                                }
+                            }
+                            else
+                            {
+                                page_message = "ServerAPI failed.";
+                            }
+                        }
+                    }
+                }
+                filtered_message = string.Empty;
+                StateHasChanged();
+            }
+        }
+        else
+        {
+            var result = await ProtectedSessionStore.GetAsync<string>("selected_customer_id");
+            CID = result.Success ? result.Value : "0";
+            if (!string.IsNullOrWhiteSpace(CID) && int.Parse(CID) > 0)
+            {
+                if (customer_logs.Count == 0)
+                {
+                    if (HttpContextAccessor.HttpContext != null)
+                    {
+                        int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
+                        if (admin_id > 0)
+                        {
+                            string? token = HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value;
+                            if (!string.IsNullOrWhiteSpace(token))
+                            {
+                                using (HttpClient httpClient = new HttpClient())
+                                {
+                                    httpClient.BaseAddress = new Uri("http://localhost:5444/");
+                                    httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
+                                    using HttpResponseMessage response = await httpClient.PostAsync("api/Customer/" + CID + "/GetCustomerLogs",
+                                    new StringContent(JsonConvert.SerializeObject(new ApiFilter() { pager = new Pager() { items_per_page = pageItemsCount, current_page_index = currentPage - 1 }, filters = new() { { "filtered_worker", filtered_worker }, { "filtered_title", filtered_title }, { "filtered_message", filtered_message }, { "filtered_date", filtered_date.ToString() } } }), Encoding.UTF8, "application/json"));
+
+                                    if (response.IsSuccessStatusCode)
+                                    {
+                                        var base_respond = JsonConvert.DeserializeObject<BaseResponseModel>(response.Content.ReadAsStringAsync().Result);
+                                        if (base_respond != null && base_respond.Success && base_respond.Data != null)
+                                        {
+                                            customer_logs = JsonConvert.DeserializeObject<List<Log>>(base_respond.Data.ToString());
+                                            if (customer_logs != null && customer_logs.Count == 0)
+                                                page_message = "No servers working.";
+                                            else
+                                            {
+                                                page_message = string.Empty;
+                                                StateHasChanged();
+                                            }
+
+                                            loading = string.Empty;
+                                        }
+                                        else
+                                        {
+                                            page_message = "ServerAPI Data failed.";
+                                        }
+                                    }
+                                    else
+                                    {
+                                        page_message = "ServerAPI failed.";
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                customer_logs.Clear();
+            }
+        }
+    }
+
+    protected async Task CustomerSelected(ChangeEventArgs e)
+    {
+        int customer_id = 0;
+        if (e.Value != null && int.TryParse(e.Value.ToString(), out customer_id))
+        {
+            CID = e.Value.ToString();
+            await ProtectedSessionStore.SetAsync("selected_customer_id", CID != null ? CID : "0");
+            await RefreshLogs();
+        }
+    }
+
+    protected async Task FilterWorkerChanged(ChangeEventArgs e)
+    {
+        if (e.Value != null)
+        {
+            filtered_worker = e.Value.ToString();
+            await ProtectedSessionStore.SetAsync("filtered_worker", filtered_worker != null ? filtered_worker : "0");
+            await RefreshLogs();
+        }
+    }
+
+    protected async Task FilterTitleChanged(ChangeEventArgs e)
+    {
+        if (e.Value != null)
+        {
+            filtered_title = e.Value.ToString();
+            await ProtectedSessionStore.SetAsync("filtered_title", filtered_title != null ? filtered_title : "0");
+            await RefreshLogs();
+        }
+    }
+
+    protected async Task FilterDateChanged(ChangeEventArgs e)
+    {
+        if (e.Value != null)
+        {
+            filtered_date = int.TryParse(e.Value.ToString(), out int selected_date) ? selected_date : 0;
+            await ProtectedSessionStore.SetAsync("filtered_date", filtered_date);
+            await RefreshLogs();
+        }
+    }
+
+    private async Task FilterMessageChanged(KeyboardEventArgs? e)
+    {
+        var search = this.filtered_message;
+        if (e != null)
+            if (e.Code == "Enter" || e.Code == "NumpadEnter")
+            {
+                //if( !string.IsNullOrWhiteSpace( searchparam ) ) {
+                await ProtectedSessionStore.SetAsync("filtered_message", search);
+                await RefreshLogs();
+                //}
+            }
+    }
+
+    protected async Task RefreshLogs()
+    {
+        int customer_id = 0;
+        if (!string.IsNullOrWhiteSpace(CID) && int.TryParse(CID, out customer_id) && customer_id > 0)
+        {
+            if (HttpContextAccessor.HttpContext != null)
+            {
+                int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
+                if (admin_id > 0)
+                {
+                    string? token = HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value;
+                    if (!string.IsNullOrWhiteSpace(token))
+                    {
+                        using (HttpClient httpClient = new HttpClient())
+                        {
+                            httpClient.BaseAddress = new Uri("http://localhost:5444/");
+                            httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
+                            using HttpResponseMessage response = await httpClient.PostAsync("api/Customer/" + CID + "/GetCustomerLogs",
+                                new StringContent(JsonConvert.SerializeObject(new Pager() { items_per_page = pageItemsCount, current_page_index = currentPage - 1 }), Encoding.UTF8, "application/json"));
+
+                            if (response.IsSuccessStatusCode)
+                            {
+                                var base_respond = JsonConvert.DeserializeObject<BaseResponseModel>(response.Content.ReadAsStringAsync().Result);
+                                if (base_respond != null && base_respond.Success && base_respond.Data != null)
+                                {
+                                    customer_logs = JsonConvert.DeserializeObject<List<Log>>(base_respond.Data.ToString());
+                                    if (customer_logs != null && customer_logs.Count == 0)
+                                        page_message = "No servers working.";
+                                    else
+                                    {
+                                        page_message = string.Empty;
+                                        StateHasChanged();
+                                    }
+
+                                    loading = string.Empty;
+                                }
+                                else
+                                {
+                                    page_message = "ServerAPI Data failed.";
+                                }
+                            }
+                            else
+                            {
+                                page_message = "ServerAPI failed.";
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            customer_logs.Clear();
+            StateHasChanged();
+        }
+    }
+
+    private async Task PreviousPage()
+    {
+        currentPage += 1;
+        customer_logs.Clear();
+        await RefreshLogs();
+    }
+
+    private async Task NextPage()
+    {
+        if (currentPage > 1)
+        {
+            currentPage -= 1;
+            customer_logs.Clear();
+            await RefreshLogs();
+        }
+    }
+}

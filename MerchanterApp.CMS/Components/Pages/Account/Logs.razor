@@ -1,8 +1,10 @@
-﻿@page "/Account/User/{CID}/Logs"
+﻿@attribute [Authorize]
+@page "/Account/User/{CID}/Logs"
+@using MerchanterApp.CMS.Components.Controls;
 
 <PageTitle>User [@CID] Logs | Merchanter</PageTitle>
 
-<h3>System Logs for @CID</h3>
+<CustomerLogsComponent @rendermode="InteractiveServer" CID="@CID" />
 
 @code {
     [Parameter]

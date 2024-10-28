@@ -3,6 +3,7 @@ using Merchanter.ServerService.Services;
 using System.Diagnostics;
 using System.Management;
 using Microsoft.Extensions.Configuration;
+using Merchanter.Classes;
 
 namespace Merchanter.ServerService.Repositories {
     public interface IServerRepository {
@@ -24,14 +25,44 @@ namespace Merchanter.ServerService.Repositories {
         public async Task<MerchanterServer> StartServer( int _customer_id ) {
             MerchanterServer started_server = new MerchanterServer();
             await Task.Factory.StartNew( () => {
-                ProcessStartInfo process = new ProcessStartInfo();
-                process.WorkingDirectory = configuration[ "AppSettings:MerchanterServerFilePath" ];
-                process.FileName = "MerchanterServer.exe";
-                process.Arguments = _customer_id.ToString();
-                process.WindowStyle = ProcessWindowStyle.Normal;
-                process.UseShellExecute = true;
-                var started_process = Process.Start( process );
-                started_server = new MerchanterServer() { customer_id = _customer_id, PID = started_process != null ? started_process.Id : 0 };
+                Customer customer = merchanterService.helper.GetCustomer( _customer_id );
+                if( customer.status ) {
+                    bool is_changed = false;
+                    if( customer.is_productsync_working == true ) {
+                        customer.is_productsync_working = false;
+                        is_changed = true;
+                    }
+                    if( customer.is_ordersync_working == true ) {
+                        customer.is_ordersync_working = false;
+                        is_changed = true;
+                    }
+                    if( customer.is_notificationsync_working == true ) {
+                        customer.is_notificationsync_working = false;
+                        is_changed = true;
+                    }
+                    if( customer.is_invoicesync_working == true ) {
+                        customer.is_invoicesync_working = false;
+                        is_changed = true;
+                    }
+                    if( customer.is_xmlsync_working == true ) {
+                        customer.is_xmlsync_working = false;
+                        is_changed = true;
+                    }
+                    if( is_changed )
+                        merchanterService.helper.SaveCustomer( _customer_id, customer );
+
+                    ProcessStartInfo process = new ProcessStartInfo();
+                    process.WorkingDirectory = configuration[ "AppSettings:MerchanterServerFilePath" ];
+                    process.FileName = "MerchanterServer.exe";
+                    process.Arguments = _customer_id.ToString();
+                    process.WindowStyle = ProcessWindowStyle.Normal;
+                    process.UseShellExecute = true;
+                    var started_process = Process.Start( process );
+                    started_server = new MerchanterServer() { customer_id = _customer_id, PID = started_process != null ? started_process.Id : 0 };
+                }
+                else {
+                    merchanterService.helper.LogToServer( "api", "start disabled for user:" + customer.customer_id, customer.customer_id, "server_service" );
+                }
             } );
             return started_server;
         }
