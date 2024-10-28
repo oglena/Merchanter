@@ -50,6 +50,8 @@ app.UseAntiforgery();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
+app.UseAuthentication();
+//app.UseRouting();
 app.UseAuthorization();
 
 app.Run();

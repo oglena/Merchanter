@@ -7,14 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\MerchanterHelpers\MerchanterHelpers.csproj" />
     <ProjectReference Include="..\..\Merchanter\Merchanter.csproj" />
-    <ProjectReference Include="..\..\ShipmentHelpers\ShipmentHelpers.csproj" />
     <ProjectReference Include="..\MerchanterApp.ServiceDefaults\MerchanterApp.ServiceDefaults.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.10" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="8.0.1" />
     <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="8.10.0" />
     <PackageReference Include="RestSharp" Version="112.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.9.0" />

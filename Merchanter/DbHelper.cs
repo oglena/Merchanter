@@ -258,7 +258,7 @@ namespace Merchanter {
                 if( state != System.Data.ConnectionState.Open )
                     connection.Open();
                 object val; int inserted_id;
-                string _query = "START TRANSACTION;" + 
+                string _query = "START TRANSACTION;" +
                     "UPDATE customer SET customer_id=LAST_INSERT_ID(@customer_id),user_name=@user_name,password=@password,status=@status,product_sync_status=@product_sync_status,order_sync_status=@order_sync_status,xml_sync_status=@xml_sync_status,invoice_sync_status=@invoice_sync_status,notification_sync_status=@notification_sync_status,is_productsync_working=@is_productsync_working,is_ordersync_working=@is_ordersync_working,is_xmlsync_working=@is_xmlsync_working,is_notificationsync_working=@is_notificationsync_working,is_invoicesync_working=@is_invoicesync_working WHERE customer_id=@customer_id;" +
                     "SELECT LAST_INSERT_ID();" +
                     "COMMIT;";
@@ -362,16 +362,16 @@ namespace Merchanter {
             try {
                 if( state != System.Data.ConnectionState.Open ) connection.Open();
                 string _query = "SELECT * FROM log WHERE customer_id=@customer_id";
-                string? filtered_worker = _filters.Where( x => x.Key == "filtered_worker" ).GetValue();
-                string? filtered_title = _filters.Where( x => x.Key == "filtered_title" ).GetValue();
-                string? filtered_message = _filters.Where( x => x.Key == "filtered_message" ).GetValue();
-                string? filtered_date = _filters.Where( x => x.Key == "filtered_date" ).GetValue();
+                string? filtered_worker = _filters[ "filtered_worker" ];
+                string? filtered_title = _filters[ "filtered_title" ];
+                string? filtered_message = _filters[ "filtered_message" ];
+                string? filtered_date = _filters[ "filtered_date" ];
                 List<Log> list = new List<Log>();
-                if(filtered_worker != null && filtered_title != null && filtered_message != null && filtered_date != null ) {
-                    _query += filtered_worker != null ? " AND worker='" + filtered_worker + "'" : string.Empty;
-                    _query += filtered_title != null ? " AND title='" + filtered_title + "'" : string.Empty;
-                    _query += filtered_message != null ? " AND message='" + filtered_message + "'" : string.Empty;
-                    //_query += filtered_date != null ? " AND update_date='" + filtered_date + "'" : string.Empty;
+                if( filtered_worker != null && filtered_title != null && filtered_message != null && filtered_date != null ) {
+                    _query += !string.IsNullOrWhiteSpace( filtered_worker ) && filtered_worker != "0" ? " AND worker='" + filtered_worker + "'" : string.Empty;
+                    _query += !string.IsNullOrWhiteSpace( filtered_title ) && filtered_title != "0" ? " AND title='" + filtered_title + "'" : string.Empty;
+                    _query += !string.IsNullOrWhiteSpace( filtered_message ) && filtered_message != "0" ? " AND message LIKE '%" + filtered_message + "%'" : string.Empty;
+                    //_query += !string.IsNullOrWhiteSpace( filtered_date ) && filtered_worker != "0" ? " AND update_date='" + filtered_date + "'" : string.Empty;
                     _query += " ORDER BY id DESC LIMIT @start,@end";
                     MySqlCommand cmd = new MySqlCommand( _query, connection );
                     cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );

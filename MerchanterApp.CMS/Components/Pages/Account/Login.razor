@@ -2,12 +2,12 @@
 @layout LoginLayout
 
 @using System.Text.Json.Serialization
-@using Merchanter.ServerService.Models
 @using Newtonsoft.Json
 @inject IHttpClientFactory ClientFactory
 
 @inject NavigationManager navigationManager
 @inject IHttpContextAccessor HttpContextAccessor
+@inject IConfiguration configuration
 
 <PageTitle>Admin Login | Merchanter</PageTitle>
 
@@ -73,7 +73,7 @@
                     using (HttpClient httpClient = new HttpClient())
                     {
                         Dictionary<string, string>? tokenDetails = null;
-                        httpClient.BaseAddress = new Uri("http://localhost:5444/");
+                        httpClient.BaseAddress = new Uri(configuration["AppSettings:MerchanterServerUrl"]);
                         using StringContent jsonContent = new(
                             System.Text.Json.JsonSerializer.Serialize(new
                             {

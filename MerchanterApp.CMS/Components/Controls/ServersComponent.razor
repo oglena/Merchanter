@@ -1,10 +1,12 @@
-﻿@using Merchanter.ServerService.Classes
+﻿@rendermode InteractiveServer
 @using System.Text.Json.Serialization
-@using Merchanter.ServerService.Models
 @using Newtonsoft.Json
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @inject IHttpClientFactory ClientFactory
 @inject NavigationManager navigationManager
 @inject IHttpContextAccessor HttpContextAccessor
+@inject ProtectedLocalStorage ProtectedLocalStorage
+@inject IConfiguration configuration
 
 <div class="container-fluid">
     <div class="row mt-3">
@@ -43,7 +45,7 @@
                                 <p class='card-text @(!item.customer.xml_sync_status ? "text-muted" : "")'>XML Working Status:&nbsp; @(item.customer.is_xmlsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
                                 <hr />
                                 <p class="card-footer text-center">
-                                    <a href="@("Account/User/" + item.customer_id.ToString() + "/Logs")" class="btn btn-primary">Show Log</a>
+                                    <button type="button" class="btn btn-primary" @onclick="(() => ShowLog(item.customer_id))">Show Log</button>
                                     <button type="button" class="btn btn-danger" @onclick="( () => StopServer(item.customer_id))">
                                         Stop
                                     </button>
@@ -118,7 +120,7 @@ else
                 {
                     using (HttpClient httpClient = new HttpClient())
                     {
-                        httpClient.BaseAddress = new Uri("http://localhost:5444/");
+                        httpClient.BaseAddress = new Uri(configuration["AppSettings:MerchanterServerUrl"]);
                         httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
                         using HttpResponseMessage response = await httpClient.GetAsync("api/Server/GetServers");
 
@@ -146,39 +148,45 @@ else
                         }
                     }
 
-                    using (HttpClient httpClient = new HttpClient())
-                    {
-                        httpClient.BaseAddress = new Uri("http://localhost:5444/");
-                        httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                        using HttpResponseMessage response = await httpClient.GetAsync("api/Customer/GetCustomers");
+                    await RefreshServers();
+                    // using (HttpClient httpClient = new HttpClient())
+                    // {
+                    //     httpClient.BaseAddress = new Uri(configuration["AppSettings:MerchanterServerUrl"]);
+                    //     httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
+                    //     using HttpResponseMessage response = await httpClient.GetAsync("api/Customer/GetCustomers");
 
-                        if (response.IsSuccessStatusCode)
-                        {
-                            var base_respond = JsonConvert.DeserializeObject<BaseResponseModel>(response.Content.ReadAsStringAsync().Result);
-                            if (base_respond != null && base_respond.Success && base_respond.Data != null)
-                            {
-                                customers = JsonConvert.DeserializeObject<List<Customer>>(base_respond.Data.ToString());
-                                if (customers != null && customers.Count == 0)
-                                    customers_loading = "No customers found.";
-                                else
-                                    customers_loading = string.Empty;
+                    //     if (response.IsSuccessStatusCode)
+                    //     {
+                    //         var base_respond = JsonConvert.DeserializeObject<BaseResponseModel>(response.Content.ReadAsStringAsync().Result);
+                    //         if (base_respond != null && base_respond.Success && base_respond.Data != null)
+                    //         {
+                    //             customers = JsonConvert.DeserializeObject<List<Customer>>(base_respond.Data.ToString());
+                    //             if (customers != null && customers.Count == 0)
+                    //                 customers_loading = "No customers found.";
+                    //             else
+                    //                 customers_loading = string.Empty;
 
-                                customers_loading = string.Empty;
-                            }
-                            else
-                            {
-                                customers_loading = "ServerAPI Data failed.";
-                            }
-                        }
-                        else
-                        {
-                            customers_loading = "ServerAPI failed.";
-                        }
-                    }
+                    //             customers_loading = string.Empty;
+                    //         }
+                    //         else
+                    //         {
+                    //             customers_loading = "ServerAPI Data failed.";
+                    //         }
+                    //     }
+                    //     else
+                    //     {
+                    //         customers_loading = "ServerAPI failed.";
+                    //     }
+                    // }
                 }
             }
-            StateHasChanged();
         }
+    }
+
+    private async Task ShowLog(int _customer_id)
+    {
+        await ProtectedLocalStorage.SetAsync("selected_customer_id", _customer_id);
+        navigationManager.NavigateTo("Account/User/" + _customer_id.ToString() + "/Logs");
     }
 
     private async Task RefreshServers()
@@ -191,7 +199,7 @@ else
             {
                 using (HttpClient httpClient = new HttpClient())
                 {
-                    httpClient.BaseAddress = new Uri("http://localhost:5444/");
+                    httpClient.BaseAddress = new Uri(configuration["AppSettings:MerchanterServerUrl"]);
                     httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
                     using HttpResponseMessage response = await httpClient.GetAsync("api/Customer/GetCustomers");
 
@@ -221,7 +229,7 @@ else
 
                 using (HttpClient httpClient = new HttpClient())
                 {
-                    httpClient.BaseAddress = new Uri("http://localhost:5444/");
+                    httpClient.BaseAddress = new Uri(configuration["AppSettings:MerchanterServerUrl"]);
                     httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
                     using HttpResponseMessage response = await httpClient.GetAsync("api/Server/GetServers");
 
@@ -266,7 +274,7 @@ else
             {
                 using (HttpClient httpClient = new HttpClient())
                 {
-                    httpClient.BaseAddress = new Uri("http://localhost:5444/");
+                    httpClient.BaseAddress = new Uri(configuration["AppSettings:MerchanterServerUrl"]);
                     httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
                     using HttpResponseMessage response = await httpClient.GetAsync("api/Server/" + _customer_id.ToString() + "/StartServer");
 
@@ -320,7 +328,7 @@ else
             {
                 using (HttpClient httpClient = new HttpClient())
                 {
-                    httpClient.BaseAddress = new Uri("http://localhost:5444/");
+                    httpClient.BaseAddress = new Uri(configuration["AppSettings:MerchanterServerUrl"]);
                     httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
                     using HttpResponseMessage response = await httpClient.GetAsync("api/Server/" + _customer_id.ToString() + "/StopServer");
 

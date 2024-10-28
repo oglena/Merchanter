@@ -1,13 +1,13 @@
-﻿@using Merchanter.ServerService.Classes
+﻿@rendermode InteractiveServer
 @using System.Text.Json.Serialization
-@using Merchanter.ServerService.Models
 @using Newtonsoft.Json
 @using System.Text
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @inject IHttpClientFactory ClientFactory
 @inject NavigationManager navigationManager
 @inject IHttpContextAccessor HttpContextAccessor
-@inject ProtectedSessionStorage ProtectedSessionStore
+@inject ProtectedLocalStorage ProtectedLocalStorage
+@inject IConfiguration configuration
 
 @if (customers != null)
 {
@@ -76,8 +76,8 @@
                                                 <option value="customer" selected='@(filtered_title == "friendly_error" ? true : false)'>Friendly Error</option>
                                                 <option value="helper_settings" selected='@(filtered_title == "ftpupload" ? true : false)'>FTP Upload</option>
                                                 <option value="invoice" selected='@(filtered_title == "helper_error" ? true : false)'>Helper Error</option>
-                                                <option value="notification" selected='@(filtered_title == "info" ? true : false)'>Info</option>
-                                                <option value="order" selected='@(filtered_title == "notification" ? true : false)'>Notification</option>
+                                                <option value="info" selected='@(filtered_title == "info" ? true : false)'>Info</option>
+                                                <option value="notification" selected='@(filtered_title == "notification" ? true : false)'>Notification</option>
                                                 <option value="product" selected='@(filtered_title == "order_complete" ? true : false)'>Order Complete</option>
                                                 <option value="shipment" selected='@(filtered_title == "order_processed" ? true : false)'>Order Processed</option>
                                                 <option value="xml" selected='@(filtered_title == "xml" ? true : false)'>XML</option>
@@ -177,7 +177,7 @@ else
                     {
                         using (HttpClient httpClient = new HttpClient())
                         {
-                            httpClient.BaseAddress = new Uri("http://localhost:5444/");
+                            httpClient.BaseAddress = new Uri(configuration["AppSettings:MerchanterServerUrl"]);
                             httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
                             using HttpResponseMessage response = await httpClient.GetAsync("api/Customer/GetCustomers");
 
@@ -207,57 +207,53 @@ else
                     }
                 }
                 filtered_message = string.Empty;
-                StateHasChanged();
             }
-        }
-        else
-        {
-            var result = await ProtectedSessionStore.GetAsync<string>("selected_customer_id");
-            CID = result.Success ? result.Value : "0";
+
             if (!string.IsNullOrWhiteSpace(CID) && int.Parse(CID) > 0)
             {
-                if (customer_logs.Count == 0)
+                if (HttpContextAccessor?.HttpContext != null)
                 {
-                    if (HttpContextAccessor.HttpContext != null)
+                    int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
+                    if (admin_id > 0)
                     {
-                        int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
-                        if (admin_id > 0)
+                        string? token = HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value;
+                        if (!string.IsNullOrWhiteSpace(token))
                         {
-                            string? token = HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value;
-                            if (!string.IsNullOrWhiteSpace(token))
+                            using (HttpClient httpClient = new HttpClient())
                             {
-                                using (HttpClient httpClient = new HttpClient())
-                                {
-                                    httpClient.BaseAddress = new Uri("http://localhost:5444/");
-                                    httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                                    using HttpResponseMessage response = await httpClient.PostAsync("api/Customer/" + CID + "/GetCustomerLogs",
-                                    new StringContent(JsonConvert.SerializeObject(new ApiFilter() { pager = new Pager() { items_per_page = pageItemsCount, current_page_index = currentPage - 1 }, filters = new() { { "filtered_worker", filtered_worker }, { "filtered_title", filtered_title }, { "filtered_message", filtered_message }, { "filtered_date", filtered_date.ToString() } } }), Encoding.UTF8, "application/json"));
-
-                                    if (response.IsSuccessStatusCode)
+                                httpClient.BaseAddress = new Uri(configuration["AppSettings:MerchanterServerUrl"]);
+                                httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
+                                using HttpResponseMessage response = await httpClient.PostAsync("api/Customer/" + CID + "/GetCustomerLogs",
+                                new StringContent(JsonConvert.SerializeObject(new ApiFilter()
                                     {
-                                        var base_respond = JsonConvert.DeserializeObject<BaseResponseModel>(response.Content.ReadAsStringAsync().Result);
-                                        if (base_respond != null && base_respond.Success && base_respond.Data != null)
-                                        {
-                                            customer_logs = JsonConvert.DeserializeObject<List<Log>>(base_respond.Data.ToString());
-                                            if (customer_logs != null && customer_logs.Count == 0)
-                                                page_message = "No servers working.";
-                                            else
-                                            {
-                                                page_message = string.Empty;
-                                                StateHasChanged();
-                                            }
+                                        pager = new Pager() { items_per_page = pageItemsCount, current_page_index = currentPage - 1 },
+                                        filters = new() { { "filtered_worker", filtered_worker }, { "filtered_title", filtered_title }, { "filtered_message", filtered_message }, { "filtered_date", filtered_date.ToString() } }
+                                    }), Encoding.UTF8, "application/json"));
 
-                                            loading = string.Empty;
-                                        }
+                                if (response.IsSuccessStatusCode)
+                                {
+                                    var base_respond = JsonConvert.DeserializeObject<BaseResponseModel>(response.Content.ReadAsStringAsync().Result);
+                                    if (base_respond != null && base_respond.Success && base_respond.Data != null)
+                                    {
+                                        customer_logs = JsonConvert.DeserializeObject<List<Log>>(base_respond.Data.ToString());
+                                        if (customer_logs != null && customer_logs.Count == 0)
+                                            page_message = "No servers working.";
                                         else
                                         {
-                                            page_message = "ServerAPI Data failed.";
+                                            page_message = string.Empty;
+                                            StateHasChanged();
                                         }
+
+                                        loading = string.Empty;
                                     }
                                     else
                                     {
-                                        page_message = "ServerAPI failed.";
+                                        page_message = "ServerAPI Data failed.";
                                     }
+                                }
+                                else
+                                {
+                                    page_message = "ServerAPI failed.";
                                 }
                             }
                         }
@@ -267,6 +263,7 @@ else
             else
             {
                 customer_logs.Clear();
+                StateHasChanged();
             }
         }
     }
@@ -277,7 +274,7 @@ else
         if (e.Value != null && int.TryParse(e.Value.ToString(), out customer_id))
         {
             CID = e.Value.ToString();
-            await ProtectedSessionStore.SetAsync("selected_customer_id", CID != null ? CID : "0");
+            await ProtectedLocalStorage.SetAsync("selected_customer_id", CID != null ? CID : "0");
             await RefreshLogs();
         }
     }
@@ -287,7 +284,7 @@ else
         if (e.Value != null)
         {
             filtered_worker = e.Value.ToString();
-            await ProtectedSessionStore.SetAsync("filtered_worker", filtered_worker != null ? filtered_worker : "0");
+            await ProtectedLocalStorage.SetAsync("filtered_worker", filtered_worker != null ? filtered_worker : "0");
             await RefreshLogs();
         }
     }
@@ -297,7 +294,7 @@ else
         if (e.Value != null)
         {
             filtered_title = e.Value.ToString();
-            await ProtectedSessionStore.SetAsync("filtered_title", filtered_title != null ? filtered_title : "0");
+            await ProtectedLocalStorage.SetAsync("filtered_title", filtered_title != null ? filtered_title : "0");
             await RefreshLogs();
         }
     }
@@ -307,7 +304,7 @@ else
         if (e.Value != null)
         {
             filtered_date = int.TryParse(e.Value.ToString(), out int selected_date) ? selected_date : 0;
-            await ProtectedSessionStore.SetAsync("filtered_date", filtered_date);
+            await ProtectedLocalStorage.SetAsync("filtered_date", filtered_date);
             await RefreshLogs();
         }
     }
@@ -319,7 +316,7 @@ else
             if (e.Code == "Enter" || e.Code == "NumpadEnter")
             {
                 //if( !string.IsNullOrWhiteSpace( searchparam ) ) {
-                await ProtectedSessionStore.SetAsync("filtered_message", search);
+                await ProtectedLocalStorage.SetAsync("filtered_message", search);
                 await RefreshLogs();
                 //}
             }
@@ -340,10 +337,14 @@ else
                     {
                         using (HttpClient httpClient = new HttpClient())
                         {
-                            httpClient.BaseAddress = new Uri("http://localhost:5444/");
+                            httpClient.BaseAddress = new Uri(configuration["AppSettings:MerchanterServerUrl"]);
                             httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
                             using HttpResponseMessage response = await httpClient.PostAsync("api/Customer/" + CID + "/GetCustomerLogs",
-                                new StringContent(JsonConvert.SerializeObject(new Pager() { items_per_page = pageItemsCount, current_page_index = currentPage - 1 }), Encoding.UTF8, "application/json"));
+                                new StringContent(JsonConvert.SerializeObject(new ApiFilter()
+                                    {
+                                        pager = new Pager() { items_per_page = pageItemsCount, current_page_index = currentPage - 1 },
+                                        filters = new() { { "filtered_worker", filtered_worker }, { "filtered_title", filtered_title }, { "filtered_message", filtered_message }, { "filtered_date", filtered_date.ToString() } }
+                                    }), Encoding.UTF8, "application/json"));
 
                             if (response.IsSuccessStatusCode)
                             {

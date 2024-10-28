@@ -18,6 +18,10 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MerchanterApp.ApiService", "..\MerchanterApp\MerchanterApp.ApiService\MerchanterApp.ApiService.csproj", "{7C8C56FB-6350-4FFF-8347-593E0FE7DA54}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MerchanterApp.CMS", "..\MerchanterApp.CMS\MerchanterApp.CMS.csproj", "{22D1D136-C0F0-4664-8638-9F24C8D97F25}"
+	ProjectSection(ProjectDependencies) = postProject
+		{7C8C56FB-6350-4FFF-8347-593E0FE7DA54} = {7C8C56FB-6350-4FFF-8347-593E0FE7DA54}
+		{EDD0A50E-7F3B-4499-BBBB-394970002DFB} = {EDD0A50E-7F3B-4499-BBBB-394970002DFB}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Merchanter.ServerService", "..\Merchanter.ServerService\Merchanter.ServerService.csproj", "{EDD0A50E-7F3B-4499-BBBB-394970002DFB}"
 EndProject

@@ -2,14 +2,13 @@
 @rendermode InteractiveServer
 
 @using MerchanterApp.CMS.Components.Controls
-@using Merchanter.ServerService.Classes
 @using System.Text.Json.Serialization
-@using Merchanter.ServerService.Models
 @using Newtonsoft.Json
 @using System.Text
 @inject IHttpClientFactory ClientFactory
 @inject NavigationManager navigationManager
 @inject IHttpContextAccessor HttpContextAccessor
+@inject IConfiguration configuration
 @inject IToastService toastService
 
 <PageTitle>Customer [@CID] | Merchanter</PageTitle>
@@ -211,7 +210,7 @@ else
                 {
                     using (HttpClient httpClient = new HttpClient())
                     {
-                        httpClient.BaseAddress = new Uri("http://localhost:5444/");
+                        httpClient.BaseAddress = new Uri(configuration["AppSettings:MerchanterServerUrl"]);
                         httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
                         using HttpResponseMessage response = await httpClient.GetAsync("api/Customer/" + CID + "/GetCustomer");
 
@@ -264,7 +263,7 @@ else
                     {
                         using (HttpClient httpClient = new HttpClient())
                         {
-                            httpClient.BaseAddress = new Uri("http://localhost:5444/");
+                            httpClient.BaseAddress = new Uri(configuration["AppSettings:MerchanterServerUrl"]);
                             httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
                             using HttpResponseMessage response = await httpClient.GetAsync("api/Customer/" + CID + "/GetCustomer");
 
@@ -319,7 +318,7 @@ else
                     {
                         using (HttpClient httpClient = new HttpClient())
                         {
-                            httpClient.BaseAddress = new Uri("http://localhost:5444/");
+                            httpClient.BaseAddress = new Uri(configuration["AppSettings:MerchanterServerUrl"]);
                             httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
                             using HttpResponseMessage response = await httpClient.PutAsync("api/Customer/" + CID + "/SaveCustomer", new StringContent(JsonConvert.SerializeObject(_customer), Encoding.UTF8, "application/json"));
                             if (response.IsSuccessStatusCode)

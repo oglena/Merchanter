@@ -9,6 +9,9 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder( args );
 
+builder.Host.UseWindowsService();
+builder.Services.AddWindowsService();
+
 builder.Services.AddCors( options => {
     options.AddDefaultPolicy(
         builder => {
@@ -96,7 +99,7 @@ if( app.Environment.IsDevelopment() ) {
 
 app.UseSwagger();
 app.UseSwaggerUI( c => {
-    c.SwaggerEndpoint( "v1/swagger.json", "MerchanterAPI V1" );
+    c.SwaggerEndpoint( "v1/swagger.json", "Merchanter.API V1" );
 } );
 
 // Configure the HTTP request pipeline.

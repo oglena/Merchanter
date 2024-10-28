@@ -10,6 +10,9 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder( args );
 
+builder.Host.UseWindowsService();
+builder.Services.AddWindowsService();
+
 // Add service defaults & Aspire components.
 builder.AddServiceDefaults();
 
@@ -91,7 +94,7 @@ if( app.Environment.IsDevelopment() ) {
 
 app.UseSwagger();
 app.UseSwaggerUI( c => {
-    c.SwaggerEndpoint( "v1/swagger.json", "MerchanterAPI V1" );
+    c.SwaggerEndpoint( "v1/swagger.json", "Merchanter.ServerAPI V1" );
 } );
 
 // Configure the HTTP request pipeline.
