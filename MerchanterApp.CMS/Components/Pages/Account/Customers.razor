@@ -1,4 +1,4 @@
-﻿@page "/account/users"
+﻿@page "/Account/Customer/Customers"
 @rendermode InteractiveServer
 
 @using Newtonsoft.Json
@@ -13,7 +13,7 @@
 <div class="container-fluid">
     <div class="row mt-3">
         <div class="col-12 ps-2">
-            <h1>Users</h1>
+            <h1>Customers</h1>
         </div>
     </div>
 </div>
@@ -63,7 +63,9 @@
                                     @(item.order_sync_status ? "Enabled" : "Disabled")
                                 </td>
                                 <td class="align-content-center">
-                                    @(item.notification_sync_status ? "Enabled" : "Disabled")
+                                    @(item.notification_sync_status ? "Enabled" : "Disabled")&nbsp;&nbsp;
+                                    <a class="btn btn-outline-primary" href="@("Account/Customer/" + item.customer_id.ToString()+"/Notifications")">Show</a>
+
                                 </td>
                                 <td class="align-content-center">
                                     @(item.xml_sync_status ? "Enabled" : "Disabled")
@@ -72,8 +74,9 @@
                                     @(item.invoice_sync_status ? "Enabled" : "Disabled")
                                 </td>
                                 <td class="align-content-center">
-                                    <a class="btn btn-primary" href="@("Account/User/" + item.customer_id.ToString()+"/Logs")">Show Logs</a>&nbsp;&nbsp;
-                                    <a class="btn btn-primary" href="@("Account/User/" + item.customer_id.ToString())">Edit Customer</a>
+                                    <a class="btn btn-primary" href="@("Account/Customer/" + item.customer_id.ToString()+"/Settings")">Settings</a>&nbsp;&nbsp;
+                                    <a class="btn btn-primary" href="@("Account/Customer/" + item.customer_id.ToString()+"/Logs")">Show Logs</a>&nbsp;&nbsp;
+                                    <a class="btn btn-primary" href="@("Account/Customer/" + item.customer_id.ToString())">Edit Customer</a>
                                 </td>
                             </tr>
                         }
@@ -82,14 +85,15 @@
             }
             else
             {
-                @loading
+                <SpinKitChasingDots />
+                @* @loading *@
             }
         </div>
     </div>
 </div>
 
 @code {
-    private List<Customer>? customers { get; set; }
+    private List<Merchanter.Classes.Customer>? customers { get; set; }
     private string loading = "Loading...";
     private string page_message = "";
 
@@ -114,7 +118,7 @@
                             var base_respond = JsonConvert.DeserializeObject<BaseResponseModel>(response.Content.ReadAsStringAsync().Result);
                             if (base_respond != null && base_respond.Success && base_respond.Data != null)
                             {
-                                customers = JsonConvert.DeserializeObject<List<Customer>>(base_respond.Data.ToString());
+                                customers = JsonConvert.DeserializeObject<List<Merchanter.Classes.Customer>>(base_respond.Data.ToString());
                                 if (customers != null && customers.Count == 0)
                                     page_message = "No servers working.";
                                 else

@@ -47,6 +47,25 @@ namespace Merchanter.ServerService.Controllers {
             return BadRequest();
         }
 
+        [HttpPost( "{CID}/GetCustomerNotifications" )]
+        [Authorize]
+        public async Task<ActionResult<BaseResponseModel>> GetCustomerNotifications( string CID, [FromBody] ApiFilter _api_filter ) {
+            int customer_id;
+            if( int.TryParse( CID, out customer_id ) && customer_id > 0 ) {
+                if( _api_filter.pager != null && _api_filter.filters != null ) {
+                    List<Notification> customer_notifications = await customerService.GetCustomerNotifications( customer_id, _api_filter.pager.items_per_page, _api_filter.pager.current_page_index, _api_filter.filters );
+                    if( customer_notifications != null ) {
+                        return Ok( new BaseResponseModel() { Success = customer_notifications != null, ErrorMessage = customer_notifications != null ? "" : "Error -1", Data = customer_notifications != null ? customer_notifications : new() } );
+                    }
+                    else {
+                        return BadRequest();
+                    }
+                }
+                return BadRequest();
+            }
+            return BadRequest();
+        }
+
         [HttpGet( "GetCustomers" )]
         [Authorize]
         public async Task<ActionResult<BaseResponseModel>> GetCustomers() {

@@ -1,11 +1,11 @@
 ﻿@attribute [Authorize]
-@page "/Account/Customer/{CID?}/Logs"
+@page "/Account/Customer/{CID}/Settings"
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @inject ProtectedLocalStorage ProtectedLocalStorage
 
-<PageTitle>Customer [@CID] Logs | Merchanter</PageTitle>
-
-<CustomerLogsComponent CID="@CID" />
+<PageTitle>Customer [@CID] Settings | Merchanter</PageTitle>
+@* 
+<NotificationsComponent CID="@CID" /> *@
 
 @code {
     [Parameter]

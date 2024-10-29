@@ -253,13 +253,14 @@ namespace Merchanter {
             }
         }
 
-        public Customer SaveCustomer( int _customer_id, Customer _customer ) {
+        public Customer SaveCustomer( int _customer_id, Customer _customer, bool _with_working_parameters = false ) {
             try {
                 if( state != System.Data.ConnectionState.Open )
                     connection.Open();
                 object val; int inserted_id;
                 string _query = "START TRANSACTION;" +
-                    "UPDATE customer SET customer_id=LAST_INSERT_ID(@customer_id),user_name=@user_name,password=@password,status=@status,product_sync_status=@product_sync_status,order_sync_status=@order_sync_status,xml_sync_status=@xml_sync_status,invoice_sync_status=@invoice_sync_status,notification_sync_status=@notification_sync_status,is_productsync_working=@is_productsync_working,is_ordersync_working=@is_ordersync_working,is_xmlsync_working=@is_xmlsync_working,is_notificationsync_working=@is_notificationsync_working,is_invoicesync_working=@is_invoicesync_working WHERE customer_id=@customer_id;" +
+                    "UPDATE customer SET customer_id=LAST_INSERT_ID(@customer_id),user_name=@user_name,password=@password,status=@status,product_sync_status=@product_sync_status,order_sync_status=@order_sync_status,xml_sync_status=@xml_sync_status,invoice_sync_status=@invoice_sync_status,notification_sync_status=@notification_sync_status" + 
+                    (_with_working_parameters ? ",is_productsync_working=@is_productsync_working,is_ordersync_working=@is_ordersync_working,is_xmlsync_working=@is_xmlsync_working,is_invoicesync_working=@is_invoicesync_working,is_notificationsync_working=@is_notificationsync_working" : "") + " WHERE customer_id=@customer_id;" +
                     "SELECT LAST_INSERT_ID();" +
                     "COMMIT;";
                 MySqlCommand cmd = new MySqlCommand( _query, connection );
@@ -272,11 +273,13 @@ namespace Merchanter {
                 cmd.Parameters.Add( new MySqlParameter( "xml_sync_status", _customer.xml_sync_status ) );
                 cmd.Parameters.Add( new MySqlParameter( "invoice_sync_status", _customer.invoice_sync_status ) );
                 cmd.Parameters.Add( new MySqlParameter( "notification_sync_status", _customer.notification_sync_status ) );
-                cmd.Parameters.Add( new MySqlParameter( "is_productsync_working", _customer.is_productsync_working ) );
-                cmd.Parameters.Add( new MySqlParameter( "is_ordersync_working", _customer.is_ordersync_working ) );
-                cmd.Parameters.Add( new MySqlParameter( "is_xmlsync_working", _customer.is_xmlsync_working ) );
-                cmd.Parameters.Add( new MySqlParameter( "is_invoicesync_working", _customer.is_invoicesync_working ) );
-                cmd.Parameters.Add( new MySqlParameter( "is_notificationsync_working", _customer.is_notificationsync_working ) );
+                if( _with_working_parameters ) {
+                    cmd.Parameters.Add( new MySqlParameter( "is_productsync_working", _customer.is_productsync_working ) );
+                    cmd.Parameters.Add( new MySqlParameter( "is_ordersync_working", _customer.is_ordersync_working ) );
+                    cmd.Parameters.Add( new MySqlParameter( "is_xmlsync_working", _customer.is_xmlsync_working ) );
+                    cmd.Parameters.Add( new MySqlParameter( "is_invoicesync_working", _customer.is_invoicesync_working ) );
+                    cmd.Parameters.Add( new MySqlParameter( "is_notificationsync_working", _customer.is_notificationsync_working ) );
+                }
                 if( state != System.Data.ConnectionState.Open ) connection.Open();
                 val = cmd.ExecuteScalar();
                 if( state == System.Data.ConnectionState.Open ) connection.Close();
@@ -1019,6 +1022,45 @@ namespace Merchanter {
                 List<Notification> list = new List<Notification>();
                 MySqlCommand cmd = new MySqlCommand( _query, connection );
                 cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+                MySqlDataReader dataReader = cmd.ExecuteReader();
+                while( dataReader.Read() ) {
+                    Notification n = new Notification {
+                        id = int.Parse( dataReader[ "id" ].ToString() ),
+                        customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
+                        type = (Notification.NotificationTypes)int.Parse( dataReader[ "type" ].ToString() ),
+                        order_label = dataReader[ "order_label" ].ToString(),
+                        product_sku = dataReader[ "product_sku" ].ToString(),
+                        xproduct_barcode = dataReader[ "xproduct_barcode" ].ToString(),
+                        invoice_no = dataReader[ "invoice_no" ].ToString(),
+                        notification_content = dataReader[ "notification_content" ].ToString(),
+                        is_notification_sent = Convert.ToBoolean( int.Parse( dataReader[ "is_notification_sent" ].ToString() ) ),
+                        create_date = !string.IsNullOrWhiteSpace( dataReader[ "create_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "create_date" ].ToString() ) : null,
+                        notification_date = !string.IsNullOrWhiteSpace( dataReader[ "notification_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "notification_date" ].ToString() ) : null,
+                    };
+                    list.Add( n );
+                }
+                dataReader.Close();
+                if( state == System.Data.ConnectionState.Open )
+                    connection.Close();
+                return list;
+            }
+            catch( Exception ex ) {
+                OnError( ex.Message );
+                return null;
+            }
+        }
+
+        public List<Notification>? GetNotifications( int _customer_id, bool? _is_notification_sent, int _items_per_page = 20, int _current_page_index = 0 ) {
+            try {
+                if( state != System.Data.ConnectionState.Open )
+                    connection.Open();
+                string _query = (!_is_notification_sent.HasValue ? "SELECT * FROM notifications WHERE customer_id=@customer_id ORDER BY id DESC LIMIT @start,@end" :
+                    "SELECT * FROM notifications WHERE is_notification_sent = " + (_is_notification_sent.Value ? "1" : "0") + " AND customer_id=@customer_id ORDER BY id DESC LIMIT @start,@end");
+                List<Notification> list = new List<Notification>();
+                MySqlCommand cmd = new MySqlCommand( _query, connection );
+                cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+                cmd.Parameters.Add( new MySqlParameter( "start", _items_per_page * (_current_page_index) ) );
+                cmd.Parameters.Add( new MySqlParameter( "end", _items_per_page ) );
                 MySqlDataReader dataReader = cmd.ExecuteReader();
                 while( dataReader.Read() ) {
                     Notification n = new Notification {

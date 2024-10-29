@@ -1,4 +1,4 @@
-﻿@page "/account/login"
+﻿@page "/Account/Login"
 @layout LoginLayout
 
 @using System.Text.Json.Serialization
@@ -8,6 +8,7 @@
 @inject NavigationManager navigationManager
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IConfiguration configuration
+@inject IPostHelper PostHelper
 
 <PageTitle>Admin Login | Merchanter</PageTitle>
 
@@ -38,7 +39,6 @@
                     <div class="checkbox mb-3">
                         <label>
                             <InputCheckbox @bind-Value="admin.remember_me"></InputCheckbox>&nbsp;Remember me
-                            @* <input type="checkbox" value="remember-me" checked="@remember_me" @onchange="() => remember_me = !remember_me"> Remember me  *@
                         </label>
                     </div>
                     <button class="w-100 btn btn-lg btn-primary" type="submit">Login</button>
@@ -98,12 +98,16 @@
                                         new ClaimsPrincipal(
                                             new ClaimsIdentity(
                                                 new List<Claim>() {
-                                                    new Claim(Variables.admin_id, admin.admin.id.ToString()),
-                                                    new Claim(ClaimTypes.Name , admin.admin.name),
-                                                    new Claim(ClaimTypes.Role, Variables.admin_role/* TODO: add admin role*/),
-                                                    new Claim("rememberMe", admin.remember_me.ToString()),
-                                                    new Claim(Variables.auth_token, token)
-                                                            }, Variables.auth_cookie)));
+                                                new Claim(Variables.admin_id, admin.admin.id.ToString()),
+                                                new Claim(ClaimTypes.Name , admin.admin.name),
+                                                new Claim(ClaimTypes.Role, Variables.admin_role/* TODO: add admin role*/),
+                                                new Claim("rememberMe", admin.remember_me.ToString()),
+                                                new Claim(Variables.auth_token, token)
+                                            },
+                                            Variables.auth_cookie)), 
+                                            new AuthenticationProperties {
+                                                IsPersistent = admin.remember_me
+                                            });
                                     navigationManager.NavigateTo("/");
                                 }
                             }

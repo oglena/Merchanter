@@ -1,4 +1,4 @@
-﻿@page "/account/logout"
+﻿@page "/Account/Logout"
 @layout EmptyLayout
 
 <PageTitle>Logout | Merchanter</PageTitle>
@@ -21,10 +21,10 @@
         if( HttpContextAccessor != null && HttpContextAccessor.HttpContext != null && HttpContextAccessor.HttpContext.User.Identity != null ) {
             if( HttpContextAccessor.HttpContext.User.Identity.IsAuthenticated ) {
                 await HttpContextAccessor.HttpContext.SignOutAsync( Variables.auth_cookie );
-                navigationManager.NavigateTo( "/account/logout", true );
+                navigationManager.NavigateTo( "/Account/Logout", true );
             }
             else {
-                navigationManager.NavigateTo( "/account/login", true );
+                navigationManager.NavigateTo( "/Account/Login", true );
             }
         }
     }

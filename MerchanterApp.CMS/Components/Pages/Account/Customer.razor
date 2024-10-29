@@ -1,7 +1,7 @@
-﻿@page "/account/user/{CID?}"
+﻿@attribute [Authorize]
+@page "/Account/Customer/{CID?}"
 @rendermode InteractiveServer
 
-@using MerchanterApp.CMS.Components.Controls
 @using System.Text.Json.Serialization
 @using Newtonsoft.Json
 @using System.Text
@@ -11,19 +11,21 @@
 @inject IConfiguration configuration
 @inject IToastService toastService
 
-<PageTitle>Customer [@CID] | Merchanter</PageTitle>
+<PageTitle>Customer [@company_name] | Merchanter</PageTitle>
 
 @if (customer != null && customer_id > 0)
 {
-    <BlazoredToasts Position="Blazored.Toast.Configuration.ToastPosition.TopRight" Timeout="3" />
+    <BlazoredToasts Position="Blazored.Toast.Configuration.ToastPosition.TopRight" Timeout="3" ShowProgressBar="true" />
     <EditForm Model="customer" Context="formContext" class="container-fluid">
         <div class="container-fluid">
             <div class="row mt-3">
                 <div class="col-12 ps-2">
                     <h1>
-                        User: &nbsp;@customer_id&nbsp;&nbsp;&nbsp;
-                        <a href="@("Account/User/" + customer.customer_id.ToString() + "/Logs")" class="btn btn-primary">Show Log</a>
-                        <button type="submit" class="btn btn-outline-primary" @onclick="@(() => RefreshCustomer())">Refresh User</button>
+                        Customer:&nbsp; @company_name &nbsp;&nbsp;&nbsp;
+                        <a href="@("Account/Customer/" + customer.customer_id.ToString() + "/Logs")" class="btn btn-primary">Show Logs</a>
+                        <a href="@("Account/Customer/" + customer.customer_id.ToString() + "/Notifications")" class="btn btn-primary">Show Notifications</a>
+                        <a href="@("Account/Customer/" + customer.customer_id.ToString() + "/Settings")" class="btn btn-primary">Show Settings</a>
+                        <button type="submit" class="btn btn-outline-primary" @onclick="@(() => RefreshCustomer())">Refresh Customer</button>
                         <button type="submit" class="btn btn-outline-success" @onclick="@(() => SaveCustomer(customer))">Save</button>
                     </h1>
                 </div>
@@ -35,7 +37,6 @@
             <span>@page_message</span>
         }
         <hr />
-
 
         <div class="container-fluid">
             <div class="row mt-3">
@@ -169,7 +170,7 @@
                                 </td>
                                 <td>
                                     <div class="form-check form-switch mt-2">
-                                        <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.is_invoicesync_working"></InputCheckbox>
+                                        <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.is_invoicesync_working" disabled></InputCheckbox>
                                     </div>
                                 </td>
                                 <td>
@@ -185,14 +186,17 @@
 }
 else
 {
-    @loading
+    <SpinKitChasingDots />
+    @* @loading *@
 }
 
 @code {
     [Parameter]
     public string? CID { get; set; }
     public int customer_id = 0;
-    public Customer? customer { get; set; }
+    public string company_name { get; set; } = "";
+
+    public Merchanter.Classes.Customer? customer { get; set; }
 
     private string loading = "Loading...";
     private string page_message = string.Empty;
@@ -219,10 +223,11 @@ else
                             var base_respond = JsonConvert.DeserializeObject<BaseResponseModel>(response.Content.ReadAsStringAsync().Result);
                             if (base_respond != null && base_respond.Success && base_respond.Data != null)
                             {
-                                customer = JsonConvert.DeserializeObject<Customer>(base_respond.Data.ToString());
+                                customer = JsonConvert.DeserializeObject<Merchanter.Classes.Customer>(base_respond.Data.ToString());
                                 if (customer == null)
                                     page_message = "Customer not found.";
-
+                                else
+                                    company_name = customer.user_name;
                                 loading = string.Empty;
                             }
                             else
@@ -255,6 +260,8 @@ else
         {
             if (int.TryParse(CID, out customer_id))
             {
+                customer = null;
+
                 int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
                 if (admin_id > 0)
                 {
@@ -273,12 +280,12 @@ else
                                 var base_respond = JsonConvert.DeserializeObject<BaseResponseModel>(response.Content.ReadAsStringAsync().Result);
                                 if (base_respond != null && base_respond.Success && base_respond.Data != null)
                                 {
-                                    customer = JsonConvert.DeserializeObject<Customer>(base_respond.Data.ToString());
+                                    customer = JsonConvert.DeserializeObject<Merchanter.Classes.Customer>(base_respond.Data.ToString());
                                     if (customer == null)
                                         page_message = "Customer not found.";
                                     else
                                     {
-                                        toastService.ShowSuccess("Customers Refreshed");
+                                        toastService.ShowInfo("Customers Refreshed");
                                     }
 
                                     loading = string.Empty;
@@ -299,12 +306,15 @@ else
         }
         catch
         {
+        }
+        finally
+        {
 
         }
     }
 
 
-    private async Task SaveCustomer(Customer _customer)
+    private async Task SaveCustomer(Merchanter.Classes.Customer _customer)
     {
         try
         {
@@ -327,12 +337,12 @@ else
                                 var base_respond = JsonConvert.DeserializeObject<BaseResponseModel>(response.Content.ReadAsStringAsync().Result);
                                 if (base_respond != null && base_respond.Success && base_respond.Data != null)
                                 {
-                                    customer = JsonConvert.DeserializeObject<Customer>(base_respond.Data.ToString());
+                                    customer = JsonConvert.DeserializeObject<Merchanter.Classes.Customer>(base_respond.Data.ToString());
                                     if (customer == null)
                                         page_message = "Customer not found.";
                                     else
                                     {
-                                        toastService.ShowInfo("Saved Successfully");
+                                        toastService.ShowSuccess("Saved Successfully");
                                     }
 
                                     loading = string.Empty;

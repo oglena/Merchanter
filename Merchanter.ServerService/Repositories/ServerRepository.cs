@@ -49,7 +49,7 @@ namespace Merchanter.ServerService.Repositories {
                         is_changed = true;
                     }
                     if( is_changed )
-                        merchanterService.helper.SaveCustomer( _customer_id, customer );
+                        merchanterService.helper.SaveCustomer( _customer_id, customer, true );
 
                     ProcessStartInfo process = new ProcessStartInfo();
                     process.WorkingDirectory = configuration[ "AppSettings:MerchanterServerFilePath" ];

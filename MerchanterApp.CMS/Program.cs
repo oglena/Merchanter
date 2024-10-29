@@ -1,8 +1,7 @@
 using Blazored.Toast;
-using Merchanter;
 using MerchanterApp.CMS;
+using MerchanterApp.CMS.Classes;
 using MerchanterApp.CMS.Components;
-using Microsoft.AspNetCore.Components.Authorization;
 
 var builder = WebApplication.CreateBuilder( args );
 
@@ -10,7 +9,7 @@ var builder = WebApplication.CreateBuilder( args );
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-//builder.Services.AddSingleton<MerchanterService>();
+builder.Services.AddTransient<IPostHelper, PostHelper>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
 
