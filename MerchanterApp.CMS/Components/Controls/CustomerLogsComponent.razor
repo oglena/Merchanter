@@ -239,8 +239,7 @@ else
 
 	protected async Task LoadCustomers()
 	{
-		var response = await PostHelper.Request(int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id) ? admin_id : 0,
-					HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+		var response = await PostHelper.Request(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
 					Classes.PostHelper.PostMethod.Get,
 					"api/Customer/GetCustomers");
 
@@ -263,8 +262,7 @@ else
 	{
 		if (_customer_id > 0)
 		{
-			var response = await PostHelper.Request(int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id) ? admin_id : 0,
-					HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+			var response = await PostHelper.Request(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
 					Classes.PostHelper.PostMethod.Post,
 					"api/Customer/" + _customer_id.ToString() + "/GetCustomerLogs",
 				new StringContent(JsonConvert.SerializeObject(new ApiFilter()

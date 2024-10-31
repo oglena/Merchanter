@@ -1,5 +1,6 @@
 ﻿using Merchanter.ServerService.Classes;
 using Merchanter.ServerService.Models;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Merchanter.ServerService.Services {
@@ -22,17 +23,18 @@ namespace Merchanter.ServerService.Services {
         public async Task<UserLoginResponse> LoginUserAsync( UserLoginRequest request ) {
             UserLoginResponse response = new();
 
-            if( string.IsNullOrEmpty( request.Name ) || string.IsNullOrEmpty( request.Password ) ) {
+            if( string.IsNullOrEmpty( request.UserName ) || string.IsNullOrEmpty( request.Password ) ) {
                 throw new ArgumentNullException( nameof( request ) );
             }
 
-            var admin = merchanterService.helper.GetAdmin( request.AdminID, request.Name, request.Password );
+            var admin = merchanterService.helper.GetAdmin( request.UserName, request.Password );
             if( admin != null ) {
                 var generatedTokenInformation = await tokenService.GenerateToken( new GenerateTokenRequest { AdminID = admin.id, Name = admin.name } );
 
                 response.AuthenticateResult = true;
                 response.AuthToken = generatedTokenInformation.Token;
                 response.AccessTokenExpireDate = generatedTokenInformation.TokenExpireDate;
+                response.AdminInformation = admin;
             }
 
             return response;

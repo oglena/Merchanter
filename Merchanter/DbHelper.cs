@@ -298,14 +298,15 @@ namespace Merchanter {
         #endregion
 
         #region Admin
-        public Admin? GetAdmin( int _admin_id, string _name, string _password ) {
+        public Admin? GetAdmin( /*int _admin_id,*/ string _name, string _password ) {
             try {
                 if( state != System.Data.ConnectionState.Open )
                     connection.Open();
-                string _query = "SELECT * FROM admin WHERE name=@name AND password=@password AND id=@id";
+                //string _query = "SELECT * FROM admin WHERE name=@name AND password=@password AND id=@id";
+                string _query = "SELECT * FROM admin WHERE name=@name AND password=@password";
                 Admin? a = null;
                 MySqlCommand cmd = new MySqlCommand( _query, connection );
-                cmd.Parameters.Add( new MySqlParameter( "id", _admin_id ) );
+                //cmd.Parameters.Add( new MySqlParameter( "id", _admin_id ) );
                 cmd.Parameters.Add( new MySqlParameter( "name", _name ) );
                 cmd.Parameters.Add( new MySqlParameter( "password", _password ) );
                 MySqlDataReader dataReader = cmd.ExecuteReader( System.Data.CommandBehavior.CloseConnection );

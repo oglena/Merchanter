@@ -7,7 +7,7 @@ using static MerchanterApp.CMS.Classes.PostHelper;
 
 namespace MerchanterApp.CMS.Classes {
     public interface IPostHelper {
-        public Task<BaseResponseModel?> Request( int _admin_id, string? _token, PostMethod _method, string _url, StringContent? _body = null );
+        public Task<BaseResponseModel?> Request( string? _token, PostMethod _method, string _url, StringContent? _body = null );
     }
     public class PostHelper :IPostHelper {
         [Inject]
@@ -17,11 +17,31 @@ namespace MerchanterApp.CMS.Classes {
             configuration = _configuration;
             logger = _logger;
         }
-        public async Task<BaseResponseModel?> Request( int _admin_id, string? _token, PostMethod _method, string _url, StringContent? _body = null ) {
+        public async Task<BaseResponseModel?> Request( string? _token, PostMethod _method, string _url, StringContent? _body = null ) {
             BaseResponseModel? model = null;
             switch( _method ) {
+                case PostMethod.Login:
+                    using( HttpClient httpClient = new HttpClient() ) {
+                        httpClient.BaseAddress = new Uri( configuration[ "AppSettings:MerchanterServerUrl" ] );
+                        using HttpResponseMessage response = await httpClient.PostAsync( _url, _body );
+                        if( response.IsSuccessStatusCode ) {
+                            var login_response = JsonConvert.DeserializeObject<UserLoginResponseModel>( response.Content.ReadAsStringAsync().Result );
+                            if( login_response != null && login_response.AuthenticateResult && !string.IsNullOrWhiteSpace( login_response.AuthToken ) && login_response.AdminInformation != null ) {
+                                model = new BaseResponseModel() {
+                                    Success = true,
+                                    ErrorMessage = "",
+                                    Data = login_response
+                                };
+                                logger.LogInformation( "LOGIN[" + login_response.AdminInformation.name + "]: " + _url, DateTime.UtcNow.ToLongTimeString() );
+                            }
+                            else {
+                                logger.LogInformation( "LOGIN[FAIL]: " + _url, DateTime.UtcNow.ToLongTimeString() );
+                            }
+                        }
+                    }
+                    break;
                 case PostMethod.Get:
-                    if( _admin_id > 0 && !string.IsNullOrWhiteSpace( _token ) ) {
+                    if( !string.IsNullOrWhiteSpace( _token ) ) {
                         using( HttpClient httpClient = new HttpClient() ) {
                             httpClient.BaseAddress = new Uri( configuration[ "AppSettings:MerchanterServerUrl" ] );
                             httpClient.DefaultRequestHeaders.Add( "Authorization", "Bearer " + _token );
@@ -35,7 +55,7 @@ namespace MerchanterApp.CMS.Classes {
                     }
                     break;
                 case PostMethod.Post:
-                    if( _admin_id > 0 && !string.IsNullOrWhiteSpace( _token ) ) {
+                    if( !string.IsNullOrWhiteSpace( _token ) ) {
                         using( HttpClient httpClient = new HttpClient() ) {
                             httpClient.BaseAddress = new Uri( configuration[ "AppSettings:MerchanterServerUrl" ] );
                             httpClient.DefaultRequestHeaders.Add( "Authorization", "Bearer " + _token );
@@ -62,7 +82,8 @@ namespace MerchanterApp.CMS.Classes {
             Get = 0,
             Post = 1,
             Put = 2,
-            Delete = 3
+            Delete = 3,
+            Login = 4
         }
     }
 }

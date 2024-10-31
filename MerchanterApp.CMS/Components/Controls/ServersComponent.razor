@@ -139,8 +139,7 @@ else
 	private async Task RefreshServers()
 	{
 		is_refreshing = true;
-		var response = await PostHelper.Request(int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id) ? admin_id : 0,
-						HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+		var response = await PostHelper.Request(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
 						Classes.PostHelper.PostMethod.Get,
 						"api/Server/GetServers");
 
@@ -164,8 +163,7 @@ else
 
 	private async Task RefreshCustomers()
 	{
-		var response = await PostHelper.Request(int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id) ? admin_id : 0,
-						HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+		var response = await PostHelper.Request(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
 						Classes.PostHelper.PostMethod.Get,
 						"api/Customer/GetCustomers");
 
@@ -187,8 +185,7 @@ else
 
 	private async Task StartServer(int _customer_id)
 	{
-		var response = await PostHelper.Request(int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id) ? admin_id : 0,
-						HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+		var response = await PostHelper.Request(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
 						Classes.PostHelper.PostMethod.Get,
 						"api/Server/" + _customer_id.ToString() + "/StartServer");
 
@@ -222,8 +219,7 @@ else
 
 	private async Task StopServer(int _customer_id)
 	{
-		var response = await PostHelper.Request(int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id) ? admin_id : 0,
-							HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+		var response = await PostHelper.Request(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
 							Classes.PostHelper.PostMethod.Get,
 							"api/Server/" + _customer_id.ToString() + "/StopServer");
 
