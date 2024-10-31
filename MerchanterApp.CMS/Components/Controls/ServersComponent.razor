@@ -9,11 +9,14 @@
 @inject IConfiguration configuration
 @inject IPostHelper PostHelper
 
-<div class="container-fluid">
+<div class="container-fluid bg-dark text-light rounded-2 p-3">
 	<div class="row mt-3">
 		<div class="col-12 ps-2">
-			<h5>Server Pulse: <span class="badge rounded-pill text-bg-primary">5secs</span></h5>
-			<h1>Working Servers&nbsp;&nbsp;&nbsp;<button type="button" class="btn btn-primary" @onclick="RefreshServers" disabled="@is_refreshing">Refresh Servers</button></h1>
+			<h1>Working Servers&nbsp;&nbsp;&nbsp;<button type="button" class="btn btn-primary" @onclick="RefreshServers" disabled="@is_refreshing">Refresh Servers&nbsp;&nbsp;<span class="spinner-border spinner-border-sm @(is_refreshing ? "" : "d-none")" aria-hidden="true"></span></button></h1>
+		</div>
+		<div class="col-12 ps-2 pb-2">
+			<span>Working Servers: <span class="badge rounded-pill text-bg-primary">@(servers != null ? servers.Count.ToString() : "0")</span></span>&nbsp&nbsp&nbsp;&nbsp
+			<span>Active Customers: <span class="badge rounded-pill text-bg-primary">@(customers != null ? customers.Count.ToString() : "0")</span></span>&nbsp;&nbsp&nbsp;&nbsp
 		</div>
 	</div>
 </div>
@@ -25,9 +28,10 @@
 <hr />
 @if (servers != null)
 {
-	<div class="container-fluid">
-		<div class="row mt-3">
-			<div class="col-12 ps-2">
+	<div class="row mt-3">
+		<div class="col-12 ps-2">
+			@if (servers != null)
+			{
 				@foreach (var item in servers)
 				{
 					@if (item.customer != null)
@@ -101,19 +105,17 @@
 				{
 					<span>@customers_loading</span>
 				}
-			</div>
+			}
 		</div>
 	</div>
 }
 else
 {
-	@* <span>@loading</span> *@
 	<SpinKitChasingDots />
 }
 @code {
 	private List<MerchanterServer> servers { get; set; } = new List<MerchanterServer>();
 	private List<Customer>? customers { get; set; }
-	private string loading = "Loading...";
 	private string customers_loading = "Loading Customers...";
 	private string server_message = "";
 	private string page_message = "No servers working.";
@@ -136,6 +138,7 @@ else
 
 	private async Task RefreshServers()
 	{
+		is_refreshing = true;
 		var response = await PostHelper.Request(int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id) ? admin_id : 0,
 						HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
 						Classes.PostHelper.PostMethod.Get,
@@ -150,7 +153,7 @@ else
 			else
 				page_message = string.Empty;
 
-			loading = string.Empty;
+			is_refreshing = false;
 			StateHasChanged();
 		}
 		else
@@ -174,89 +177,16 @@ else
 			else
 				page_message = string.Empty;
 
-			loading = string.Empty;
 			StateHasChanged();
 		}
 		else
 		{
 			page_message = "Merchanter Server ServiceAPI data response empty.";
 		}
-
-		#region OLD
-		// int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
-		// if (admin_id > 0)
-		// {
-		// 	string? token = HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value;
-		// 	if (!string.IsNullOrWhiteSpace(token))
-		// 	{
-		// 		using (HttpClient httpClient = new HttpClient())
-		// 		{
-		// 			httpClient.BaseAddress = new Uri(configuration["AppSettings:MerchanterServerUrl"]);
-		// 			httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-		// 			using HttpResponseMessage response = await httpClient.GetAsync("api/Customer/GetCustomers");
-
-		// 			if (response.IsSuccessStatusCode)
-		// 			{
-		// 				var base_respond = JsonConvert.DeserializeObject<BaseResponseModel>(response.Content.ReadAsStringAsync().Result);
-		// 				if (base_respond != null && base_respond.Success && base_respond.Data != null)
-		// 				{
-		// 					customers = JsonConvert.DeserializeObject<List<Customer>>(base_respond.Data.ToString());
-		// 					if (customers != null && customers.Count == 0)
-		// 						customers_loading = "No customers found.";
-		// 					else
-		// 						customers_loading = string.Empty;
-		// 				}
-		// 				else
-		// 				{
-		// 					customers_loading = "ServerAPI Data failed.";
-		// 				}
-		// 			}
-		// 			else
-		// 			{
-		// 				customers_loading = "ServerAPI failed.";
-		// 			}
-		// 		}
-
-		// 		using (HttpClient httpClient = new HttpClient())
-		// 		{
-		// 			httpClient.BaseAddress = new Uri(configuration["AppSettings:MerchanterServerUrl"]);
-		// 			httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-		// 			using HttpResponseMessage response = await httpClient.GetAsync("api/Server/GetServers");
-
-		// 			if (response.IsSuccessStatusCode)
-		// 			{
-		// 				var base_respond = JsonConvert.DeserializeObject<BaseResponseModel>(response.Content.ReadAsStringAsync().Result);
-		// 				if (base_respond != null && base_respond.Success && base_respond.Data != null)
-		// 				{
-		// 					servers = JsonConvert.DeserializeObject<List<MerchanterServer>>(base_respond.Data.ToString());
-		// 					if (servers != null && servers.Count == 0)
-		// 						page_message = "No servers working.";
-		// 					else
-		// 					{
-		// 						page_message = string.Empty;
-
-		// 					}
-		// 					loading = string.Empty;
-		// 				}
-		// 				else
-		// 				{
-		// 					page_message = "ServerAPI Data failed.";
-		// 				}
-		// 			}
-		// 			else
-		// 			{
-		// 				page_message = "ServerAPI failed.";
-		// 			}
-		// 		}
-		// 		StateHasChanged();
-		// 	}
-		// }
-		#endregion
 	}
 
 	private async Task StartServer(int _customer_id)
 	{
-		loading = "Trying to start server." + DateTime.Now.ToString();
 		var response = await PostHelper.Request(int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id) ? admin_id : 0,
 						HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
 						Classes.PostHelper.PostMethod.Get,
@@ -292,7 +222,6 @@ else
 
 	private async Task StopServer(int _customer_id)
 	{
-		loading = "Trying to stop Merchanter Server." + DateTime.Now.ToString();
 		var response = await PostHelper.Request(int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id) ? admin_id : 0,
 							HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
 							Classes.PostHelper.PostMethod.Get,
@@ -318,52 +247,5 @@ else
 				page_message = "Merchanter Server ServiceAPI data response empty.";
 			}
 		}
-
-
-		// int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
-		// if (admin_id > 0)
-		// {
-		// 	string? token = HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value;
-		// 	if (!string.IsNullOrWhiteSpace(token))
-		// 	{
-		// 		using (HttpClient httpClient = new HttpClient())
-		// 		{
-		// 			httpClient.BaseAddress = new Uri(configuration["AppSettings:MerchanterServerUrl"]);
-		// 			httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-		// 			using HttpResponseMessage response = await httpClient.GetAsync("api/Server/" + _customer_id.ToString() + "/StopServer");
-
-		// 			if (response.IsSuccessStatusCode)
-		// 			{
-		// 				var base_respond = JsonConvert.DeserializeObject<BaseResponseModel>(response.Content.ReadAsStringAsync().Result);
-		// 				if (base_respond != null && base_respond.Success && base_respond.Data != null)
-		// 				{
-		// 					var stopped_server = JsonConvert.DeserializeObject<MerchanterServer>(base_respond.Data.ToString());
-		// 					if (stopped_server != null)
-		// 					{
-		// 						var s = servers.Where(x => x.customer_id == _customer_id).FirstOrDefault();
-		// 						if (s != null)
-		// 						{
-		// 							servers.Remove(s);
-
-		// 							page_message = "Merchanter Server stopped. " + DateTime.Now.ToString();
-		// 						}
-		// 						else
-		// 						{
-		// 							page_message = "Cannot start Merchanter Server.";
-		// 						}
-		// 					}
-		// 					else
-		// 					{
-		// 						page_message = "ServerAPI Data failed.";
-		// 					}
-		// 				}
-		// 				else
-		// 				{
-		// 					page_message = "ServerAPI failed.";
-		// 				}
-		// 			}
-		// 		}
-		// 	}
-		// }
 	}
 }

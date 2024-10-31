@@ -1,0 +1,53 @@
+﻿<div class="modal @ModalClass" tabindex="-1" role="dialog" style="display:@ModalDisplay">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h3 class="modal-title">@(ModalTitle != null ? ModalTitle : "no title")</h3>
+			</div>
+			<div class="modal-body">
+				<h5>@((MarkupString)(ModalHeader != null ? ModalHeader : "no header"))</h5><hr />
+				<div>@((MarkupString)(ModalContent != null ? ModalContent + "<hr>" : "no content"))</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="() => Close()">Close</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+@if (ShowBackdrop)
+{
+	<div class="modal-backdrop fade show"></div>
+}
+
+
+@code {
+	public Guid Guid = Guid.NewGuid();
+	public string ModalDisplay = "none;";
+	public string ModalClass = "";
+	public bool ShowBackdrop = false;
+	public string? ModalTitle { get; set; }
+	public string? ModalContent { get; set; }
+	public string? ModalHeader { get; set; }
+
+	public async Task Open(string? modal_title, string? modal_header, string modal_content)
+	{
+		ModalTitle = modal_title;
+		ModalHeader = modal_header;
+		ModalContent = modal_content;
+		ModalDisplay = "block;";
+		await Task.Delay(20);
+		ModalClass = "Show";
+		ShowBackdrop = true;
+		StateHasChanged();
+	}
+
+	public async Task Close()
+	{
+		ModalDisplay = "none";
+		await Task.Delay(75);
+		ModalClass = "";
+		ShowBackdrop = false;
+		StateHasChanged();
+	}
+}

@@ -1,8 +1,13 @@
-﻿@page "/Account/Customer/Logs"
+﻿@attribute [Authorize]
+@page "/Account/Customer/Logs"
 
 <PageTitle>Customer Logs | Merchanter</PageTitle>
 
-<CustomerLogsComponent />
+<div class="row mt-3 pb-2">
+	<div class="col-12 pb-2 bg-light rounded-3">
+		<CustomerLogsComponent />
+	</div>
+</div>
 
 @code {
 

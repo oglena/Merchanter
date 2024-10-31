@@ -11,10 +11,10 @@
 
 @if (customers != null)
 {
-	<div class="container-fluid sticky-top bg-dark text-light rounded-2 p-3" style="top:60px !important;">
+	<div class="container-fluid sticky-top-lg bg-dark text-light rounded-2 p-3">
 		<div class="row mt-3">
 			<div class="col-12 ps-2">
-				<h1>Customer Logs: @(!string.IsNullOrWhiteSpace(CID) && int.Parse(CID) > 0 ? customers.Where(x => x.customer_id == int.Parse(CID)).FirstOrDefault()?.user_name : "N/A") <button type="button" class="btn btn-primary" @onclick="RefreshLogs" disabled="@is_refreshing">Refresh Logs</button></h1>
+				<h1>Customer Logs: @(!string.IsNullOrWhiteSpace(CID) && int.Parse(CID) > 0 ? customers.Where(x => x.customer_id == int.Parse(CID)).FirstOrDefault()?.user_name : "N/A") <button type="button" class="btn btn-primary" @onclick="RefreshLogs" disabled="@(is_refreshing)">Refresh Logs&nbsp;&nbsp;<span class='spinner-border spinner-border-sm @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button></h1>
 			</div>
 		</div>
 		@if (!string.IsNullOrWhiteSpace(@page_message))
@@ -22,7 +22,6 @@
 			<hr />
 			<span>@page_message</span>
 		}
-		<hr />
 		<div class="row mt-3">
 			<div class="col-8 ps-2">
 				<div class="form-floating">
@@ -46,14 +45,15 @@
 			</div>
 		</div>
 	</div>
+	<hr />
 	<div class="container-fluid">
 		<div class="row mt-3">
-			<div class="col-12 ps-2">
-				<table class="table table-responsive table-hover">
-					<thead>
+			<div class="col-12">
+				<table class="table table-striped w-auto">
+					<thead class="sticky-thead">
 						@if (!string.IsNullOrWhiteSpace(CID))
 						{
-							<tr>
+							<tr class="border-1">
 								<td class="w-25">
 									<div class="form-floating">
 										<select class="form-select text-start" aria-label="servers-select" @onchange="FilterWorkerChanged">
@@ -107,7 +107,7 @@
 								<td class="w-25">
 									<div class="form-floating">
 										<input class="form-control" type="text" name="filter-message" @bind-value="@this.filtered_message" @bind-value:event="oninput"
-										@onkeydown="FilterMessageChanged">
+											   @onkeydown="FilterMessageChanged">
 										<label>Message</label>
 									</div>
 								</td>
@@ -136,9 +136,20 @@
 									<td class="align-content-center">
 										<span class='badge @(item.title == "thread" ? "text-bg-dark" : item.title.Contains("error") ? "text-bg-danger" : (item.title == "info" || item.title == "qp_mysqlupdate") ? "text-bg-info" : "text-bg-secondary")'>@item.title</span>
 									</td>
-									<td class="align-content-center">
-										@item.message
-									</td>
+									@if (item.worker == "notification" || item.title == "error" || item.title == "helper_error" || item.title == "qp_mysqlupdate")
+									{
+										<td class="align-content-center">
+											@(item.message.Split("=>")[0])
+											<button type="button" class="btn btn-warning btn-sm" @onclick='() => Modal.Open(item.title,item.message.Split("=>")[0].Trim(),item.message.Split("=>")[1].Trim())'>Show</button>
+											<ModalComponent @ref="Modal"></ModalComponent>
+										</td>
+									}
+									else
+									{
+										<td class="align-content-center">
+											@item.message
+										</td>
+									}
 									<td class="align-content-center">
 										@item.update_date.Value.ToString()
 									</td>
@@ -163,51 +174,67 @@
 }
 else
 {
-	@* @loading *@
 	<SpinKitChasingDots />
 }
+
 @code {
 	[Parameter]
-	public string? CID { get; set; } = "0";
+	public string? CID { get; set; }
 	List<Log> customer_logs { get; set; } = new List<Log>();
 	List<Customer>? customers { get; set; }
 	private string page_message = "Logs not found for this customer.";
 	private int currentPage { get; set; } = 1;
-	private int pageItemsCount { get; set; } = 20;
+	private int pageItemsCount { get; set; } = 50;
 	private string? filtered_worker { get; set; } = "0";
 	private string? filtered_message { get; set; } = string.Empty;
 	private string? filtered_title { get; set; } = "0";
 	private int filtered_date { get; set; } = 0;
 	private bool is_refreshing { get; set; } = false;
 
+	private ModalComponent Modal { get; set; }
+
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
 		if (firstRender)
 		{
+			int customer_id = 0;
+			if (!string.IsNullOrWhiteSpace(CID) && int.TryParse(CID, out customer_id))
+				await SetSessionValueAsync("selected_customer_id", CID != null ? CID : "0");
+			else
+			{
+				await GetSessionValueAsync("selected_customer_id");
+				int.TryParse(CID, out customer_id);
+			}
 			await LoadCustomers();
 
-			await LoadSessionValueAsync("selected_customer_id");
-			if (!string.IsNullOrWhiteSpace(CID) && int.TryParse(CID, out int customer_id) && customer_id > 0)
+			if (customer_id > 0)
 			{
-				await LoadSessionValueAsync("filtered_worker");
-				await LoadSessionValueAsync("filtered_message");
-				await LoadSessionValueAsync("filtered_title");
-				await LoadSessionValueAsync("filtered_date");
+				await GetSessionValueAsync("filtered_worker");
+				await GetSessionValueAsync("filtered_message");
+				await GetSessionValueAsync("filtered_title");
+				await GetSessionValueAsync("filtered_date");
 				await LoadCustomerLogs(customer_id);
 			}
 			else
 			{
+				await SetSessionValueAsync("selected_customer_id", "0");
+				await SetSessionValueAsync("filtered_worker", "0");
+				await SetSessionValueAsync("filtered_message", string.Empty);
+				await SetSessionValueAsync("filtered_title", "0");
+				await SetSessionValueAsync("filtered_date", "0");
 				customer_logs.Clear();
 				StateHasChanged();
 			}
 		}
 	}
 
-	protected override Task OnParametersSetAsync()
+	protected override async Task OnParametersSetAsync()
 	{
 		if (CID != "0")
-			StateHasChanged();
-		return base.OnParametersSetAsync();
+		{
+			//await RefreshLogs();
+		}
+		await base.OnParametersSetAsync();
 	}
 
 	protected async Task LoadCustomers()
@@ -270,7 +297,7 @@ else
 		if (e.Value != null && int.TryParse(e.Value.ToString(), out customer_id))
 		{
 			CID = e.Value.ToString();
-			await ProtectedLocalStorage.SetAsync("selected_customer_id", CID != null ? CID : "0");
+			await SetSessionValueAsync("selected_customer_id", CID != null ? CID : "0");
 			await RefreshLogs();
 		}
 	}
@@ -280,7 +307,7 @@ else
 		if (e.Value != null)
 		{
 			filtered_worker = e.Value.ToString();
-			await ProtectedLocalStorage.SetAsync("filtered_worker", filtered_worker != null ? filtered_worker : "0");
+			await SetSessionValueAsync("filtered_worker", filtered_worker != null ? filtered_worker : "0");
 			await RefreshLogs();
 		}
 	}
@@ -290,7 +317,7 @@ else
 		if (e.Value != null)
 		{
 			filtered_title = e.Value.ToString();
-			await ProtectedLocalStorage.SetAsync("filtered_title", filtered_title != null ? filtered_title : "0");
+			await SetSessionValueAsync("filtered_title", filtered_title != null ? filtered_title : "0");
 			await RefreshLogs();
 		}
 	}
@@ -300,7 +327,7 @@ else
 		if (e.Value != null)
 		{
 			filtered_date = int.TryParse(e.Value.ToString(), out int selected_date) ? selected_date : 0;
-			await ProtectedLocalStorage.SetAsync("filtered_date", filtered_date);
+			await SetSessionValueAsync("filtered_date", filtered_date.ToString());
 			await RefreshLogs();
 		}
 	}
@@ -312,7 +339,7 @@ else
 			if (e.Code == "Enter" || e.Code == "NumpadEnter")
 			{
 				//if( !string.IsNullOrWhiteSpace( searchparam ) ) {
-				await ProtectedLocalStorage.SetAsync("filtered_message", search);
+				await SetSessionValueAsync("filtered_message", search);
 				await RefreshLogs();
 				//}
 			}
@@ -338,7 +365,7 @@ else
 		}
 		finally
 		{
-		is_refreshing = false;
+			is_refreshing = false;
 		}
 	}
 
@@ -359,7 +386,7 @@ else
 		}
 	}
 
-	async Task LoadSessionValueAsync(string _session)
+	async Task GetSessionValueAsync(string _session)
 	{
 		if (_session == "selected_customer_id")
 		{
@@ -390,6 +417,30 @@ else
 			var result = await ProtectedLocalStorage.GetAsync<string>("filtered_message");
 			if (result.Success)
 				filtered_message = result.Value;
+		}
+	}
+
+	async Task SetSessionValueAsync(string _session, string _value)
+	{
+		if (_session == "selected_customer_id")
+		{
+			await ProtectedLocalStorage.SetAsync("selected_customer_id", _value);
+		}
+		if (_session == "filtered_worker")
+		{
+			await ProtectedLocalStorage.SetAsync("filtered_worker", _value);
+		}
+		if (_session == "filtered_date")
+		{
+			await ProtectedLocalStorage.SetAsync("filtered_date", _value);
+		}
+		if (_session == "filtered_title")
+		{
+			await ProtectedLocalStorage.SetAsync("filtered_title", _value);
+		}
+		if (_session == "filtered_message")
+		{
+			await ProtectedLocalStorage.SetAsync("filtered_message", _value);
 		}
 	}
 }

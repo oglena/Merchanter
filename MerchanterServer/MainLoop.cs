@@ -31,6 +31,7 @@ namespace MerchanterServer {
         List<Product>? products = [];
         List<ProductExtension>? products_ext = [];
         List<Brand> brands = [];
+        List<Category> categories = [];
         List<Invoice>? invoices = [];
         List<Order> live_orders = [];
         List<Order>? orders = [];
@@ -85,6 +86,7 @@ namespace MerchanterServer {
                 brands = db_helper.GetBrands( customer.customer_id );
                 products = db_helper.GetProducts( customer.customer_id );
                 products_ext = db_helper.GetProductExts( customer.customer_id );
+                categories = db_helper.GetCategories( customer.customer_id );
 
                 if( health ) { this.ProductLoop( out health ); }
 
@@ -826,50 +828,77 @@ namespace MerchanterServer {
                     var ent_products = Helper.GetENTProducts();
                     if( ent_products != null && ent_products.Count > 0 ) {
                         foreach( var item in ent_products ) {
-                            if( item.Barcode != null ) {
-                                var selected_brand = brands.Where( x => x.brand_name == item.BrandName ).FirstOrDefault(); //checking if brand exist
-                                var selected_pextension = products_ext?.Where( x => x.sku == item.Sku ).FirstOrDefault(); //checking if product exist
-                                var p = new Product() {
-                                    customer_id = customer.customer_id,
-                                    source_product_id = item.ProductId,
-                                    barcode = item.Barcode,
-                                    currency = item.Currency,
-                                    name = item.Name,
-                                    sku = item.Sku,
-                                    price = item.Price,
-                                    special_price = item.Special_Price,
-                                    custom_price = item.Custom_Price,
-                                    tax = item.Tax,
-                                    tax_included = item.TaxIncluded,
-                                    sources = [ new ProductSource() { is_active = true /*TODO:this gonna change*/, name = Constants.ENTEGRA, sku = item.Sku, barcode = item.Barcode, qty = item.Qty, customer_id = customer.customer_id } ],
-                                    extension = new ProductExtension() {
-                                        sku = item.Sku, barcode = item.Barcode, customer_id = customer.customer_id,
-                                        brand_id = selected_brand != null ? selected_brand.id : 1, /*TODO:this gonna change*/
-                                        is_xml_enabled = selected_pextension != null ? selected_pextension.is_xml_enabled : false,
-                                        xml_sources = selected_pextension != null ? selected_pextension.xml_sources : [],
-                                        category_ids = selected_pextension != null ? selected_pextension.category_ids : Helper.global.customer_root_category.ToString()
-                                    }, /*TODO:this gonna change*/
-                                    brand = !string.IsNullOrWhiteSpace( item.BrandName ) ? selected_brand : null
-                                };
+                            if( Helper.global.settings.is_barcode_required && item.Barcode != string.Empty ) {
+                                if( item.Sku != string.Empty ) {
+                                    //checking if exist
+                                    Brand? existed_brand = brands.Where( x => x.brand_name == item.BrandName ).FirstOrDefault();
+                                    ProductExtension? existed_pextension = products_ext?.Where( x => x.sku == item.Sku ).FirstOrDefault();
+                                    List<Category>? existed_pcategories = existed_pextension != null ? categories?.Where( x => existed_pextension.category_ids.Split( "," ).Contains( x.id.ToString() ) ).ToList() : null;
+                                    //checking if exist
 
-                                if( p.brand == null ) {
-                                    if( !string.IsNullOrWhiteSpace( item.BrandName ) ) {
-                                        var inserted_brand = db_helper.InsertBrand( customer.customer_id, new Brand() { brand_name = item.BrandName, status = true } );
-                                        if( inserted_brand != null ) {
-                                            p.brand = inserted_brand;
-                                            p.extension.brand_id = inserted_brand.id;
-                                            Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + inserted_brand.brand_name + " brand inserted." );
+                                    var p = new Product() {
+                                        customer_id = customer.customer_id,
+                                        source_product_id = item.ProductId,
+                                        barcode = item.Barcode,
+                                        currency = item.Currency,
+                                        name = item.Name,
+                                        sku = item.Sku,
+                                        price = item.Price,
+                                        special_price = item.Special_Price,
+                                        custom_price = item.Custom_Price,
+                                        tax = item.Tax,
+
+                                        tax_included = item.TaxIncluded,
+                                        sources = [ new ProductSource() {
+                                            is_active = true, name = Constants.ENTEGRA, sku = item.Sku, barcode = item.Barcode, qty = item.Qty, customer_id = customer.customer_id
+                                        } ],
+                                        extension = new ProductExtension() {
+                                            sku = item.Sku, barcode = item.Barcode, customer_id = customer.customer_id,
+                                            brand_id = existed_brand != null ? existed_brand.id : 1, /*TODO: customer default brand id gelmeli*/
+                                            is_xml_enabled = existed_pextension != null ? existed_pextension.is_xml_enabled : false,
+                                            xml_sources = existed_pextension != null ? existed_pextension.xml_sources : [],
+                                            category_ids /*= item.CategoryIds*/ = existed_pextension != null ? existed_pextension.category_ids : Helper.global.customer_root_category.ToString(),
+                                            categories /*= item.Categories()*/ = existed_pcategories != null ? existed_pcategories : [ new Category() {
+                                                id = Helper.global.customer_root_category, category_name = customer.customer_id + "-root", is_active = true, parent_id = 1, customer_id = customer.customer_id
+                                            } ]
+                                        }, /*TODO:this gonna change*/
+                                        brand = existed_brand != null ? existed_brand : new Brand() {
+                                            id = 1/*TODO: customer default brand id gelmeli*/, brand_name = "DİĞER", status = true, customer_id = customer.customer_id
                                         }
-                                    }
-                                    else {
-                                        p.extension.brand_id = 1; /*TODO:this gonna change*/
-                                        p.brand = new Brand() { id = 1, brand_name = "DİĞER", status = true, customer_id = customer.customer_id };
-                                    }
-                                }
+                                    };
 
-                                //Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.settings.settings_customer.company_name + " " + item.Sku + " main_source=" +
-                                //    Constants.ENTEGRA + ":" + item.Qty + " product source added." );
-                                live_products.Add( p );
+                                    #region OLD
+                                    //CRITICAL: HERE I AM
+                                    //if( p.brand == null ) {
+                                    //    var inserted_brand = db_helper.InsertBrand( customer.customer_id, new Brand() { brand_name = item.BrandName, status = true } );
+                                    //    if( inserted_brand != null ) {
+                                    //        p.brand = inserted_brand;
+                                    //        p.extension.brand_id = inserted_brand.id;
+                                    //        Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + inserted_brand.brand_name + " brand inserted." );
+                                    //    }
+                                    //}
+
+                                    //var p_cids = p.extension.category_ids.Split( "," );
+                                    //foreach( var citem in p_cids ) {
+                                    //    if( citem == string.Empty ) {
+                                    //        p.extension.category_ids = Helper.global.customer_root_category.ToString();
+                                    //    }
+                                    //    else {
+                                    //        Category? c = db_helper.GetCategory( customer.customer_id, int.Parse( citem ) );
+                                    //        if( c != null ) {
+
+                                    //        }
+                                    //    }
+                                    //}
+
+                                    //Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.settings.settings_customer.company_name + " " + item.Sku + " main_source=" +
+                                    //    Constants.ENTEGRA + ":" + item.Qty + " product source added." ); 
+                                    #endregion
+                                    live_products.Add( p );
+                                }
+                                else {
+                                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ENTEGRA + " " + item.Barcode + " sku missing, not sync." );
+                                }
                             }
                             else {
                                 Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ENTEGRA + " " + item.Sku + " barcode missing, not sync." );
@@ -910,7 +939,7 @@ namespace MerchanterServer {
                             foreach( var xitem in selected_xproducts ) {
                                 item.sources.Add( new ProductSource() {
                                     customer_id = customer.customer_id,
-                                    is_active = (Helper.global.settings.xml_qty_addictive_enable || item.sources[0].qty <= 0) ? (xitem.is_active ? (item.extension.is_xml_enabled && item.extension.xml_sources.Contains( xitem.xml_source )) : false) : false,
+                                    is_active = (Helper.global.settings.xml_qty_addictive_enable || item.sources[ 0 ].qty <= 0) ? (xitem.is_active ? (item.extension.is_xml_enabled && item.extension.xml_sources.Contains( xitem.xml_source )) : false) : false,
                                     name = xitem.xml_source,
                                     sku = item.sku,
                                     barcode = item.barcode,
@@ -970,6 +999,38 @@ namespace MerchanterServer {
                             if( selected_product.name != item.name ) { }
                             if( selected_product.tax_included != item.tax_included ) { }
                             if( selected_product.tax != item.tax ) { }
+
+                            #region Brand
+                            if( selected_product.brand.brand_name != item.brand.brand_name ) {
+                                is_updated = true; is_need_indexer = true;
+                                var source_brand = Helper.GetProductAttribute( Helper.global.magento.brand_attribute_code );
+                                if( source_brand != null ) {
+                                    var selected_source_brand = source_brand.options.Where( x => x.value == item.brand.brand_name ).FirstOrDefault();
+                                    if( selected_source_brand != null ) { //update
+                                        if( true || Helper.UpdateProductAttribute( item.sku, Helper.global.magento.brand_attribute_code, selected_source_brand.value ) ) {
+                                            db_helper.LogToServer( "product_brand_updated", Helper.global.settings.company_name + " Sku:" + item.sku + "= " + selected_product.brand.brand_name + " => " + item.brand.brand_name, customer.customer_id, "product" );
+                                        }
+                                        else {
+                                            db_helper.LogToServer( "product_brand_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + "= " + selected_product.brand.brand_name.ToString() + " => " + item.brand.brand_name?.ToString(), customer.customer_id, "product" );
+                                        }
+                                    }
+                                    else { //insert
+                                        var inserted_id = Helper.InsertAttributeOption( Helper.global.magento.brand_attribute_code, item.brand.brand_name );
+                                        if(inserted_id != null ) {
+                                            if( true || Helper.UpdateProductAttribute( item.sku, Helper.global.magento.brand_attribute_code, selected_source_brand.value ) ) {
+                                                db_helper.LogToServer( "product_brand_inserted", Helper.global.settings.company_name + " Sku:" + item.sku + "= " + selected_product.brand.brand_name + " => " + item.brand.brand_name, customer.customer_id, "product" );
+                                            }
+                                            else {
+                                                db_helper.LogToServer( "product_brand_insert_error", Helper.global.settings.company_name + " Sku:" + item.sku + "= " + selected_product.brand.brand_name.ToString() + " => " + item.brand.brand_name?.ToString(), customer.customer_id, "product" );
+                                            }
+                                        }
+                                    }
+                                }
+                                else { //no brand attribute exists
+
+                                }
+                            }
+                            #endregion
 
                             #region Barcode
                             //if( selected_product.barcode?.Trim() != item.barcode?.Trim() ) {

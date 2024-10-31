@@ -27,5 +27,7 @@ namespace Merchanter.Classes.Settings {
         public bool aras_kargo { get; set; } = false;
         [Required]
         public bool xml_qty_addictive_enable { get; set; } = true;
+        [Required]
+        public bool is_barcode_required { get; set; } = true;
     }
 }

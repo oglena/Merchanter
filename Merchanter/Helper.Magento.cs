@@ -1132,6 +1132,37 @@ namespace Merchanter {
             }
         }
 
+        public static string? InsertAttributeOption( string _attribute_code, string? _attribute_value ) {
+            try {
+                if( !string.IsNullOrWhiteSpace( _attribute_value ) ) return null;
+                var attribute_option = new M2_AttributeOption() {
+                    option = new M2_Option() {
+                        value = _attribute_value,
+                        store_labels = [ new M2_StoreLabels() { store_id = 0, label = _attribute_value } ],
+                        is_default = false,
+                        sort_order = 0
+                    }
+                };
+
+                using( Executioner executioner = new Executioner() ) {
+                    var json_product = executioner.Execute( Helper.global.magento.base_url + "index.php/rest/all/V1/products/attributes/" + ConvertFriendly( _attribute_code ) + "/options", RestSharp.Method.Post, attribute_option, Helper.global.magento.token );
+                    if( json_product != null ) {
+                        var updated_id = Newtonsoft.Json.JsonConvert.DeserializeObject<string>( json_product );
+                        if( updated_id != null ) {
+                            Console.WriteLine( "[" + DateTime.Now.ToString() + "] Attribute Code:" + _attribute_code + "  updated => [" + _attribute_code + "=" + _attribute_value + "]" );
+                            return updated_id;
+                        }
+                    }
+                    return null;
+                }
+            }
+            catch( Exception ex ) {
+                Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + ex.ToString() );
+                Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + ex.ToString() );
+                return null;
+            }
+        }
+
         public static bool UpdateProductQty( string _sku, int _qty ) {
             try {
                 var stock_item = new {

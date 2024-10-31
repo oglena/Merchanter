@@ -259,7 +259,7 @@ namespace Merchanter {
                     connection.Open();
                 object val; int inserted_id;
                 string _query = "START TRANSACTION;" +
-                    "UPDATE customer SET customer_id=LAST_INSERT_ID(@customer_id),user_name=@user_name,password=@password,status=@status,product_sync_status=@product_sync_status,order_sync_status=@order_sync_status,xml_sync_status=@xml_sync_status,invoice_sync_status=@invoice_sync_status,notification_sync_status=@notification_sync_status" + 
+                    "UPDATE customer SET customer_id=LAST_INSERT_ID(@customer_id),user_name=@user_name,password=@password,status=@status,product_sync_status=@product_sync_status,order_sync_status=@order_sync_status,xml_sync_status=@xml_sync_status,invoice_sync_status=@invoice_sync_status,notification_sync_status=@notification_sync_status" +
                     (_with_working_parameters ? ",is_productsync_working=@is_productsync_working,is_ordersync_working=@is_ordersync_working,is_xmlsync_working=@is_xmlsync_working,is_invoicesync_working=@is_invoicesync_working,is_notificationsync_working=@is_notificationsync_working" : "") + " WHERE customer_id=@customer_id;" +
                     "SELECT LAST_INSERT_ID();" +
                     "COMMIT;";
@@ -1165,9 +1165,13 @@ namespace Merchanter {
                     var exts = GetProductExts( _customer_id );
                     if( exts != null ) {
                         var brands = GetBrands( _customer_id );
+                        var categories = GetCategories( _customer_id );
                         foreach( var item in list ) {
                             item.extension = exts.Where( x => x.sku == item.sku ).FirstOrDefault();
                             item.brand = brands.Where( x => x.id == item.extension.brand_id ).FirstOrDefault();
+
+                            if( item.extension != null )
+                                item.extension.categories = categories.Where( x => item.extension.category_ids.Contains( x.id.ToString() ) ).ToList();
                         }
                     }
                 }
@@ -2006,6 +2010,115 @@ namespace Merchanter {
                     c.id = int.Parse( dataReader[ "id" ].ToString() );
                     c.customer_id = int.Parse( dataReader[ "customer_id" ].ToString() );
                     c.parent_id = int.Parse( dataReader[ "parent_id" ].ToString() );
+                    c.category_name = dataReader[ "category_name" ].ToString();
+                    c.is_active = dataReader[ "is_active" ] != null ? dataReader[ "is_active" ].ToString() == "1" ? true : false : false;
+                }
+                dataReader.Close();
+                if( state == System.Data.ConnectionState.Open ) connection.Close();
+
+                return c;
+            }
+            catch( Exception ex ) {
+                OnError( ex.Message );
+                return null;
+            }
+        }
+
+        public List<Category> GetProductCategories( int _customer_id, string _sku ) {
+            try {
+                List<Category> categories = new List<Category>();
+                if( !string.IsNullOrWhiteSpace( _sku ) ) {
+                    if( state != System.Data.ConnectionState.Open ) connection.Open();
+
+                    string? category_ids = string.Empty;
+                    {
+                        string _query = "SELECT category_ids FROM products_ext " +
+                          "WHERE customer_id=@customer_id AND sku=@sku";
+                        MySqlCommand cmd = new MySqlCommand( _query, connection );
+                        cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+                        cmd.Parameters.Add( new MySqlParameter( "sku", _sku ) );
+                        category_ids = cmd.ExecuteScalar().ToString();
+                    }
+
+                    if( category_ids != null ) {
+                        string _query = "SELECT * FROM categories " +
+                            "WHERE customer_id=@customer_id";
+                        List<string> cids = category_ids.Split( "," ).ToList();
+                        foreach( var item in cids ) {
+                            _query += " AND (" + string.Join( "id=" + item + " OR" );
+                        }
+                        _query = _query.Substring( 0, _query.Length - 2 );
+                        MySqlCommand cmd = new MySqlCommand( _query, connection );
+                        cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+                        MySqlDataReader dataReader = cmd.ExecuteReader();
+                        while( dataReader.Read() ) {
+                            Category c = new();
+                            c.id = int.Parse( dataReader[ "id" ].ToString() );
+                            c.customer_id = int.Parse( dataReader[ "customer_id" ].ToString() );
+                            c.parent_id = int.Parse( dataReader[ "parent_id" ].ToString() );
+                            c.category_name = dataReader[ "category_name" ].ToString();
+                            c.is_active = dataReader[ "is_active" ] != null ? dataReader[ "is_active" ].ToString() == "1" ? true : false : false;
+                            categories.Add( c );
+                        }
+                        dataReader.Close();
+                    }
+
+                    if( state == System.Data.ConnectionState.Open ) connection.Close();
+                }
+                return categories;
+            }
+            catch( Exception ex ) {
+                OnError( ex.Message );
+                return null;
+            }
+        }
+
+        public List<Category> GetCategories( int _customer_id ) {
+            try {
+                if( state != System.Data.ConnectionState.Open ) connection.Open();
+                string _query = "SELECT * FROM categories " +
+                    "WHERE customer_id=@customer_id ";
+                List<Category> categories = new();
+                MySqlCommand cmd = new MySqlCommand( _query, connection );
+                cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+                MySqlDataReader dataReader = cmd.ExecuteReader();
+                while( dataReader.Read() ) {
+                    Category c = new();
+                    c.id = int.Parse( dataReader[ "id" ].ToString() );
+                    c.customer_id = int.Parse( dataReader[ "customer_id" ].ToString() );
+                    c.parent_id = int.Parse( dataReader[ "parent_id" ].ToString() );
+                    c.category_name = dataReader[ "category_name" ].ToString();
+                    c.is_active = dataReader[ "is_active" ] != null ? dataReader[ "is_active" ].ToString() == "1" ? true : false : false;
+                    categories.Add( c );
+                }
+                dataReader.Close();
+
+                if( state == System.Data.ConnectionState.Open ) connection.Close();
+
+                return categories;
+            }
+            catch( Exception ex ) {
+                OnError( ex.Message );
+                return null;
+            }
+        }
+
+        public Category? GetCategory( int _customer_id, int _id ) {
+            try {
+                if( state != System.Data.ConnectionState.Open ) connection.Open();
+                string _query = "SELECT * FROM categories " +
+                    "WHERE id=@id AND customer_id=@customer_id";
+                MySqlCommand cmd = new MySqlCommand( _query, connection );
+                cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+                cmd.Parameters.Add( new MySqlParameter( "id", _id ) );
+                MySqlDataReader dataReader = cmd.ExecuteReader();
+                Category? c = null;
+                if( dataReader.Read() ) {
+                    c = new Category();
+                    c.id = int.Parse( dataReader[ "id" ].ToString() );
+                    c.customer_id = int.Parse( dataReader[ "customer_id" ].ToString() );
+                    c.customer_id = int.Parse( dataReader[ "parent_id" ].ToString() );
+                    c.customer_id = int.Parse( dataReader[ "customer_id" ].ToString() );
                     c.category_name = dataReader[ "category_name" ].ToString();
                     c.is_active = dataReader[ "is_active" ] != null ? dataReader[ "is_active" ].ToString() == "1" ? true : false : false;
                 }

@@ -1,13 +1,16 @@
-using Blazored.Toast;
 using MerchanterApp.CMS;
 using MerchanterApp.CMS.Classes;
 using MerchanterApp.CMS.Components;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder( args );
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
 
 builder.Services.AddTransient<IPostHelper, PostHelper>();
 builder.Services.AddHttpContextAccessor();
@@ -29,7 +32,9 @@ builder.Services.AddAuthorization( options => {
     options.AddPolicy( Variables.admin_id, policy => policy.RequireClaim( Variables.admin_id ) );
 } );
 builder.Services.AddCascadingAuthenticationState();
-builder.Services.AddBlazoredToast();
+
+var trimmedContentRootPath = builder.Environment.ContentRootPath.TrimEnd( Path.DirectorySeparatorChar );
+builder.Services.AddDataProtection().SetApplicationName( trimmedContentRootPath );
 
 var app = builder.Build();
 

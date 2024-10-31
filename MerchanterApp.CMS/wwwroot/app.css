@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap');
+/*@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap');*/
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap');
 
 * {
     font-size: 14px;
@@ -6,9 +7,10 @@
 }
 
 html, body {
-    /*font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;*/
-    font-family: 'Open Sans', system-ui;
+    font-family: "Quicksand", sans-serif;
+    font-optical-sizing: auto;
     background-color: #FEFEFE;
+    font-style: normal;
 }
 
 a, .btn-link {
@@ -93,4 +95,15 @@ input[type=checkbox] {
     -moz-transform: scale(1.5); /* FF */
     -webkit-transform: scale(1.5); /* Safari and Chrome */
     -o-transform: scale(1.5); /* Opera */
+}
+
+.table-overflow {
+    overflow: hidden;
+    overflow-x: auto;
+}
+
+.sticky-thead {
+    position: sticky;
+    z-index: 1020;
+    top: 48px;
 }

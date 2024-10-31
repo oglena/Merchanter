@@ -12,8 +12,10 @@ namespace MerchanterApp.CMS.Classes {
     public class PostHelper :IPostHelper {
         [Inject]
         private IConfiguration? configuration { get; set; }
-        public PostHelper( IConfiguration _configuration ) {
+        private readonly ILogger logger;
+        public PostHelper( IConfiguration _configuration, ILogger<PostHelper> _logger ) {
             configuration = _configuration;
+            logger = _logger;
         }
         public async Task<BaseResponseModel?> Request( int _admin_id, string? _token, PostMethod _method, string _url, StringContent? _body = null ) {
             BaseResponseModel? model = null;
@@ -25,7 +27,9 @@ namespace MerchanterApp.CMS.Classes {
                             httpClient.DefaultRequestHeaders.Add( "Authorization", "Bearer " + _token );
                             using HttpResponseMessage response = await httpClient.GetAsync( _url );
                             if( response.IsSuccessStatusCode ) {
-                                model = JsonConvert.DeserializeObject<BaseResponseModel>( response.Content.ReadAsStringAsync().Result );
+                                var response_json = response.Content.ReadAsStringAsync().Result;
+                                model = JsonConvert.DeserializeObject<BaseResponseModel>( response_json );
+                                logger.LogInformation( "GET: " + _url, DateTime.UtcNow.ToLongTimeString() );
                             }
                         }
                     }
@@ -38,6 +42,7 @@ namespace MerchanterApp.CMS.Classes {
                             using HttpResponseMessage response = await httpClient.PostAsync( _url, _body );
                             if( response.IsSuccessStatusCode ) {
                                 model = JsonConvert.DeserializeObject<BaseResponseModel>( response.Content.ReadAsStringAsync().Result );
+                                logger.LogInformation( "POST: " + _url, DateTime.UtcNow.ToLongTimeString() );
                             }
                         }
 
