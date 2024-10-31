@@ -48,9 +48,9 @@
 	<hr />
 	<div class="container-fluid">
 		<div class="row mt-3">
-			<div class="col-12">
-				<table class="table table-striped w-auto">
-					<thead class="sticky-thead">
+			<div class="col-12 table-overflow">
+				<table class="table table-striped table-hover w-auto">
+					<thead>
 						@if (!string.IsNullOrWhiteSpace(CID))
 						{
 							<tr class="border-1">
@@ -159,13 +159,13 @@
 					}
 					else
 					{
-						<tbody class="table-group-divider">
+						@* <tbody class="table-group-divider">
 							<tr>
 								<td class="text-center" colspan="4">
 									<span>No data.</span>
 								</td>
 							</tr>
-						</tbody>
+						</tbody> *@
 					}
 				</table>
 			</div>

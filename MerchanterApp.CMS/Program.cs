@@ -1,7 +1,6 @@
 using MerchanterApp.CMS;
 using MerchanterApp.CMS.Classes;
 using MerchanterApp.CMS.Components;
-using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder( args );
 
@@ -32,9 +31,6 @@ builder.Services.AddAuthorization( options => {
     options.AddPolicy( Variables.admin_id, policy => policy.RequireClaim( Variables.admin_id ) );
 } );
 builder.Services.AddCascadingAuthenticationState();
-
-var trimmedContentRootPath = builder.Environment.ContentRootPath.TrimEnd( Path.DirectorySeparatorChar );
-builder.Services.AddDataProtection().SetApplicationName( trimmedContentRootPath );
 
 var app = builder.Build();
 
