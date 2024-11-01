@@ -34,7 +34,11 @@ namespace Merchanter.Classes {
             XML_SYNC_ERROR = 12,
             XML_QTY_CHANGED = 13,
             XML_PRODUCT_REMOVED_BY_USER = 14,
-            XML_SOURCE_FAILED = 15
+            XML_SOURCE_FAILED = 15,
+            NEW_INVOICE = 16,
+            ORDER_COMPLETE = 17,
+            ORDER_PROCESS = 18,
+            ORDER_SHIPPED = 19,
         }
     }
 }

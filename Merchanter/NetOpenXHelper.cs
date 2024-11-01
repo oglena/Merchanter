@@ -8,6 +8,7 @@ using NetOpenX.Rest.Client.BLL;
 using NetOpenX.Rest.Client.Model;
 using NetOpenX.Rest.Client.Model.Enums;
 using System.Diagnostics;
+using System.Reflection.Metadata.Ecma335;
 
 namespace Merchanter {
     public static class NetOpenXHelper {
@@ -95,7 +96,7 @@ namespace Merchanter {
             }
         }
 
-        public static List<NETSIS_InvoiceResponse> GetNetsisFaturas( int _days, List<Invoice> _past_invoices, int _limit = 250 ) {
+        public static List<NETSIS_InvoiceResponse> GetNetsisFaturas( int _days, List<Invoice>? _past_invoices, int _limit = 250 ) {
             List<NetOpenX.Rest.Client.Model.NetOpenX.ItemSlips> data = [];
             int offset = 0;
             var _item_slips_manager = new ItemSlipsManager( LoginNetsis( Helper.global ) );
@@ -119,7 +120,7 @@ namespace Merchanter {
 
                 List<NETSIS_InvoiceResponse> response = [];
                 foreach( var item in data ) {
-                    var temp_invoice = _past_invoices.Where( x => x.invoice_no == item.FatUst.FATIRS_NO ).Where( x => x.is_belge_created ).FirstOrDefault();
+                    var temp_invoice = _past_invoices?.Where( x => x.invoice_no == item.FatUst.FATIRS_NO ).Where( x => x.is_belge_created ).FirstOrDefault();
                     if( temp_invoice == null ) {
                         var selected_item = _item_slips_manager.GetInternalById( belge_tipleri.SATIS_FATURASI + ";" + item.FatUst.FATIRS_NO ).Data;
                         NETSIS_InvoiceResponse invoice = new() {
@@ -251,7 +252,7 @@ namespace Merchanter {
             foreach( var item in _order.order_items ) {
                 NetOpenX.Rest.Client.Model.NetOpenX.ItemSlipLines slipLine = new() {
                     StokKodu = item.sku,
-                    STra_ACIK = item.parent_sku,
+                    ProjeKodu = item.parent_sku,
                     STra_KDV = Convert.ToDouble( item.tax ),
                     DEPO_KODU = Helper.global.netsis.siparis_depokodu,
                     STra_GCMIK = (double)item.qty_ordered,
