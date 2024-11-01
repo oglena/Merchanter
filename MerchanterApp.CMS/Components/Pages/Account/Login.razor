@@ -50,6 +50,7 @@
 @code {
 	[SupplyParameterFromForm(FormName = "LoginForm")]
 	private AdminLogin admin { get; set; } = new AdminLogin();
+
 	public bool remember_me { get; set; }
 
 	private class AdminLogin
@@ -82,17 +83,17 @@
 							new ClaimsPrincipal(
 								new ClaimsIdentity(
 									new List<Claim>() {
-												new Claim(Variables.admin_id, login.AdminInformation.id.ToString()),
-												new Claim(ClaimTypes.Name , login.AdminInformation.name),
-												new Claim(ClaimTypes.Role, Variables.admin_role/* TODO: add admin role*/),
-												new Claim("rememberMe", remember_me.ToString()),
-												new Claim(Variables.auth_token, login.AuthToken)
-																	},
+											new Claim(Variables.admin_id, login.AdminInformation.id.ToString()),
+											new Claim(ClaimTypes.Name , login.AdminInformation.name),
+											new Claim(ClaimTypes.Role, Variables.admin_role/* TODO: add admin role*/),
+											new Claim("rememberMe", remember_me.ToString()),
+											new Claim(Variables.auth_token, login.AuthToken)
+										},
 								Variables.auth_cookie)),
 								new AuthenticationProperties
-									{
-										IsPersistent = remember_me
-									});
+								{
+									IsPersistent = remember_me
+								});
 						navigationManager.NavigateTo("/");
 					}
 					else

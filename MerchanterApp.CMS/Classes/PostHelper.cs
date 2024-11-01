@@ -9,6 +9,7 @@ namespace MerchanterApp.CMS.Classes {
     public interface IPostHelper {
         public Task<BaseResponseModel?> Request( string? _token, PostMethod _method, string _url, StringContent? _body = null );
     }
+
     public class PostHelper :IPostHelper {
         [Inject]
         private IConfiguration? configuration { get; set; }

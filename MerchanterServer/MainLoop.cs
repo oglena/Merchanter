@@ -858,8 +858,8 @@ namespace MerchanterServer {
                                             is_xml_enabled = existed_pextension != null ? existed_pextension.is_xml_enabled : false,
                                             xml_sources = existed_pextension != null ? existed_pextension.xml_sources : [],
                                             category_ids /*= item.CategoryIds*/ = existed_pextension != null ? existed_pextension.category_ids : Helper.global.customer_root_category.ToString(),
-                                            categories /*= item.Categories()*/ = existed_pcategories != null ? existed_pcategories : [ new Category() {
-                                                id = Helper.global.customer_root_category, category_name = customer.customer_id + "-root", is_active = true, parent_id = 1, customer_id = customer.customer_id
+                                            categories /*= item.Categories()*/ = existed_pcategories != null ? existed_pcategories : 
+                                            [ new Category() { id = Helper.global.customer_root_category, category_name = customer.customer_id + "-root", is_active = true, parent_id = 1, customer_id = customer.customer_id
                                             } ]
                                         }, /*TODO:this gonna change*/
                                         brand = existed_brand != null ? existed_brand : new Brand() {

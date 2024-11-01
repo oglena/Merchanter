@@ -1,6 +1,6 @@
-﻿namespace MerchanterApp.CMS.Classes {
+﻿namespace MerchanterApp.CMS.Models {
     public class ApiFilter {
-        public Dictionary<string,string?>? filters { get; set; }
+        public Dictionary<string, string?>? filters { get; set; }
         public Pager? pager { get; set; }
     }
 
