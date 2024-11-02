@@ -10,7 +10,9 @@ using Helper = Merchanter.Helper;
 
 var now = DateTime.Now;
 const string newline = "\r\n";
-
+bool first_run = true;
+Console.WriteLine( "Press Ctrl+C to exit." );
+Console.Beep();
 int customer_id;
 
 #region Customer Params
@@ -39,7 +41,7 @@ if( customer_id <= 0 ) {
 
 #region Helper Instance
 DbHelper db_helper = new( Constants.Server, Constants.User, Constants.Password, Constants.Database, Constants.Port );
-Console.WriteLine( "[" + now.ToString() + "] " + "Merchanter Sync | CERES SOFTWARE & CONSULTANCY" + " DB:[" + db_helper.Database + "]" );
+Console.WriteLine( "[" + now.ToString() + "] " + "Merchanter Sync | Ceres Software & Consultancy" + " Version: " + Assembly.GetExecutingAssembly().GetName().Version?.ToString() + " DB:[" + db_helper.Database + "]" );
 db_helper.ErrorOccured += ( sender, e ) => { Console.WriteLine( e ); db_helper.LogToServer( "helper_error", e, customer_id, "helper_instance" ); };
 
 string thread_id = Guid.NewGuid().ToString();
@@ -51,9 +53,10 @@ if( !db_helper.LogToServer( "thread", "started " + thread_id, customer_id, "help
     Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Ceres Database error." );
     Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Thread Ended " + thread_id );
     Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Thread Ended " + thread_id );
-    GMail.Send( Constants.mail_sender, Constants.mail_password, Constants.mail_sender_name, Constants.mail_to,
-        Assembly.GetCallingAssembly().GetName().Name + "Error  //customer:" + customer_id.ToString(),
-        "ERROR" + newline + "CustomerID: " + customer_id.ToString() + ". Ceres Database Not Found" + newline + "exit -99" );
+    //GMail.Send( Constants.mail_sender, Constants.mail_password, Constants.mail_sender_name, Constants.mail_to,
+    //    Assembly.GetCallingAssembly().GetName().Name + "Error  //customer:" + customer_id.ToString(),
+    //    "ERROR" + newline + "CustomerID: " + customer_id.ToString() + ". Ceres Database Not Found" + newline + "exit -99" );
+    Console.WriteLine( "-99 exited" );
     return -99;
 }
 else {
@@ -66,6 +69,7 @@ AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
 #endregion
 
 while( true ) {
+    #region Load Customer & Check License
     Customer customer = db_helper.GetCustomer( customer_id );
 
     if( customer == null ) {
@@ -75,9 +79,10 @@ while( true ) {
         Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Thread Ended " + thread_id );
         Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Thread Ended " + thread_id );
         db_helper.LogToServer( "thread", "ended " + thread_id, customer_id, "customer" );
-        GMail.Send( Constants.mail_sender, Constants.mail_password, Constants.mail_sender_name, Constants.mail_to,
-            Assembly.GetCallingAssembly().GetName().Name + "Error  //customer:" + customer_id.ToString(),
-            "ERROR" + newline + "CustomerID: " + customer_id.ToString() + ". User Not Found." + newline + "exit -2" );
+        //GMail.Send( Constants.mail_sender, Constants.mail_password, Constants.mail_sender_name, Constants.mail_to,
+        //    Assembly.GetCallingAssembly().GetName().Name + "Error  //customer:" + customer_id.ToString(),
+        //    "ERROR" + newline + "CustomerID: " + customer_id.ToString() + ". User Not Found." + newline + "exit -2" );
+        Console.WriteLine( "Thread will sleep 10m!" );
         Thread.Sleep( 1000 * 60 * 10 ); //10m
         return -2;
     }
@@ -85,9 +90,11 @@ while( true ) {
     if( !customer.status ) {
         Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + customer_id + "-ID license error." );
         Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + customer_id + "-ID license error." );
+        Console.WriteLine( "Thread will sleep 1h!" );
         Thread.Sleep( 1000 * 60 * 60 ); //1h
         continue;
-    }
+    } 
+    #endregion
 
     #region Helper Settings
     try {
@@ -97,6 +104,7 @@ while( true ) {
             db_helper.LogToServer( "friendly_error", "Settings could not load.", customer_id, "helper_settings" );
             Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Settings could not load." );
             Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Settings could not load." );
+            Console.WriteLine( "Thread will sleep 10m!" );
             Thread.Sleep( 1000 * 60 * 10 ); //10m
             continue;
         }
@@ -105,16 +113,19 @@ while( true ) {
         db_helper.LogToServer( "friendly_error", "Settings could not load.", customer_id, "helper_settings" );
         Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Settings could not load." + newline + ex.ToString() );
         Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Settings could not load." + newline + ex.ToString() );
+        Console.WriteLine( "Thread will sleep 10m!" );
         Thread.Sleep( 1000 * 60 * 10 ); //10m
         continue;
     }
     #endregion
 
-    Constants.is_local = true;
-    if( Helper.global != null && Constants.is_local ) {
-        Helper.global.netsis.rest_url = "http://88.247.120.127:7070/";
-        Helper.global.entegra.api_url = "http://88.247.120.127:5421/";
+    #region First Run
+    if( first_run ) {
+        first_run = false;
+        if( db_helper.SetProductSyncWorking( customer_id, false ) && db_helper.SetOrderSyncWorking( customer_id, false ) && db_helper.SetNotificationSyncWorking( customer_id, false ) && db_helper.SetXmlSyncWorking( customer_id, false ) && db_helper.SetInvoiceSyncWorking( customer_id, false ) )
+            Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + customer_id + "-ID sync statuses reset for first run." );
     }
+    #endregion
 
     #region Decision to Work
     if( customer.product_sync_status && !customer.is_productsync_working ) {
@@ -143,8 +154,7 @@ while( true ) {
                 customer.notification_sync_status = false;
     }
     if( !customer.product_sync_status && !customer.order_sync_status && !customer.xml_sync_status && !customer.invoice_sync_status && !customer.notification_sync_status ) {
-        //Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + customer_id.ToString() + "-" + Helper.global.settings.company_name + " SYNC OK" );
-        //Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + customer_id.ToString() + "-" + Helper.global.settings.company_name + " SYNC OK" );
+        //Console.WriteLine( "Thread will sleep 5secs!" );
         Thread.Sleep( 5 * 1000 ); //5secs
         continue;
     }
@@ -167,9 +177,11 @@ while( true ) {
     }
     catch( Exception _ex ) {
         db_helper.LogToServer( "error", _ex.Message + newline + _ex.ToString(), customer_id, "general" );
-        GMail.Send( Constants.mail_sender, Constants.mail_password, Constants.mail_sender_name, Constants.mail_to,
-            Assembly.GetCallingAssembly().GetName().Name + "-Error  //customer:" + customer_id.ToString(),
-            "ERROR" + newline + "CustomerID: " + customer_id.ToString() + ". " + _ex.Message + newline + _ex.ToString() + newline + "exit -2" );
+        //GMail.Send( Constants.mail_sender, Constants.mail_password, Constants.mail_sender_name, Constants.mail_to,
+        //    Assembly.GetCallingAssembly().GetName().Name + "-Error  //customer:" + customer_id.ToString(),
+        //    "ERROR" + newline + "CustomerID: " + customer_id.ToString() + ". " + _ex.Message + newline + _ex.ToString() + newline + "exit -2" );
+        Console.WriteLine(_ex.Message + newline + _ex.ToString() );
+        Console.WriteLine( "Thread will sleep 1m!" );
         Thread.Sleep( 1000 * 60 * 1 ); //1m
         continue;
     } finally {

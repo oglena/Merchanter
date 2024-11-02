@@ -122,44 +122,51 @@ namespace Merchanter {
                 foreach( var item in data ) {
                     var temp_invoice = _past_invoices?.Where( x => x.invoice_no == item.FatUst.FATIRS_NO ).Where( x => x.is_belge_created ).FirstOrDefault();
                     if( temp_invoice == null ) {
-                        var selected_item = _item_slips_manager.GetInternalById( belge_tipleri.SATIS_FATURASI + ";" + item.FatUst.FATIRS_NO ).Data;
-                        NETSIS_InvoiceResponse invoice = new() {
-                            FATURANO = selected_item.FatUst.FATIRS_NO,
-                            EKACK1 = selected_item.FatUst.EKACK1,
-                            EKACK2 = selected_item.FatUst.EKACK2,
-                            CARIKODU = selected_item.FatUst.CariKod,
-                            CARIGRUP = selected_item.FatUst.CariKod.Split( "-" )[ 0 ],
-                            GENELTOPLAM = Convert.ToDecimal( selected_item.FatUst.GENELTOPLAM ),
-                            BRUTTUTAR = Convert.ToDecimal( selected_item.FatUst.BRUTTUTAR ),
-                            KDV = Convert.ToDecimal( selected_item.FatUst.KDV ),
-                            FATKALEM_ADEDI = selected_item.KalemAdedi.HasValue ? selected_item.KalemAdedi.Value : 0,
-                            KDV_DAHILMI = selected_item.FatUst.KDV_DAHILMI.HasValue ? selected_item.FatUst.KDV_DAHILMI.Value : false,
-                            TARIH = selected_item.FatUst.Tarih,
-                            GIB_FATIRS_NO = selected_item.FatUst.GIB_FATIRS_NO,
-                            KALEMS = []
-                        };
-                        List<string> sipnums = [];
-                        foreach( var kalem in selected_item.Kalems ) {
-                            invoice.KALEMS.Add( new NETSIS_InvoiceItemResponse() {
+                        try {
+                            var selected_item = _item_slips_manager.GetInternalById( belge_tipleri.SATIS_FATURASI + ";" + item.FatUst.FATIRS_NO ).Data;
+                            NETSIS_InvoiceResponse invoice = new() {
                                 FATURANO = selected_item.FatUst.FATIRS_NO,
-                                STOKKODU = kalem.StokKodu,
-                                MIKTAR = Convert.ToInt32( kalem.STra_GCMIK ),
-                                TARIH = kalem.Stra_FiiliTar,
-                                SIPARISNO = kalem.STra_SIPNUM,
-                                FIYAT = Convert.ToDecimal( kalem.STra_NF ),
-                                KDV_ORAN = Convert.ToInt32( kalem.SatisKDVOran ),
-                                SERILER = kalem.KalemSeri != null ? kalem.KalemSeri.Select( x => x.Seri1 ).ToList() : []
-                            } );
-                            if( !sipnums.Contains( kalem.STra_SIPNUM ) ) { }
-                            sipnums.Add( kalem.STra_SIPNUM );
+                                EKACK1 = selected_item.FatUst.EKACK1,
+                                EKACK2 = selected_item.FatUst.EKACK2,
+                                CARIKODU = selected_item.FatUst.CariKod,
+                                CARIGRUP = selected_item.FatUst.CariKod.Split( "-" )[ 0 ],
+                                GENELTOPLAM = Convert.ToDecimal( selected_item.FatUst.GENELTOPLAM ),
+                                BRUTTUTAR = Convert.ToDecimal( selected_item.FatUst.BRUTTUTAR ),
+                                KDV = Convert.ToDecimal( selected_item.FatUst.KDV ),
+                                FATKALEM_ADEDI = selected_item.KalemAdedi.HasValue ? selected_item.KalemAdedi.Value : 0,
+                                KDV_DAHILMI = selected_item.FatUst.KDV_DAHILMI.HasValue ? selected_item.FatUst.KDV_DAHILMI.Value : false,
+                                TARIH = selected_item.FatUst.Tarih,
+                                GIB_FATIRS_NO = selected_item.FatUst.GIB_FATIRS_NO,
+                                KALEMS = []
+                            };
+                            List<string> sipnums = [];
+                            foreach( var kalem in selected_item.Kalems ) {
+                                invoice.KALEMS.Add( new NETSIS_InvoiceItemResponse() {
+                                    FATURANO = selected_item.FatUst.FATIRS_NO,
+                                    STOKKODU = kalem.StokKodu,
+                                    MIKTAR = Convert.ToInt32( kalem.STra_GCMIK ),
+                                    TARIH = kalem.Stra_FiiliTar,
+                                    SIPARISNO = kalem.STra_SIPNUM,
+                                    FIYAT = Convert.ToDecimal( kalem.STra_NF ),
+                                    KDV_ORAN = Convert.ToInt32( kalem.SatisKDVOran ),
+                                    SERILER = kalem.KalemSeri != null ? kalem.KalemSeri.Select( x => x.Seri1 ).ToList() : []
+                                } );
+                                if( !sipnums.Contains( kalem.STra_SIPNUM ) ) { }
+                                sipnums.Add( kalem.STra_SIPNUM );
+                            }
+                            invoice.SIPARISNO = sipnums[ 0 ];
+                            if( !string.IsNullOrWhiteSpace( invoice.FATURANO ) && !string.IsNullOrWhiteSpace( invoice.SIPARISNO ) ) {
+                                response.Add( invoice );
+                                WriteLogLine( "[" + DateTime.Now.ToString() + "] " + invoice.FATURANO + " processing", ConsoleColor.Blue );
+                            }
+                            else {
+                                WriteLogLine( "[" + DateTime.Now.ToString() + "] " + invoice.FATURANO + " invalid invoice", ConsoleColor.Red );
+                            }
                         }
-                        invoice.SIPARISNO = sipnums[ 0 ];
-                        if( !string.IsNullOrWhiteSpace( invoice.FATURANO ) && !string.IsNullOrWhiteSpace( invoice.SIPARISNO ) ) {
-                            response.Add( invoice );
-                            WriteLogLine( "[" + DateTime.Now.ToString() + "] " + invoice.FATURANO + " processing", ConsoleColor.Blue );
-                        }
-                        else {
-                            WriteLogLine( "[" + DateTime.Now.ToString() + "] " + invoice.FATURANO + " invalid invoice", ConsoleColor.Red );
+                        catch( Exception ex ) {
+                            WriteLogLine( "[" + DateTime.Now.ToString() + "] " + "Netsis invoice " + item.FatUst.FATIRS_NO + " response error" + Environment.NewLine + ex.ToString(), ConsoleColor.Red );
+                            Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Netsis invoice " + item.FatUst.FATIRS_NO + " response error" );
+                            continue;
                         }
                     }
                 }
@@ -252,7 +259,7 @@ namespace Merchanter {
             foreach( var item in _order.order_items ) {
                 NetOpenX.Rest.Client.Model.NetOpenX.ItemSlipLines slipLine = new() {
                     StokKodu = item.sku,
-                    ProjeKodu = item.parent_sku,
+                    STra_ACIK = item.parent_sku,
                     STra_KDV = Convert.ToDouble( item.tax ),
                     DEPO_KODU = Helper.global.netsis.siparis_depokodu,
                     STra_GCMIK = (double)item.qty_ordered,

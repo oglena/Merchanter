@@ -928,11 +928,11 @@ namespace MerchanterServer {
                                     live_products.Add( p );
                                 }
                                 else {
-                                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ENTEGRA + " " + item.Barcode + " sku missing, not sync." );
+                                    Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ENTEGRA + " " + item.Barcode + " sku missing, not sync." );
                                 }
                             }
                             else {
-                                Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ENTEGRA + " " + item.Sku + " barcode missing, not sync." );
+                                Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ENTEGRA + " " + item.Sku + " barcode missing, not sync." );
                             }
                         }
                     }
@@ -1022,7 +1022,7 @@ namespace MerchanterServer {
                 if( products != null ) {
                     List<Notification> notifications = [];
                     if( product_targets.Contains( Constants.MAGENTO2 ) ) {
-                        var source_brand = Helper.GetProductAttribute( Helper.global.magento.brand_attribute_code );
+                        var source_brands = Helper.GetProductAttribute( Helper.global.magento.brand_attribute_code );
                         bool is_need_indexer = false;
                         foreach( var item in live_products ) {
                             bool is_updated = false;
@@ -1035,8 +1035,8 @@ namespace MerchanterServer {
                             #region Brand
                             if( !selected_product.brand.brand_name.Trim().Equals( item.brand.brand_name.Trim(), StringComparison.CurrentCultureIgnoreCase ) ) {
                                 is_updated = true; is_need_indexer = true;
-                                if( source_brand != null ) {
-                                    var selected_source_brand = source_brand.options.Where( x => x.label.Equals( item.brand.brand_name, StringComparison.CurrentCultureIgnoreCase ) ).FirstOrDefault();
+                                if( source_brands != null ) {
+                                    var selected_source_brand = source_brands.options.Where( x => x.label.Equals( item.brand.brand_name, StringComparison.CurrentCultureIgnoreCase ) ).FirstOrDefault();
                                     if( selected_source_brand != null ) { //update
                                         if( true || Helper.UpdateProductAttribute( item.sku, Helper.global.magento.brand_attribute_code, selected_source_brand.value ) ) {
                                             db_helper.LogToServer( "product_brand_updated", Helper.global.settings.company_name + " Sku:" + item.sku + selected_source_brand.label + " => " + item.brand.brand_name, customer.customer_id, "product" );

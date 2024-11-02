@@ -1,5 +1,6 @@
 ﻿using Merchanter.Classes;
 using RestSharp;
+using System.Diagnostics;
 
 namespace Merchanter {
     public class Executioner :IDisposable {
@@ -20,7 +21,7 @@ namespace Merchanter {
 
                     var response = restClient.Execute( request );
                     if( response.StatusCode == System.Net.HttpStatusCode.OK ) {
-                        Console.WriteLine( "Executed!.. M:" + _method.ToString() + " | URL:'" + _url + "'" );
+                        Debug.WriteLine( "Executed!.. M:" + _method.ToString() + " | URL:'" + _url + "'" );
                         return response.Content;
                     }
                     else {
@@ -30,7 +31,7 @@ namespace Merchanter {
                 else if( _method == Method.Get ) {
                     var response = restClient.Execute( request );
                     if( response.StatusCode == System.Net.HttpStatusCode.OK ) {
-                        Console.WriteLine( "Executed!.. M:" + _method.ToString() + " | URL:'" + _url + "'" );
+                        Debug.WriteLine( "Executed!.. M:" + _method.ToString() + " | URL:'" + _url + "'" );
                         return response.Content;
                     }
                     else {
@@ -40,7 +41,7 @@ namespace Merchanter {
                 else if( _method == Method.Delete ) {
                     var response = restClient.Execute( request );
                     if( response.StatusCode == System.Net.HttpStatusCode.OK ) {
-                        Console.WriteLine( "Executed!.. M:" + _method.ToString() + " | URL:'" + _url + "'" );
+                        Debug.WriteLine( "Executed!.. M:" + _method.ToString() + " | URL:'" + _url + "'" );
                         return response.Content;
                     }
                     else {
