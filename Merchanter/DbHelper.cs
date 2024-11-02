@@ -1498,11 +1498,12 @@ namespace Merchanter {
                     val += cmd.ExecuteNonQuery();
                     if( state == System.Data.ConnectionState.Open ) connection.Close();
                     DeleteProductSources( _customer_id, item.sku.ToString() );
+
                     foreach( var source_item in item.sources )
                         InsertProductSource( _customer_id, source_item );
+
                     if( _with_ext && item.extension != null ) {
                         UpdateProductExt( _customer_id, item.extension );
-
                     }
                 }
 
@@ -1659,7 +1660,7 @@ namespace Merchanter {
                 cmd.Parameters.Add( new MySqlParameter( "brand_id", _source.brand_id ) );
                 cmd.Parameters.Add( new MySqlParameter( "category_ids", _source.category_ids ) );
                 cmd.Parameters.Add( new MySqlParameter( "barcode", _source.barcode ) );
-                cmd.Parameters.Add( new MySqlParameter( "xml_sources", string.Join( ",", _source.xml_sources ) ) );
+                cmd.Parameters.Add( new MySqlParameter( "xml_sources", _source.xml_sources.Length > 0 ? string.Join( ",", _source.xml_sources ) : null ) );
                 cmd.Parameters.Add( new MySqlParameter( "is_xml_enabled", _source.is_xml_enabled ) );
                 cmd.Parameters.Add( new MySqlParameter( "update_date", DateTime.Now ) );
                 val = cmd.ExecuteNonQuery();
@@ -1937,7 +1938,7 @@ namespace Merchanter {
             try {
                 if( state != System.Data.ConnectionState.Open ) connection.Open();
                 string _query = "SELECT * FROM brands " +
-                    "WHERE UPPER(brand_name)=UPPER(@brand_name) AND customer_id=@customer_id";
+                    "WHERE LOWER(brand_name)=LOWER(@brand_name) AND customer_id=@customer_id";
                 MySqlCommand cmd = new MySqlCommand( _query, connection );
                 cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
                 cmd.Parameters.Add( new MySqlParameter( "brand_name", _name ) );
@@ -1985,6 +1986,66 @@ namespace Merchanter {
             catch( Exception ex ) {
                 OnError( ex.Message );
                 return null;
+            }
+        }
+
+        public int InsertBrand( int _customer_id, Brand _brand, bool return_bid ) {
+            try {
+                var temp_brand = GetBrandByName( _customer_id, _brand.brand_name );
+                if( temp_brand == null ) {
+                    object val;
+                    string _query = "START TRANSACTION;" +
+                        "INSERT INTO brands (customer_id,brand_name,status) VALUES (@customer_id,@brand_name,@status);" +
+                        "SELECT LAST_INSERT_ID();" +
+                        "COMMIT;";
+                    MySqlCommand cmd = new MySqlCommand( _query, connection );
+                    cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+                    cmd.Parameters.Add( new MySqlParameter( "brand_name", _brand.brand_name ) );
+                    cmd.Parameters.Add( new MySqlParameter( "status", _brand.status ) );
+                    if( state != System.Data.ConnectionState.Open ) connection.Open();
+                    val = cmd.ExecuteScalar();
+                    if( state == System.Data.ConnectionState.Open ) connection.Close();
+                    if( val != null ) {
+                        if( int.TryParse( val.ToString(), out int BID ) )
+                            return BID;
+                    }
+                    return 0;
+                }
+                else {
+                    return temp_brand.id;
+                }
+            }
+            catch( Exception ex ) {
+                OnError( ex.Message );
+                return 0;
+            }
+        }
+
+        public bool UpdateBrand( int _customer_id, Brand _brand ) {
+            try {
+                if( state != System.Data.ConnectionState.Open )
+                    connection.Open();
+
+                int val = 0;
+                string _query = "UPDATE brands SET brand_name=@brand_name,status=@status " +
+                    "WHERE id=@id AND customer_id=@customer_id";
+                MySqlCommand cmd = new MySqlCommand( _query, connection );
+                cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+                cmd.Parameters.Add( new MySqlParameter( "id", _brand.id ) );
+                cmd.Parameters.Add( new MySqlParameter( "brand_name", _brand.brand_name ) );
+                cmd.Parameters.Add( new MySqlParameter( "status", _brand.status ) );
+                val = cmd.ExecuteNonQuery();
+
+                if( state == System.Data.ConnectionState.Open )
+                    connection.Close();
+
+                if( val > 0 )
+                    return true;
+                else return false;
+            }
+            catch( Exception ex ) {
+                OnError( ex.Message );
+                return false;
             }
         }
         #endregion

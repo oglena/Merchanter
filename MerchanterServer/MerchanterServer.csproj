@@ -8,13 +8,6 @@
 		<SatelliteResourceLanguages>tr</SatelliteResourceLanguages>
 	</PropertyGroup>
 	<ItemGroup>
-	  <PackageReference Include="RestSharp" Version="112.0.0" />
-	  <PackageReference Include="System.Formats.Asn1" Version="8.0.1" />
-	  <PackageReference Include="System.ServiceModel.Duplex" Version="6.0.0" />
-	  <PackageReference Include="System.ServiceModel.NetTcp" Version="8.0.0" />
-	  <PackageReference Include="System.ServiceModel.Security" Version="6.0.0" />
-	</ItemGroup>
-	<ItemGroup>
 		<ProjectReference Include="..\MerchanterHelpers\MerchanterHelpers.csproj" />
 		<ProjectReference Include="..\Merchanter\Merchanter.csproj" />
 		<ProjectReference Include="..\ShipmentHelpers\ShipmentHelpers.csproj" />

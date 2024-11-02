@@ -840,6 +840,8 @@ namespace MerchanterServer {
                 if( product_main_source != null && product_main_source == Constants.ENTEGRA ) {
                     Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name +
                     " started loading " + Constants.ENTEGRA + " sources." );
+
+                    //TODO: main currency source check will be here
                     var source_currency_rates = Helper.GetENTCurrencyRates();
                     if( source_currency_rates != null ) {
                         rates.TL = source_currency_rates.TL;
@@ -858,9 +860,10 @@ namespace MerchanterServer {
                             if( Helper.global.settings.is_barcode_required && item.Barcode != string.Empty ) {
                                 if( item.Sku != string.Empty ) {
                                     //checking if exist
-                                    Brand? existed_brand = brands.Where( x => x.brand_name == item.BrandName ).FirstOrDefault();
+                                    Brand? existed_brand = brands.Where( x => x.brand_name.Trim().Equals( item.BrandName?.Trim().ToLower(), StringComparison.CurrentCultureIgnoreCase ) ).FirstOrDefault();
                                     ProductExtension? existed_p_ext = products_ext?.Where( x => x.sku == item.Sku ).FirstOrDefault();
                                     List<Category>? existed_p_cats = existed_p_ext != null ? categories?.Where( x => existed_p_ext.category_ids.Split( "," ).Contains( x.id.ToString() ) ).ToList() : null;
+                                    if( existed_p_ext != null ) existed_p_ext.categories = existed_p_cats;
                                     //checking if exist
 
                                     //TODO: Product attribute source mapping condition will be here
@@ -882,17 +885,17 @@ namespace MerchanterServer {
                                         } ],
                                         extension = new ProductExtension() {
                                             sku = item.Sku, barcode = item.Barcode, customer_id = customer.customer_id,
-                                            brand_id = existed_brand != null ? existed_brand.id : 1, /*TODO: customer default brand id gelmeli*/
-                                            is_xml_enabled = existed_p_ext != null ? existed_p_ext.is_xml_enabled : false,
+                                            brand_id = existed_brand != null ? existed_brand.id : (string.IsNullOrEmpty( item.BrandName ) ? 1 : 0),
+                                            is_xml_enabled = existed_p_ext != null && existed_p_ext.is_xml_enabled,
                                             xml_sources = existed_p_ext != null ? existed_p_ext.xml_sources : [],
                                             category_ids = /* TODO: this gonna change item.CategoryIds*/ existed_p_ext != null ? existed_p_ext.category_ids : Helper.global.customer_root_category.ToString(),
                                             categories = /* TODO: this gonna change item.Categories()*/ existed_p_cats != null ? existed_p_cats :
                                             [ new Category() { id = Helper.global.customer_root_category, category_name = customer.customer_id + "-root", is_active = true, parent_id = 1, customer_id = customer.customer_id
                                             } ]
                                         },
-                                        brand = existed_brand != null ? existed_brand : new Brand() {
+                                        brand = existed_brand != null ? existed_brand : (string.IsNullOrEmpty( item.BrandName ) ? new Brand() {
                                             id = 1/*TODO: customer default brand id gelmeli*/, brand_name = "DİĞER", status = true, customer_id = customer.customer_id
-                                        }
+                                        } : new Brand() { customer_id = customer.customer_id, brand_name = item.BrandName, status = true, id = 0 })
                                     };
 
                                     #region OLD
@@ -1019,33 +1022,33 @@ namespace MerchanterServer {
                 if( products != null ) {
                     List<Notification> notifications = [];
                     if( product_targets.Contains( Constants.MAGENTO2 ) ) {
+                        var source_brand = Helper.GetProductAttribute( Helper.global.magento.brand_attribute_code );
                         bool is_need_indexer = false;
                         foreach( var item in live_products ) {
                             bool is_updated = false;
                             var selected_product = products.Where( x => x.sku == item.sku ).FirstOrDefault();
                             selected_product ??= new Product() { customer_id = customer.customer_id, sku = item.sku, source_product_id = item.source_product_id };
-                            if( selected_product.name != item.name ) { }
+                            if( selected_product.name?.Trim().ToLower() != item.name?.Trim().ToLower() ) { }
                             if( selected_product.tax_included != item.tax_included ) { }
                             if( selected_product.tax != item.tax ) { }
 
                             #region Brand
-                            if( selected_product.brand.brand_name != item.brand.brand_name ) {
+                            if( !selected_product.brand.brand_name.Trim().Equals( item.brand.brand_name.Trim(), StringComparison.CurrentCultureIgnoreCase ) ) {
                                 is_updated = true; is_need_indexer = true;
-                                var source_brand = Helper.GetProductAttribute( Helper.global.magento.brand_attribute_code );
                                 if( source_brand != null ) {
-                                    var selected_source_brand = source_brand.options.Where( x => x.value == item.brand.brand_name ).FirstOrDefault();
+                                    var selected_source_brand = source_brand.options.Where( x => x.label.Equals( item.brand.brand_name, StringComparison.CurrentCultureIgnoreCase ) ).FirstOrDefault();
                                     if( selected_source_brand != null ) { //update
                                         if( true || Helper.UpdateProductAttribute( item.sku, Helper.global.magento.brand_attribute_code, selected_source_brand.value ) ) {
-                                            db_helper.LogToServer( "product_brand_updated", Helper.global.settings.company_name + " Sku:" + item.sku + "= " + selected_product.brand.brand_name + " => " + item.brand.brand_name, customer.customer_id, "product" );
+                                            db_helper.LogToServer( "product_brand_updated", Helper.global.settings.company_name + " Sku:" + item.sku + selected_source_brand.label + " => " + item.brand.brand_name, customer.customer_id, "product" );
                                         }
                                         else {
-                                            db_helper.LogToServer( "product_brand_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + "= " + selected_product.brand.brand_name.ToString() + " => " + item.brand.brand_name?.ToString(), customer.customer_id, "product" );
+                                            db_helper.LogToServer( "product_brand_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + selected_product.brand.brand_name.ToString() + " => " + item.brand.brand_name?.ToString(), customer.customer_id, "product" );
                                         }
                                     }
                                     else { //insert
-                                        var inserted_id = Helper.InsertAttributeOption( Helper.global.magento.brand_attribute_code, item.brand.brand_name );
-                                        if( inserted_id != null ) {
-                                            if( true || Helper.UpdateProductAttribute( item.sku, Helper.global.magento.brand_attribute_code, selected_source_brand.value ) ) {
+                                        //var inserted_id = Helper.InsertAttributeOption( Helper.global.magento.brand_attribute_code, item.brand.brand_name );
+                                        if( true /*inserted_id != null*/ ) {
+                                            if( true /*|| Helper.UpdateProductAttribute( item.sku, Helper.global.magento.brand_attribute_code, inserted_id )*/ ) {
                                                 db_helper.LogToServer( "product_brand_inserted", Helper.global.settings.company_name + " Sku:" + item.sku + "= " + selected_product.brand.brand_name + " => " + item.brand.brand_name, customer.customer_id, "product" );
                                             }
                                             else {
@@ -1053,9 +1056,15 @@ namespace MerchanterServer {
                                             }
                                         }
                                     }
+
+                                    if( item.brand.id == 0 ) { 
+                                        item.brand.id = db_helper.InsertBrand( customer.customer_id, item.brand, true );
+                                        item.extension.brand_id = item.brand.id;
+                                    }
+
                                 }
                                 else { //no brand attribute exists
-
+                                    db_helper.LogToServer( "product_brand_insert_error", Helper.global.settings.company_name + " - " + Helper.global.magento.brand_attribute_code + " brand attribute missing?", customer.customer_id, "product" );
                                 }
                             }
                             #endregion
@@ -1074,11 +1083,11 @@ namespace MerchanterServer {
 
                             #region Qty
                             if( selected_product.total_qty != item.total_qty ) {
-                                is_updated = true;
                                 if( Helper.UpdateProductQty( item.sku, item.total_qty ) ) {
+                                    is_updated = true;
                                     Console.WriteLine( "[" + DateTime.Now.ToString() + "] Sku:" + item.sku + " updated " + selected_product.total_qty + " => " + item.total_qty );
                                     db_helper.LogToServer( "product_qty_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.total_qty.ToString() + " => " + item.total_qty.ToString(), customer.customer_id, "product" );
-                                    #region Notify
+                                    #region Notify Product - PRODUCT_IN_STOCK, PRODUCT_OUT_OF_STOCK
                                     if( selected_product.total_qty <= 0 && item.total_qty > 0 ) {
                                         notifications.Add( new Notification() {
                                             customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_IN_STOCK, product_sku = item.sku, xproduct_barcode = item.sources.Count > 1 ? item.barcode : null
@@ -1146,7 +1155,7 @@ namespace MerchanterServer {
                             if( is_updated ) {
                                 if( selected_product.id > 0 ) {
                                     item.id = selected_product.id;
-                                    if( db_helper.UpdateProducts( customer.customer_id, new List<Product> { item }, false ) ) {
+                                    if( db_helper.UpdateProducts( customer.customer_id, new List<Product> { item }, true ) ) {
                                         Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Sku:" + item.sku + " " + "updated." );
                                         Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Sku:" + item.sku + " " + "updated." );
                                     }
