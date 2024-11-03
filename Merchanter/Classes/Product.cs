@@ -17,7 +17,6 @@
         public bool tax_included { get; set; } = false;
         public List<ProductSource> sources { get; set; }
         public ProductExtension extension { get; set; }
-        public Brand brand { get; set; } = new Brand() { id = 1 };
 
         public enum ProductTypes {
             SIMPLE = 0,

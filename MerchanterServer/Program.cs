@@ -48,7 +48,7 @@ string thread_id = Guid.NewGuid().ToString();
 Thread.CurrentThread.Name = thread_id + ",main";
 Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Thread Started " + thread_id );
 Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Thread Started " + thread_id );
-if( !db_helper.LogToServer( "thread", "started " + thread_id, customer_id, "helper_instance" ) ) {
+if( !db_helper.LogToServer( "merchanter", "started " + thread_id, customer_id, "main_thread" ) ) {
     Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Ceres Database error." );
     Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Ceres Database error." );
     Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Thread Ended " + thread_id );
@@ -196,7 +196,7 @@ while( true ) {
 }
 
 void CurrentDomain_ProcessExit( object? sender, EventArgs e ) {
-    if( db_helper.LogToServer( "thread", "ended " + thread_id, customer_id, "helper_instance" ) ) {
+    if( db_helper.LogToServer( "merchanter", "ended " + thread_id, customer_id, "main_thread" ) ) {
         Debug.WriteLine( "exit success" );
     }
 }

@@ -1164,15 +1164,13 @@ namespace Merchanter {
                 if( state == System.Data.ConnectionState.Open ) connection.Close();
                 if( _with_ext ) {
                     var exts = GetProductExts( _customer_id );
-                    if( exts != null ) {
-                        var brands = GetBrands( _customer_id );
-                        var categories = GetCategories( _customer_id );
-                        foreach( var item in list ) {
-                            item.extension = exts.Where( x => x.sku == item.sku ).FirstOrDefault();
-                            item.brand = brands.Where( x => x.id == item.extension.brand_id ).FirstOrDefault();
-
-                            if( item.extension != null )
-                                item.extension.categories = categories.Where( x => item.extension.category_ids.Contains( x.id.ToString() ) ).ToList();
+                    foreach( var item in list ) {
+                        var selected_ext = exts?.Where( x => x.sku == item.sku ).FirstOrDefault();
+                        if( selected_ext != null )
+                            item.extension = selected_ext;
+                        else {
+                            OnError( item.sku + " Product Extension Not Found" );
+                            throw new Exception( item.sku + " Product Extension Not Found" );
                         }
                     }
                 }
@@ -1226,11 +1224,13 @@ namespace Merchanter {
                 if( state == System.Data.ConnectionState.Open ) connection.Close();
                 if( _with_ext ) {
                     var exts = GetProductExts( _customer_id );
-                    if( exts != null ) {
-                        var brands = GetBrands( _customer_id );
-                        foreach( var item in list ) {
-                            item.extension = exts.Where( x => x.sku == item.sku ).FirstOrDefault();
-                            item.brand = brands.Where( x => x.id == item.extension.brand_id ).FirstOrDefault();
+                    foreach( var item in list ) {
+                        var selected_ext = exts?.Where( x => x.sku == item.sku ).FirstOrDefault();
+                        if( selected_ext != null )
+                            item.extension = selected_ext;
+                        else {
+                            OnError( item.sku + " Product Extension Not Found" );
+                            throw new Exception( item.sku + " Product Extension Not Found" );
                         }
                     }
                 }
@@ -1283,12 +1283,13 @@ namespace Merchanter {
                 dataReader.Close();
                 if( state == System.Data.ConnectionState.Open ) connection.Close();
                 if( _with_ext ) {
-                    var exts = GetProductExts( _customer_id );
-                    if( exts != null ) {
-                        var brands = GetBrands( _customer_id );
-                        foreach( var item in list ) {
-                            item.extension = exts.Where( x => x.sku == item.sku ).FirstOrDefault();
-                            item.brand = brands.Where( x => x.id == item.extension.brand_id ).FirstOrDefault();
+                    var exts = GetProductExts( _customer_id ); foreach( var item in list ) {
+                        var selected_ext = exts?.Where( x => x.sku == item.sku ).FirstOrDefault();
+                        if( selected_ext != null )
+                            item.extension = selected_ext;
+                        else {
+                            OnError( item.sku + " Product Extension Not Found" );
+                            throw new Exception( item.sku + " Product Extension Not Found" );
                         }
                     }
                 }
@@ -1355,12 +1356,13 @@ namespace Merchanter {
                 dataReader.Close();
                 if( state == System.Data.ConnectionState.Open ) connection.Close();
                 if( _with_ext ) {
-                    var exts = GetProductExts( _customer_id );
-                    if( exts != null ) {
-                        var brands = GetBrands( _customer_id );
-                        foreach( var item in list ) {
-                            item.extension = exts.Where( x => x.sku == item.sku ).FirstOrDefault();
-                            item.brand = brands.Where( x => x.id == item.extension.brand_id ).FirstOrDefault();
+                    var exts = GetProductExts( _customer_id ); foreach( var item in list ) {
+                        var selected_ext = exts?.Where( x => x.sku == item.sku ).FirstOrDefault();
+                        if( selected_ext != null )
+                            item.extension = selected_ext;
+                        else {
+                            OnError( item.sku + " Product Extension Not Found" );
+                            throw new Exception( item.sku + " Product Extension Not Found" );
                         }
                     }
                 }
@@ -1419,7 +1421,6 @@ namespace Merchanter {
                 }
 
                 list[ 0 ].extension = GetProductExt( _customer_id, list[ 0 ].sku );
-                list[ 0 ].brand = GetBrand( _customer_id, list[ 0 ].extension.brand_id );
 
                 if( state == System.Data.ConnectionState.Open ) connection.Close();
                 return list[ 0 ];
@@ -1543,7 +1544,7 @@ namespace Merchanter {
             }
         }
 
-        public ProductExtension? GetProductExt( int _customer_id, string _sku ) {
+        public ProductExtension GetProductExt( int _customer_id, string _sku ) {
             try {
                 if( state != System.Data.ConnectionState.Open )
                     connection.Open();
@@ -1568,6 +1569,12 @@ namespace Merchanter {
                 dataReader.Close();
                 if( state == System.Data.ConnectionState.Open )
                     connection.Close();
+
+                if( px != null ) {
+                    px.brand = GetBrand( _customer_id, px.brand_id );
+                    px.categories = GetProductCategories( _customer_id, _sku );
+                }
+
                 return px;
             }
             catch( Exception ex ) {
@@ -1576,7 +1583,7 @@ namespace Merchanter {
             }
         }
 
-        public List<ProductExtension>? GetProductExts( int _customer_id ) {
+        public List<ProductExtension> GetProductExts( int _customer_id ) {
             try {
                 if( state != System.Data.ConnectionState.Open )
                     connection.Open();
@@ -1602,6 +1609,13 @@ namespace Merchanter {
                 dataReader.Close();
                 if( state == System.Data.ConnectionState.Open )
                     connection.Close();
+
+                var brands = GetBrands( _customer_id );
+                var categories = GetCategories( _customer_id );
+                foreach( var item in list ) {
+                    item.brand = brands.FirstOrDefault( x => x.id == item.brand_id );
+                    item.categories = categories.Where( x => item.category_ids.Split( ',' ).Contains( x.id.ToString() ) ).ToList();
+                }
                 return list;
             }
             catch( Exception ex ) {
@@ -1613,7 +1627,7 @@ namespace Merchanter {
         public bool InsertProductExt( int _customer_id, ProductExtension _source ) {
             try {
                 var temp_ext = GetProductExt( _customer_id, _source.sku );
-                if( temp_ext != null ) throw new Exception( "Sku is already in table." );
+                if( temp_ext != null ) { OnError( "Sku is already in table." ); throw new Exception( "Sku is already in table." ); }
 
                 int val = 0;
                 string _query = "INSERT INTO products_ext (customer_id,brand_id,category_ids,sku,barcode) VALUES " +
@@ -1849,7 +1863,7 @@ namespace Merchanter {
         #endregion
 
         #region Brand
-        public Brand? GetBrand( int _customer_id, int _id ) {
+        public Brand GetBrand( int _customer_id, int _id ) {
             try {
                 if( state != System.Data.ConnectionState.Open ) connection.Open();
                 string _query = "SELECT * FROM brands " +

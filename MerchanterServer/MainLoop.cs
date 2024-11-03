@@ -634,7 +634,7 @@ namespace MerchanterServer {
                                            selected_product.name,
                                            selected_product.sku,
                                            selected_product.barcode,
-                                           selected_product.brand.brand_name,
+                                           selected_product.extension.brand.brand_name,
                                            selected_order.order_label,
                                            selected_order.order_items.Where( x => x.sku == item.product_sku ).FirstOrDefault()?.qty_ordered,
                                            selected_order.order_items.Where( x => x.sku == item.product_sku ).FirstOrDefault()?.price + " " + selected_order.currency,
@@ -682,7 +682,7 @@ namespace MerchanterServer {
                                            selected_product.name,
                                            selected_product.sku,
                                            selected_product.barcode,
-                                           selected_product.brand.brand_name,
+                                           selected_product.extension.brand.brand_name,
                                            (selected_product.special_price != 0 ? (selected_product.special_price * (1 + (selected_product.tax / 100)) * (selected_product.currency == "USD" ? Helper.global.settings.rate_USD : (selected_product.currency == "EUR" ? Helper.global.settings.rate_EUR : 1))) + "TL" :
                                                     Math.Round( selected_product.price * (1m + (selected_product.tax / 100m)) * (selected_product.currency == "USD" ? Helper.global.settings.rate_USD : (selected_product.currency == "EUR" ? Helper.global.settings.rate_EUR : 1)), 2, MidpointRounding.AwayFromZero ) + "TL"),
                                            string.Join( "", selected_product.sources.SelectMany( x => new List<string>() {
@@ -729,7 +729,7 @@ namespace MerchanterServer {
                                            selected_product.name,
                                            selected_product.sku,
                                            selected_product.barcode,
-                                           selected_product.brand.brand_name,
+                                           selected_product.extension.brand.brand_name,
                                            (selected_product.special_price != 0 ? (selected_product.special_price * (1 + (selected_product.tax / 100)) * (selected_product.currency == "USD" ? Helper.global.settings.rate_USD : (selected_product.currency == "EUR" ? Helper.global.settings.rate_EUR : 1))) + "TL" :
                                                     Math.Round( selected_product.price * (1m + (selected_product.tax / 100m)) * (selected_product.currency == "USD" ? Helper.global.settings.rate_USD : (selected_product.currency == "EUR" ? Helper.global.settings.rate_EUR : 1)), 2, MidpointRounding.AwayFromZero ) + "TL"),
                                            string.Join( "", selected_product.sources.SelectMany( x => new List<string>() {
@@ -788,7 +788,7 @@ namespace MerchanterServer {
                                                selected_product.name,
                                                selected_product.sku,
                                                selected_product.barcode,
-                                               selected_product.brand.brand_name,
+                                               selected_product.extension.brand.brand_name,
                                                xsource, ((selected_xproducts?.Where( x => x.xml_source == xsource ).FirstOrDefault()?.is_active == true) ? "active" : "passive"),
                                                selected_xproducts?.Where( x => x.xml_source == xsource ).FirstOrDefault()?.qty,
                                                Math.Round( old_price, 2, MidpointRounding.AwayFromZero ) + selected_xproducts?.Where( x => x.xml_source == xsource ).FirstOrDefault()?.currency,
@@ -896,11 +896,11 @@ namespace MerchanterServer {
                                             category_ids = /* TODO: this gonna change item.CategoryIds*/ existed_p_ext != null ? existed_p_ext.category_ids : Helper.global.customer_root_category.ToString(),
                                             categories = /* TODO: this gonna change item.Categories()*/ existed_p_cats != null ? existed_p_cats :
                                             [ new Category() { id = Helper.global.customer_root_category, category_name = customer.customer_id + "-root", is_active = true, parent_id = 1, customer_id = customer.customer_id
-                                            } ]
-                                        },
-                                        brand = existed_brand != null ? existed_brand : (string.IsNullOrEmpty( item.BrandName ) ? new Brand() {
-                                            id = 1/*TODO: customer default brand id gelmeli*/, brand_name = "DİĞER", status = true, customer_id = customer.customer_id
-                                        } : new Brand() { customer_id = customer.customer_id, brand_name = item.BrandName, status = true, id = 0 })
+                                            } ],
+                                            brand = existed_brand != null ? existed_brand : (string.IsNullOrEmpty( item.BrandName ) ? new Brand() {
+                                                id = 1/*TODO: customer default brand id gelmeli*/, brand_name = "DİĞER", status = true, customer_id = customer.customer_id
+                                            } : new Brand() { customer_id = customer.customer_id, brand_name = item.BrandName, status = true, id = 0 })
+                                        }
                                     };
 
                                     #region OLD
@@ -1034,33 +1034,33 @@ namespace MerchanterServer {
                             if( selected_product.tax != item.tax ) { }
 
                             #region Brand
-                            if( !selected_product.brand.brand_name.Trim().Equals( item.brand.brand_name.Trim(), StringComparison.CurrentCultureIgnoreCase ) ) {
+                            if( !selected_product.extension.brand.brand_name.Trim().Equals( item.extension.brand.brand_name.Trim(), StringComparison.CurrentCultureIgnoreCase ) ) {
                                 is_updated = true; is_need_indexer = true;
                                 if( source_brands != null ) {
-                                    var selected_source_brand = source_brands.options.Where( x => x.label.Equals( item.brand.brand_name, StringComparison.CurrentCultureIgnoreCase ) ).FirstOrDefault();
+                                    var selected_source_brand = source_brands.options.Where( x => x.label.Equals( item.extension.brand.brand_name, StringComparison.CurrentCultureIgnoreCase ) ).FirstOrDefault();
                                     if( selected_source_brand != null ) { //update
                                         if( true || Helper.UpdateProductAttribute( item.sku, Helper.global.magento.brand_attribute_code, selected_source_brand.value ) ) {
-                                            db_helper.LogToServer( "product_brand_updated", Helper.global.settings.company_name + " Sku:" + item.sku + selected_source_brand.label + " => " + item.brand.brand_name, customer.customer_id, "product" );
+                                            db_helper.LogToServer( "product_brand_updated", Helper.global.settings.company_name + " Sku:" + item.sku + selected_source_brand.label + " => " + item.extension.brand.brand_name, customer.customer_id, "product" );
                                         }
                                         else {
-                                            db_helper.LogToServer( "product_brand_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + selected_product.brand.brand_name.ToString() + " => " + item.brand.brand_name?.ToString(), customer.customer_id, "product" );
+                                            db_helper.LogToServer( "product_brand_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString(), customer.customer_id, "product" );
                                         }
                                     }
                                     else { //insert
                                         //var inserted_id = Helper.InsertAttributeOption( Helper.global.magento.brand_attribute_code, item.brand.brand_name );
                                         if( true /*inserted_id != null*/ ) {
                                             if( true /*|| Helper.UpdateProductAttribute( item.sku, Helper.global.magento.brand_attribute_code, inserted_id )*/ ) {
-                                                db_helper.LogToServer( "product_brand_inserted", Helper.global.settings.company_name + " Sku:" + item.sku + "= " + selected_product.brand.brand_name + " => " + item.brand.brand_name, customer.customer_id, "product" );
+                                                db_helper.LogToServer( "product_brand_inserted", Helper.global.settings.company_name + " Sku:" + item.sku + "= " + selected_product.extension.brand.brand_name + " => " + item.extension.brand.brand_name, customer.customer_id, "product" );
                                             }
                                             else {
-                                                db_helper.LogToServer( "product_brand_insert_error", Helper.global.settings.company_name + " Sku:" + item.sku + "= " + selected_product.brand.brand_name.ToString() + " => " + item.brand.brand_name?.ToString(), customer.customer_id, "product" );
+                                                db_helper.LogToServer( "product_brand_insert_error", Helper.global.settings.company_name + " Sku:" + item.sku + "= " + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString(), customer.customer_id, "product" );
                                             }
                                         }
                                     }
 
-                                    if( item.brand.id == 0 ) {
-                                        item.brand.id = db_helper.InsertBrand( customer.customer_id, item.brand, true );
-                                        item.extension.brand_id = item.brand.id;
+                                    if( item.extension.brand.id == 0 ) {
+                                        item.extension.brand.id = db_helper.InsertBrand( customer.customer_id, item.extension.brand, true );
+                                        item.extension.brand_id = item.extension.brand.id;
                                     }
 
                                 }
