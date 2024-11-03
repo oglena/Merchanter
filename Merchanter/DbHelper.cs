@@ -1,8 +1,6 @@
 ﻿using Merchanter.Classes;
 using Merchanter.Classes.Settings;
 using MySql.Data.MySqlClient;
-using NetOpenX.Rest.Core.Models;
-using static Org.BouncyCastle.Asn1.Cmp.Challenge;
 
 namespace Merchanter {
     public class DbHelper {
@@ -61,7 +59,7 @@ namespace Merchanter {
                 Database = _database;
                 Port = _port;
                 connectionString = "Server=" + Server + ";Port=" + Port.ToString() + ";" + "Database=" +
-            Database + ";" + "Uid=" + User + ";" + "Pwd=" + Password + ";CharSet=utf8;";
+                    Database + ";" + "Uid=" + User + ";" + "Pwd=" + Password + ";CharSet=utf8;";
                 //Connection = new MySqlConnection( connectionString );
                 Connection.ConnectionString = connectionString;
                 Connection.StateChange += Connection_StateChange;
@@ -348,7 +346,7 @@ namespace Merchanter {
                         worker = dataReader[ "worker" ].ToString(),
                         title = dataReader[ "title" ].ToString(),
                         message = dataReader[ "message" ].ToString(),
-                        update_date = !string.IsNullOrWhiteSpace( dataReader[ "update_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "update_date" ].ToString() ) : null,
+                        update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() ),
                     };
                     list.Add( l );
                 }
@@ -386,10 +384,10 @@ namespace Merchanter {
                         Log l = new Log {
                             id = int.Parse( dataReader[ "id" ].ToString() ),
                             customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
-                            worker = dataReader[ "worker" ].ToString(),
-                            title = dataReader[ "title" ].ToString(),
-                            message = dataReader[ "message" ].ToString(),
-                            update_date = !string.IsNullOrWhiteSpace( dataReader[ "update_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "update_date" ].ToString() ) : null,
+                            worker = dataReader[ "worker" ]?.ToString() ?? string.Empty,
+                            title = dataReader[ "title" ].ToString() ?? string.Empty,
+                            message = dataReader[ "message" ]?.ToString() ?? string.Empty,
+                            update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() ),
                         };
                         list.Add( l );
                     }
@@ -1035,7 +1033,7 @@ namespace Merchanter {
                         invoice_no = dataReader[ "invoice_no" ].ToString(),
                         notification_content = dataReader[ "notification_content" ].ToString(),
                         is_notification_sent = Convert.ToBoolean( int.Parse( dataReader[ "is_notification_sent" ].ToString() ) ),
-                        create_date = !string.IsNullOrWhiteSpace( dataReader[ "create_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "create_date" ].ToString() ) : null,
+                        create_date = Convert.ToDateTime( dataReader[ "create_date" ].ToString() ),
                         notification_date = !string.IsNullOrWhiteSpace( dataReader[ "notification_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "notification_date" ].ToString() ) : null,
                     };
                     list.Add( n );
@@ -1074,7 +1072,7 @@ namespace Merchanter {
                         invoice_no = dataReader[ "invoice_no" ].ToString(),
                         notification_content = dataReader[ "notification_content" ].ToString(),
                         is_notification_sent = Convert.ToBoolean( int.Parse( dataReader[ "is_notification_sent" ].ToString() ) ),
-                        create_date = !string.IsNullOrWhiteSpace( dataReader[ "create_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "create_date" ].ToString() ) : null,
+                        create_date = Convert.ToDateTime( dataReader[ "create_date" ].ToString() ),
                         notification_date = !string.IsNullOrWhiteSpace( dataReader[ "notification_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "notification_date" ].ToString() ) : null,
                     };
                     list.Add( n );
@@ -1113,7 +1111,7 @@ namespace Merchanter {
                         source_attribute = dataReader[ "source_attribute" ].ToString(),
                         regex = dataReader[ "regex" ].ToString(),
                         is_active = dataReader[ "is_active" ] != null ? dataReader[ "is_active" ].ToString() == "1" ? true : false : false,
-                        update_date = !string.IsNullOrWhiteSpace( dataReader[ "update_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "update_date" ].ToString() ) : null
+                        update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() )
                     };
                     list.Add( sm );
                 }
@@ -1145,7 +1143,7 @@ namespace Merchanter {
                         id = int.Parse( dataReader[ "id" ].ToString() ),
                         customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
                         source_product_id = int.Parse( dataReader[ "source_product_id" ].ToString() ),
-                        update_date = !string.IsNullOrWhiteSpace( dataReader[ "update_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "update_date" ].ToString() ) : null,
+                        update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() ),
                         sku = dataReader[ "sku" ].ToString(),
                         type = (Product.ProductTypes)int.Parse( dataReader[ "type" ].ToString() ),
                         total_qty = int.Parse( dataReader[ "total_qty" ].ToString() ),
@@ -1205,7 +1203,7 @@ namespace Merchanter {
                         id = int.Parse( dataReader[ "id" ].ToString() ),
                         customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
                         source_product_id = int.Parse( dataReader[ "source_product_id" ].ToString() ),
-                        update_date = !string.IsNullOrWhiteSpace( dataReader[ "update_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "update_date" ].ToString() ) : null,
+                        update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() ),
                         sku = dataReader[ "sku" ].ToString(),
                         type = (Product.ProductTypes)int.Parse( dataReader[ "type" ].ToString() ),
                         total_qty = int.Parse( dataReader[ "total_qty" ].ToString() ),
@@ -1265,7 +1263,7 @@ namespace Merchanter {
                         id = int.Parse( dataReader[ "id" ].ToString() ),
                         customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
                         source_product_id = int.Parse( dataReader[ "source_product_id" ].ToString() ),
-                        update_date = !string.IsNullOrWhiteSpace( dataReader[ "update_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "update_date" ].ToString() ) : null,
+                        update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() ),
                         sku = dataReader[ "sku" ].ToString(),
                         type = (Product.ProductTypes)int.Parse( dataReader[ "type" ].ToString() ),
                         total_qty = int.Parse( dataReader[ "total_qty" ].ToString() ),
@@ -1338,7 +1336,7 @@ namespace Merchanter {
                         id = int.Parse( dataReader[ "id" ].ToString() ),
                         customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
                         source_product_id = int.Parse( dataReader[ "source_product_id" ].ToString() ),
-                        update_date = !string.IsNullOrWhiteSpace( dataReader[ "update_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "update_date" ].ToString() ) : null,
+                        update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() ),
                         sku = dataReader[ "sku" ].ToString(),
                         type = (Product.ProductTypes)int.Parse( dataReader[ "type" ].ToString() ),
                         total_qty = int.Parse( dataReader[ "total_qty" ].ToString() ),
@@ -1396,7 +1394,7 @@ namespace Merchanter {
                         id = int.Parse( dataReader[ "id" ].ToString() ),
                         source_product_id = int.Parse( dataReader[ "source_product_id" ].ToString() ),
                         customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
-                        update_date = !string.IsNullOrWhiteSpace( dataReader[ "update_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "update_date" ].ToString() ) : null,
+                        update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() ),
                         sku = dataReader[ "sku" ].ToString(),
                         type = (Product.ProductTypes)int.Parse( dataReader[ "type" ].ToString() ),
                         total_qty = int.Parse( dataReader[ "total_qty" ].ToString() ),
@@ -1563,8 +1561,8 @@ namespace Merchanter {
                     px.sku = dataReader[ "sku" ].ToString();
                     px.barcode = dataReader[ "barcode" ].ToString();
                     px.is_xml_enabled = Convert.ToBoolean( int.Parse( dataReader[ "is_xml_enabled" ].ToString() ) );
-                    px.xml_sources = dataReader[ "xml_sources" ].ToString().Split( ',' );
-                    px.update_date = !string.IsNullOrWhiteSpace( dataReader[ "update_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "update_date" ].ToString() ) : null;
+                    px.xml_sources = dataReader[ "xml_sources" ]?.ToString()?.Split( ',' );
+                    px.update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() );
                 }
                 dataReader.Close();
                 if( state == System.Data.ConnectionState.Open )
@@ -1600,9 +1598,9 @@ namespace Merchanter {
                         category_ids = dataReader[ "category_ids" ].ToString(),
                         sku = dataReader[ "sku" ].ToString(),
                         barcode = dataReader[ "barcode" ].ToString(),
-                        is_xml_enabled = dataReader[ "is_xml_enabled" ] != null ? dataReader[ "is_xml_enabled" ].ToString() == "1" ? true : false : false,
-                        xml_sources = dataReader[ "xml_sources" ].ToString().Split( ',' ),
-                        update_date = !string.IsNullOrWhiteSpace( dataReader[ "update_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "update_date" ].ToString() ) : null
+                        is_xml_enabled = dataReader[ "is_xml_enabled" ] != null ? dataReader[ "is_xml_enabled" ].ToString() == "1" : false,
+                        xml_sources = dataReader[ "xml_sources" ]?.ToString()?.Split( ',' ),
+                        update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() )
                     };
                     list.Add( s );
                 }
@@ -1638,8 +1636,8 @@ namespace Merchanter {
                 cmd.Parameters.Add( new MySqlParameter( "category_ids", _source.category_ids ) );
                 cmd.Parameters.Add( new MySqlParameter( "sku", _source.sku ) );
                 cmd.Parameters.Add( new MySqlParameter( "barcode", _source.barcode ) );
-                //cmd.Parameters.Add( new MySqlParameter( "is_xml_enabled", _source.is_xml_enabled ) );
-                //cmd.Parameters.Add( new MySqlParameter( "xml_sources", string.Join( ",", _source.xml_sources ) ) );
+                cmd.Parameters.Add( new MySqlParameter( "is_xml_enabled", _source.is_xml_enabled ) );
+                cmd.Parameters.Add( new MySqlParameter( "xml_sources", _source.xml_sources != null ? string.Join( ",", _source.xml_sources ) : null ) );
                 if( state != System.Data.ConnectionState.Open ) connection.Open();
                 val = cmd.ExecuteNonQuery();
                 if( state == System.Data.ConnectionState.Open ) connection.Close();
@@ -1674,7 +1672,7 @@ namespace Merchanter {
                 cmd.Parameters.Add( new MySqlParameter( "brand_id", _source.brand_id ) );
                 cmd.Parameters.Add( new MySqlParameter( "category_ids", _source.category_ids ) );
                 cmd.Parameters.Add( new MySqlParameter( "barcode", _source.barcode ) );
-                cmd.Parameters.Add( new MySqlParameter( "xml_sources", _source.xml_sources.Length > 0 ? string.Join( ",", _source.xml_sources ) : null ) );
+                cmd.Parameters.Add( new MySqlParameter( "xml_sources", (_source.xml_sources != null && _source.xml_sources.Length > 0) ? string.Join( ",", _source.xml_sources ) : null ) );
                 cmd.Parameters.Add( new MySqlParameter( "is_xml_enabled", _source.is_xml_enabled ) );
                 cmd.Parameters.Add( new MySqlParameter( "update_date", DateTime.Now ) );
                 val = cmd.ExecuteNonQuery();
@@ -1757,14 +1755,16 @@ namespace Merchanter {
                 cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
                 MySqlDataReader dataReader = cmd.ExecuteReader();
                 while( dataReader.Read() ) {
-                    ProductSource s = new ProductSource {
-                        id = int.Parse( dataReader[ "id" ].ToString() ),
-                        sku = dataReader[ "sku" ].ToString(),
-                        barcode = dataReader[ "barcode" ].ToString(),
-                        name = dataReader[ "name" ].ToString(),
-                        qty = int.Parse( dataReader[ "qty" ].ToString() ),
-                        is_active = Convert.ToBoolean( int.Parse( dataReader[ "is_active" ].ToString() ) ),
-                    };
+                    ProductSource s = new ProductSource(
+                        _customer_id,
+                        int.Parse( dataReader[ "id" ].ToString() ),
+                        dataReader[ "sku" ].ToString(),
+                        dataReader[ "barcode" ].ToString(),
+                        dataReader[ "name" ].ToString(),
+                        int.Parse( dataReader[ "qty" ].ToString() ),
+                        Convert.ToBoolean( int.Parse( dataReader[ "is_active" ].ToString() ) )
+                    );
+
                     list.Add( s );
                 }
                 dataReader.Close();
@@ -1790,14 +1790,15 @@ namespace Merchanter {
                 cmd.Parameters.Add( new MySqlParameter( "sku", _sku ) );
                 MySqlDataReader dataReader = cmd.ExecuteReader();
                 while( dataReader.Read() ) {
-                    ProductSource s = new ProductSource {
-                        id = int.Parse( dataReader[ "id" ].ToString() ),
-                        sku = _sku,
-                        barcode = dataReader[ "barcode" ].ToString(),
-                        name = dataReader[ "name" ].ToString(),
-                        qty = int.Parse( dataReader[ "qty" ].ToString() ),
-                        is_active = Convert.ToBoolean( int.Parse( dataReader[ "is_active" ].ToString() ) ),
-                    };
+                    ProductSource s = new ProductSource(
+                        _customer_id,
+                        int.Parse( dataReader[ "id" ].ToString() ),
+                        dataReader[ "sku" ].ToString(),
+                        dataReader[ "barcode" ].ToString(),
+                        dataReader[ "name" ].ToString(),
+                        int.Parse( dataReader[ "qty" ].ToString() ),
+                        Convert.ToBoolean( int.Parse( dataReader[ "is_active" ].ToString() ) )
+                    );
                     list.Add( s );
                 }
                 dataReader.Close();
@@ -2224,7 +2225,7 @@ namespace Merchanter {
                     XProduct xp = new XProduct {
                         id = int.Parse( dataReader[ "id" ].ToString() ),
                         customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
-                        update_date = !string.IsNullOrWhiteSpace( dataReader[ "update_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "update_date" ].ToString() ) : null,
+                        update_date =  Convert.ToDateTime( dataReader[ "update_date" ].ToString() ),
                         barcode = dataReader[ "barcode" ].ToString(),
                         qty = int.Parse( dataReader[ "qty" ].ToString() ),
                         source_sku = dataReader[ "source_sku" ].ToString(),
@@ -2263,7 +2264,7 @@ namespace Merchanter {
                     XProduct xp = new XProduct {
                         id = int.Parse( dataReader[ "id" ].ToString() ),
                         customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
-                        update_date = !string.IsNullOrWhiteSpace( dataReader[ "update_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "update_date" ].ToString() ) : null,
+                        update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() ),
                         barcode = dataReader[ "barcode" ].ToString(),
                         qty = int.Parse( dataReader[ "qty" ].ToString() ),
                         source_sku = dataReader[ "source_sku" ].ToString(),
@@ -2302,7 +2303,7 @@ namespace Merchanter {
                     XProduct xp = new XProduct {
                         id = int.Parse( dataReader[ "id" ].ToString() ),
                         customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
-                        update_date = !string.IsNullOrWhiteSpace( dataReader[ "update_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "update_date" ].ToString() ) : null,
+                        update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() ),
                         barcode = dataReader[ "barcode" ].ToString(),
                         qty = int.Parse( dataReader[ "qty" ].ToString() ),
                         source_sku = dataReader[ "source_sku" ].ToString(),
@@ -2444,8 +2445,8 @@ namespace Merchanter {
                         barcode = dataReader[ "barcode" ].ToString(),
                         is_shipped = dataReader[ "is_shipped" ] != null ? dataReader[ "is_shipped" ].ToString() == "1" ? true : false : false,
                         tracking_number = dataReader[ "tracking_number" ].ToString(),
-                        order_date = !string.IsNullOrWhiteSpace( dataReader[ "order_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "order_date" ].ToString() ) : null,
-                        update_date = !string.IsNullOrWhiteSpace( dataReader[ "update_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "update_date" ].ToString() ) : null,
+                        order_date = Convert.ToDateTime( dataReader[ "order_date" ].ToString() ) ,
+                        update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() ),
                         shipment_date = !string.IsNullOrWhiteSpace( dataReader[ "shipment_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "shipment_date" ].ToString() ) : null,
                     };
                     list.Add( s );
@@ -2482,8 +2483,8 @@ namespace Merchanter {
                     s.barcode = dataReader[ "barcode" ].ToString();
                     s.is_shipped = dataReader[ "is_shipped" ] != null ? dataReader[ "is_shipped" ].ToString() == "1" ? true : false : false;
                     s.tracking_number = dataReader[ "tracking_number" ].ToString();
-                    s.order_date = !string.IsNullOrWhiteSpace( dataReader[ "order_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "order_date" ].ToString() ) : null;
-                    s.update_date = !string.IsNullOrWhiteSpace( dataReader[ "update_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "update_date" ].ToString() ) : null;
+                    s.order_date = Convert.ToDateTime( dataReader[ "order_date" ].ToString() );
+                    s.update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() );
                     s.shipment_date = !string.IsNullOrWhiteSpace( dataReader[ "shipment_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "shipment_date" ].ToString() ) : null;
                 }
                 dataReader.Close();
@@ -2618,8 +2619,8 @@ namespace Merchanter {
                         invoice_no = dataReader[ "invoice_no" ].ToString(),
                         belge_url = dataReader[ "belge_url" ].ToString(),
                         gib_fatura_no = dataReader[ "gib_fatura_no" ].ToString(),
-                        order_date = !string.IsNullOrWhiteSpace( dataReader[ "order_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "order_date" ].ToString() ) : null,
-                        update_date = !string.IsNullOrWhiteSpace( dataReader[ "update_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "update_date" ].ToString() ) : null,
+                        order_date = Convert.ToDateTime( dataReader[ "order_date" ].ToString() ),
+                        update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() )
                     };
                     list.Add( i );
                 }
@@ -2663,8 +2664,8 @@ namespace Merchanter {
                     i.invoice_no = dataReader[ "invoice_no" ].ToString();
                     i.belge_url = dataReader[ "belge_url" ].ToString();
                     i.gib_fatura_no = dataReader[ "gib_fatura_no" ].ToString();
-                    i.order_date = !string.IsNullOrWhiteSpace( dataReader[ "order_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "order_date" ].ToString() ) : null;
-                    i.update_date = !string.IsNullOrWhiteSpace( dataReader[ "update_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "update_date" ].ToString() ) : null;
+                    i.order_date = Convert.ToDateTime( dataReader[ "order_date" ].ToString() );
+                    i.update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() );
                 }
                 dataReader.Close();
                 if( state == System.Data.ConnectionState.Open ) connection.Close();
@@ -2772,8 +2773,8 @@ namespace Merchanter {
                         sku = dataReader[ "sku" ].ToString(),
                         qty = int.Parse( dataReader[ "qty" ].ToString() ),
                         serials = dataReader[ "serials" ].ToString().Split( ',' ),
-                        create_date = !string.IsNullOrWhiteSpace( dataReader[ "create_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "create_date" ].ToString() ) : null,
-                        update_date = !string.IsNullOrWhiteSpace( dataReader[ "update_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "update_date" ].ToString() ) : null
+                        create_date = Convert.ToDateTime( dataReader[ "create_date" ].ToString() ),
+                        update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() )
                     };
                     list.Add( ii );
                 }
@@ -2805,8 +2806,8 @@ namespace Merchanter {
                         sku = dataReader[ "sku" ].ToString(),
                         qty = int.Parse( dataReader[ "qty" ].ToString() ),
                         serials = dataReader[ "xml_sources" ].ToString().Split( ',' ),
-                        create_date = !string.IsNullOrWhiteSpace( dataReader[ "create_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "create_date" ].ToString() ) : null,
-                        update_date = !string.IsNullOrWhiteSpace( dataReader[ "update_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "update_date" ].ToString() ) : null
+                        create_date = Convert.ToDateTime( dataReader[ "create_date" ].ToString() ),
+                        update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() )
                     };
                     list.Add( ii );
                 }
@@ -2938,7 +2939,7 @@ namespace Merchanter {
                         currency = dataReader[ "currency" ].ToString(),
                         order_status = dataReader[ "order_status" ].ToString(),
                         order_date = !string.IsNullOrWhiteSpace( dataReader[ "order_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "order_date" ].ToString() ) : DateTime.Now,
-                        update_date = !string.IsNullOrWhiteSpace( dataReader[ "update_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "update_date" ].ToString() ) : null,
+                        update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() ),
                     };
                     list.Add( o );
                 }
@@ -3009,7 +3010,7 @@ namespace Merchanter {
                         currency = dataReader[ "currency" ].ToString(),
                         order_status = dataReader[ "order_status" ].ToString(),
                         order_date = !string.IsNullOrWhiteSpace( dataReader[ "order_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "order_date" ].ToString() ) : DateTime.Now,
-                        update_date = !string.IsNullOrWhiteSpace( dataReader[ "update_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "update_date" ].ToString() ) : null,
+                        update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() ),
                     };
                     list.Add( o );
                 }
@@ -3072,7 +3073,7 @@ namespace Merchanter {
                     o.currency = dataReader[ "currency" ].ToString();
                     o.order_status = dataReader[ "order_status" ].ToString();
                     o.order_date = !string.IsNullOrWhiteSpace( dataReader[ "order_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "order_date" ].ToString() ) : DateTime.Now;
-                    o.update_date = !string.IsNullOrWhiteSpace( dataReader[ "update_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "update_date" ].ToString() ) : null;
+                    o.update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() );
                 }
                 dataReader.Close();
                 if( state == System.Data.ConnectionState.Open ) connection.Close();

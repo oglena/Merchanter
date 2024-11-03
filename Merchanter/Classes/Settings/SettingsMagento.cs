@@ -2,10 +2,9 @@
     public class SettingsMagento {
         public int id { get; set; }
         public int customer_id { get; set; }
-        public string? base_url { get; set; } = @"https://";
+        public string base_url { get; set; } = @"https://";
         public string? token { get; set; }
         public int root_category_id { get; set; } = 1;
-        public string currencies { get; set; } = "TL=1|USD=0|EUR=0";
         public string brand_attribute_code { get; set; } = "brand";
         public string barcode_attribute_code { get; set; } = "barcode";
         public string order_processing_comment { get; set; } = "Siparişiniz hazırlanıyor.";

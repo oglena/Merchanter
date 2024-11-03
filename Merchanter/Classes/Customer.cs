@@ -11,7 +11,7 @@ namespace Merchanter.Classes {
         public string user_name { get; set; }
         [Required, PasswordPropertyText]
         public string password { get; set; }
-        public bool status { get; set; }
+        public bool status { get; set; } = true;
         public bool product_sync_status { get; set; } = false;
         public bool order_sync_status { get; set; } = false;
         public bool xml_sync_status { get; set; } = false;
@@ -21,7 +21,7 @@ namespace Merchanter.Classes {
         public int product_sync_timer { get; set; } = 60;
         public int xml_sync_timer { get; set; } = 14400;
         public int invoice_sync_timer { get; set; } = 9000;
-        public int notification_sync_timer { get; set; } = 60;
+        public int notification_sync_timer { get; set; } = 120;
         public DateTime? last_product_sync_date { get; set; }
         public DateTime? last_order_sync_date { get; set; }
         public DateTime? last_xml_sync_date { get; set; }

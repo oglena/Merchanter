@@ -509,7 +509,7 @@ namespace MerchanterServer {
                                 erp_customer_code = item.CARIKODU,
                                 erp_customer_group = item.CARIGRUP,
                                 gib_fatura_no = item.GIB_FATIRS_NO,
-                                order_date = item.TARIH,
+                                order_date = item.TARIH != null ? item.TARIH.Value : DateTime.MinValue,
                                 items = new List<InvoiceItem>()
                             };
                             foreach( var kalem in item.KALEMS ) {
@@ -519,7 +519,7 @@ namespace MerchanterServer {
                                     customer_id = customer.customer_id,
                                     sku = kalem.STOKKODU,
                                     qty = kalem.MIKTAR,
-                                    create_date = kalem.TARIH,
+                                    create_date = kalem.TARIH != null ? kalem.TARIH.Value : DateTime.MinValue,
                                     serials = [ .. kalem.SERILER ]
                                 } );
                             }
@@ -885,9 +885,12 @@ namespace MerchanterServer {
                                         tax = item.Tax,
 
                                         tax_included = item.TaxIncluded,
-                                        sources = [ new ProductSource() {
-                                            is_active = true, name = Constants.ENTEGRA, sku = item.Sku, barcode = item.Barcode, qty = item.Qty, customer_id = customer.customer_id
-                                        } ],
+                                        sources = [ new ProductSource( customer.customer_id, 0,
+                                            item.Sku,
+                                            item.Barcode,
+                                            Constants.ENTEGRA,
+                                            item.Qty,
+                                            true) ],
                                         extension = new ProductExtension() {
                                             sku = item.Sku, barcode = item.Barcode, customer_id = customer.customer_id,
                                             brand_id = existed_brand != null ? existed_brand.id : (string.IsNullOrEmpty( item.BrandName ) ? 1 : 0),
@@ -966,17 +969,20 @@ namespace MerchanterServer {
                 if( other_product_sources.Length > 0 ) {
                     Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " started loading other sources." );
                     foreach( var item in live_products ) {
-                        var selected_xproducts = xproducts.Where( x => x.barcode == item.barcode ).ToList();
-                        if( selected_xproducts != null && selected_xproducts.Count > 0 ) {
-                            foreach( var xitem in selected_xproducts ) {
-                                item.sources.Add( new ProductSource() {
-                                    customer_id = customer.customer_id,
-                                    is_active = (Helper.global.settings.xml_qty_addictive_enable || item.sources[ 0 ].qty <= 0) ? (xitem.is_active ? (item.extension.is_xml_enabled && item.extension.xml_sources.Contains( xitem.xml_source )) : false) : false,
-                                    name = xitem.xml_source,
-                                    sku = item.sku,
-                                    barcode = item.barcode,
-                                    qty = xitem.qty
-                                } );
+                        if( item.sources != null && item.extension.xml_sources != null ) {
+                            var selected_xproducts = xproducts.Where( x => x.barcode == item.barcode ).ToList();
+                            if( selected_xproducts != null && selected_xproducts.Count > 0 ) {
+                                foreach( var xitem in selected_xproducts ) {
+                                    ProductSource s = new ProductSource(
+                                        customer.customer_id,
+                                        0,
+                                        item.sku,
+                                        item.barcode,
+                                        xitem.xml_source,
+                                        xitem.qty,
+                                        (Helper.global.settings.xml_qty_addictive_enable || item.sources[ 0 ].qty <= 0) ? (xitem.is_active ? (item.extension.is_xml_enabled && item.extension.xml_sources.Contains( xitem.xml_source )) : false) : false
+                                    );
+                                }
                             }
                         }
                     }

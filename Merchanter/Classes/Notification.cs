@@ -9,13 +9,13 @@ namespace Merchanter.Classes {
         public int id { get; set; }
         public int customer_id { get; set; }
         public NotificationTypes type { get; set; }
-        public string? order_label { get; set; }
-        public string? product_sku { get; set; }
-        public string? xproduct_barcode { get; set; }
-        public string? invoice_no { get; set; }
+        public string? order_label { get; set; } = null;
+        public string? product_sku { get; set; } = null;
+        public string? xproduct_barcode { get; set; } = null;
+        public string? invoice_no { get; set; } = null;
         public string? notification_content { get; set; }
         public bool is_notification_sent { get; set; } = false;
-        public DateTime? create_date { get; set; }
+        public DateTime create_date { get; set; }
         public DateTime? notification_date { get; set; }
 
         public enum NotificationTypes {

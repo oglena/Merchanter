@@ -6,8 +6,8 @@
         public string erp_no { get; set; }
         public string sku { get; set; }
         public int qty { get; set; }
-        public string[] serials { get; set; }
-        public DateTime? update_date { get; set; }
-        public DateTime? create_date { get; set; }
+        public string[]? serials { get; set; }
+        public DateTime update_date { get; set; }
+        public DateTime create_date { get; set; }
     }
 }

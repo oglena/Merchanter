@@ -1,5 +1,12 @@
 ﻿namespace Merchanter.Classes {
     public class WorkSource {
+        public int id { get; set; }
+        public int customer_id { get; set; }
+        public string name { get; set; } = string.Empty;
+        public string type { get; set; } = string.Empty;
+        public string direction { get; set; } = string.Empty;
+        public bool is_active { get; set; }
+
         public WorkSource() {
 
         }
@@ -11,11 +18,5 @@
             direction = _direction;
             is_active = _is_active;
         }
-        public int id { get; set; }
-        public int customer_id { get; set; }
-        public string name { get; set; } = string.Empty;
-        public string type { get; set; } = string.Empty;
-        public string direction { get; set; } = string.Empty;
-        public bool is_active { get; set; }
     }
 }

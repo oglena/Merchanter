@@ -125,7 +125,7 @@ while( true ) {
         if( db_helper.SetProductSyncWorking( customer_id, false ) && db_helper.SetOrderSyncWorking( customer_id, false ) && db_helper.SetNotificationSyncWorking( customer_id, false ) && db_helper.SetXmlSyncWorking( customer_id, false ) && db_helper.SetInvoiceSyncWorking( customer_id, false ) )
             Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + customer_id + "-ID sync statuses reset for first run." );
 
-        //Constants.is_local = true;
+        Constants.is_local = true;
         if( Constants.is_local ) {
             Helper.global.netsis.rest_url = "http://88.247.120.127:7070/";
             Helper.global.entegra.api_url = "http://88.247.120.127:5421/";

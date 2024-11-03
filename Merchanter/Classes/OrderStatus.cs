@@ -6,8 +6,8 @@
         public string status_name { get; set; }
         public string status_code { get; set; }
         public string magento2_status_code { get; set; }
-        public bool sync_status { get; set; }
-        public bool process_status { get; set; }
+        public bool sync_status { get; set; } = false;
+        public bool process_status { get; set; } = false;
 
         public OrderStatus( int _id, int _customer_id, string _status_name, string _status_code, string _magento2_status_code, bool _sync_status, bool _process_status ) {
             id = _id;
