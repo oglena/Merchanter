@@ -15,12 +15,12 @@ namespace Merchanter {
                 var m2_json = executioner.Execute( url_product_stocks, RestSharp.Method.Get, _json: null, Helper.global.magento.token );
                 if( m2_json != null ) {
                     var m2_product_stocks = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_ProductStocks>( m2_json );
-                    if( m2_product_stocks == null ) { Console.WriteLine( Helper.global.settings.company_name + " " + "Product Stocks Load Failed. Exiting." ); return null; }
-                    Console.WriteLine( Helper.global.settings.company_name + " " + m2_product_stocks.items.Count().ToString() + " Product Stocks Loaded." );
+                    if( m2_product_stocks == null ) { Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Magento Product Stocks Load Failed. Exiting." ); return null; }
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + m2_product_stocks.items.Count().ToString() + " Magento Product Stocks Loaded." );
                     return m2_product_stocks;
                 }
                 else {
-                    Console.WriteLine( Helper.global.settings.company_name + " " + "Product Stocks Load Failed. Exiting2." );
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Magento Product Stocks Load Failed. Exiting2." );
                     return null;
                 }
             }
@@ -34,12 +34,12 @@ namespace Merchanter {
                 var m2_json = executioner.Execute( url_attribute_set, RestSharp.Method.Get, _json: null, Helper.global.magento.token );
                 if( m2_json != null ) {
                     var m2_attribute_sets = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_AttributeSets>( m2_json );
-                    if( m2_attribute_sets == null ) { Console.WriteLine( Helper.global.settings.company_name + " " + "Attribute Sets Load Failed. Exiting." ); return null; }
-                    Console.WriteLine( Helper.global.settings.company_name + " " + m2_attribute_sets.items.Count().ToString() + " Attribute Sets Loaded." );
+                    if( m2_attribute_sets == null ) { Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Magento Attribute Sets Load Failed. Exiting." ); return null; }
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + m2_attribute_sets.items.Count().ToString() + " Magento Attribute Sets Loaded." );
                     return m2_attribute_sets;
                 }
                 else {
-                    Console.WriteLine( Helper.global.settings.company_name + " " + "Attribute Sets Load Failed. Exiting2." );
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Magento Attribute Sets Load Failed. Exiting2." );
                     return null;
                 }
             }
@@ -51,12 +51,12 @@ namespace Merchanter {
                 var m2_json = executioner.Execute( url_attribute, RestSharp.Method.Get, _json: null, Helper.global.magento.token );
                 if( m2_json != null ) {
                     var m2_attribute_by_id = Newtonsoft.Json.JsonConvert.DeserializeObject<List<M2_Attribute>>( m2_json );
-                    if( m2_attribute_by_id == null ) { Console.WriteLine( "Attribute Load Failed. Exiting." ); return null; }
-                    Console.WriteLine( Helper.global.settings.company_name + " " + m2_attribute_by_id.Count().ToString() + " Attribute Loaded for " + _attribute_set_id.ToString() );
+                    if( m2_attribute_by_id == null ) { Console.WriteLine( "Magento Attribute Load Failed. Exiting." ); return null; }
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + m2_attribute_by_id.Count().ToString() + " Magento Attribute Loaded for " + _attribute_set_id.ToString() );
                     return m2_attribute_by_id;
                 }
                 else {
-                    Console.WriteLine( "Attribute Set(" + _attribute_set_id.ToString() + ") Attributes Load Failed. Exiting2." );
+                    Console.WriteLine( "Attribute Set(" + _attribute_set_id.ToString() + ") Magento Attributes Load Failed. Exiting2." );
                     return null;
                 }
             }
@@ -70,12 +70,12 @@ namespace Merchanter {
                 var m2_json = executioner.Execute( url_eav_attribute_set, RestSharp.Method.Get, _json: null, Helper.global.magento.token );
                 if( m2_json != null ) {
                     var m2_eav_attribute_sets = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_EAVAttributeSets>( m2_json );
-                    if( m2_eav_attribute_sets == null ) { Console.WriteLine( Helper.global.settings.company_name + " " + "EAV Attribute Sets Load Failed. Exiting." ); return null; }
-                    Console.WriteLine( Helper.global.settings.company_name + " " + m2_eav_attribute_sets.items.Count().ToString() + " EAV Attribute Sets Loaded." );
+                    if( m2_eav_attribute_sets == null ) { Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Magento EAV Attribute Sets Load Failed. Exiting." ); return null; }
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + m2_eav_attribute_sets.items.Count().ToString() + " Magento EAV Attribute Sets Loaded." );
                     return m2_eav_attribute_sets;
                 }
                 else {
-                    Console.WriteLine( Helper.global.settings.company_name + " " + "EAV Attribute Sets Load Failed. Exiting2." );
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Magento EAV Attribute Sets Load Failed. Exiting2." );
                     return null;
                 }
             }
@@ -89,12 +89,12 @@ namespace Merchanter {
                 var m2_json = executioner.Execute( url_attribute_set_group, RestSharp.Method.Get, _json: null, Helper.global.magento.token );
                 if( m2_json != null ) {
                     var m2_attribute_set_groups = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_AttributeSetGroups>( m2_json );
-                    if( m2_attribute_set_groups == null ) { Console.WriteLine( Helper.global.settings.company_name + " " + "Attribute Set Groups Load Failed. Exiting." ); return null; }
-                    Console.WriteLine( Helper.global.settings.company_name + " " + m2_attribute_set_groups.items.Count().ToString() + " Attribute Set Groups Loaded." );
+                    if( m2_attribute_set_groups == null ) { Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Magento Attribute Set Groups Load Failed. Exiting." ); return null; }
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + m2_attribute_set_groups.items.Count().ToString() + " Magento Attribute Set Groups Loaded." );
                     return m2_attribute_set_groups;
                 }
                 else {
-                    Console.WriteLine( Helper.global.settings.company_name + " " + "Attribute Set Groups Load Failed. Exiting2." );
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Magento Attribute Set Groups Load Failed. Exiting2." );
                     return null;
                 }
             }
@@ -111,12 +111,12 @@ namespace Merchanter {
                 var m2_json = executioner.Execute( url_attribute_set_group, RestSharp.Method.Get, _json: null, Helper.global.magento.token );
                 if( m2_json != null ) {
                     var m2_attribute_set_groups = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_AttributeSetGroups>( m2_json );
-                    if( m2_attribute_set_groups == null ) { Console.WriteLine( Helper.global.settings.company_name + " " + "Attribute Set Groups Load Failed. Exiting." ); return null; }
-                    Console.WriteLine( Helper.global.settings.company_name + " " + m2_attribute_set_groups.items.Count().ToString() + " Attribute Set Groups Loaded." );
+                    if( m2_attribute_set_groups == null ) { Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Magento Attribute Set Groups Load Failed. Exiting." ); return null; }
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + m2_attribute_set_groups.items.Count().ToString() + " Magento Attribute Set Groups Loaded." );
                     return m2_attribute_set_groups;
                 }
                 else {
-                    Console.WriteLine( Helper.global.settings.company_name + " " + "Attribute Set Groups Load Failed. Exiting2." );
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Magento Attribute Set Groups Load Failed. Exiting2." );
                     return null;
                 }
             }
@@ -145,12 +145,12 @@ namespace Merchanter {
                 var m2_json = executioner.Execute( url_category, RestSharp.Method.Get, _json: null, Helper.global.magento.token );
                 if( m2_json != null ) {
                     var m2_categories = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Categories>( m2_json );
-                    if( m2_categories == null ) { Console.WriteLine( Helper.global.settings.company_name + " " + "Categories Load Failed. Exiting." ); return null; }
-                    Console.WriteLine( Helper.global.settings.company_name + " " + m2_categories.items.Count().ToString() + " Categories Loaded." );
+                    if( m2_categories == null ) { Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Magento Categories Load Failed. Exiting." ); return null; }
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + m2_categories.items.Count().ToString() + " Magento Categories Loaded." );
                     return m2_categories;
                 }
                 else {
-                    Console.WriteLine( Helper.global.settings.company_name + " " + "Categories Load Failed. Exiting2." );
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Magento Categories Load Failed. Exiting2." );
                     return null;
                 }
             }
@@ -162,12 +162,12 @@ namespace Merchanter {
                 var m2_json = executioner.Execute( url_category, RestSharp.Method.Get, _json: null, Helper.global.magento.token );
                 if( m2_json != null ) {
                     var m2_categories = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_CategoryList>( m2_json );
-                    if( m2_categories == null ) { Console.WriteLine( Helper.global.settings.company_name + " " + "Categories Load Failed. Exiting." ); return null; }
-                    Console.WriteLine( Helper.global.settings.company_name + " " + m2_categories.children_data.Count().ToString() + " Categories Loaded." );
+                    if( m2_categories == null ) { Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Magento Categories Load Failed. Exiting." ); return null; }
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + m2_categories.children_data.Count().ToString() + " Magento Categories Loaded." );
                     return m2_categories;
                 }
                 else {
-                    Console.WriteLine( Helper.global.settings.company_name + " " + "Categories Load Failed. Exiting2." );
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Magento Categories Load Failed. Exiting2." );
                     return null;
                 }
             }
@@ -199,12 +199,12 @@ namespace Merchanter {
                 var m2_json = executioner.Execute( url_category, RestSharp.Method.Get, _json: null, Helper.global.magento.token );
                 if( m2_json != null ) {
                     var m2_categories = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Categories>( m2_json );
-                    if( m2_categories == null ) { Console.WriteLine( Helper.global.settings.company_name + " " + "Categories Load Failed. Exiting." ); return null; }
-                    Console.WriteLine( Helper.global.settings.company_name + " " + m2_categories.items.Count().ToString() + " Categories Loaded." );
+                    if( m2_categories == null ) { Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Magento Categories Load Failed. Exiting." ); return null; }
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + m2_categories.items.Count().ToString() + " Magento Categories Loaded." );
                     return m2_categories;
                 }
                 else {
-                    Console.WriteLine( Helper.global.settings.company_name + " " + "Categories Load Failed. Exiting2." );
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Magento Categories Load Failed. Exiting2." );
                     return null;
                 }
             }
@@ -221,12 +221,12 @@ namespace Merchanter {
                 var m2_json = executioner.Execute( url_category, RestSharp.Method.Get, _json: null, Helper.global.magento.token );
                 if( m2_json != null ) {
                     var m2_categories = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Categories>( m2_json );
-                    if( m2_categories == null ) { Console.WriteLine( Helper.global.settings.company_name + " Category Load Failed. Exiting." ); return null; }
-                    Console.WriteLine( Helper.global.settings.company_name + " " + m2_categories.items[ 0 ].id + " Category Loaded." );
+                    if( m2_categories == null ) { Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Magento Category Load Failed. Exiting." ); return null; }
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + m2_categories.items[ 0 ].id + " Magento Category Loaded." );
                     return m2_categories.items[ 0 ];
                 }
                 else {
-                    Console.WriteLine( Helper.global.settings.company_name + " " + "Category Load Failed. Exiting2." );
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Magento Category Load Failed. Exiting2." );
                     return null;
                 }
             }
@@ -238,12 +238,12 @@ namespace Merchanter {
                 var m2_json = executioner.Execute( url_category, RestSharp.Method.Get, _json: null, Helper.global.magento.token );
                 if( m2_json != null ) {
                     var m2_category = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Category>( m2_json );
-                    if( m2_category == null ) { Console.WriteLine( Helper.global.settings.company_name + " Category Load Failed. Exiting." ); return null; }
-                    Console.WriteLine( Helper.global.settings.company_name + " " + m2_category.id.ToString() + " Category Loaded." );
+                    if( m2_category == null ) { Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Magento Category Load Failed. Exiting." ); return null; }
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + m2_category.id.ToString() + " Magento Category Loaded." );
                     return m2_category;
                 }
                 else {
-                    Console.WriteLine( Helper.global.settings.company_name + " " + "Category Load Failed. Exiting2." );
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Magento Category Load Failed. Exiting2." );
                     return null;
                 }
             }
@@ -255,12 +255,12 @@ namespace Merchanter {
                 var m2_json = executioner.Execute( url_tax_class, RestSharp.Method.Get, _json: null, Helper.global.magento.token );
                 if( m2_json != null ) {
                     var m2_tax_class = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_TaxRules>( m2_json );
-                    if( m2_tax_class == null ) { Console.WriteLine( Helper.global.settings.company_name + " Tax Class Load Failed. Exiting." ); return null; }
-                    Console.WriteLine( Helper.global.settings.company_name + " " + m2_tax_class.code.ToString() + " Tax Class Loaded." );
+                    if( m2_tax_class == null ) { Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Magento Tax Class Load Failed. Exiting." ); return null; }
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + m2_tax_class.code.ToString() + " Magento Tax Class Loaded." );
                     return m2_tax_class;
                 }
                 else {
-                    Console.WriteLine( Helper.global.settings.company_name + " " + "Tax Class Load Failed. Exiting2." );
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Magento Tax Class Load Failed. Exiting2." );
                     return null;
                 }
             }
@@ -272,12 +272,12 @@ namespace Merchanter {
                 var m2_json = executioner.Execute( url_tax_rate, RestSharp.Method.Get, _json: null, Helper.global.magento.token );
                 if( m2_json != null ) {
                     var m2_tax_rate = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_TaxRate>( m2_json );
-                    if( m2_tax_rate == null ) { Console.WriteLine( Helper.global.settings.company_name + " Tax Class Load Failed. Exiting." ); return null; }
-                    Console.WriteLine( Helper.global.settings.company_name + " " + m2_tax_rate.code.ToString() + " Tax Class Loaded." );
+                    if( m2_tax_rate == null ) { Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Magento Tax Class Load Failed. Exiting." ); return null; }
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + m2_tax_rate.code.ToString() + " Magento Tax Class Loaded." );
                     return m2_tax_rate;
                 }
                 else {
-                    Console.WriteLine( Helper.global.settings.company_name + " " + "Tax Class Load Failed. Exiting2." );
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Magento Tax Class Load Failed. Exiting2." );
                     return null;
                 }
             }
@@ -313,12 +313,12 @@ namespace Merchanter {
                 var m2_json = executioner.Execute( url_product, RestSharp.Method.Get, _json: null, Helper.global.magento.token );
                 if( m2_json != null ) {
                     var m2_products = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Products>( m2_json );
-                    if( m2_products == null ) { Console.WriteLine( "Products Load Failed. Exiting." ); return null; }
-                    Console.WriteLine( Helper.global.settings.company_name + " " + m2_products.items.Count().ToString() + " Products Loaded." );
+                    if( m2_products == null ) { Console.WriteLine( "Magento Products Load Failed. Exiting." ); return null; }
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + m2_products.items.Count().ToString() + " Magento Products Loaded." );
                     return m2_products;
                 }
                 else {
-                    Console.WriteLine( Helper.global.settings.company_name + " " + "Products Load Failed. Exiting2." );
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Magento Products Load Failed. Exiting2." );
                     return null;
                 }
             }
@@ -337,12 +337,12 @@ namespace Merchanter {
                 var m2_json = executioner.Execute( url_product, RestSharp.Method.Get, _json: null, Helper.global.magento.token );
                 if( m2_json != null ) {
                     var m2_products = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Products>( m2_json );
-                    if( m2_products == null ) { Console.WriteLine( "Products Load Failed. Exiting." ); return null; }
-                    Console.WriteLine( Helper.global.settings.company_name + " " + m2_products.items.Count().ToString() + " Products Loaded." );
+                    if( m2_products == null ) { Console.WriteLine( "Magento Products Load Failed. Exiting." ); return null; }
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + m2_products.items.Count().ToString() + " Magento Products Loaded." );
                     return m2_products;
                 }
                 else {
-                    Console.WriteLine( Helper.global.settings.company_name + " " + "Products Load Failed. Exiting2." );
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Magento Products Load Failed. Exiting2." );
                     return null;
                 }
             }
@@ -361,12 +361,12 @@ namespace Merchanter {
                 var m2_json = executioner.Execute( url_product, RestSharp.Method.Get, _json: null, Helper.global.magento.token );
                 if( m2_json != null ) {
                     var m2_products = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Products>( m2_json );
-                    if( m2_products == null ) { Console.WriteLine( "Products Load Failed. Exiting." ); return null; }
-                    Console.WriteLine( Helper.global.settings.company_name + " " + m2_products.items.Count().ToString() + " Products Loaded." );
+                    if( m2_products == null ) { Console.WriteLine( "Magento Products Load Failed. Exiting." ); return null; }
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + m2_products.items.Count().ToString() + " Magento Products Loaded." );
                     return m2_products;
                 }
                 else {
-                    Console.WriteLine( Helper.global.settings.company_name + " " + "Products Load Failed. Exiting2." );
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Magento Products Load Failed. Exiting2." );
                     return null;
                 }
             }
@@ -417,12 +417,12 @@ namespace Merchanter {
                 var m2_json = executioner.Execute( url_product, RestSharp.Method.Get, _json: null, Helper.global.magento.token );
                 if( m2_json != null ) {
                     var m2_products = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Products>( m2_json );
-                    if( m2_products == null ) { Console.WriteLine( "Products Load Failed. Exiting." ); return null; }
-                    Console.WriteLine( Helper.global.settings.company_name + " " + m2_products.items.Count().ToString() + " Products Loaded." );
+                    if( m2_products == null ) { Console.WriteLine( "Magento Products Load Failed. Exiting." ); return null; }
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + m2_products.items.Count().ToString() + " Magento Products Loaded." );
                     return m2_products;
                 }
                 else {
-                    Console.WriteLine( Helper.global.settings.company_name + " " + "Products Load Failed. Exiting2." );
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Magento Products Load Failed. Exiting2." );
                     return null;
                 }
             }
@@ -456,12 +456,12 @@ namespace Merchanter {
                 var m2_json = executioner.Execute( url_product, RestSharp.Method.Get, _json: null, Helper.global.magento.token );
                 if( m2_json != null ) {
                     var m2_products = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Products>( m2_json );
-                    if( m2_products == null ) { Console.WriteLine( "Products Load Failed. Exiting." ); return null; }
-                    Console.WriteLine( Helper.global.settings.company_name + " " + m2_products.items.Count().ToString() + " Products Loaded." );
+                    if( m2_products == null ) { Console.WriteLine( "Magento Products Load Failed. Exiting." ); return null; }
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + m2_products.items.Count().ToString() + " Magento Products Loaded." );
                     return m2_products;
                 }
                 else {
-                    Console.WriteLine( Helper.global.settings.company_name + " " + "Products Load Failed. Exiting2." );
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Magento Products Load Failed. Exiting2." );
                     return null;
                 }
             }
@@ -475,12 +475,12 @@ namespace Merchanter {
                 var m2_json = executioner.Execute( url_p_attributes, RestSharp.Method.Get, _json: null, Helper.global.magento.token );
                 if( m2_json != null ) {
                     var m2_attributes = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Attributes>( m2_json );
-                    if( m2_attributes == null ) { Console.WriteLine( Helper.global.settings.company_name + " " + "Product Attributes Load Failed. Exiting." ); return null; }
-                    Console.WriteLine( Helper.global.settings.company_name + " " + m2_attributes.items.Count().ToString() + " Product Attributes Loaded." );
+                    if( m2_attributes == null ) { Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Magento Product Attributes Load Failed. Exiting." ); return null; }
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + m2_attributes.items.Count().ToString() + " Magento Product Attributes Loaded." );
                     return m2_attributes;
                 }
                 else {
-                    Console.WriteLine( Helper.global.settings.company_name + " " + "Product Attributes Load Failed. Exiting2." );
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Magento Product Attributes Load Failed. Exiting2." );
                     return null;
                 }
             }
@@ -492,12 +492,12 @@ namespace Merchanter {
                 var m2_json = executioner.Execute( url_p_attribute, RestSharp.Method.Get, _json: null, Helper.global.magento.token );
                 if( m2_json != null ) {
                     var m2_attribute = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Attribute>( m2_json );
-                    if( m2_attribute == null ) { Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Product Attributes Load Failed. Exiting." ); return null; }
-                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + m2_attribute.attribute_code + " Loaded." );
+                    if( m2_attribute == null ) { Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Magento Product Attributes Load Failed. Exiting." ); return null; }
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Magento " + m2_attribute.attribute_code + " Loaded." );
                     return m2_attribute;
                 }
                 else {
-                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + _attribute_code + "Product Attribute Load Failed. Exiting2." );
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Magento " + _attribute_code + "Product Attribute Load Failed. Exiting2." );
                     return null;
                 }
             }
@@ -515,35 +515,65 @@ namespace Merchanter {
                 if( m2_json != null ) {
                     var m2_attribute = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Attribute>( m2_json );
                     if( m2_attribute == null ) { Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Product Attributes Load Failed. Exiting." ); return null; }
-                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + m2_attribute.attribute_code + " Loaded." );
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Magento " + m2_attribute.attribute_code + " Loaded." );
                     return m2_attribute;
                 }
                 else {
-                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + _attribute_id.ToString() + "Product Attribute Load Failed. Exiting2." );
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Magento " + _attribute_id.ToString() + "Product Attribute Load Failed. Exiting2." );
                     return null;
                 }
             }
         }
 
-        public static M2_Products? SearchProductByAttribute( string _attribute_code, string _attribute_value, int _page_size = 99999, int _current_page = 1 ) {
+        public static List<M2_Product>? SearchProductByAttribute( string _attribute_code, string _attribute_value, int _page_size = 99999, int _current_page = 1 ) {
             try {
                 using( Executioner executioner = new Executioner() ) {
-                    var url_product = Helper.global.magento.base_url + "index.php/rest/all/V1/products?" +
-                     "&searchCriteria[filterGroups][0][filters][0][field]=" + _attribute_code +
-                     "&searchCriteria[filterGroups][0][filters][0][value]=" + _attribute_value +
-                     "&searchCriteria[filterGroups][0][filters][0][conditionType]=" + "eq" +
-                     "&searchCriteria[currentPage]=" + _current_page.ToString() +
-                     "&searchCriteria[pageSize]=" + _page_size.ToString();
-                    var m2_json = executioner.Execute( url_product, RestSharp.Method.Get, _json: null, Helper.global.magento.token );
-                    if( m2_json != null ) {
-                        var m2_products = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Products>( m2_json );
-                        if( m2_products == null ) { Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Products Load Failed. Exiting." ); return new M2_Products(); }
-                        Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + m2_products.items.Count().ToString() + " Products Loaded." );
-                        return m2_products;
+                    var url_product = string.Empty;
+                    if( _page_size == 99999 ) {
+                        List<M2_Product> m2_products = new List<M2_Product>();
+                        _current_page = 1; _page_size = 250;
+                    START:
+                        url_product = Helper.global.magento.base_url + "index.php/rest/all/V1/products?" +
+                            "&searchCriteria[filterGroups][0][filters][0][field]=" + _attribute_code +
+                            "&searchCriteria[filterGroups][0][filters][0][value]=" + _attribute_value +
+                            "&searchCriteria[filterGroups][0][filters][0][conditionType]=" + "eq" +
+                            "&searchCriteria[currentPage]=" + _current_page.ToString() +
+                            "&searchCriteria[pageSize]=" + _page_size.ToString();
+                        var m2_json = executioner.Execute( url_product, RestSharp.Method.Get, _json: null, Helper.global.magento.token );
+                        if( m2_json != null ) {
+                            var query_products = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Products>( m2_json )?.items?.ToList();
+                            if( query_products != null && query_products.Count > 0 ) {
+                                m2_products.AddRange( query_products );
+                                _current_page++; Thread.Sleep( 10 ); goto START;
+                            }
+
+                            if( m2_products == null ) { Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Magento Products Load Failed. Exiting." ); return new List<M2_Product>(); }
+                            Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + m2_products.Count.ToString() + " Magento Products Loaded." );
+                            return m2_products;
+                        }
+                        else {
+                            Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Magento Products Load Failed. Exiting2." );
+                            return null;
+                        }
                     }
                     else {
-                        Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Products Load Failed. Exiting2." );
-                        return null;
+                        url_product = Helper.global.magento.base_url + "index.php/rest/all/V1/products?" +
+                            "&searchCriteria[filterGroups][0][filters][0][field]=" + _attribute_code +
+                            "&searchCriteria[filterGroups][0][filters][0][value]=" + _attribute_value +
+                            "&searchCriteria[filterGroups][0][filters][0][conditionType]=" + "eq" +
+                            "&searchCriteria[currentPage]=" + _current_page.ToString() +
+                            "&searchCriteria[pageSize]=" + _page_size.ToString();
+                        var m2_json = executioner.Execute( url_product, RestSharp.Method.Get, _json: null, Helper.global.magento.token );
+                        if( m2_json != null ) {
+                            var query_products = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Products>( m2_json )?.items?.ToList();
+                            if( query_products == null ) { Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Magento Products Load Failed. Exiting." ); return new List<M2_Product>(); }
+                            Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + query_products.Count().ToString() + " Magento Products Loaded." );
+                            return query_products;
+                        }
+                        else {
+                            Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Magento Products Load Failed. Exiting2." );
+                            return null;
+                        }
                     }
                 }
             }
@@ -581,12 +611,12 @@ namespace Merchanter {
                 var m2_json = executioner.Execute( url_stock_item, RestSharp.Method.Get, _json: null, Helper.global.magento.token );
                 if( m2_json != null ) {
                     var m2_stock_item = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_StockItem>( m2_json );
-                    if( m2_stock_item == null ) { Console.WriteLine( Helper.global.settings.company_name + " " + _sku + " Product Load Failed. Exiting." ); return null; }
-                    Console.WriteLine( Helper.global.settings.company_name + " " + _sku + " Loaded." );
+                    if( m2_stock_item == null ) { Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + _sku + " Magento Product Load Failed. Exiting." ); return null; }
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + _sku + " Loaded." );
                     return m2_stock_item;
                 }
                 else {
-                    Console.WriteLine( Helper.global.settings.company_name + " " + _sku + " Load Failed. Exiting2." );
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + _sku + " Load Failed. Exiting2." );
                     return null;
                 }
             }
@@ -599,18 +629,18 @@ namespace Merchanter {
                     var m2_json = executioner.Execute( url_product, RestSharp.Method.Get, _json: null, Helper.global.magento.token );
                     if( m2_json != null ) {
                         var m2_product = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Product>( m2_json );
-                        if( m2_product == null ) { Console.WriteLine( Helper.global.settings.company_name + " " + _sku + " Product Load Failed. Exiting." ); return null; }
-                        Console.WriteLine( Helper.global.settings.company_name + " " + _sku + " Product Loaded." );
+                        if( m2_product == null ) { Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + _sku + " Magento Product Load Failed. Exiting." ); return null; }
+                        Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + _sku + " Magento Product Loaded." );
                         return m2_product;
                     }
                     else {
-                        Console.WriteLine( Helper.global.settings.company_name + " " + _sku + " Product Load Failed. Exiting2." );
+                        Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + _sku + " Magento Product Load Failed. Exiting2." );
                         return null;
                     }
                 }
             }
             catch( Exception ex ) {
-                Console.WriteLine( Helper.global.settings.company_name + " " + _sku + " Product Parse Error." + Environment.NewLine + ex.ToString() );
+                Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + _sku + " Magento Product Parse Error." + Environment.NewLine + ex.ToString() );
                 return null;
             }
         }
@@ -621,12 +651,12 @@ namespace Merchanter {
                 var m2_json = executioner.Execute( url_products, RestSharp.Method.Get, _json: null, Helper.global.magento.token );
                 if( m2_json != null ) {
                     var m2_products = Newtonsoft.Json.JsonConvert.DeserializeObject<List<M2_ConfigurableChild>>( m2_json );
-                    if( m2_products == null ) { Console.WriteLine( Helper.global.settings.company_name + " " + _sku + " Products Load Failed. Exiting." ); return null; }
-                    Console.WriteLine( Helper.global.settings.company_name + " " + _sku + " Products Loaded." );
+                    if( m2_products == null ) { Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + _sku + " Magento Products Load Failed. Exiting." ); return null; }
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + _sku + " Magento Products Loaded." );
                     return m2_products;
                 }
                 else {
-                    Console.WriteLine( Helper.global.settings.company_name + " " + _sku + " Products Load Failed. Exiting2." );
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + _sku + " Magento Products Load Failed. Exiting2." );
                     return null;
                 }
             }
@@ -643,12 +673,12 @@ namespace Merchanter {
                 var m2_json = executioner.Execute( url_product, RestSharp.Method.Get, _json: null, Helper.global.magento.token );
                 if( m2_json != null ) {
                     var m2_products = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Products>( m2_json );
-                    if( m2_products == null ) { Console.WriteLine( Helper.global.settings.company_name + " " + string.Join( ",", _product_ids ) + " Products Load Failed. Exiting." ); return null; }
-                    Console.WriteLine( Helper.global.settings.company_name + " " + string.Join( ",", _product_ids ) + " Products Loaded." );
+                    if( m2_products == null ) { Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + string.Join( ",", _product_ids ) + " Magento Products Load Failed. Exiting." ); return null; }
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + string.Join( ",", _product_ids ) + " Magento Products Loaded." );
                     return m2_products;
                 }
                 else {
-                    Console.WriteLine( Helper.global.settings.company_name + " " + string.Join( ",", _product_ids ) + " Products Load Failed. Exiting2." );
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + string.Join( ",", _product_ids ) + " Magento Products Load Failed. Exiting2." );
                     return null;
                 }
             }
@@ -660,12 +690,12 @@ namespace Merchanter {
                 var m2_json = executioner.Execute( url_currency, RestSharp.Method.Get, _json: null, Helper.global.magento.token );
                 if( m2_json != null ) {
                     var m2_currency = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Currency>( m2_json );
-                    if( m2_currency == null ) { Console.WriteLine( Helper.global.settings.company_name + " " + "Currency Load Failed. Exiting." ); return null; }
-                    Console.WriteLine( Helper.global.settings.company_name + "Currency Loaded." );
+                    if( m2_currency == null ) { Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + "Magento Currency Load Failed. Exiting." ); return null; }
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + "Magento Currency Loaded." );
                     return m2_currency;
                 }
                 else {
-                    Console.WriteLine( Helper.global.settings.company_name + "Currency Load Failed. Exiting2." );
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Magento Currency Load Failed. Exiting2." );
                     return null;
                 }
             }
@@ -709,12 +739,11 @@ namespace Merchanter {
                 var m2_json = executioner.Execute( url_order, RestSharp.Method.Get, _json: null, Helper.global.magento.token );
                 if( m2_json != null ) {
                     var m2_orders = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Orders>( m2_json );
-                    if( m2_orders == null ) { Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Orders Load Failed. Exiting." ); return null; }
-                    //Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " MAGENTO2 " + m2_orders.items.Length.ToString() + " Orders Loaded." );
+                    if( m2_orders == null ) { Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Magento Orders Load Failed. Exiting." ); return null; }
                     return m2_orders;
                 }
                 else {
-                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " MAGENTO2 " + "Orders Load Failed. Exiting2." );
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Magento Orders Load Failed. Exiting2." );
                     return null;
                 }
             }
@@ -737,12 +766,11 @@ namespace Merchanter {
                 var m2_json = executioner.Execute( url_order, RestSharp.Method.Get, _json: null, Helper.global.magento.token );
                 if( m2_json != null ) {
                     var m2_orders = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Orders>( m2_json );
-                    if( m2_orders == null ) { Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Orders Load Failed. Exiting." ); return null; }
-                    //Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.MAGENTO2 + " " + m2_orders.items.Length.ToString() + " Orders Loaded." );
+                    if( m2_orders == null ) { Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Magento Orders Load Failed. Exiting." ); return null; }
                     return m2_orders;
                 }
                 else {
-                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " MAGENTO2 " + "Orders Load Failed. Exiting2." );
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Magento Orders Load Failed. Exiting2." );
                     return null;
                 }
             }
@@ -759,15 +787,15 @@ namespace Merchanter {
                     var m2_orders = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Orders>( m2_json );
                     if( m2_orders != null ) {
                         var m2_order = m2_orders.items.Length > 0 ? m2_orders.items[ 0 ] : null;
-                        if( m2_order == null ) { Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " MAGENTO2 " + _increment_id + "Orders Load Failed. Exiting." ); return null; }
-                        //Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " MAGENTO2 " + m2_order.increment_id + " Order Loaded." );
+                        if( m2_order == null ) { Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + _increment_id + " Magento Order Load Failed. Exiting." ); return null; }
+                        //Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + m2_order.increment_id + " Magento Order Loaded." );
                         return m2_order;
                     }
                     else
                         return null;
                 }
                 else {
-                    Console.WriteLine( "MAGENTO2" + " " + _increment_id + "Order Load Failed. Exiting2." );
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + _increment_id + "Magento Order Load Failed. Exiting2." );
                     return null;
                 }
             }
@@ -784,7 +812,7 @@ namespace Merchanter {
                 var m2_json = executioner.Execute( url_customer, RestSharp.Method.Get, _json: null, Helper.global.magento.token );
                 if( m2_json != null ) {
                     var m2_customers = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Customers>( m2_json );
-                    if( m2_customers == null ) { Console.WriteLine( "Orders Load Failed. Exiting." ); return null; }
+                    if( m2_customers == null ) { Console.WriteLine( "Magento Orders Load Failed. Exiting." ); return null; }
                     if( m2_customers.items.Length > 0 ) {
                         var c = m2_customers.items.Where( x => x.website_id == 2 ).FirstOrDefault();
                         if( c != null ) {
@@ -795,7 +823,7 @@ namespace Merchanter {
                     return null;
                 }
                 else {
-                    Console.WriteLine( Helper.global.settings.company_name + " " + _email + " Customer Load Failed. Exiting2." );
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + _email + " Magento Customer Load Failed. Exiting2." );
                     return null;
                 }
             }
@@ -850,7 +878,7 @@ namespace Merchanter {
                 using( Executioner executioner = new Executioner() ) {
                     var json_invoice = executioner.Execute( Helper.global.magento.base_url + "rest/all/V1/order/" + _order.order_id.ToString() + "/invoice", RestSharp.Method.Post, invoice, Helper.global.magento.token );
                     if( json_invoice != null ) {
-                        Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + json_invoice + " invoice created." );
+                        Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + json_invoice + " magento invoice created." );
                         return json_invoice;
                     }
                     else {
@@ -879,7 +907,7 @@ namespace Merchanter {
                 using( Executioner executioner = new Executioner() ) {
                     var json_order = executioner.Execute( Helper.global.magento.base_url + "/index.php/rest/all/V1/order/" + _order_id.ToString() + "/ship", RestSharp.Method.Post, ship, Helper.global.magento.token );
                     if( json_order != null ) {
-                        Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + _order_label + ":" + _carrier_title + " => " + _tracking_numbers + " order shipped." );
+                        Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + _order_label + ":" + _carrier_title + " => " + _tracking_numbers + " magento order shipped." );
                         return json_order;
                     }
                     else
@@ -893,15 +921,21 @@ namespace Merchanter {
             }
         }
 
-        public static void ChangeOrderStatus( Order _order, string _status ) {
+        public static void ChangeOrderStatus( Order _order, string? _status ) {
             try {
-                var order = new { entity = new { entity_id = _order.order_id, increment_id = _order.order_label, status = _status } };
+                if( !string.IsNullOrWhiteSpace( _status ) ) {
+                    var order = new { entity = new { entity_id = _order.order_id, increment_id = _order.order_label, status = _status } };
 
-                using( Executioner executioner = new Executioner() ) {
-                    var json_order = executioner.Execute( Helper.global.magento.base_url + "rest/all/V1/orders", RestSharp.Method.Post, order, Helper.global.magento.token );
-                    if( json_order != null ) {
-                        Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + _order.order_status + " => " + _status + " order status changed!" );
+                    using( Executioner executioner = new Executioner() ) {
+                        var json_order = executioner.Execute( Helper.global.magento.base_url + "rest/all/V1/orders", RestSharp.Method.Post, order, Helper.global.magento.token );
+                        if( json_order != null ) {
+                            Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + _order.order_status + " => " + _status + " magento order status changed!" );
+                        }
                     }
+                }
+                else {
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + "status missing for " + _order.order_label );
+                    Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + "status missing for " + _order.order_label );
                 }
             }
             catch( Exception ex ) {
@@ -1118,7 +1152,7 @@ namespace Merchanter {
                     if( json_product != null ) {
                         var updated_product = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Product>( json_product );
                         if( updated_product != null ) {
-                            Console.WriteLine( "[" + DateTime.Now.ToString() + "] Sku:" + _sku + "  updated => [" + _attribute_code + "=" + _attribute_value + "]" );
+                            Console.WriteLine( "[" + DateTime.Now.ToString() + "] Sku:" + _sku + " updated => [" + _attribute_code + "=" + _attribute_value + "]" );
                             return true;
                         }
                     }
@@ -1149,7 +1183,7 @@ namespace Merchanter {
                     if( json_product != null ) {
                         var updated_id = Newtonsoft.Json.JsonConvert.DeserializeObject<string>( json_product );
                         if( updated_id != null ) {
-                            Console.WriteLine( "[" + DateTime.Now.ToString() + "] Attribute Code:" + _attribute_code + "  updated => [" + _attribute_code + "=" + _attribute_value + "]" );
+                            Console.WriteLine( "[" + DateTime.Now.ToString() + "] Attribute Code:" + _attribute_code + " option inserted => [" + _attribute_code + "=" + _attribute_value + "]" );
                             return updated_id;
                         }
                     }

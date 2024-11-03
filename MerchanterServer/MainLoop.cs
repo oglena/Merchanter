@@ -1,18 +1,14 @@
 ﻿using Merchanter;
 using Merchanter.Classes;
 using MerchanterHelpers;
+using Org.BouncyCastle.Utilities.Encoders;
 using ShipmentHelpers;
 using System.Diagnostics;
 using System.Reflection;
 
 namespace MerchanterServer {
     internal class MainLoop {
-
-        #region Constant Variables
-        public static string newline = "\r\n";
-        #endregion
-
-        #region Variables
+        #region Properties
         public string thread_id { get; set; }
         public Customer customer { get; set; }
         public DbHelper db_helper { get; set; }
@@ -22,9 +18,14 @@ namespace MerchanterServer {
         public string[] product_targets { get; set; } = [];
         public string[] order_sources { get; set; } = [];
         public string[] shipments { get; set; } = [];
+        #endregion
 
-        private bool xml_has_error = false;
+        #region Constant Variables
+        public static string newline = "\r\n";
+        #endregion
 
+        #region Variables
+        private bool xml_has_error;
         CurrencyRates rates = new();
         List<XProduct> xproducts = [];
         List<Product> live_products = [];
@@ -44,11 +45,11 @@ namespace MerchanterServer {
             db_helper = _db_helper;
 
             #region Work Sources
-            product_main_source = Helper.global.work_sources.Where( x => x.type == "PRODUCT" && (x.direction == "MAIN_SOURCE" || x.direction == "BOTH") && x.is_active ).FirstOrDefault()?.name;
-            other_product_sources = Helper.global.work_sources.Where( x => x.type == "PRODUCT" && (x.direction == "SOURCE" || x.direction == "BOTH") && x.is_active ).Select( x => x.name ).ToArray();
-            product_targets = Helper.global.work_sources.Where( x => x.type == "PRODUCT" && (x.direction == "TARGET" || x.direction == "BOTH") && x.is_active ).Select( x => x.name ).ToArray();
-            order_main_target = Helper.global.work_sources.Where( x => x.type == "ORDER" && (x.direction == "MAIN_TARGET" || x.direction == "BOTH") && x.is_active ).FirstOrDefault()?.name;
-            order_sources = Helper.global.work_sources.Where( x => x.type == "ORDER" && (x.direction == "SOURCE" || x.direction == "BOTH") && x.is_active ).Select( x => x.name ).ToArray();
+            product_main_source = Helper.global.work_sources.Where( x => x.type == "PRODUCT" && (x.direction == "MAIN_SOURCE") && x.is_active ).FirstOrDefault()?.name;
+            other_product_sources = Helper.global.work_sources.Where( x => x.type == "PRODUCT" && (x.direction == "SOURCE") && x.is_active ).Select( x => x.name ).ToArray();
+            product_targets = Helper.global.work_sources.Where( x => x.type == "PRODUCT" && (x.direction == "TARGET") && x.is_active ).Select( x => x.name ).ToArray();
+            order_main_target = Helper.global.work_sources.Where( x => x.type == "ORDER" && (x.direction == "MAIN_TARGET") && x.is_active ).FirstOrDefault()?.name;
+            order_sources = Helper.global.work_sources.Where( x => x.type == "ORDER" && (x.direction == "SOURCE") && x.is_active ).Select( x => x.name ).ToArray();
             shipments = Helper.global.work_sources.Where( x => x.type == "SHIPMENT" && x.direction == "BOTH" && x.is_active ).Select( x => x.name ).ToArray();
             #endregion
         }
@@ -140,11 +141,11 @@ namespace MerchanterServer {
                 #region Inject XML Sources for QP Bilisim
                 if( customer.customer_id == 1 && xml_enabled_products != null ) {
                     try {
-                        Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Injecting XML Sources for " + customer.customer_id );
+                        Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Injecting XML Sources for " + customer.user_name );
                         var xml_sources_1 = Helper.GetProductAttribute( Helper.global.magento.xml_sources_attribute_code );
                         var xml_enabled_products_1 = Helper.SearchProductByAttribute( Helper.global.magento.is_xml_enabled_attribute_code, "1" );
                         if( xml_enabled_products_1 != null ) {
-                            foreach( var item in xml_enabled_products_1.items ) {
+                            foreach( var item in xml_enabled_products_1 ) {
                                 string? raw_sources_1 = item.custom_attributes.Where( x => x.attribute_code == Helper.global.magento.xml_sources_attribute_code )?.First().value?.ToString();
                                 if( raw_sources_1 != null && raw_sources_1.Length > 0 ) {
                                     var live_sources = xml_sources_1?.options.Where( x => raw_sources_1.Contains( x.value ) ).Where( x => !string.IsNullOrWhiteSpace( x.value ) ).ToList();
@@ -180,7 +181,7 @@ namespace MerchanterServer {
 
                             xml_enabled_products = db_helper.xml.GetXMLEnabledProducts( customer.customer_id );
                         }
-                        Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Done." + customer.customer_id );
+                        Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Injecting XML Sources for " + customer.user_name + " Done." );
                     }
                     catch( Exception _ex ) {
                         db_helper.xml.LogToServer( "error", _ex.ToString(), customer.customer_id, "xml" );
@@ -223,7 +224,7 @@ namespace MerchanterServer {
                         db_helper.xml.InsertNotifications( customer.customer_id, [ new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_SOURCE_FAILED, notification_content = Constants.FSP } ] );
                         #endregion
 
-                        db_helper.xml.LogToServer( "error", Constants.FSP, customer.customer_id, "xml" );
+                        db_helper.xml.LogToServer( "source_error", Constants.FSP, customer.customer_id, "xml" );
                         Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.FSP + " xproducts load failed" );
                         xml_has_error = true;
                         return;
@@ -264,7 +265,7 @@ namespace MerchanterServer {
                         db_helper.xml.InsertNotifications( customer.customer_id, [ new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_SOURCE_FAILED, notification_content = Constants.PENTA } ] );
                         #endregion
 
-                        db_helper.xml.LogToServer( "error", Constants.PENTA, customer.customer_id, "xml" );
+                        db_helper.xml.LogToServer( "source_error", Constants.PENTA, customer.customer_id, "xml" );
                         Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.PENTA + " xproducts load failed" );
                         xml_has_error = true;
                         return;
@@ -305,7 +306,7 @@ namespace MerchanterServer {
                         db_helper.xml.InsertNotifications( customer.customer_id, [ new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_SOURCE_FAILED, notification_content = Constants.KOYUNCU } ] );
                         #endregion
 
-                        db_helper.xml.LogToServer( "error", Constants.KOYUNCU, customer.customer_id, "xml" );
+                        db_helper.xml.LogToServer( "source_error", Constants.KOYUNCU, customer.customer_id, "xml" );
                         Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.KOYUNCU + " xproducts load failed" );
                         xml_has_error = true;
                         return;
@@ -346,7 +347,7 @@ namespace MerchanterServer {
                         db_helper.xml.InsertNotifications( customer.customer_id, [ new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_SOURCE_FAILED, notification_content = Constants.OKSID } ] );
                         #endregion
 
-                        db_helper.xml.LogToServer( "error", Constants.OKSID, customer.customer_id, "xml" );
+                        db_helper.xml.LogToServer( "source_error", Constants.OKSID, customer.customer_id, "xml" );
                         Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.OKSID + " xproducts load failed" );
                         xml_has_error = true;
                         return;
@@ -388,7 +389,7 @@ namespace MerchanterServer {
                         db_helper.xml.InsertNotifications( customer.customer_id, [ new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_SOURCE_FAILED, notification_content = Constants.BOGAZICI } ] );
                         #endregion
 
-                        db_helper.xml.LogToServer( "error", Constants.BOGAZICI, customer.customer_id, "xml" );
+                        db_helper.xml.LogToServer( "source_error", Constants.BOGAZICI, customer.customer_id, "xml" );
                         Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.BOGAZICI + " xproducts load failed" );
                         xml_has_error = true;
                         return;
@@ -406,6 +407,7 @@ namespace MerchanterServer {
                                 item.barcode + " source=" + item.xml_source + " " + " xproduct removed." );
 
                             #region Notify - XML_PRODUCT_REMOVED
+                            db_helper.xml.LogToServer( "product_removed", item.barcode + ": " + item.qty, customer.customer_id, "xml" );
                             if( xml_enabled_products?.Where( x => x.barcode == item.barcode ).ToList().Count() == 0 ) {
                                 notifications.Add( new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_PRODUCT_REMOVED, xproduct_barcode = item.barcode, notification_content = item.xml_source } );
                             }
@@ -423,6 +425,7 @@ namespace MerchanterServer {
                             #region Notify - XML_PRICE_CHANGED
                             if( xml_enabled_products?.Where( x => x.barcode == item.barcode ).ToList().Count() > 0 ) {
                                 if( item.price2 != tempx.price2 ) {
+                                    db_helper.xml.LogToServer( "price_change", item.xml_source + "=" + item.price2 + "|" + tempx.price2, customer.customer_id, "xml" );
                                     notifications.Add( new Notification() {
                                         customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_PRICE_CHANGED, xproduct_barcode = item.barcode,
                                         notification_content = item.xml_source + "=" + item.price2 + "|" + tempx.price2
@@ -434,6 +437,7 @@ namespace MerchanterServer {
                             #region Notify - XML_QTY_CHANGED
                             if( xml_enabled_products?.Where( x => x.barcode == item.barcode ).ToList().Count() > 0 ) {
                                 if( item.qty != tempx.qty ) {
+                                    db_helper.xml.LogToServer( "qty_change", item.xml_source + "=" + item.qty + "|" + tempx.qty, customer.customer_id, "xml" );
                                     notifications.Add( new Notification() {
                                         customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_QTY_CHANGED, xproduct_barcode = item.barcode,
                                         notification_content = item.xml_source + "=" + item.qty + "|" + tempx.qty
@@ -445,6 +449,7 @@ namespace MerchanterServer {
                         else {
                             #region Notify - XML_PRODUCT_ADDED
                             if( xml_enabled_products?.Where( x => x.barcode == item.barcode ).ToList().Count() > 0 ) {
+                                db_helper.xml.LogToServer( "product_added", item.barcode + ": " + item.qty, customer.customer_id, "xml" );
                                 notifications.Add( new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_PRODUCT_ADDED, xproduct_barcode = item.barcode } );
                             }
                             #endregion
@@ -531,12 +536,6 @@ namespace MerchanterServer {
                                                         Helper.global.erp_invoice_ftp_username, Helper.global.erp_invoice_ftp_password );
                                                     db_helper.invoice.LogToServer( "ftpupload", fullpath + " => " + Helper.global.erp_invoice_ftp_url, customer.customer_id, "invoice" );
                                                     if( QP_MySQLHelper.QP_UpdateInvoiceNo( selected_invoice.order_label, invoice.gib_fatura_no ) ) {
-                                                        #region Notify - NEW_INVOICE
-                                                        notifications.Add( new Notification() {
-                                                            customer_id = customer.customer_id, type = Notification.NotificationTypes.NEW_INVOICE, invoice_no = invoice.gib_fatura_no, order_label = selected_invoice.order_label, notification_content = Helper.global.erp_invoice_ftp_url + invoice.gib_fatura_no + ".pdf"
-                                                            , is_notification_sent = true
-                                                        } ); //TODO: this gonna change
-                                                        #endregion
                                                         db_helper.invoice.LogToServer( "qp_mysqlupdate", selected_invoice.order_label + " => " + invoice.gib_fatura_no, customer.customer_id, "invoice" );
                                                     }
                                                 }
@@ -546,6 +545,12 @@ namespace MerchanterServer {
                                             }
                                         }
                                         if( db_helper.invoice.SetInvoiceCreated( customer.customer_id, invoice.invoice_no, fullpath ) ) { //TODO: belge_url <> local_path different condition
+                                            #region Notify - NEW_INVOICE
+                                            notifications.Add( new Notification() {
+                                                customer_id = customer.customer_id, type = Notification.NotificationTypes.NEW_INVOICE, invoice_no = invoice.gib_fatura_no, order_label = selected_invoice.order_label, notification_content = Helper.global.erp_invoice_ftp_url + invoice.gib_fatura_no + ".pdf"
+                                                , is_notification_sent = true
+                                            } ); //TODO: this gonna change
+                                            #endregion
                                             Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + invoice.invoice_no + " created at [" + fullpath + "]" );
                                             db_helper.invoice.LogToServer( "info", selected_invoice.order_label + " => " + invoice.gib_fatura_no, customer.customer_id, "invoice" );
                                         }
@@ -607,7 +612,7 @@ namespace MerchanterServer {
                                     item.notification_content = mail_title;
                                     if( db_helper.notification.UpdateNotifications( customer.customer_id, [ item ] ) ) {
                                         Console.WriteLine( "[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title + "]" );
-                                        db_helper.notification.LogToServer( "notification", mail_title + " => " + mail_body, customer.customer_id, "notification" );
+                                        db_helper.notification.LogToServer( "NEW_ORDER", mail_title + " => " + mail_body, customer.customer_id, "notification" );
                                     }
                                 }
                                 break;
@@ -655,7 +660,7 @@ namespace MerchanterServer {
                                         item.notification_content = mail_body;
                                         if( db_helper.notification.UpdateNotifications( customer.customer_id, [ item ] ) ) {
                                             Console.WriteLine( "[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title + "]" );
-                                            db_helper.notification.LogToServer( "notification", mail_title + " => " + mail_body, customer.customer_id, "notification" );
+                                            db_helper.notification.LogToServer( "OUT_OF_STOCK_PRODUCT_SOLD", mail_title + " => " + mail_body, customer.customer_id, "notification" );
                                         }
                                     }
                                     selected_product = null;
@@ -702,7 +707,7 @@ namespace MerchanterServer {
                                         item.notification_content = mail_body;
                                         if( db_helper.notification.UpdateNotifications( customer.customer_id, [ item ] ) ) {
                                             Console.WriteLine( "[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title + "]" );
-                                            db_helper.notification.LogToServer( "notification", mail_title + " => " + mail_body, customer.customer_id, "notification" );
+                                            db_helper.notification.LogToServer( "PRODUCT_IN_STOCK", mail_title + " => " + mail_body, customer.customer_id, "notification" );
                                         }
                                     }
                                     selected_product = null;
@@ -749,7 +754,7 @@ namespace MerchanterServer {
                                         item.notification_content = mail_body;
                                         if( db_helper.notification.UpdateNotifications( customer.customer_id, [ item ] ) ) {
                                             Console.WriteLine( "[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title + "]" );
-                                            db_helper.notification.LogToServer( "notification", mail_title + " => " + mail_body, customer.customer_id, "notification" );
+                                            db_helper.notification.LogToServer( "PRODUCT_OUT_OF_STOCK", mail_title + " => " + mail_body, customer.customer_id, "notification" );
                                         }
                                     }
                                     selected_product = null;
@@ -795,7 +800,7 @@ namespace MerchanterServer {
                                             item.notification_content = mail_body;
                                             if( db_helper.notification.UpdateNotifications( customer.customer_id, [ item ] ) ) {
                                                 Console.WriteLine( "[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title + "]" );
-                                                db_helper.notification.LogToServer( "notification", mail_title + " => " + mail_body, customer.customer_id, "notification" );
+                                                db_helper.notification.LogToServer( "XML_PRICE_CHANGED", mail_title + " => " + mail_body, customer.customer_id, "notification" );
                                             }
                                         }
                                         selected_product = null;
@@ -948,12 +953,8 @@ namespace MerchanterServer {
             }
             catch( Exception _ex ) {
                 db_helper.LogToServer( "product_source_error", _ex.Message + newline + _ex.ToString(), customer.customer_id, "product" );
-                GMail.Send( Constants.mail_sender, Constants.mail_password, Constants.mail_sender_name, Constants.mail_to,
-                    Assembly.GetCallingAssembly().GetName().Name + "-Error  //customer:" + customer.customer_id.ToString(),
-                    "ERROR" + newline + "CustomerID: " + customer.customer_id.ToString() + ". " + _ex.Message + newline + _ex.ToString() + newline + "exit -3" );
                 _health = false;
             } finally {
-                //db_helper.LogToServer( "info", Helper.global.settings.company_name + " " + live_products.Count + " live products loaded", customer.customer_id, "product" );
                 Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ENTEGRA + " " + live_products.Count + " live products loaded" );
             }
         }
@@ -1011,7 +1012,7 @@ namespace MerchanterServer {
                 #endregion
             }
             catch( Exception _ex ) {
-                db_helper.LogToServer( "error", _ex.ToString(), customer.customer_id, "product_source_error" );
+                db_helper.LogToServer( "product_source_error", _ex.ToString(), customer.customer_id, "product" );
                 _health = false;
             }
         }
@@ -1057,7 +1058,7 @@ namespace MerchanterServer {
                                         }
                                     }
 
-                                    if( item.brand.id == 0 ) { 
+                                    if( item.brand.id == 0 ) {
                                         item.brand.id = db_helper.InsertBrand( customer.customer_id, item.brand, true );
                                         item.extension.brand_id = item.brand.id;
                                     }
@@ -1183,9 +1184,6 @@ namespace MerchanterServer {
             }
             catch( Exception _ex ) {
                 db_helper.LogToServer( "product_update_error", _ex.Message + newline + _ex.ToString(), customer.customer_id, "product" );
-                GMail.Send( Constants.mail_sender, Constants.mail_password, Constants.mail_sender_name, Constants.mail_to,
-                    Assembly.GetCallingAssembly().GetName().Name + "-Error  //customer:" + customer.customer_id.ToString(),
-                    "ERROR" + newline + "CustomerID: " + customer.customer_id.ToString() + ". " + _ex.Message + newline + _ex.ToString() + newline + "exit -3" );
                 _health = false;
             }
         }
@@ -1302,17 +1300,14 @@ namespace MerchanterServer {
                             live_orders.Add( o );
                         }
                     }
+                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + m2_orders?.items.Length + " magento2 orders loaded" );
                 }
             }
             catch( Exception _ex ) {
                 db_helper.LogToServer( "order_source_error", _ex.Message + newline + _ex.ToString(), customer.customer_id, "order" );
-                GMail.Send( Constants.mail_sender, Constants.mail_password, Constants.mail_sender_name, Constants.mail_to,
-                    Assembly.GetCallingAssembly().GetName().Name + "-Error  //customer:" + customer.customer_id.ToString(),
-                    "ERROR" + newline + "CustomerID: " + customer.customer_id.ToString() + ". " + _ex.Message + newline + _ex.ToString() + newline + "exit -3" );
                 _health = false;
             } finally {
-                //db_helper.LogToServer( "info", Helper.global.settings.company_name + " " + live_orders.Count + " live orders loaded", customer.customer_id, "order" );
-                Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + live_orders.Count + " live orders loaded" );
+                Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + live_orders.Count + " total live orders loaded" );
             }
         }
 
@@ -1352,6 +1347,7 @@ namespace MerchanterServer {
                                                 //TODO: rewrite ?
                                             }
                                             inserted_musteri_siparis_no = NetOpenXHelper.InsertNetsisMusSiparis( order_item, inserted_cari_kodu, selected_order.order_shipping_barcode );
+                                            db_helper.LogToServer( "new_order", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + order_item.grand_total.ToString() + order_item.currency, customer.customer_id, "order" );
                                             #region Notify Order - NEW_ORDER
                                             notifications.Add( new Notification() {
                                                 customer_id = customer.customer_id, type = Notification.NotificationTypes.NEW_ORDER, order_label = order_item.order_label,
@@ -1364,7 +1360,8 @@ namespace MerchanterServer {
                                     if( inserted_musteri_siparis_no != null ) {
                                         if( order_sources.Contains( Constants.MAGENTO2 ) && order_item.order_status != "HAZIRLANIYOR" ) { //processed | do order status change => processing
                                             if( !string.IsNullOrWhiteSpace( Helper.CreateOrderInvoice( order_item ) ) ) {
-                                                Helper.ChangeOrderStatus( order_item, "processing" );
+                                                Helper.ChangeOrderStatus( order_item, Helper.global.order_statuses.Where( x => x.status_code == "HAZIRLANIYOR" ).FirstOrDefault()?.magento2_status_code );
+                                                db_helper.LogToServer( "order_process", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + Helper.global.order_statuses.Where( x => x.status_code == "HAZIRLANIYOR" ).FirstOrDefault()?.magento2_status_code, customer.customer_id, "order" );
                                                 #region Notify Order - ORDER_PROCESS
                                                 notifications.Add( new Notification() {
                                                     customer_id = customer.customer_id, type = Notification.NotificationTypes.ORDER_PROCESS, order_label = order_item.order_label,
@@ -1375,7 +1372,7 @@ namespace MerchanterServer {
                                         }
 
                                         if( db_helper.SetOrderProcess( customer.customer_id, order_item.order_id, inserted_musteri_siparis_no ) ) {
-                                            db_helper.LogToServer( "order_processed", "Order:" + order_item.order_label + ":" + inserted_musteri_siparis_no + " => " + order_item.grand_total.ToString() + order_item.currency, customer.customer_id, "order" );
+                                            db_helper.LogToServer( "order_processed", "Order:" + order_item.order_source + ":" + order_item.order_label + ":" + inserted_musteri_siparis_no + " => " + order_item.grand_total.ToString() + order_item.currency, customer.customer_id, "order" );
 
                                             #region Notify Order - NEW_ORDER, OUT_OF_STOCK_PRODUCT_SOLD
                                             foreach( var sold_item in order_item.order_items ) {
@@ -1387,6 +1384,7 @@ namespace MerchanterServer {
                                                             var sold_product_main_source = sold_product_sources.Where( x => x.name == product_main_source ).FirstOrDefault();
                                                             if( sold_product_main_source != null ) {
                                                                 if( sold_product_main_source.qty <= 0 ) {
+                                                                    db_helper.LogToServer( "out_of_stock_product_sold", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + sold_product.sku, customer.customer_id, "product" );
                                                                     notifications.Add( new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.OUT_OF_STOCK_PRODUCT_SOLD, order_label = order_item.order_label, product_sku = sold_product.sku, xproduct_barcode = sold_product.barcode } );
                                                                 }
                                                             }
@@ -1422,16 +1420,23 @@ namespace MerchanterServer {
                                                         " Detaylı takip için: https://www.yurticikargo.com/tr/online-servisler/gonderi-sorgula?code=" +
                                                         string.Join( ",", tracking_codes ),
                                                         order_item.shipment_method, ShipmentMethod.GetShipmentName( order_item.shipment_method ) );
+                                                    db_helper.LogToServer( "order_process", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + Helper.global.order_statuses.Where( x => x.status_code == "TAMAMLANDI" ).FirstOrDefault()?.magento2_status_code, customer.customer_id, "order" );
+                                                    #region Notify Order - ORDER_COMPLETE
+                                                    notifications.Add( new Notification() {
+                                                        customer_id = customer.customer_id, type = Notification.NotificationTypes.ORDER_COMPLETE, order_label = order_item.order_label,
+                                                        notification_content = order_item.order_label + " => " + string.Join( ",", tracking_codes ), is_notification_sent = true
+                                                    } );
+                                                    #endregion
                                                 }
 
                                                 if( db_helper.SetShipped( customer.customer_id, order_item.order_label, string.Join( ",", tracking_codes ) ) ) {
+                                                    db_helper.LogToServer( "order_shipped", order_item.order_source + ":" + order_item.order_label + ":" + shipment.barcode + " => " + string.Join( ",", tracking_codes ), customer.customer_id, "order" );
                                                     #region Notify Order - ORDER_SHIPPED
                                                     notifications.Add( new Notification() {
                                                         customer_id = customer.customer_id, type = Notification.NotificationTypes.ORDER_SHIPPED, order_label = order_item.order_label,
                                                         notification_content = shipment.barcode + " => " + string.Join( ",", tracking_codes ), is_notification_sent = true
                                                     } );
                                                     #endregion
-                                                    db_helper.LogToServer( "order_shipped", order_item.order_label + ":" + shipment.barcode + " => " + string.Join( ",", tracking_codes ), customer.customer_id, "order" );
                                                 }
                                             }
                                         }
@@ -1461,7 +1466,7 @@ namespace MerchanterServer {
                                         if( db_helper.InsertShipments( customer.customer_id, [ shipment ] ) ) {
                                             if( db_helper.SetOrderShipmentBarcode( customer.customer_id, order_item.order_id, shipment.barcode ) ) {
                                                 Console.WriteLine( "{1}-shipment_inserted {0}", shipment.order_id + ":" + shipment.order_label + ":" + shipment.order_source + " => " + shipment.barcode, customer.customer_id );
-                                                db_helper.LogToServer( "info", _message: string.Format( "{1}-shipment_inserted {0}", shipment.order_id + ":" + shipment.order_label + ":" + shipment.order_source + " => " + shipment.barcode, customer.customer_id ), customer.customer_id, "shipment" );
+                                                db_helper.LogToServer( "shipment_inserted", _message: string.Format( "{1}-shipment_inserted {0}", shipment.order_id + ":" + shipment.order_label + ":" + shipment.order_source + " => " + shipment.barcode, customer.customer_id ), customer.customer_id, "shipment" );
                                             }
                                         }
                                     }
@@ -1495,9 +1500,6 @@ namespace MerchanterServer {
             }
             catch( Exception _ex ) {
                 db_helper.LogToServer( "order_update_error", _ex.Message + newline + _ex.ToString(), customer.customer_id, "order" );
-                GMail.Send( Constants.mail_sender, Constants.mail_password, Constants.mail_sender_name, Constants.mail_to,
-                    Assembly.GetCallingAssembly().GetName().Name + "-Error  //customer:" + customer.customer_id.ToString(),
-                    "ERROR" + newline + "CustomerID: " + customer.customer_id.ToString() + ". " + _ex.Message + newline + _ex.ToString() + newline + "exit -3" );
                 _health = false;
             }
         }

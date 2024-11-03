@@ -92,6 +92,7 @@ namespace Merchanter {
             }
         }
 
+
         public static bool? QP_UpdateCustomBundlePC( string _product_id, decimal _custom_price ) {
             try {
                 using( QP_MySQLHelper.connection = new MySqlConnection() ) {
@@ -162,7 +163,5 @@ namespace Merchanter {
                     connection.Close();
             }
         }
-
-
     }
 }

@@ -72,7 +72,7 @@ public class M2_ProductVideoContent {
 
 public class M2_ProductCustomAttributes {
     public string attribute_code { get; set; }
-    public string? value { get; set; }
+    public object? value { get; set; }
 }
 
 

@@ -5,15 +5,23 @@ using System.Diagnostics;
 namespace Merchanter {
     public class Executioner :IDisposable {
 
-        RestClient restClient = new RestClient();
+        private RestClient restClient;
+
+        public Executioner() {
+            var httpClient = new HttpClient {
+                Timeout = TimeSpan.FromMinutes( 3 ), // Set the desired timeout in minutes
+                MaxResponseContentBufferSize = 256000000 // Set the desired max size in bytes (e.g., 256 MB)
+            };
+            restClient = new RestClient( httpClient );
+        }
 
         public virtual string? Execute( string _url, Method _method, object? _json, string? _token ) {
             try {
-                restClient = new RestClient();
                 var request = new RestRequest( _url, _method );
                 request.AddHeader( "Accept", "application/json" );
                 request.AddHeader( "Content-Type", "application/json" );
                 if( !string.IsNullOrWhiteSpace( _token ) ) request.AddHeader( "Authorization", "Bearer " + _token );
+
                 if( _method == Method.Post ) {
                     if( _json != null ) {
                         request.AddJsonBody( _json );
