@@ -1,4 +1,4 @@
 ﻿[*.cs]
 
-# CA1707: Identifiers should not contain underscores
-dotnet_diagnostic.CA1707.severity = none
+# CS8601: Possible null reference assignment.
+dotnet_diagnostic.CS8601.severity = silent

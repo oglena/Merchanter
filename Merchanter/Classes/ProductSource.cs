@@ -8,6 +8,16 @@
         public int qty { get; set; }
         public bool is_active { get; set; } = false;
 
+        /// <summary>
+        /// ProductSource constructor
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_id">Product Source ID</param>
+        /// <param name="_name">Product Name</param>
+        /// <param name="_sku">Product SKU</param>
+        /// <param name="_barcode">Product Barcode</param>
+        /// <param name="_qty">Product Quantity</param>
+        /// <param name="_is_active">Product Source Active Status</param>
         public ProductSource( int _customer_id, int _id,  string _name, string _sku, string _barcode, int _qty, bool _is_active ) {
             customer_id = _customer_id;
             id = _id;

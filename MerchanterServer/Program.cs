@@ -12,7 +12,6 @@ var now = DateTime.Now;
 const string newline = "\r\n";
 bool first_run = true;
 Console.WriteLine( "Press Ctrl+C to exit." );
-Console.Beep();
 int customer_id;
 
 #region Customer Params
@@ -126,6 +125,8 @@ while( true ) {
             Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + customer_id + "-ID sync statuses reset for first run." );
 
         if( File.Exists( Path.Combine( AppDomain.CurrentDomain.BaseDirectory, "local" ) ) ) {
+            WriteLogLine( thread_id + " local enabled!!!", ConsoleColor.Yellow );
+            Console.Beep();
             Helper.global.netsis.rest_url = "http://88.247.120.127:7070/";
             Helper.global.entegra.api_url = "http://88.247.120.127:5421/";
         }

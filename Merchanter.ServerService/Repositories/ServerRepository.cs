@@ -61,7 +61,7 @@ namespace Merchanter.ServerService.Repositories {
                     started_server = new MerchanterServer() { customer_id = _customer_id, PID = started_process != null ? started_process.Id : 0 };
                 }
                 else {
-                    merchanterService.helper.LogToServer( "api", "start disabled for user:" + customer.customer_id, customer.customer_id, "server_service" );
+                    merchanterService.helper.LogToServer( AppDomain.CurrentDomain.Id.ToString(), "api", "start disabled for user:" + customer.customer_id, customer.customer_id, "server_service" );
                 }
             } );
             return started_server;

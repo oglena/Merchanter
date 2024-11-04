@@ -130,28 +130,27 @@ namespace Merchanter {
                     c = new Customer {
                         customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
                         user_name = dataReader[ "user_name" ].ToString(),
-                        password = dataReader[ "password" ].ToString(),
-                        status = Convert.ToBoolean( int.Parse( dataReader[ "status" ].ToString() ) ),
-                        product_sync_status = Convert.ToBoolean( int.Parse( dataReader[ "product_sync_status" ].ToString() ) ),
-                        order_sync_status = Convert.ToBoolean( int.Parse( dataReader[ "order_sync_status" ].ToString() ) ),
-                        xml_sync_status = Convert.ToBoolean( int.Parse( dataReader[ "xml_sync_status" ].ToString() ) ),
-                        invoice_sync_status = Convert.ToBoolean( int.Parse( dataReader[ "invoice_sync_status" ].ToString() ) ),
-                        notification_sync_status = Convert.ToBoolean( int.Parse( dataReader[ "notification_sync_status" ].ToString() ) ),
-                        product_sync_timer = int.Parse( dataReader[ "product_sync_timer" ].ToString() ),
-                        order_sync_timer = int.Parse( dataReader[ "order_sync_timer" ].ToString() ),
-                        xml_sync_timer = int.Parse( dataReader[ "xml_sync_timer" ].ToString() ),
-                        invoice_sync_timer = int.Parse( dataReader[ "invoice_sync_timer" ].ToString() ),
-                        notification_sync_timer = int.Parse( dataReader[ "notification_sync_timer" ].ToString() ),
+                        status = Convert.ToBoolean( Convert.ToInt32( dataReader[ "status" ]?.ToString() ) ),
+                        product_sync_status = Convert.ToBoolean( Convert.ToInt32( dataReader[ "product_sync_status" ].ToString() ) ),
+                        order_sync_status = Convert.ToBoolean( Convert.ToInt32( dataReader[ "order_sync_status" ].ToString() ) ),
+                        xml_sync_status = Convert.ToBoolean( Convert.ToInt32( dataReader[ "xml_sync_status" ].ToString() ) ),
+                        invoice_sync_status = Convert.ToBoolean( Convert.ToInt32( dataReader[ "invoice_sync_status" ].ToString() ) ),
+                        notification_sync_status = Convert.ToBoolean( Convert.ToInt32( dataReader[ "notification_sync_status" ].ToString() ) ),
+                        product_sync_timer = Convert.ToInt32( dataReader[ "product_sync_timer" ].ToString() ),
+                        order_sync_timer = Convert.ToInt32( dataReader[ "order_sync_timer" ].ToString() ),
+                        xml_sync_timer = Convert.ToInt32( dataReader[ "xml_sync_timer" ].ToString() ),
+                        invoice_sync_timer = Convert.ToInt32( dataReader[ "invoice_sync_timer" ].ToString() ),
+                        notification_sync_timer = Convert.ToInt32( dataReader[ "notification_sync_timer" ].ToString() ),
                         last_product_sync_date = !string.IsNullOrWhiteSpace( dataReader[ "last_product_sync_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "last_product_sync_date" ].ToString() ) : null,
                         last_order_sync_date = !string.IsNullOrWhiteSpace( dataReader[ "last_order_sync_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "last_order_sync_date" ].ToString() ) : null,
                         last_xml_sync_date = !string.IsNullOrWhiteSpace( dataReader[ "last_xml_sync_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "last_xml_sync_date" ].ToString() ) : null,
                         last_invoice_sync_date = !string.IsNullOrWhiteSpace( dataReader[ "last_invoice_sync_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "last_invoice_sync_date" ].ToString() ) : null,
                         last_notification_sync_date = !string.IsNullOrWhiteSpace( dataReader[ "last_notification_sync_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "last_notification_sync_date" ].ToString() ) : null,
-                        is_productsync_working = Convert.ToBoolean( int.Parse( dataReader[ "is_productsync_working" ].ToString() ) ),
-                        is_ordersync_working = Convert.ToBoolean( int.Parse( dataReader[ "is_ordersync_working" ].ToString() ) ),
-                        is_xmlsync_working = Convert.ToBoolean( int.Parse( dataReader[ "is_xmlsync_working" ].ToString() ) ),
-                        is_invoicesync_working = Convert.ToBoolean( int.Parse( dataReader[ "is_invoicesync_working" ].ToString() ) ),
-                        is_notificationsync_working = Convert.ToBoolean( int.Parse( dataReader[ "is_notificationsync_working" ].ToString() ) ),
+                        is_productsync_working = Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_productsync_working" ].ToString() ) ),
+                        is_ordersync_working = Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_ordersync_working" ].ToString() ) ),
+                        is_xmlsync_working = Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_xmlsync_working" ].ToString() ) ),
+                        is_invoicesync_working = Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_invoicesync_working" ].ToString() ) ),
+                        is_notificationsync_working = Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_notificationsync_working" ].ToString() ) ),
                     };
                 }
                 dataReader.Close();
@@ -188,27 +187,27 @@ namespace Merchanter {
                         customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
                         user_name = dataReader[ "user_name" ].ToString(),
                         password = dataReader[ "password" ].ToString(),
-                        status = Convert.ToBoolean( int.Parse( dataReader[ "status" ].ToString() ) ),
-                        product_sync_status = Convert.ToBoolean( int.Parse( dataReader[ "product_sync_status" ].ToString() ) ),
-                        order_sync_status = Convert.ToBoolean( int.Parse( dataReader[ "order_sync_status" ].ToString() ) ),
-                        xml_sync_status = Convert.ToBoolean( int.Parse( dataReader[ "xml_sync_status" ].ToString() ) ),
-                        invoice_sync_status = Convert.ToBoolean( int.Parse( dataReader[ "invoice_sync_status" ].ToString() ) ),
-                        notification_sync_status = Convert.ToBoolean( int.Parse( dataReader[ "notification_sync_status" ].ToString() ) ),
-                        product_sync_timer = int.Parse( dataReader[ "product_sync_timer" ].ToString() ),
-                        order_sync_timer = int.Parse( dataReader[ "order_sync_timer" ].ToString() ),
-                        xml_sync_timer = int.Parse( dataReader[ "xml_sync_timer" ].ToString() ),
-                        invoice_sync_timer = int.Parse( dataReader[ "invoice_sync_timer" ].ToString() ),
-                        notification_sync_timer = int.Parse( dataReader[ "notification_sync_timer" ].ToString() ),
+                        status = Convert.ToBoolean( Convert.ToInt32( dataReader[ "status" ].ToString() ) ),
+                        product_sync_status = Convert.ToBoolean( Convert.ToInt32( dataReader[ "product_sync_status" ].ToString() ) ),
+                        order_sync_status = Convert.ToBoolean( Convert.ToInt32( dataReader[ "order_sync_status" ].ToString() ) ),
+                        xml_sync_status = Convert.ToBoolean( Convert.ToInt32( dataReader[ "xml_sync_status" ].ToString() ) ),
+                        invoice_sync_status = Convert.ToBoolean( Convert.ToInt32( dataReader[ "invoice_sync_status" ].ToString() ) ),
+                        notification_sync_status = Convert.ToBoolean( Convert.ToInt32( dataReader[ "notification_sync_status" ].ToString() ) ),
+                        product_sync_timer = Convert.ToInt32( dataReader[ "product_sync_timer" ].ToString() ),
+                        order_sync_timer = Convert.ToInt32( dataReader[ "order_sync_timer" ].ToString() ),
+                        xml_sync_timer = Convert.ToInt32( dataReader[ "xml_sync_timer" ].ToString() ),
+                        invoice_sync_timer = Convert.ToInt32( dataReader[ "invoice_sync_timer" ].ToString() ),
+                        notification_sync_timer = Convert.ToInt32( dataReader[ "notification_sync_timer" ].ToString() ),
                         last_product_sync_date = !string.IsNullOrWhiteSpace( dataReader[ "last_product_sync_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "last_product_sync_date" ].ToString() ) : null,
                         last_order_sync_date = !string.IsNullOrWhiteSpace( dataReader[ "last_order_sync_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "last_order_sync_date" ].ToString() ) : null,
                         last_xml_sync_date = !string.IsNullOrWhiteSpace( dataReader[ "last_xml_sync_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "last_xml_sync_date" ].ToString() ) : null,
                         last_invoice_sync_date = !string.IsNullOrWhiteSpace( dataReader[ "last_invoice_sync_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "last_invoice_sync_date" ].ToString() ) : null,
                         last_notification_sync_date = !string.IsNullOrWhiteSpace( dataReader[ "last_notification_sync_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "last_notification_sync_date" ].ToString() ) : null,
-                        is_productsync_working = Convert.ToBoolean( int.Parse( dataReader[ "is_productsync_working" ].ToString() ) ),
-                        is_ordersync_working = Convert.ToBoolean( int.Parse( dataReader[ "is_ordersync_working" ].ToString() ) ),
-                        is_xmlsync_working = Convert.ToBoolean( int.Parse( dataReader[ "is_xmlsync_working" ].ToString() ) ),
-                        is_invoicesync_working = Convert.ToBoolean( int.Parse( dataReader[ "is_invoicesync_working" ].ToString() ) ),
-                        is_notificationsync_working = Convert.ToBoolean( int.Parse( dataReader[ "is_notificationsync_working" ].ToString() ) ),
+                        is_productsync_working = Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_productsync_working" ].ToString() ) ),
+                        is_ordersync_working = Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_ordersync_working" ].ToString() ) ),
+                        is_xmlsync_working = Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_xmlsync_working" ].ToString() ) ),
+                        is_invoicesync_working = Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_invoicesync_working" ].ToString() ) ),
+                        is_notificationsync_working = Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_notificationsync_working" ].ToString() ) ),
                     };
                 }
                 dataReader.Close();
@@ -239,27 +238,27 @@ namespace Merchanter {
                         customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
                         user_name = dataReader[ "user_name" ].ToString(),
                         password = dataReader[ "password" ].ToString(),
-                        status = Convert.ToBoolean( int.Parse( dataReader[ "status" ].ToString() ) ),
-                        product_sync_status = Convert.ToBoolean( int.Parse( dataReader[ "product_sync_status" ].ToString() ) ),
-                        order_sync_status = Convert.ToBoolean( int.Parse( dataReader[ "order_sync_status" ].ToString() ) ),
-                        xml_sync_status = Convert.ToBoolean( int.Parse( dataReader[ "xml_sync_status" ].ToString() ) ),
-                        invoice_sync_status = Convert.ToBoolean( int.Parse( dataReader[ "invoice_sync_status" ].ToString() ) ),
-                        notification_sync_status = Convert.ToBoolean( int.Parse( dataReader[ "notification_sync_status" ].ToString() ) ),
-                        product_sync_timer = int.Parse( dataReader[ "product_sync_timer" ].ToString() ),
-                        order_sync_timer = int.Parse( dataReader[ "order_sync_timer" ].ToString() ),
-                        xml_sync_timer = int.Parse( dataReader[ "xml_sync_timer" ].ToString() ),
-                        invoice_sync_timer = int.Parse( dataReader[ "invoice_sync_timer" ].ToString() ),
-                        notification_sync_timer = int.Parse( dataReader[ "notification_sync_timer" ].ToString() ),
+                        status = Convert.ToBoolean( Convert.ToInt32( dataReader[ "status" ].ToString() ) ),
+                        product_sync_status = Convert.ToBoolean( Convert.ToInt32( dataReader[ "product_sync_status" ].ToString() ) ),
+                        order_sync_status = Convert.ToBoolean( Convert.ToInt32( dataReader[ "order_sync_status" ].ToString() ) ),
+                        xml_sync_status = Convert.ToBoolean( Convert.ToInt32( dataReader[ "xml_sync_status" ].ToString() ) ),
+                        invoice_sync_status = Convert.ToBoolean( Convert.ToInt32( dataReader[ "invoice_sync_status" ].ToString() ) ),
+                        notification_sync_status = Convert.ToBoolean( Convert.ToInt32( dataReader[ "notification_sync_status" ].ToString() ) ),
+                        product_sync_timer = Convert.ToInt32( dataReader[ "product_sync_timer" ].ToString() ),
+                        order_sync_timer = Convert.ToInt32( dataReader[ "order_sync_timer" ].ToString() ),
+                        xml_sync_timer = Convert.ToInt32( dataReader[ "xml_sync_timer" ].ToString() ),
+                        invoice_sync_timer = Convert.ToInt32( dataReader[ "invoice_sync_timer" ].ToString() ),
+                        notification_sync_timer = Convert.ToInt32( dataReader[ "notification_sync_timer" ].ToString() ),
                         last_product_sync_date = !string.IsNullOrWhiteSpace( dataReader[ "last_product_sync_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "last_product_sync_date" ].ToString() ) : null,
                         last_order_sync_date = !string.IsNullOrWhiteSpace( dataReader[ "last_order_sync_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "last_order_sync_date" ].ToString() ) : null,
                         last_xml_sync_date = !string.IsNullOrWhiteSpace( dataReader[ "last_xml_sync_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "last_xml_sync_date" ].ToString() ) : null,
                         last_invoice_sync_date = !string.IsNullOrWhiteSpace( dataReader[ "last_invoice_sync_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "last_invoice_sync_date" ].ToString() ) : null,
                         last_notification_sync_date = !string.IsNullOrWhiteSpace( dataReader[ "last_notification_sync_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "last_notification_sync_date" ].ToString() ) : null,
-                        is_productsync_working = Convert.ToBoolean( int.Parse( dataReader[ "is_productsync_working" ].ToString() ) ),
-                        is_ordersync_working = Convert.ToBoolean( int.Parse( dataReader[ "is_ordersync_working" ].ToString() ) ),
-                        is_xmlsync_working = Convert.ToBoolean( int.Parse( dataReader[ "is_xmlsync_working" ].ToString() ) ),
-                        is_invoicesync_working = Convert.ToBoolean( int.Parse( dataReader[ "is_invoicesync_working" ].ToString() ) ),
-                        is_notificationsync_working = Convert.ToBoolean( int.Parse( dataReader[ "is_notificationsync_working" ].ToString() ) ),
+                        is_productsync_working = Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_productsync_working" ].ToString() ) ),
+                        is_ordersync_working = Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_ordersync_working" ].ToString() ) ),
+                        is_xmlsync_working = Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_xmlsync_working" ].ToString() ) ),
+                        is_invoicesync_working = Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_invoicesync_working" ].ToString() ) ),
+                        is_notificationsync_working = Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_notificationsync_working" ].ToString() ) ),
                     } );
                 }
                 dataReader.Close();
@@ -371,10 +370,10 @@ namespace Merchanter {
         /// <param name="_message">Message</param>
         /// <param name="_worker">Worker</param>
         /// <returns>[No change] or [Error] returns 'false'</returns>
-        public bool LogToServer(string _thread_id, string _title, string _message, int _customer_id, string _worker = "general" ) {
+        public bool LogToServer( string? _thread_id, string _title, string _message, int _customer_id, string _worker = "general" ) {
             try {
-                if( state != System.Data.ConnectionState.Open )
-                    connection.Open();
+                if( state != System.Data.ConnectionState.Open ) connection.Open();
+
                 string query = "INSERT INTO log (thread_id,title,message,worker,customer_id) VALUES (@thread_id,@title,@message,@worker,@customer_id);";
                 MySqlCommand cmd = new MySqlCommand( query, connection );
                 cmd.Parameters.Add( new MySqlParameter() { ParameterName = "thread_id", Value = _thread_id } );
@@ -383,41 +382,13 @@ namespace Merchanter {
                 cmd.Parameters.Add( new MySqlParameter() { ParameterName = "worker", Value = _worker } );
                 cmd.Parameters.Add( new MySqlParameter() { ParameterName = "customer_id", Value = _customer_id } );
                 int value = cmd.ExecuteNonQuery();
-                if( state == System.Data.ConnectionState.Open )
-                    connection.Close();
-                WriteLogLine( "log|" + _title + ":" + _message, ConsoleColor.Green );
+                if( state == System.Data.ConnectionState.Open ) connection.Close();
+
+                WriteLogLine( "log|" + _title + ":" + _message, ConsoleColor.Yellow );
                 return true;
             }
             catch( Exception ex ) {
-                Console.WriteLine( "LOG ERROR GG - " + ex.ToString() );
-                return false;
-            }
-        }
-        /// <summary>
-        /// Logs the message to the server
-        /// </summary>
-        /// <param name="_title">Title</param>
-        /// <param name="_message">Message</param>
-        /// <param name="_worker">Worker</param>
-        /// <returns>[No change] or [Error] returns 'false'</returns>
-        public bool LogToServer( string _title, string _message, int _customer_id, string _worker = "general" ) {
-            try {
-                if( state != System.Data.ConnectionState.Open )
-                    connection.Open();
-                string query = "INSERT INTO log (title,message,worker,customer_id) VALUES (@title,@message,@worker,@customer_id);";
-                MySqlCommand cmd = new MySqlCommand( query, connection );
-                cmd.Parameters.Add( new MySqlParameter() { ParameterName = "title", Value = _title } );
-                cmd.Parameters.Add( new MySqlParameter() { ParameterName = "message", Value = _message } );
-                cmd.Parameters.Add( new MySqlParameter() { ParameterName = "worker", Value = _worker } );
-                cmd.Parameters.Add( new MySqlParameter() { ParameterName = "customer_id", Value = _customer_id } );
-                int value = cmd.ExecuteNonQuery();
-                if( state == System.Data.ConnectionState.Open )
-                    connection.Close();
-                WriteLogLine( "log|" + _title + ":" + _message, ConsoleColor.Green );
-                return true;
-            }
-            catch( Exception ex ) {
-                Console.WriteLine( "LOG ERROR GG - " + ex.ToString() );
+                WriteLogLine( "LOG ERROR GG - " + ex.ToString(), ConsoleColor.Red );
                 return false;
             }
         }
@@ -441,11 +412,11 @@ namespace Merchanter {
                 MySqlDataReader dataReader = cmd.ExecuteReader();
                 while( dataReader.Read() ) {
                     Log l = new Log {
-                        id = int.Parse( dataReader[ "id" ].ToString() ),
-                        customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
-                        worker = dataReader[ "worker" ].ToString(),
-                        title = dataReader[ "title" ].ToString(),
-                        message = dataReader[ "message" ].ToString(),
+                        id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                        customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
+                        worker = dataReader[ "worker" ]?.ToString() ?? string.Empty,
+                        title = dataReader[ "title" ].ToString() ?? string.Empty,
+                        message = dataReader[ "message" ]?.ToString() ?? string.Empty,
                         update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() ),
                     };
                     list.Add( l );
@@ -491,8 +462,8 @@ namespace Merchanter {
                     MySqlDataReader dataReader = cmd.ExecuteReader();
                     while( dataReader.Read() ) {
                         Log l = new Log {
-                            id = int.Parse( dataReader[ "id" ].ToString() ),
-                            customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
+                            id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                            customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
                             worker = dataReader[ "worker" ]?.ToString() ?? string.Empty,
                             title = dataReader[ "title" ].ToString() ?? string.Empty,
                             message = dataReader[ "message" ]?.ToString() ?? string.Empty,
@@ -700,10 +671,10 @@ namespace Merchanter {
                         rate_EUR = Convert.ToDecimal( dataReader[ "rate_EUR" ].ToString() ),
                         daysto_ordersync = Convert.ToInt32( dataReader[ "daysto_ordersync" ].ToString() ),
                         daysto_invoicesync = Convert.ToInt32( dataReader[ "daysto_invoicesync" ].ToString() ),
-                        yurtici_kargo = Convert.ToBoolean( int.Parse( dataReader[ "yurtici_kargo" ].ToString() ) ),
-                        mng_kargo = Convert.ToBoolean( int.Parse( dataReader[ "mng_kargo" ].ToString() ) ),
-                        aras_kargo = Convert.ToBoolean( int.Parse( dataReader[ "aras_kargo" ].ToString() ) ),
-                        xml_qty_addictive_enable = Convert.ToBoolean( int.Parse( dataReader[ "xml_qty_addictive_enable" ].ToString() ) )
+                        yurtici_kargo = Convert.ToBoolean( Convert.ToInt32( dataReader[ "yurtici_kargo" ].ToString() ) ),
+                        mng_kargo = Convert.ToBoolean( Convert.ToInt32( dataReader[ "mng_kargo" ].ToString() ) ),
+                        aras_kargo = Convert.ToBoolean( Convert.ToInt32( dataReader[ "aras_kargo" ].ToString() ) ),
+                        xml_qty_addictive_enable = Convert.ToBoolean( Convert.ToInt32( dataReader[ "xml_qty_addictive_enable" ].ToString() ) )
                     };
                 }
                 dataReader.Close();
@@ -823,12 +794,12 @@ namespace Merchanter {
                         cari_siparis_grupkodu = dataReader[ "cari_siparis_grupkodu" ].ToString(),
                         sipari_caritip = dataReader[ "sipari_caritip" ].ToString(),
                         siparis_muhasebekodu = dataReader[ "siparis_muhasebekodu" ].ToString(),
-                        siparis_kdvdahilmi = Convert.ToBoolean( int.Parse( dataReader[ "siparis_kdvdahilmi" ].ToString() ) ),
+                        siparis_kdvdahilmi = Convert.ToBoolean( Convert.ToInt32( dataReader[ "siparis_kdvdahilmi" ].ToString() ) ),
                         siparis_subekodu = Convert.ToInt32( dataReader[ "siparis_subekodu" ].ToString() ),
                         siparis_depokodu = Convert.ToInt32( dataReader[ "siparis_depokodu" ].ToString() ),
                         siparis_kargo_sku = dataReader[ "siparis_kargo_sku" ].ToString(),
                         siparis_taksitkomisyon_sku = dataReader[ "siparis_taksitkomisyon_sku" ].ToString(),
-                        is_rewrite_siparis = Convert.ToBoolean( int.Parse( dataReader[ "is_rewrite_siparis" ].ToString() ) ),
+                        is_rewrite_siparis = Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_rewrite_siparis" ].ToString() ) ),
                         ebelge_dizayn_earsiv = dataReader[ "ebelge_dizayn_earsiv" ].ToString(),
                         ebelge_dizayn_efatura = dataReader[ "ebelge_dizayn_efatura" ].ToString(),
                         ebelge_klasorismi = dataReader[ "ebelge_klasorismi" ].ToString(),
@@ -870,8 +841,8 @@ namespace Merchanter {
                         List<DBSetting> list = new List<DBSetting>();
                         while( dataReader.Read() ) {
                             list.Add( new DBSetting() {
-                                id = int.Parse( dataReader[ "id" ].ToString() ),
-                                customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
+                                id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                                customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
                                 name = dataReader[ "name" ].ToString(),
                                 value = dataReader[ "value" ].ToString(),
                                 group_name = dataReader[ "group_name" ].ToString(),
@@ -910,13 +881,13 @@ namespace Merchanter {
                         List<OrderStatus> list = new List<OrderStatus>();
                         while( dataReader.Read() ) {
                             list.Add( new OrderStatus(
-                                int.Parse( dataReader[ "id" ].ToString() ),
-                                 int.Parse( dataReader[ "customer_id" ].ToString() ),
+                                Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                                 Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
                                  dataReader[ "status_name" ].ToString(),
                                  dataReader[ "status_code" ].ToString(),
                                  dataReader[ "magento2_status_code" ].ToString(),
-                                 Convert.ToBoolean( int.Parse( dataReader[ "sync_status" ].ToString() ) ),
-                                 Convert.ToBoolean( int.Parse( dataReader[ "process_status" ].ToString() ) )
+                                 Convert.ToBoolean( Convert.ToInt32( dataReader[ "sync_status" ].ToString() ) ),
+                                 Convert.ToBoolean( Convert.ToInt32( dataReader[ "process_status" ].ToString() ) )
                             ) );
                         }
                         dataReader.Close();
@@ -950,8 +921,8 @@ namespace Merchanter {
                         List<PaymentMethod> list = new List<PaymentMethod>();
                         while( dataReader.Read() ) {
                             list.Add( new PaymentMethod(
-                                int.Parse( dataReader[ "id" ].ToString() ),
-                                 int.Parse( dataReader[ "customer_id" ].ToString() ),
+                                Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                                 Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
                                  dataReader[ "payment_name" ].ToString(),
                                  dataReader[ "payment_code" ].ToString(),
                                  dataReader[ "magento2_payment_code" ].ToString()
@@ -988,8 +959,8 @@ namespace Merchanter {
                         List<ShipmentMethod> list = new List<ShipmentMethod>();
                         while( dataReader.Read() ) {
                             list.Add( new ShipmentMethod(
-                                int.Parse( dataReader[ "id" ].ToString() ),
-                                 int.Parse( dataReader[ "customer_id" ].ToString() ),
+                                Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                                 Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
                                  dataReader[ "shipment_name" ].ToString(),
                                  dataReader[ "shipment_code" ].ToString(),
                                  dataReader[ "magento2_shipment_code" ].ToString()
@@ -1026,12 +997,12 @@ namespace Merchanter {
                         List<WorkSource> list = new List<WorkSource>();
                         while( dataReader.Read() ) {
                             list.Add( new WorkSource(
-                                int.Parse( dataReader[ "id" ].ToString() ),
-                                 int.Parse( dataReader[ "customer_id" ].ToString() ),
-                                 dataReader[ "name" ].ToString(),
-                                 dataReader[ "type" ].ToString(),
-                                 dataReader[ "direction" ].ToString(),
-                                 Convert.ToBoolean( int.Parse( dataReader[ "is_active" ].ToString() ) )
+                                Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                                Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
+                                dataReader[ "name" ].ToString(),
+                                dataReader[ "type" ].ToString(),
+                                dataReader[ "direction" ].ToString(),
+                                Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_active" ].ToString() ) )
                             ) );
                         }
                         dataReader.Close();
@@ -1083,6 +1054,7 @@ namespace Merchanter {
                     MySqlCommand cmd = new MySqlCommand( _query, connection );
                     cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
                     cmd.Parameters.Add( new MySqlParameter( "type", item.type ) );
+                    cmd.Parameters.Add( new MySqlParameter( "is_notification_sent", item.is_notification_sent ) );
                     cmd.Parameters.Add( new MySqlParameter( "notification_content", item.notification_content ) );
                     cmd.Parameters.Add( new MySqlParameter( "order_label", item.order_label ) );
                     cmd.Parameters.Add( new MySqlParameter( "product_sku", item.product_sku ) );
@@ -1158,15 +1130,15 @@ namespace Merchanter {
                 MySqlDataReader dataReader = cmd.ExecuteReader();
                 while( dataReader.Read() ) {
                     Notification n = new Notification {
-                        id = int.Parse( dataReader[ "id" ].ToString() ),
-                        customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
-                        type = (Notification.NotificationTypes)int.Parse( dataReader[ "type" ].ToString() ),
+                        id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                        customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
+                        type = (Notification.NotificationTypes)Convert.ToInt32( dataReader[ "type" ].ToString() ),
                         order_label = dataReader[ "order_label" ].ToString(),
                         product_sku = dataReader[ "product_sku" ].ToString(),
                         xproduct_barcode = dataReader[ "xproduct_barcode" ].ToString(),
                         invoice_no = dataReader[ "invoice_no" ].ToString(),
                         notification_content = dataReader[ "notification_content" ].ToString(),
-                        is_notification_sent = Convert.ToBoolean( int.Parse( dataReader[ "is_notification_sent" ].ToString() ) ),
+                        is_notification_sent = Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_notification_sent" ].ToString() ) ),
                         create_date = Convert.ToDateTime( dataReader[ "create_date" ].ToString() ),
                         notification_date = !string.IsNullOrWhiteSpace( dataReader[ "notification_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "notification_date" ].ToString() ) : null,
                     };
@@ -1205,15 +1177,15 @@ namespace Merchanter {
                 MySqlDataReader dataReader = cmd.ExecuteReader();
                 while( dataReader.Read() ) {
                     Notification n = new Notification {
-                        id = int.Parse( dataReader[ "id" ].ToString() ),
-                        customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
-                        type = (Notification.NotificationTypes)int.Parse( dataReader[ "type" ].ToString() ),
+                        id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                        customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
+                        type = (Notification.NotificationTypes)Convert.ToInt32( dataReader[ "type" ].ToString() ),
                         order_label = dataReader[ "order_label" ].ToString(),
                         product_sku = dataReader[ "product_sku" ].ToString(),
                         xproduct_barcode = dataReader[ "xproduct_barcode" ].ToString(),
                         invoice_no = dataReader[ "invoice_no" ].ToString(),
                         notification_content = dataReader[ "notification_content" ].ToString(),
-                        is_notification_sent = Convert.ToBoolean( int.Parse( dataReader[ "is_notification_sent" ].ToString() ) ),
+                        is_notification_sent = Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_notification_sent" ].ToString() ) ),
                         create_date = Convert.ToDateTime( dataReader[ "create_date" ].ToString() ),
                         notification_date = !string.IsNullOrWhiteSpace( dataReader[ "notification_date" ].ToString() ) ? Convert.ToDateTime( dataReader[ "notification_date" ].ToString() ) : null,
                     };
@@ -1248,8 +1220,8 @@ namespace Merchanter {
                 MySqlDataReader dataReader = cmd.ExecuteReader();
                 while( dataReader.Read() ) {
                     SyncMapping sm = new SyncMapping {
-                        id = int.Parse( dataReader[ "id" ].ToString() ),
-                        customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
+                        id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                        customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
                         attribute_source = dataReader[ "attribute_source" ].ToString(),
                         attribute_type = dataReader[ "attribute_type" ].ToString(),
                         variable_type = dataReader[ "variable_type" ].ToString(),
@@ -1293,21 +1265,21 @@ namespace Merchanter {
                 MySqlDataReader dataReader = cmd.ExecuteReader();
                 while( dataReader.Read() ) {
                     Product p = new Product {
-                        id = int.Parse( dataReader[ "id" ].ToString() ),
-                        customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
-                        source_product_id = int.Parse( dataReader[ "source_product_id" ].ToString() ),
+                        id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                        customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
+                        source_product_id = Convert.ToInt32( dataReader[ "source_product_id" ].ToString() ),
                         update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() ),
                         sku = dataReader[ "sku" ].ToString(),
-                        type = (Product.ProductTypes)int.Parse( dataReader[ "type" ].ToString() ),
-                        total_qty = int.Parse( dataReader[ "total_qty" ].ToString() ),
+                        type = (Product.ProductTypes)Convert.ToInt32( dataReader[ "type" ].ToString() ),
+                        total_qty = Convert.ToInt32( dataReader[ "total_qty" ].ToString() ),
                         name = dataReader[ "name" ].ToString(),
                         barcode = dataReader[ "barcode" ].ToString(),
                         price = decimal.Parse( dataReader[ "price" ].ToString() ),
                         special_price = decimal.Parse( dataReader[ "special_price" ].ToString() ),
                         custom_price = decimal.Parse( dataReader[ "custom_price" ].ToString() ),
                         currency = dataReader[ "currency" ].ToString(),
-                        tax = int.Parse( dataReader[ "tax" ].ToString() ),
-                        tax_included = Convert.ToBoolean( int.Parse( dataReader[ "tax_included" ].ToString() ) ),
+                        tax = Convert.ToInt32( dataReader[ "tax" ].ToString() ),
+                        tax_included = Convert.ToBoolean( Convert.ToInt32( dataReader[ "tax_included" ].ToString() ) ),
                     };
                     list.Add( p );
                 }
@@ -1366,21 +1338,21 @@ namespace Merchanter {
                 MySqlDataReader dataReader = cmd.ExecuteReader();
                 while( dataReader.Read() ) {
                     Product p = new Product {
-                        id = int.Parse( dataReader[ "id" ].ToString() ),
-                        customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
-                        source_product_id = int.Parse( dataReader[ "source_product_id" ].ToString() ),
+                        id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                        customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
+                        source_product_id = Convert.ToInt32( dataReader[ "source_product_id" ].ToString() ),
                         update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() ),
                         sku = dataReader[ "sku" ].ToString(),
-                        type = (Product.ProductTypes)int.Parse( dataReader[ "type" ].ToString() ),
-                        total_qty = int.Parse( dataReader[ "total_qty" ].ToString() ),
+                        type = (Product.ProductTypes)Convert.ToInt32( dataReader[ "type" ].ToString() ),
+                        total_qty = Convert.ToInt32( dataReader[ "total_qty" ].ToString() ),
                         name = dataReader[ "name" ].ToString(),
                         barcode = dataReader[ "barcode" ].ToString(),
                         price = decimal.Parse( dataReader[ "price" ].ToString() ),
                         special_price = decimal.Parse( dataReader[ "special_price" ].ToString() ),
                         custom_price = decimal.Parse( dataReader[ "custom_price" ].ToString() ),
                         currency = dataReader[ "currency" ].ToString(),
-                        tax = int.Parse( dataReader[ "tax" ].ToString() ),
-                        tax_included = Convert.ToBoolean( int.Parse( dataReader[ "tax_included" ].ToString() ) ),
+                        tax = Convert.ToInt32( dataReader[ "tax" ].ToString() ),
+                        tax_included = Convert.ToBoolean( Convert.ToInt32( dataReader[ "tax_included" ].ToString() ) ),
                     };
                     list.Add( p );
                 }
@@ -1438,21 +1410,21 @@ namespace Merchanter {
                 MySqlDataReader dataReader = cmd.ExecuteReader();
                 while( dataReader.Read() ) {
                     Product p = new Product {
-                        id = int.Parse( dataReader[ "id" ].ToString() ),
-                        customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
-                        source_product_id = int.Parse( dataReader[ "source_product_id" ].ToString() ),
+                        id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                        customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
+                        source_product_id = Convert.ToInt32( dataReader[ "source_product_id" ].ToString() ),
                         update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() ),
                         sku = dataReader[ "sku" ].ToString(),
-                        type = (Product.ProductTypes)int.Parse( dataReader[ "type" ].ToString() ),
-                        total_qty = int.Parse( dataReader[ "total_qty" ].ToString() ),
+                        type = (Product.ProductTypes)Convert.ToInt32( dataReader[ "type" ].ToString() ),
+                        total_qty = Convert.ToInt32( dataReader[ "total_qty" ].ToString() ),
                         name = dataReader[ "name" ].ToString(),
                         barcode = dataReader[ "barcode" ].ToString(),
                         price = decimal.Parse( dataReader[ "price" ].ToString() ),
                         special_price = decimal.Parse( dataReader[ "special_price" ].ToString() ),
                         custom_price = decimal.Parse( dataReader[ "custom_price" ].ToString() ),
                         currency = dataReader[ "currency" ].ToString(),
-                        tax = int.Parse( dataReader[ "tax" ].ToString() ),
-                        tax_included = Convert.ToBoolean( int.Parse( dataReader[ "tax_included" ].ToString() ) ),
+                        tax = Convert.ToInt32( dataReader[ "tax" ].ToString() ),
+                        tax_included = Convert.ToBoolean( Convert.ToInt32( dataReader[ "tax_included" ].ToString() ) ),
                     };
                     list.Add( p );
                 }
@@ -1548,21 +1520,21 @@ namespace Merchanter {
                 MySqlDataReader dataReader = cmd.ExecuteReader();
                 while( dataReader.Read() ) {
                     Product p = new Product {
-                        id = int.Parse( dataReader[ "id" ].ToString() ),
-                        customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
-                        source_product_id = int.Parse( dataReader[ "source_product_id" ].ToString() ),
+                        id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                        customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
+                        source_product_id = Convert.ToInt32( dataReader[ "source_product_id" ].ToString() ),
                         update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() ),
                         sku = dataReader[ "sku" ].ToString(),
-                        type = (Product.ProductTypes)int.Parse( dataReader[ "type" ].ToString() ),
-                        total_qty = int.Parse( dataReader[ "total_qty" ].ToString() ),
+                        type = (Product.ProductTypes)Convert.ToInt32( dataReader[ "type" ].ToString() ),
+                        total_qty = Convert.ToInt32( dataReader[ "total_qty" ].ToString() ),
                         name = dataReader[ "name" ].ToString(),
                         barcode = dataReader[ "barcode" ].ToString(),
                         price = decimal.Parse( dataReader[ "price" ].ToString() ),
                         special_price = decimal.Parse( dataReader[ "special_price" ].ToString() ),
                         custom_price = decimal.Parse( dataReader[ "custom_price" ].ToString() ),
                         currency = dataReader[ "currency" ].ToString(),
-                        tax = int.Parse( dataReader[ "tax" ].ToString() ),
-                        tax_included = Convert.ToBoolean( int.Parse( dataReader[ "tax_included" ].ToString() ) ),
+                        tax = Convert.ToInt32( dataReader[ "tax" ].ToString() ),
+                        tax_included = Convert.ToBoolean( Convert.ToInt32( dataReader[ "tax_included" ].ToString() ) ),
                     };
                     list.Add( p );
                 }
@@ -1617,21 +1589,21 @@ namespace Merchanter {
                 Product? p = null;
                 if( dataReader.Read() ) {
                     p = new Product {
-                        id = int.Parse( dataReader[ "id" ].ToString() ),
-                        source_product_id = int.Parse( dataReader[ "source_product_id" ].ToString() ),
-                        customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
+                        id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                        source_product_id = Convert.ToInt32( dataReader[ "source_product_id" ].ToString() ),
+                        customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
                         update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() ),
                         sku = dataReader[ "sku" ].ToString(),
-                        type = (Product.ProductTypes)int.Parse( dataReader[ "type" ].ToString() ),
-                        total_qty = int.Parse( dataReader[ "total_qty" ].ToString() ),
+                        type = (Product.ProductTypes)Convert.ToInt32( dataReader[ "type" ].ToString() ),
+                        total_qty = Convert.ToInt32( dataReader[ "total_qty" ].ToString() ),
                         name = dataReader[ "name" ].ToString(),
                         barcode = dataReader[ "barcode" ].ToString(),
                         price = decimal.Parse( dataReader[ "price" ].ToString() ),
                         special_price = decimal.Parse( dataReader[ "special_price" ].ToString() ),
                         custom_price = decimal.Parse( dataReader[ "custom_price" ].ToString() ),
                         currency = dataReader[ "currency" ].ToString(),
-                        tax = int.Parse( dataReader[ "tax" ].ToString() ),
-                        tax_included = Convert.ToBoolean( int.Parse( dataReader[ "tax_included" ].ToString() ) )
+                        tax = Convert.ToInt32( dataReader[ "tax" ].ToString() ),
+                        tax_included = Convert.ToBoolean( Convert.ToInt32( dataReader[ "tax_included" ].ToString() ) )
                     };
                 }
                 dataReader.Close();
@@ -1682,21 +1654,21 @@ namespace Merchanter {
                 Product? p = null;
                 if( dataReader.Read() ) {
                     p = new Product {
-                        id = int.Parse( dataReader[ "id" ].ToString() ),
-                        source_product_id = int.Parse( dataReader[ "source_product_id" ].ToString() ),
-                        customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
+                        id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                        source_product_id = Convert.ToInt32( dataReader[ "source_product_id" ].ToString() ),
+                        customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
                         update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() ),
                         sku = dataReader[ "sku" ].ToString(),
-                        type = (Product.ProductTypes)int.Parse( dataReader[ "type" ].ToString() ),
-                        total_qty = int.Parse( dataReader[ "total_qty" ].ToString() ),
+                        type = (Product.ProductTypes)Convert.ToInt32( dataReader[ "type" ].ToString() ),
+                        total_qty = Convert.ToInt32( dataReader[ "total_qty" ].ToString() ),
                         name = dataReader[ "name" ].ToString(),
                         barcode = dataReader[ "barcode" ].ToString(),
                         price = decimal.Parse( dataReader[ "price" ].ToString() ),
                         special_price = decimal.Parse( dataReader[ "special_price" ].ToString() ),
                         custom_price = decimal.Parse( dataReader[ "custom_price" ].ToString() ),
                         currency = dataReader[ "currency" ].ToString(),
-                        tax = int.Parse( dataReader[ "tax" ].ToString() ),
-                        tax_included = Convert.ToBoolean( int.Parse( dataReader[ "tax_included" ].ToString() ) )
+                        tax = Convert.ToInt32( dataReader[ "tax" ].ToString() ),
+                        tax_included = Convert.ToBoolean( Convert.ToInt32( dataReader[ "tax_included" ].ToString() ) )
                     };
                 }
                 dataReader.Close();
@@ -1898,13 +1870,13 @@ namespace Merchanter {
                 ProductExtension? px = null;
                 if( dataReader.Read() ) {
                     px = new ProductExtension();
-                    px.id = int.Parse( dataReader[ "id" ].ToString() );
-                    px.customer_id = int.Parse( dataReader[ "customer_id" ].ToString() );
-                    px.brand_id = int.Parse( dataReader[ "brand_id" ].ToString() );
+                    px.id = Convert.ToInt32( dataReader[ "id" ].ToString() );
+                    px.customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() );
+                    px.brand_id = Convert.ToInt32( dataReader[ "brand_id" ].ToString() );
                     px.category_ids = dataReader[ "category_ids" ].ToString();
                     px.sku = dataReader[ "sku" ].ToString();
                     px.barcode = dataReader[ "barcode" ].ToString();
-                    px.is_xml_enabled = Convert.ToBoolean( int.Parse( dataReader[ "is_xml_enabled" ].ToString() ) );
+                    px.is_xml_enabled = Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_xml_enabled" ].ToString() ) );
                     px.xml_sources = dataReader[ "xml_sources" ]?.ToString()?.Split( ',' );
                     px.update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() );
                 }
@@ -1947,8 +1919,8 @@ namespace Merchanter {
         /// <returns>[Error] returns 'null'</returns>
         public List<ProductExtension> GetProductExts( int _customer_id ) {
             try {
-                if( state != System.Data.ConnectionState.Open )
-                    connection.Open();
+                if( state != System.Data.ConnectionState.Open ) connection.Open();
+
                 string _query = "SELECT * FROM products_ext WHERE customer_id=@customer_id";
                 List<ProductExtension> list = [];
                 MySqlCommand cmd = new MySqlCommand( _query, connection );
@@ -1956,21 +1928,20 @@ namespace Merchanter {
                 MySqlDataReader dataReader = cmd.ExecuteReader();
                 while( dataReader.Read() ) {
                     ProductExtension s = new ProductExtension {
-                        id = int.Parse( dataReader[ "id" ].ToString() ),
-                        customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
-                        brand_id = int.Parse( dataReader[ "brand_id" ].ToString() ),
+                        id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                        customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
+                        brand_id = Convert.ToInt32( dataReader[ "brand_id" ].ToString() ),
                         category_ids = dataReader[ "category_ids" ].ToString(),
                         sku = dataReader[ "sku" ].ToString(),
                         barcode = dataReader[ "barcode" ].ToString(),
-                        is_xml_enabled = dataReader[ "is_xml_enabled" ] != null ? dataReader[ "is_xml_enabled" ].ToString() == "1" : false,
+                        is_xml_enabled = dataReader[ "is_xml_enabled" ] != null && dataReader[ "is_xml_enabled" ].ToString() == "1",
                         xml_sources = dataReader[ "xml_sources" ]?.ToString()?.Split( ',' ),
                         update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() )
                     };
                     list.Add( s );
                 }
                 dataReader.Close();
-                if( state == System.Data.ConnectionState.Open )
-                    connection.Close();
+                if( state == System.Data.ConnectionState.Open ) connection.Close();
 
                 var brands = GetBrands( _customer_id );
                 var categories = GetCategories( _customer_id );
@@ -2026,8 +1997,8 @@ namespace Merchanter {
                 cmd.Parameters.Add( new MySqlParameter( "category_ids", _source.category_ids ) );
                 cmd.Parameters.Add( new MySqlParameter( "sku", _source.sku ) );
                 cmd.Parameters.Add( new MySqlParameter( "barcode", _source.barcode ) );
-                cmd.Parameters.Add( new MySqlParameter( "is_xml_enabled", _source.is_xml_enabled ) );
-                cmd.Parameters.Add( new MySqlParameter( "xml_sources", _source.xml_sources != null ? string.Join( ",", _source.xml_sources ) : null ) );
+                //cmd.Parameters.Add( new MySqlParameter( "is_xml_enabled", _source.is_xml_enabled ) );
+                //cmd.Parameters.Add( new MySqlParameter( "xml_sources", _source.xml_sources != null ? string.Join( ",", _source.xml_sources ) : null ) );
                 if( state != System.Data.ConnectionState.Open ) connection.Open();
                 val = cmd.ExecuteNonQuery();
                 if( state == System.Data.ConnectionState.Open ) connection.Close();
@@ -2164,12 +2135,12 @@ namespace Merchanter {
                 while( dataReader.Read() ) {
                     ProductSource s = new ProductSource(
                         _customer_id,
-                        int.Parse( dataReader[ "id" ].ToString() ),
+                        Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                        dataReader[ "name" ].ToString(),
                         dataReader[ "sku" ].ToString(),
                         dataReader[ "barcode" ].ToString(),
-                        dataReader[ "name" ].ToString(),
-                        int.Parse( dataReader[ "qty" ].ToString() ),
-                        Convert.ToBoolean( int.Parse( dataReader[ "is_active" ].ToString() ) )
+                        Convert.ToInt32( dataReader[ "qty" ].ToString() ),
+                        Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_active" ].ToString() ) )
                     );
 
                     list.Add( s );
@@ -2204,12 +2175,12 @@ namespace Merchanter {
                 while( dataReader.Read() ) {
                     ProductSource s = new ProductSource(
                         _customer_id,
-                        int.Parse( dataReader[ "id" ].ToString() ),
+                        Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                        dataReader[ "name" ].ToString(),
                         dataReader[ "sku" ].ToString(),
                         dataReader[ "barcode" ].ToString(),
-                        dataReader[ "name" ].ToString(),
-                        int.Parse( dataReader[ "qty" ].ToString() ),
-                        Convert.ToBoolean( int.Parse( dataReader[ "is_active" ].ToString() ) )
+                        Convert.ToInt32( dataReader[ "qty" ].ToString() ),
+                        Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_active" ].ToString() ) )
                     );
                     list.Add( s );
                 }
@@ -2306,8 +2277,8 @@ namespace Merchanter {
                 Brand? b = null;
                 if( dataReader.Read() ) {
                     b = new Brand();
-                    b.id = int.Parse( dataReader[ "id" ].ToString() );
-                    b.customer_id = int.Parse( dataReader[ "customer_id" ].ToString() );
+                    b.id = Convert.ToInt32( dataReader[ "id" ].ToString() );
+                    b.customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() );
                     b.brand_name = dataReader[ "brand_name" ].ToString();
                     b.status = dataReader[ "status" ] != null ? dataReader[ "status" ].ToString() == "1" ? true : false : false;
                 }
@@ -2339,8 +2310,8 @@ namespace Merchanter {
                 Brand? b = null;
                 if( dataReader.Read() ) {
                     b = new Brand();
-                    b.id = int.Parse( dataReader[ "id" ].ToString() );
-                    b.customer_id = int.Parse( dataReader[ "customer_id" ].ToString() );
+                    b.id = Convert.ToInt32( dataReader[ "id" ].ToString() );
+                    b.customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() );
                     b.brand_name = dataReader[ "brand_name" ].ToString();
                     b.status = dataReader[ "status" ] != null ? dataReader[ "status" ].ToString() == "1" ? true : false : false;
                 }
@@ -2371,10 +2342,10 @@ namespace Merchanter {
                 MySqlDataReader dataReader = cmd.ExecuteReader();
                 while( dataReader.Read() ) {
                     Brand b = new Brand {
-                        id = int.Parse( dataReader[ "id" ].ToString() ),
-                        customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
+                        id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                        customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
                         brand_name = dataReader[ "brand_name" ].ToString(),
-                        status = Convert.ToBoolean( int.Parse( dataReader[ "status" ].ToString() ) ),
+                        status = Convert.ToBoolean( Convert.ToInt32( dataReader[ "status" ].ToString() ) ),
                     };
                     list.Add( b );
                 }
@@ -2407,8 +2378,8 @@ namespace Merchanter {
                 Brand? b = null;
                 if( dataReader.Read() ) {
                     b = new Brand();
-                    b.id = int.Parse( dataReader[ "BID" ].ToString() );
-                    b.customer_id = int.Parse( dataReader[ "customer" ].ToString() );
+                    b.id = Convert.ToInt32( dataReader[ "BID" ].ToString() );
+                    b.customer_id = Convert.ToInt32( dataReader[ "customer" ].ToString() );
                     b.brand_name = dataReader[ "brand_name" ].ToString();
                     b.status = dataReader[ "brand_status" ] != null ? dataReader[ "brand_status" ].ToString() == "1" ? true : false : false;
                 }
@@ -2441,8 +2412,8 @@ namespace Merchanter {
                 Brand? b = null;
                 if( dataReader.Read() ) {
                     b = new Brand();
-                    b.id = int.Parse( dataReader[ "id" ].ToString() );
-                    b.customer_id = int.Parse( dataReader[ "customer_id" ].ToString() );
+                    b.id = Convert.ToInt32( dataReader[ "id" ].ToString() );
+                    b.customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() );
                     b.brand_name = dataReader[ "brand_name" ].ToString();
                     b.status = dataReader[ "status" ] != null ? dataReader[ "status" ].ToString() == "1" ? true : false : false;
                 }
@@ -2583,9 +2554,9 @@ namespace Merchanter {
                 Category? c = null;
                 if( dataReader.Read() ) {
                     c = new Category {
-                        id = int.Parse( dataReader[ "id" ].ToString() ),
-                        customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
-                        parent_id = int.Parse( dataReader[ "parent_id" ].ToString() ),
+                        id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                        customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
+                        parent_id = Convert.ToInt32( dataReader[ "parent_id" ].ToString() ),
                         category_name = dataReader[ "category_name" ].ToString(),
                         is_active = dataReader[ "is_active" ] != null && dataReader[ "is_active" ].ToString() == "1"
                     };
@@ -2635,9 +2606,9 @@ namespace Merchanter {
                     MySqlDataReader dataReader = cmd.ExecuteReader();
                     while( dataReader.Read() ) {
                         Category c = new() {
-                            id = int.Parse( dataReader[ "id" ].ToString() ),
-                            customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
-                            parent_id = int.Parse( dataReader[ "parent_id" ].ToString() ),
+                            id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                            customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
+                            parent_id = Convert.ToInt32( dataReader[ "parent_id" ].ToString() ),
                             category_name = dataReader[ "category_name" ].ToString(),
                             is_active = dataReader[ "is_active" ] != null && (dataReader[ "is_active" ].ToString() == "1")
                         };
@@ -2672,9 +2643,9 @@ namespace Merchanter {
                 MySqlDataReader dataReader = cmd.ExecuteReader();
                 while( dataReader.Read() ) {
                     Category c = new() {
-                        id = int.Parse( dataReader[ "id" ].ToString() ),
-                        customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
-                        parent_id = int.Parse( dataReader[ "parent_id" ].ToString() ),
+                        id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                        customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
+                        parent_id = Convert.ToInt32( dataReader[ "parent_id" ].ToString() ),
                         category_name = dataReader[ "category_name" ].ToString(),
                         is_active = dataReader[ "is_active" ] != null ? dataReader[ "is_active" ].ToString() == "1" ? true : false : false
                     };
@@ -2710,10 +2681,10 @@ namespace Merchanter {
                 Category? c = null;
                 if( dataReader.Read() ) {
                     c = new Category();
-                    c.id = int.Parse( dataReader[ "id" ].ToString() );
-                    c.customer_id = int.Parse( dataReader[ "customer_id" ].ToString() );
-                    c.customer_id = int.Parse( dataReader[ "parent_id" ].ToString() );
-                    c.customer_id = int.Parse( dataReader[ "customer_id" ].ToString() );
+                    c.id = Convert.ToInt32( dataReader[ "id" ].ToString() );
+                    c.customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() );
+                    c.customer_id = Convert.ToInt32( dataReader[ "parent_id" ].ToString() );
+                    c.customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() );
                     c.category_name = dataReader[ "category_name" ].ToString();
                     c.is_active = dataReader[ "is_active" ] != null ? dataReader[ "is_active" ].ToString() == "1" ? true : false : false;
                 }
@@ -2747,11 +2718,11 @@ namespace Merchanter {
                 MySqlDataReader dataReader = cmd.ExecuteReader();
                 while( dataReader.Read() ) {
                     XProduct xp = new XProduct {
-                        id = int.Parse( dataReader[ "id" ].ToString() ),
-                        customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
+                        id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                        customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
                         update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() ),
                         barcode = dataReader[ "barcode" ].ToString(),
-                        qty = int.Parse( dataReader[ "qty" ].ToString() ),
+                        qty = Convert.ToInt32( dataReader[ "qty" ].ToString() ),
                         source_sku = dataReader[ "source_sku" ].ToString(),
                         source_brand = dataReader[ "source_brand" ].ToString(),
                         source_product_group = dataReader[ "source_product_group" ].ToString(),
@@ -2759,8 +2730,8 @@ namespace Merchanter {
                         price1 = decimal.Parse( dataReader[ "price1" ].ToString() ),
                         price2 = decimal.Parse( dataReader[ "price2" ].ToString() ),
                         currency = dataReader[ "currency" ].ToString(),
-                        is_infosent = Convert.ToBoolean( int.Parse( dataReader[ "is_infosent" ].ToString() ) ),
-                        is_active = Convert.ToBoolean( int.Parse( dataReader[ "is_active" ].ToString() ) )
+                        is_infosent = Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_infosent" ].ToString() ) ),
+                        is_active = Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_active" ].ToString() ) )
                     };
 
                     list.Add( xp );
@@ -2794,11 +2765,11 @@ namespace Merchanter {
                 MySqlDataReader dataReader = cmd.ExecuteReader();
                 while( dataReader.Read() ) {
                     XProduct xp = new XProduct {
-                        id = int.Parse( dataReader[ "id" ].ToString() ),
-                        customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
+                        id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                        customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
                         update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() ),
                         barcode = dataReader[ "barcode" ].ToString(),
-                        qty = int.Parse( dataReader[ "qty" ].ToString() ),
+                        qty = Convert.ToInt32( dataReader[ "qty" ].ToString() ),
                         source_sku = dataReader[ "source_sku" ].ToString(),
                         source_brand = dataReader[ "source_brand" ].ToString(),
                         source_product_group = dataReader[ "source_product_group" ].ToString(),
@@ -2806,8 +2777,8 @@ namespace Merchanter {
                         price1 = decimal.Parse( dataReader[ "price1" ].ToString() ),
                         price2 = decimal.Parse( dataReader[ "price2" ].ToString() ),
                         currency = dataReader[ "currency" ].ToString(),
-                        is_infosent = Convert.ToBoolean( int.Parse( dataReader[ "is_infosent" ].ToString() ) ),
-                        is_active = Convert.ToBoolean( int.Parse( dataReader[ "is_active" ].ToString() ) )
+                        is_infosent = Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_infosent" ].ToString() ) ),
+                        is_active = Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_active" ].ToString() ) )
                     };
 
                     list.Add( xp );
@@ -2841,11 +2812,11 @@ namespace Merchanter {
                 XProduct? xp = null;
                 if( dataReader.Read() ) {
                     xp = new XProduct {
-                        id = int.Parse( dataReader[ "id" ].ToString() ),
-                        customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
+                        id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                        customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
                         update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() ),
                         barcode = dataReader[ "barcode" ].ToString(),
-                        qty = int.Parse( dataReader[ "qty" ].ToString() ),
+                        qty = Convert.ToInt32( dataReader[ "qty" ].ToString() ),
                         source_sku = dataReader[ "source_sku" ].ToString(),
                         source_brand = dataReader[ "source_brand" ].ToString(),
                         source_product_group = dataReader[ "source_product_group" ].ToString(),
@@ -2853,8 +2824,8 @@ namespace Merchanter {
                         price1 = decimal.Parse( dataReader[ "price1" ].ToString() ),
                         price2 = decimal.Parse( dataReader[ "price2" ].ToString() ),
                         currency = dataReader[ "currency" ].ToString(),
-                        is_infosent = Convert.ToBoolean( int.Parse( dataReader[ "is_infosent" ].ToString() ) ),
-                        is_active = Convert.ToBoolean( int.Parse( dataReader[ "is_active" ].ToString() ) )
+                        is_infosent = Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_infosent" ].ToString() ) ),
+                        is_active = Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_active" ].ToString() ) )
                     };
                 }
                 dataReader.Close();
@@ -2998,9 +2969,9 @@ namespace Merchanter {
                 MySqlDataReader dataReader = cmd.ExecuteReader();
                 while( dataReader.Read() ) {
                     Shipment s = new Shipment {
-                        id = int.Parse( dataReader[ "id" ].ToString() ),
-                        customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
-                        order_id = int.Parse( dataReader[ "order_id" ].ToString() ),
+                        id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                        customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
+                        order_id = Convert.ToInt32( dataReader[ "order_id" ].ToString() ),
                         order_label = dataReader[ "order_label" ].ToString(),
                         shipment_method = dataReader[ "shipment_method" ].ToString(),
                         order_source = dataReader[ "order_source" ].ToString(),
@@ -3040,9 +3011,9 @@ namespace Merchanter {
                 Shipment? s = null;
                 if( dataReader.Read() ) {
                     s = new Shipment();
-                    s.id = int.Parse( dataReader[ "id" ].ToString() );
-                    s.customer_id = int.Parse( dataReader[ "customer_id" ].ToString() );
-                    s.order_id = int.Parse( dataReader[ "order_id" ].ToString() );
+                    s.id = Convert.ToInt32( dataReader[ "id" ].ToString() );
+                    s.customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() );
+                    s.order_id = Convert.ToInt32( dataReader[ "order_id" ].ToString() );
                     s.order_label = dataReader[ "order_label" ].ToString();
                     s.shipment_method = dataReader[ "shipment_method" ].ToString();
                     s.order_source = dataReader[ "order_source" ].ToString();
@@ -3197,8 +3168,8 @@ namespace Merchanter {
                 MySqlDataReader dataReader = cmd.ExecuteReader();
                 while( dataReader.Read() ) {
                     Invoice inv = new Invoice {
-                        id = int.Parse( dataReader[ "id" ].ToString() ),
-                        customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
+                        id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                        customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
                         order_id = dataReader[ "order_id" ].ToString(),
                         order_label = dataReader[ "order_label" ].ToString(),
                         erp_customer_code = dataReader[ "erp_customer_code" ].ToString(),
@@ -3254,8 +3225,8 @@ namespace Merchanter {
                 Invoice? inv = null;
                 if( dataReader.Read() ) {
                     inv = new Invoice();
-                    inv.id = int.Parse( dataReader[ "id" ].ToString() );
-                    inv.customer_id = int.Parse( dataReader[ "customer_id" ].ToString() );
+                    inv.id = Convert.ToInt32( dataReader[ "id" ].ToString() );
+                    inv.customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() );
                     inv.order_id = dataReader[ "order_id" ].ToString();
                     inv.order_label = dataReader[ "order_label" ].ToString();
                     inv.is_belge_created = dataReader[ "is_belge_created" ] != null && (dataReader[ "is_belge_created" ].ToString() == "1");
@@ -3399,12 +3370,12 @@ namespace Merchanter {
                 MySqlDataReader dataReader = cmd.ExecuteReader();
                 while( dataReader.Read() ) {
                     InvoiceItem ii = new InvoiceItem {
-                        id = int.Parse( dataReader[ "id" ].ToString() ),
-                        customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
+                        id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                        customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
                         invoice_no = dataReader[ "invoice_no" ].ToString(),
                         erp_no = dataReader[ "erp_no" ].ToString(),
                         sku = dataReader[ "sku" ].ToString(),
-                        qty = int.Parse( dataReader[ "qty" ].ToString() ),
+                        qty = Convert.ToInt32( dataReader[ "qty" ].ToString() ),
                         serials = dataReader[ "serials" ].ToString().Split( ',' ),
                         create_date = Convert.ToDateTime( dataReader[ "create_date" ].ToString() ),
                         update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() )
@@ -3438,12 +3409,12 @@ namespace Merchanter {
                 MySqlDataReader dataReader = cmd.ExecuteReader();
                 while( dataReader.Read() ) {
                     InvoiceItem ii = new InvoiceItem {
-                        id = int.Parse( dataReader[ "id" ].ToString() ),
-                        customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
+                        id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                        customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
                         invoice_no = dataReader[ "invoice_no" ].ToString(),
                         erp_no = dataReader[ "erp_no" ].ToString(),
                         sku = dataReader[ "sku" ].ToString(),
-                        qty = int.Parse( dataReader[ "qty" ].ToString() ),
+                        qty = Convert.ToInt32( dataReader[ "qty" ].ToString() ),
                         serials = dataReader[ "xml_sources" ].ToString().Split( ',' ),
                         create_date = Convert.ToDateTime( dataReader[ "create_date" ].ToString() ),
                         update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() )
@@ -3579,9 +3550,9 @@ namespace Merchanter {
                 MySqlDataReader dataReader = cmd.ExecuteReader();
                 while( dataReader.Read() ) {
                     Order o = new Order {
-                        id = int.Parse( dataReader[ "id" ].ToString() ),
-                        customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
-                        order_id = int.Parse( dataReader[ "order_id" ].ToString() ),
+                        id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                        customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
+                        order_id = Convert.ToInt32( dataReader[ "order_id" ].ToString() ),
                         email = dataReader[ "email" ].ToString(),
                         firstname = dataReader[ "firstname" ].ToString(),
                         lastname = dataReader[ "lastname" ].ToString(),
@@ -3687,9 +3658,9 @@ namespace Merchanter {
                 MySqlDataReader dataReader = cmd.ExecuteReader();
                 while( dataReader.Read() ) {
                     Order o = new Order {
-                        id = int.Parse( dataReader[ "id" ].ToString() ),
-                        customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
-                        order_id = int.Parse( dataReader[ "order_id" ].ToString() ),
+                        id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                        customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
+                        order_id = Convert.ToInt32( dataReader[ "order_id" ].ToString() ),
                         email = dataReader[ "email" ].ToString(),
                         firstname = dataReader[ "firstname" ].ToString(),
                         lastname = dataReader[ "lastname" ].ToString(),
@@ -3788,9 +3759,9 @@ namespace Merchanter {
                 Order? o = null;
                 if( dataReader.Read() ) {
                     o = new Order();
-                    o.id = int.Parse( dataReader[ "id" ].ToString() );
-                    o.customer_id = int.Parse( dataReader[ "customer_id" ].ToString() );
-                    o.order_id = int.Parse( dataReader[ "order_id" ].ToString() );
+                    o.id = Convert.ToInt32( dataReader[ "id" ].ToString() );
+                    o.customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() );
+                    o.order_id = Convert.ToInt32( dataReader[ "order_id" ].ToString() );
                     o.email = dataReader[ "email" ].ToString();
                     o.firstname = dataReader[ "firstname" ].ToString();
                     o.lastname = dataReader[ "lastname" ].ToString();
@@ -4006,19 +3977,19 @@ namespace Merchanter {
                 List<OrderItem> list = [];
                 while( dataReader.Read() ) {
                     OrderItem oi = new OrderItem() {
-                        id = int.Parse( dataReader[ "id" ].ToString() ),
-                        customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
-                        order_id = int.Parse( dataReader[ "order_id" ].ToString() ),
-                        order_item_id = int.Parse( dataReader[ "order_item_id" ].ToString() ),
+                        id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                        customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
+                        order_id = Convert.ToInt32( dataReader[ "order_id" ].ToString() ),
+                        order_item_id = Convert.ToInt32( dataReader[ "order_item_id" ].ToString() ),
                         sku = dataReader[ "sku" ].ToString(),
                         parent_sku = dataReader[ "parent_sku" ].ToString(),
                         price = float.Parse( dataReader[ "price" ].ToString() ),
                         tax_amount = float.Parse( dataReader[ "tax_amount" ].ToString() ),
-                        qty_ordered = int.Parse( dataReader[ "qty_ordered" ].ToString() ),
-                        qty_invoiced = int.Parse( dataReader[ "qty_invoiced" ].ToString() ),
-                        qty_cancelled = int.Parse( dataReader[ "qty_cancelled" ].ToString() ),
-                        qty_refunded = int.Parse( dataReader[ "qty_refunded" ].ToString() ),
-                        tax = int.Parse( dataReader[ "tax" ].ToString() ),
+                        qty_ordered = Convert.ToInt32( dataReader[ "qty_ordered" ].ToString() ),
+                        qty_invoiced = Convert.ToInt32( dataReader[ "qty_invoiced" ].ToString() ),
+                        qty_cancelled = Convert.ToInt32( dataReader[ "qty_cancelled" ].ToString() ),
+                        qty_refunded = Convert.ToInt32( dataReader[ "qty_refunded" ].ToString() ),
+                        tax = Convert.ToInt32( dataReader[ "tax" ].ToString() ),
                         tax_included = dataReader[ "tax_included" ] != null ? dataReader[ "tax_included" ].ToString().Equals( "1" ) : false,
                     };
                     list.Add( oi );
@@ -4052,19 +4023,19 @@ namespace Merchanter {
                 List<OrderItem> list = [];
                 while( dataReader.Read() ) {
                     OrderItem oi = new OrderItem() {
-                        id = int.Parse( dataReader[ "id" ].ToString() ),
-                        customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
-                        order_id = int.Parse( dataReader[ "order_id" ].ToString() ),
-                        order_item_id = int.Parse( dataReader[ "order_item_id" ].ToString() ),
+                        id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                        customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
+                        order_id = Convert.ToInt32( dataReader[ "order_id" ].ToString() ),
+                        order_item_id = Convert.ToInt32( dataReader[ "order_item_id" ].ToString() ),
                         sku = dataReader[ "sku" ].ToString(),
                         parent_sku = dataReader[ "parent_sku" ].ToString(),
                         price = float.Parse( dataReader[ "price" ].ToString() ),
                         tax_amount = float.Parse( dataReader[ "tax_amount" ].ToString() ),
-                        qty_ordered = int.Parse( dataReader[ "qty_ordered" ].ToString() ),
-                        qty_invoiced = int.Parse( dataReader[ "qty_invoiced" ].ToString() ),
-                        qty_cancelled = int.Parse( dataReader[ "qty_cancelled" ].ToString() ),
-                        qty_refunded = int.Parse( dataReader[ "qty_refunded" ].ToString() ),
-                        tax = int.Parse( dataReader[ "tax" ].ToString() ),
+                        qty_ordered = Convert.ToInt32( dataReader[ "qty_ordered" ].ToString() ),
+                        qty_invoiced = Convert.ToInt32( dataReader[ "qty_invoiced" ].ToString() ),
+                        qty_cancelled = Convert.ToInt32( dataReader[ "qty_cancelled" ].ToString() ),
+                        qty_refunded = Convert.ToInt32( dataReader[ "qty_refunded" ].ToString() ),
+                        tax = Convert.ToInt32( dataReader[ "tax" ].ToString() ),
                         tax_included = dataReader[ "tax_included" ] != null ? dataReader[ "tax_included" ].ToString().Equals( "1" ) : false,
                     };
                     list.Add( oi );
@@ -4204,10 +4175,10 @@ namespace Merchanter {
                 List<BillingAddress> list = [];
                 while( dataReader.Read() ) {
                     BillingAddress ba = new BillingAddress() {
-                        id = int.Parse( dataReader[ "id" ].ToString() ),
-                        customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
-                        billing_id = int.Parse( dataReader[ "billing_id" ].ToString() ),
-                        order_id = int.Parse( dataReader[ "order_id" ].ToString() ),
+                        id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                        customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
+                        billing_id = Convert.ToInt32( dataReader[ "billing_id" ].ToString() ),
+                        order_id = Convert.ToInt32( dataReader[ "order_id" ].ToString() ),
                         firstname = dataReader[ "firstname" ].ToString(),
                         lastname = dataReader[ "lastname" ].ToString(),
                         telephone = dataReader[ "telephone" ].ToString(),
@@ -4250,10 +4221,10 @@ namespace Merchanter {
                 BillingAddress? ba = null;
                 if( dataReader.Read() ) {
                     ba = new BillingAddress();
-                    ba.id = int.Parse( dataReader[ "id" ].ToString() );
-                    ba.customer_id = int.Parse( dataReader[ "customer_id" ].ToString() );
-                    ba.billing_id = int.Parse( dataReader[ "billing_id" ].ToString() );
-                    ba.order_id = int.Parse( dataReader[ "order_id" ].ToString() );
+                    ba.id = Convert.ToInt32( dataReader[ "id" ].ToString() );
+                    ba.customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() );
+                    ba.billing_id = Convert.ToInt32( dataReader[ "billing_id" ].ToString() );
+                    ba.order_id = Convert.ToInt32( dataReader[ "order_id" ].ToString() );
                     ba.firstname = dataReader[ "firstname" ].ToString();
                     ba.lastname = dataReader[ "lastname" ].ToString();
                     ba.telephone = dataReader[ "telephone" ].ToString();
@@ -4374,10 +4345,10 @@ namespace Merchanter {
                 List<ShippingAddress> list = [];
                 while( dataReader.Read() ) {
                     ShippingAddress sa = new ShippingAddress() {
-                        id = int.Parse( dataReader[ "id" ].ToString() ),
-                        customer_id = int.Parse( dataReader[ "customer_id" ].ToString() ),
-                        shipping_id = int.Parse( dataReader[ "shipping_id" ].ToString() ),
-                        order_id = int.Parse( dataReader[ "order_id" ].ToString() ),
+                        id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                        customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
+                        shipping_id = Convert.ToInt32( dataReader[ "shipping_id" ].ToString() ),
+                        order_id = Convert.ToInt32( dataReader[ "order_id" ].ToString() ),
                         firstname = dataReader[ "firstname" ].ToString(),
                         lastname = dataReader[ "lastname" ].ToString(),
                         telephone = dataReader[ "telephone" ].ToString(),
@@ -4416,10 +4387,10 @@ namespace Merchanter {
                 ShippingAddress? sa = null;
                 if( dataReader.Read() ) {
                     sa = new ShippingAddress();
-                    sa.id = int.Parse( dataReader[ "id" ].ToString() );
-                    sa.customer_id = int.Parse( dataReader[ "customer_id" ].ToString() );
-                    sa.shipping_id = int.Parse( dataReader[ "shipping_id" ].ToString() );
-                    sa.order_id = int.Parse( dataReader[ "order_id" ].ToString() );
+                    sa.id = Convert.ToInt32( dataReader[ "id" ].ToString() );
+                    sa.customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() );
+                    sa.shipping_id = Convert.ToInt32( dataReader[ "shipping_id" ].ToString() );
+                    sa.order_id = Convert.ToInt32( dataReader[ "order_id" ].ToString() );
                     sa.firstname = dataReader[ "firstname" ].ToString();
                     sa.lastname = dataReader[ "lastname" ].ToString();
                     sa.telephone = dataReader[ "telephone" ].ToString();

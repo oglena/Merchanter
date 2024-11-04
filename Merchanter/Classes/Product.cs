@@ -15,7 +15,7 @@
         public string currency { get; set; }
         public int tax { get; set; } = 20;
         public bool tax_included { get; set; } = false;
-        public List<ProductSource>? sources { get; set; }
+        public List<ProductSource> sources { get; set; }
         public ProductExtension extension { get; set; }
 
         public enum ProductTypes {
