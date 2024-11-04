@@ -26,7 +26,7 @@ namespace Merchanter.CustomerService.Repositories {
             return await GetCustomer( _customer_id );
         }
 
-        public async Task<List<Log>> GetCustomerLogsById( int _customer_id, int _items_per_page, int _current_page_index, Dictionary<string, string> _filters ) {
+        public async Task<List<Log>> GetCustomerLogsById( int _customer_id, int _items_per_page, int _current_page_index, Dictionary<string, string?> _filters ) {
             merchanterService.ChangeCustomer( _customer_id );
             return await GetCustomerLogs( _customer_id, _items_per_page, _current_page_index, _filters );
         }

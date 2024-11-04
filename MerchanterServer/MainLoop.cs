@@ -403,11 +403,10 @@ namespace MerchanterServer {
                         var need_to_delete_xp = live_xproducts.Where( x => x.xml_source == item.xml_source ).Where( x => x.barcode == item.barcode ).FirstOrDefault();
                         if( need_to_delete_xp == null ) {
                             db_helper.xml.DeleteXProduct( customer.customer_id, item.id );
-                            Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " +
-                                item.barcode + " source=" + item.xml_source + " " + " xproduct removed." );
+                            Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + item.barcode + " source=" + item.xml_source + " " + " xproduct removed." );
 
                             #region Notify - XML_PRODUCT_REMOVED
-                            db_helper.xml.LogToServer( "product_removed", item.barcode + ": " + item.qty, customer.customer_id, "xml" );
+                            db_helper.xml.LogToServer( "product_removed", item.xml_source + ":" + item.barcode + ": " + item.qty, customer.customer_id, "xml" );
                             if( xml_enabled_products?.Where( x => x.barcode == item.barcode ).ToList().Count() == 0 ) {
                                 notifications.Add( new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_PRODUCT_REMOVED, xproduct_barcode = item.barcode, notification_content = item.xml_source } );
                             }
@@ -425,7 +424,7 @@ namespace MerchanterServer {
                             #region Notify - XML_PRICE_CHANGED
                             if( xml_enabled_products?.Where( x => x.barcode == item.barcode ).ToList().Count() > 0 ) {
                                 if( item.price2 != tempx.price2 ) {
-                                    db_helper.xml.LogToServer( "price_change", item.xml_source + "=" + item.price2 + "|" + tempx.price2, customer.customer_id, "xml" );
+                                    db_helper.xml.LogToServer( "price_change", item.xml_source + ":" + item.barcode + "=>" + item.price2 + "|" + tempx.price2, customer.customer_id, "xml" );
                                     notifications.Add( new Notification() {
                                         customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_PRICE_CHANGED, xproduct_barcode = item.barcode,
                                         notification_content = item.xml_source + "=" + item.price2 + "|" + tempx.price2
@@ -437,7 +436,7 @@ namespace MerchanterServer {
                             #region Notify - XML_QTY_CHANGED
                             if( xml_enabled_products?.Where( x => x.barcode == item.barcode ).ToList().Count() > 0 ) {
                                 if( item.qty != tempx.qty ) {
-                                    db_helper.xml.LogToServer( "qty_change", item.xml_source + "=" + item.qty + "|" + tempx.qty, customer.customer_id, "xml" );
+                                    db_helper.xml.LogToServer( "qty_change", item.xml_source + ":" + item.barcode + "=>" + item.qty + "|" + tempx.qty, customer.customer_id, "xml" );
                                     notifications.Add( new Notification() {
                                         customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_QTY_CHANGED, xproduct_barcode = item.barcode,
                                         notification_content = item.xml_source + "=" + item.qty + "|" + tempx.qty
@@ -449,7 +448,7 @@ namespace MerchanterServer {
                         else {
                             #region Notify - XML_PRODUCT_ADDED
                             if( xml_enabled_products?.Where( x => x.barcode == item.barcode ).ToList().Count() > 0 ) {
-                                db_helper.xml.LogToServer( "product_added", item.barcode + ": " + item.qty, customer.customer_id, "xml" );
+                                db_helper.xml.LogToServer( "product_added", item.xml_source + ":" + item.barcode + ": " + item.qty, customer.customer_id, "xml" );
                                 notifications.Add( new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_PRODUCT_ADDED, xproduct_barcode = item.barcode } );
                             }
                             #endregion
