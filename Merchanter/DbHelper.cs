@@ -366,6 +366,36 @@ namespace Merchanter {
         /// <summary>
         /// Logs the message to the server
         /// </summary>
+        /// <param name="_thread_id">Thread ID</param>
+        /// <param name="_title">Title</param>
+        /// <param name="_message">Message</param>
+        /// <param name="_worker">Worker</param>
+        /// <returns>[No change] or [Error] returns 'false'</returns>
+        public bool LogToServer(string _thread_id, string _title, string _message, int _customer_id, string _worker = "general" ) {
+            try {
+                if( state != System.Data.ConnectionState.Open )
+                    connection.Open();
+                string query = "INSERT INTO log (thread_id,title,message,worker,customer_id) VALUES (@thread_id,@title,@message,@worker,@customer_id);";
+                MySqlCommand cmd = new MySqlCommand( query, connection );
+                cmd.Parameters.Add( new MySqlParameter() { ParameterName = "thread_id", Value = _thread_id } );
+                cmd.Parameters.Add( new MySqlParameter() { ParameterName = "title", Value = _title } );
+                cmd.Parameters.Add( new MySqlParameter() { ParameterName = "message", Value = _message } );
+                cmd.Parameters.Add( new MySqlParameter() { ParameterName = "worker", Value = _worker } );
+                cmd.Parameters.Add( new MySqlParameter() { ParameterName = "customer_id", Value = _customer_id } );
+                int value = cmd.ExecuteNonQuery();
+                if( state == System.Data.ConnectionState.Open )
+                    connection.Close();
+                WriteLogLine( "log|" + _title + ":" + _message, ConsoleColor.Green );
+                return true;
+            }
+            catch( Exception ex ) {
+                Console.WriteLine( "LOG ERROR GG - " + ex.ToString() );
+                return false;
+            }
+        }
+        /// <summary>
+        /// Logs the message to the server
+        /// </summary>
         /// <param name="_title">Title</param>
         /// <param name="_message">Message</param>
         /// <param name="_worker">Worker</param>
@@ -387,7 +417,7 @@ namespace Merchanter {
                 return true;
             }
             catch( Exception ex ) {
-                OnError( "LOG ERROR GG - " + ex.ToString() );
+                Console.WriteLine( "LOG ERROR GG - " + ex.ToString() );
                 return false;
             }
         }
