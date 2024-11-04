@@ -1504,7 +1504,7 @@ namespace MerchanterServer {
                                         if( shipment != null ) {
                                             if( !shipment.is_shipped ) {
                                                 if( order_sources.Contains( Constants.MAGENTO2 ) && order_item.order_status != "TAMAMLANDI" ) {
-                                                    Helper.ShipOrder( order_item.order_id, order_item.order_label, string.Join( ",", tracking_codes ),
+                                                    Helper.CreateOrderShipment( order_item.order_id, order_item.order_label, string.Join( ",", tracking_codes ),
                                                         "Siparişiniz " + ShipmentMethod.GetShipmentName( shipment.shipment_method ) + " ile kargolanmıştır. " +
                                                         "Kargo Takip Numaranız: " + string.Join( ",", tracking_codes ) + "." +
                                                         " Detaylı takip için: https://www.yurticikargo.com/tr/online-servisler/gonderi-sorgula?code=" +

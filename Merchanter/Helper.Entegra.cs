@@ -3,6 +3,10 @@
 namespace Merchanter {
     public static partial class Helper {
         #region ENTEGRA
+        /// <summary>
+        /// Get the currency rates from Entegra
+        /// </summary>
+        /// <returns>The currency rates</returns>
         public static ENT_CurrencyRates? GetENTCurrencyRates() {
             try {
                 using( Executioner executioner = new Executioner() ) {
@@ -34,6 +38,10 @@ namespace Merchanter {
             }
         }
 
+        /// <summary>
+        /// Get the products from Entegra
+        /// </summary>
+        /// <returns>The products</returns>
         public static List<ENT_Product>? GetENTProducts() {
             try {
                 using( Executioner executioner = new Executioner() ) {

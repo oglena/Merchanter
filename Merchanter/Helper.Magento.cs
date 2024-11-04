@@ -486,6 +486,11 @@ namespace Merchanter {
             }
         }
 
+        /// <summary>
+        /// Get Magento Product Attribute by Attribute Code
+        /// </summary>
+        /// <param name="_attribute_code">Magento Attribute Code</param>
+        /// <returns>Magento Product Attribute</returns>
         public static M2_Attribute? GetProductAttribute( string _attribute_code ) {
             using( Executioner executioner = new Executioner() ) {
                 string url_p_attribute = Helper.global.magento.base_url + "rest/all/V1/products/attributes/" + _attribute_code;
@@ -525,6 +530,14 @@ namespace Merchanter {
             }
         }
 
+        /// <summary>
+        /// Get Magento Product Attribute by Attribute Code
+        /// </summary>
+        /// <param name="_attribute_code">Magento Attribute Code</param>
+        /// <param name="_attribute_value">Magento Attribute Value</param>
+        /// <param name="_page_size">Page Size</param>
+        /// <param name="_current_page">Current Page</param>
+        /// <returns>Magento Products</returns>
         public static List<M2_Product>? SearchProductByAttribute( string _attribute_code, string _attribute_value, int _page_size = 99999, int _current_page = 1 ) {
             try {
                 using( Executioner executioner = new Executioner() ) {
@@ -622,6 +635,11 @@ namespace Merchanter {
             }
         }
 
+        /// <summary>
+        /// Get Magento Product by SKU
+        /// </summary>
+        /// <param name="_sku">Magento Product SKU</param>
+        /// <returns>Magento Product</returns>
         public static M2_Product? GetProductBySKU( string _sku ) {
             try {
                 using( Executioner executioner = new Executioner() ) {
@@ -725,6 +743,13 @@ namespace Merchanter {
             };
         }
 
+        /// <summary>
+        /// Get Magento Orders
+        /// </summary>
+        /// <param name="_daysto_ordersync">Days to Sync</param>
+        /// <param name="_page_size">Page Size</param>
+        /// <param name="_current_page">Current Page</param>
+        /// <returns>Magento Orders</returns>
         public static M2_Orders? GetOrders( int _daysto_ordersync, int _page_size = 99999, int _current_page = 1 ) {
             using( Executioner executioner = new Executioner() ) {
                 string url_order = Helper.global.magento.base_url + "rest/all/V1/orders?" +
@@ -749,6 +774,14 @@ namespace Merchanter {
             }
         }
 
+        /// <summary>
+        /// Get Magento Orders by Statuses
+        /// </summary>
+        /// <param name="_daysto_ordersync">Days to Sync</param>
+        /// <param name="_statuses">Order Statuses</param>
+        /// <param name="_page_size">Page Size</param>
+        /// <param name="_current_page">Current Page</param>
+        /// <returns>Magento Orders</returns>
         public static M2_Orders? GetOrders( int _daysto_ordersync, string[] _statuses, int _page_size = 99999, int _current_page = 1 ) {
             using( Executioner executioner = new Executioner() ) {
                 string url_order = Helper.global.magento.base_url + "rest/all/V1/orders?" +
@@ -801,6 +834,13 @@ namespace Merchanter {
             }
         }
 
+        /// <summary>
+        /// Get Magento Customer by Email
+        /// </summary>
+        /// <param name="_email">Magento Customer Email</param>
+        /// <param name="_page_size">Page Size</param>
+        /// <param name="_current_page">Current Page</param>
+        /// <returns>Magento Customer</returns>
         public static M2_Customer? GetCustomer( string _email, int _page_size = 99999, int _current_page = 1 ) {
             using( Executioner executioner = new Executioner() ) {
                 string url_customer = Helper.global.magento.base_url + "rest/all/V1/customers/search?" +
@@ -829,6 +869,12 @@ namespace Merchanter {
             }
         }
 
+        /// <summary>
+        /// Gets Magento Customer Corporate Info
+        /// </summary>
+        /// <param name="_email">Magento Customer Email</param>
+        /// <param name="_is_corporate">Is Corporate</param>
+        /// <returns>Dictionary as {attr_code,attr_value}</returns>
         public static Dictionary<string, string>? GetCustomerCorporateInfo( string _email, out bool _is_corporate ) {
             var selected_customer = GetCustomer( _email );
             Dictionary<string, string>? _company_infos = null;
@@ -864,6 +910,11 @@ namespace Merchanter {
             return null;
         }
 
+        /// <summary>
+        /// Creates Magento Order Invoice
+        /// </summary>
+        /// <param name="_order">Magento Order</param>
+        /// <returns>Created Order Invoice No</returns>
         public static string? CreateOrderInvoice( Order _order ) {
             try {
                 var invoice = new M2_InvoiceRequest() {
@@ -893,7 +944,17 @@ namespace Merchanter {
             }
         }
 
-        public static string? ShipOrder( int _order_id, string _order_label, string _tracking_numbers, string _comment, string _carrier_code, string _carrier_title ) {
+        /// <summary>
+        /// Creates Magento Order Shipment
+        /// </summary>
+        /// <param name="_order_id">Magento Order ID</param>
+        /// <param name="_order_label">Magento Order Label</param>
+        /// <param name="_tracking_numbers">Tracking Numbers</param>
+        /// <param name="_comment">Comment</param>
+        /// <param name="_carrier_code">Carrier Code</param>
+        /// <param name="_carrier_title">Carrier Title</param>
+        /// <returns>Created Order Shipment No</returns>
+        public static string? CreateOrderShipment( int _order_id, string _order_label, string _tracking_numbers, string _comment, string _carrier_code, string _carrier_title ) {
             try {
                 var ship = new M2_ShippingRequest() {
                     notify = true, appendComment = true, comment = new M2_Shipment_Comment() {
@@ -921,6 +982,11 @@ namespace Merchanter {
             }
         }
 
+        /// <summary>
+        /// Changes Magento Order Status
+        /// </summary>
+        /// <param name="_order">Magento Order</param>
+        /// <param name="_status">Magento Order Status</param>
         public static void ChangeOrderStatus( Order _order, string? _status ) {
             try {
                 if( !string.IsNullOrWhiteSpace( _status ) ) {
@@ -1018,6 +1084,12 @@ namespace Merchanter {
             }
         }
 
+        /// <summary>
+        /// Updates Magento Product Price
+        /// </summary>
+        /// <param name="_product">Product</param>
+        /// <param name="_currency_rates">Currency Rates</param>
+        /// <returns>[Error] returns 'false'</returns>
         public static bool UpdateProductPrice( Product _product, CurrencyRates _currency_rates ) {
             try {
                 var prices = new {
@@ -1050,6 +1122,12 @@ namespace Merchanter {
             }
         }
 
+        /// <summary>
+        /// Updates Magento Product Special Price
+        /// </summary>
+        /// <param name="_product">Product</param>
+        /// <param name="_currency_rates">Currency Rates</param>
+        /// <returns>[Error] returns 'false'</returns>
         public static bool UpdateProductSpecialPrice( Product _product, CurrencyRates _currency_rates ) {
             try {
                 if( _product.special_price > 0 ) {
@@ -1108,6 +1186,12 @@ namespace Merchanter {
             }
         }
 
+        /// <summary>
+        /// Updates Magento Product Custom Price
+        /// </summary>
+        /// <param name="_product">Product</param>
+        /// <param name="_currency_rates">Currency Rates</param>
+        /// <returns>[Error] returns 'false'</returns>
         public static bool? UpdateProductCustomPrice( Product _product, CurrencyRates _currency_rates ) {
             int? product_id = QP_MySQLHelper.GetM2ProductId( _product.sku );
             if( product_id.HasValue ) {
@@ -1135,6 +1219,13 @@ namespace Merchanter {
             return null;
         }
 
+        /// <summary>
+        /// Updates Magento Product Attribute
+        /// </summary>
+        /// <param name="_sku">Product SKU</param>
+        /// <param name="_attribute_code">Attribute Code</param>
+        /// <param name="_attribute_value">Attribute Value</param>
+        /// <returns>[Error] returns 'false'</returns>
         public static bool UpdateProductAttribute( string _sku, string _attribute_code, string? _attribute_value ) {
             try {
                 var product = new {
@@ -1166,6 +1257,12 @@ namespace Merchanter {
             }
         }
 
+        /// <summary>
+        /// Inserts Magento Product Attribute Option
+        /// </summary>
+        /// <param name="_attribute_code">Attribute Code</param>
+        /// <param name="_attribute_value">Attribute Value</param>
+        /// <returns>Updated Option ID</returns>
         public static string? InsertAttributeOption( string _attribute_code, string? _attribute_value ) {
             try {
                 if( !string.IsNullOrWhiteSpace( _attribute_value ) ) return null;
@@ -1197,6 +1294,12 @@ namespace Merchanter {
             }
         }
 
+        /// <summary>
+        /// Updates Magento Product Qty
+        /// </summary>
+        /// <param name="_sku">Product SKU</param>
+        /// <param name="_qty">Product Qty</param>
+        /// <returns>[Error] returns 'false'</returns>
         public static bool UpdateProductQty( string _sku, int _qty ) {
             try {
                 var stock_item = new {

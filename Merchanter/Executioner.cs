@@ -5,6 +5,9 @@ using System.Diagnostics;
 namespace Merchanter {
     public class Executioner :IDisposable {
 
+        /// <summary>
+        /// The rest client to execute the requests
+        /// </summary>
         private RestClient restClient;
 
         public Executioner() {
@@ -15,6 +18,14 @@ namespace Merchanter {
             restClient = new RestClient( httpClient );
         }
 
+        /// <summary>
+        /// Execute a request to the API
+        /// </summary>
+        /// <param name="_url">The URL to execute the request</param>
+        /// <param name="_method">The method to execute the request</param>
+        /// <param name="_json">The JSON object to send</param>
+        /// <param name="_token">The token to authenticate the request</param>
+        /// <returns>The response of the request</returns>
         public virtual string? Execute( string _url, Method _method, object? _json, string? _token ) {
             try {
                 var request = new RestRequest( _url, _method );
