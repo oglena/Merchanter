@@ -67,7 +67,7 @@
 		{
 			if (admin != null && !string.IsNullOrWhiteSpace(admin.UserName) && !string.IsNullOrEmpty(admin.Password))
 			{
-				var response = await PostHelper.Request(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+				var response = await PostHelper.Request(null,
 						Classes.PostHelper.PostMethod.Login,
 						"api/Auth/Login",
 						new StringContent(JsonConvert.SerializeObject(admin), Encoding.UTF8, "application/json")
@@ -76,7 +76,7 @@
 				if (response != null && response.Success && response.Data != null)
 				{
 					var login = (UserLoginResponseModel)response.Data;
-					if (login != null)
+					if (login != null && login.AuthenticateResult)
 					{
 						login_message = "Authenticating";
 						await HttpContextAccessor.HttpContext.SignInAsync(Variables.auth_cookie,
@@ -88,12 +88,12 @@
 											new Claim(ClaimTypes.Role, Variables.admin_role/* TODO: add admin role*/),
 											new Claim("rememberMe", remember_me.ToString()),
 											new Claim(Variables.auth_token, login.AuthToken)
-										},
+											},
 								Variables.auth_cookie)),
 								new AuthenticationProperties
-								{
-									IsPersistent = remember_me
-								});
+									{
+										IsPersistent = remember_me
+									});
 						navigationManager.NavigateTo("/");
 					}
 					else
