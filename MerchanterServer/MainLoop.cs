@@ -574,7 +574,7 @@ namespace MerchanterServer {
                 }
 
                 if( notifications.Count > 0 ) {
-                    db_helper.xml.InsertNotifications( customer.customer_id, notifications );
+                    db_helper.invoice.InsertNotifications( customer.customer_id, notifications );
                 }
             }
             catch( Exception _ex ) {
@@ -771,15 +771,15 @@ namespace MerchanterServer {
                                 break;
 
                             case Notification.NotificationTypes.XML_PRODUCT_REMOVED:
-                                    string mail_title1 = string.Format( "XML PRODUCT REMOVED {0}", item.xproduct_barcode );
-                                    string mail_body1 = string.Empty;
+                                string mail_title1 = string.Format( "XML PRODUCT REMOVED {0}", item.xproduct_barcode );
+                                string mail_body1 = string.Empty;
 
-                                    item.is_notification_sent = true;
-                                    item.notification_content = mail_title1;
-                                    if( db_helper.notification.UpdateNotifications( customer.customer_id, [ item ] ) ) {
-                                        Console.WriteLine( "[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title1 + "]" );
-                                        db_helper.notification.LogToServer( thread_id, "XML PRODUCT REMOVED", mail_title1 + " => " + mail_title1, customer.customer_id, "notification" );
-                                    }
+                                item.is_notification_sent = true;
+                                item.notification_content = mail_title1;
+                                if( db_helper.notification.UpdateNotifications( customer.customer_id, [ item ] ) ) {
+                                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title1 + "]" );
+                                    db_helper.notification.LogToServer( thread_id, "XML PRODUCT REMOVED", mail_title1 + " => " + mail_title1, customer.customer_id, "notification" );
+                                }
                                 break;
 
                             case Notification.NotificationTypes.XML_PRICE_CHANGED:
@@ -1114,134 +1114,161 @@ namespace MerchanterServer {
                         var source_brands = Helper.GetProductAttribute( Helper.global.magento.brand_attribute_code );
                         bool is_need_indexer = false;
                         foreach( var item in live_products ) {
-                            bool is_updated = false;
+                            bool is_update = false; bool is_insert = false;
                             var selected_product = products.Where( x => x.sku == item.sku ).FirstOrDefault();
-                            selected_product ??= new Product() { customer_id = customer.customer_id, sku = item.sku, source_product_id = item.source_product_id };
-                            if( selected_product.name?.Trim().ToLower() != item.name?.Trim().ToLower() ) { }
-                            if( selected_product.tax_included != item.tax_included ) { }
-                            if( selected_product.tax != item.tax ) { }
+                            if( selected_product != null ) { //existing product
+                                if( selected_product.name?.ToString().Trim().ToLower() != item.name?.ToString().Trim().ToLower() ) { }
+                                if( selected_product.tax_included != item.tax_included ) { }
+                                if( selected_product.tax != item.tax ) { }
 
-                            #region Brand
-                            if( !selected_product.extension.brand.brand_name.Trim().Equals( item.extension.brand.brand_name.Trim(), StringComparison.CurrentCultureIgnoreCase ) ) {
-                                is_updated = true; is_need_indexer = true;
-                                if( source_brands != null ) {
-                                    var selected_source_brand = source_brands.options.Where( x => x.label.Equals( item.extension.brand.brand_name, StringComparison.CurrentCultureIgnoreCase ) ).FirstOrDefault();
-                                    if( selected_source_brand != null ) { //update
-                                        if( true || Helper.UpdateProductAttribute( item.sku, Helper.global.magento.brand_attribute_code, selected_source_brand.value ) ) {
-                                            db_helper.LogToServer( thread_id, "product_brand_updated", Helper.global.settings.company_name + " Sku:" + item.sku + selected_source_brand.label + " => " + item.extension.brand.brand_name, customer.customer_id, "product" );
-                                        }
-                                        else {
-                                            db_helper.LogToServer( thread_id, "product_brand_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString(), customer.customer_id, "product" );
-                                        }
-                                    }
-                                    else { //insert
-                                        //var inserted_id = Helper.InsertAttributeOption( Helper.global.magento.brand_attribute_code, item.brand.brand_name );
-                                        if( true /*inserted_id != null*/ ) {
-                                            if( true /*|| Helper.UpdateProductAttribute( item.sku, Helper.global.magento.brand_attribute_code, inserted_id )*/ ) {
-                                                db_helper.LogToServer( thread_id, "product_brand_inserted", Helper.global.settings.company_name + " Sku:" + item.sku + "= " + selected_product.extension.brand.brand_name + " => " + item.extension.brand.brand_name, customer.customer_id, "product" );
+                                #region Brand
+                                if( !selected_product.extension.brand.brand_name.Trim().Equals( item.extension.brand.brand_name.Trim(), StringComparison.CurrentCultureIgnoreCase ) ) {
+                                    is_update = true; is_need_indexer = true;
+                                    if( source_brands != null ) {
+                                        var selected_source_brand = source_brands.options.Where( x => x.label.Equals( item.extension.brand.brand_name, StringComparison.CurrentCultureIgnoreCase ) ).FirstOrDefault();
+                                        if( selected_source_brand != null ) { //update
+                                            if( true || Helper.UpdateProductAttribute( item.sku, Helper.global.magento.brand_attribute_code, selected_source_brand.value ) ) {
+                                                db_helper.LogToServer( thread_id, "product_brand_updated", Helper.global.settings.company_name + " Sku:" + item.sku + selected_source_brand.label + " => " + item.extension.brand.brand_name, customer.customer_id, "product" );
                                             }
                                             else {
-                                                db_helper.LogToServer( thread_id, "product_brand_insert_error", Helper.global.settings.company_name + " Sku:" + item.sku + "= " + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString(), customer.customer_id, "product" );
+                                                db_helper.LogToServer( thread_id, "product_brand_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString(), customer.customer_id, "product" );
                                             }
                                         }
+                                        else { //insert
+                                               //var inserted_id = Helper.InsertAttributeOption( Helper.global.magento.brand_attribute_code, item.brand.brand_name );
+                                            if( true /*inserted_id != null*/ ) {
+                                                if( true /*|| Helper.UpdateProductAttribute( item.sku, Helper.global.magento.brand_attribute_code, inserted_id )*/ ) {
+                                                    db_helper.LogToServer( thread_id, "product_brand_inserted", Helper.global.settings.company_name + " Sku:" + item.sku + "= " + selected_product.extension.brand.brand_name + " => " + item.extension.brand.brand_name, customer.customer_id, "product" );
+                                                }
+                                                else {
+                                                    db_helper.LogToServer( thread_id, "product_brand_insert_error", Helper.global.settings.company_name + " Sku:" + item.sku + "= " + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString(), customer.customer_id, "product" );
+                                                }
+                                            }
+                                        }
+
+                                        if( item.extension.brand.id == 0 ) {
+                                            item.extension.brand.id = db_helper.InsertBrand( customer.customer_id, item.extension.brand, true );
+                                            item.extension.brand_id = item.extension.brand.id;
+                                        }
+
                                     }
-
-                                    if( item.extension.brand.id == 0 ) {
-                                        item.extension.brand.id = db_helper.InsertBrand( customer.customer_id, item.extension.brand, true );
-                                        item.extension.brand_id = item.extension.brand.id;
+                                    else { //no brand attribute exists
+                                        db_helper.LogToServer( thread_id, "product_brand_insert_error", Helper.global.settings.company_name + " - " + Helper.global.magento.brand_attribute_code + " brand attribute missing?", customer.customer_id, "product" );
                                     }
-
                                 }
-                                else { //no brand attribute exists
-                                    db_helper.LogToServer( thread_id, "product_brand_insert_error", Helper.global.settings.company_name + " - " + Helper.global.magento.brand_attribute_code + " brand attribute missing?", customer.customer_id, "product" );
-                                }
-                            }
-                            #endregion
+                                #endregion
 
-                            #region Barcode
-                            //if( selected_product.barcode?.Trim() != item.barcode?.Trim() ) {
-                            //    is_updated = true; is_need_indexer = true;
-                            //    if( true || Helper.UpdateProductAttribute( item.sku, Helper.global.magento.barcode_attribute_code, item.barcode?.Trim() ) ) {
-                            //        db_helper.LogToServer( thread_id, "product_barcode_updated", Helper.global.settings.company_name + " Sku:" + item.sku + "= " + selected_product.barcode + " => " + item.barcode, customer.customer_id, "product" );
-                            //    }
-                            //    else {
-                            //        db_helper.LogToServer( thread_id, "product_barcode_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + "= " + selected_product.price.ToString() + " => " + item.barcode?.ToString(), customer.customer_id, "product" );
-                            //    }
-                            //}
-                            #endregion
+                                #region Barcode
+                                //if(false || !selected_product.extension.barcode.Trim().Equals( item.extension.barcode.Trim(), StringComparison.CurrentCultureIgnoreCase ) ) {
+                                //    is_update = true; is_need_indexer = true;
+                                //    if( true || Helper.UpdateProductAttribute( item.sku, Helper.global.magento.barcode_attribute_code, item.barcode?.Trim() ) ) {
+                                //        db_helper.LogToServer( thread_id, "product_barcode_updated", Helper.global.settings.company_name + " Sku:" + item.sku + "= " + selected_product.barcode + " => " + item.barcode, customer.customer_id, "product" );
+                                //    }
+                                //    else {
+                                //        db_helper.LogToServer( thread_id, "product_barcode_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + "= " + selected_product.price.ToString() + " => " + item.barcode?.ToString(), customer.customer_id, "product" );
+                                //    }
+                                //}
+                                #endregion
 
-                            #region Qty
-                            if( selected_product.total_qty != item.total_qty ) {
-                                if( Helper.UpdateProductQty( item.sku, item.total_qty ) ) {
-                                    is_updated = true;
-                                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] Sku:" + item.sku + " updated " + selected_product.total_qty + " => " + item.total_qty );
-                                    db_helper.LogToServer( thread_id, "product_qty_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.total_qty.ToString() + " => " + item.total_qty.ToString(), customer.customer_id, "product" );
-                                    #region Notify Product - PRODUCT_IN_STOCK, PRODUCT_OUT_OF_STOCK
-                                    if( selected_product.total_qty <= 0 && item.total_qty > 0 ) {
-                                        notifications.Add( new Notification() {
-                                            customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_IN_STOCK, product_sku = item.sku, xproduct_barcode = item.sources.Count > 1 ? item.barcode : null
-                                        } );
+                                #region Qty
+                                if( selected_product.total_qty != item.total_qty ) {
+                                    if( Helper.UpdateProductQty( item.sku, item.total_qty ) ) {
+                                        is_update = true;
+                                        Console.WriteLine( "[" + DateTime.Now.ToString() + "] Sku:" + item.sku + " updated " + selected_product.total_qty + " => " + item.total_qty );
+                                        db_helper.LogToServer( thread_id, "product_qty_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.total_qty.ToString() + " => " + item.total_qty.ToString(), customer.customer_id, "product" );
+                                        #region Notify Product - PRODUCT_IN_STOCK, PRODUCT_OUT_OF_STOCK
+                                        if( selected_product.total_qty <= 0 && item.total_qty > 0 ) {
+                                            notifications.Add( new Notification() {
+                                                customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_IN_STOCK, product_sku = item.sku, xproduct_barcode = item.sources.Count > 1 ? item.barcode : null
+                                            } );
+                                        }
+                                        if( selected_product.total_qty > 0 && item.total_qty <= 0 ) {
+                                            notifications.Add( new Notification() {
+                                                customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_OUT_OF_STOCK, product_sku = item.sku, xproduct_barcode = item.sources.Count > 1 ? item.barcode : null
+                                            } );
+                                        }
+                                        #endregion
                                     }
-                                    if( selected_product.total_qty > 0 && item.total_qty <= 0 ) {
-                                        notifications.Add( new Notification() {
-                                            customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_OUT_OF_STOCK, product_sku = item.sku, xproduct_barcode = item.sources.Count > 1 ? item.barcode : null
-                                        } );
+                                    else {
+                                        is_update = false;
+                                        notifications.Add( new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_QTY_UPDATE_ERROR, product_sku = item.sku } );
+                                        db_helper.LogToServer( thread_id, "product_qty_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.total_qty.ToString() + " => " + item.total_qty.ToString(), customer.customer_id, "product" );
                                     }
-                                    #endregion
                                 }
-                                else {
-                                    is_updated = false;
-                                    notifications.Add( new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_QTY_UPDATE_ERROR, product_sku = item.sku } );
-                                    db_helper.LogToServer( thread_id, "product_qty_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.total_qty.ToString() + " => " + item.total_qty.ToString(), customer.customer_id, "product" );
-                                }
-                            }
-                            #endregion
+                                #endregion
 
-                            #region Prices
-                            if( selected_product.price != item.price ) {
-                                is_updated = true; is_need_indexer = true;
-                                if( Helper.UpdateProductPrice( item, rates ) ) {
-                                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] Sku:" + item.sku + " updated " + selected_product.price + " => " + item.price );
-                                    db_helper.LogToServer( thread_id, "product_price_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.price.ToString() + " => " + item.price.ToString(), customer.customer_id, "product" );
+                                #region Prices
+                                if( selected_product.price != item.price ) {
+                                    is_update = true; is_need_indexer = true;
+                                    if( Helper.UpdateProductPrice( item, rates ) ) {
+                                        Console.WriteLine( "[" + DateTime.Now.ToString() + "] Sku:" + item.sku + " updated " + selected_product.price + " => " + item.price );
+                                        db_helper.LogToServer( thread_id, "product_price_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.price.ToString() + " => " + item.price.ToString(), customer.customer_id, "product" );
+                                    }
+                                    else {
+                                        is_update = false;
+                                        notifications.Add( new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_PRICE_UPDATE_ERROR, product_sku = item.sku } );
+                                        db_helper.LogToServer( thread_id, "product_price_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.price.ToString() + " => " + item.price.ToString(), customer.customer_id, "product" );
+                                    }
                                 }
-                                else {
-                                    is_updated = false;
-                                    notifications.Add( new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_PRICE_UPDATE_ERROR, product_sku = item.sku } );
-                                    db_helper.LogToServer( thread_id, "product_price_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.price.ToString() + " => " + item.price.ToString(), customer.customer_id, "product" );
+                                if( selected_product.special_price != item.special_price ) {
+                                    is_update = true; is_need_indexer = true;
+                                    if( Helper.UpdateProductSpecialPrice( item, rates ) ) {
+                                        Console.WriteLine( "[" + DateTime.Now.ToString() + "] Sku:" + item.sku + " updated " + selected_product.special_price + " => " + item.special_price );
+                                        db_helper.LogToServer( thread_id, "product_special_price_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.special_price.ToString() + " => " + item.special_price.ToString(), customer.customer_id, "product" );
+                                    }
+                                    else {
+                                        is_update = false;
+                                        notifications.Add( new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_SPECIAL_PRICE_UPDATE_ERROR, product_sku = item.sku } );
+                                        db_helper.LogToServer( thread_id, "product_special_price_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.special_price.ToString() + " => " + item.special_price.ToString(), customer.customer_id, "product" );
+                                    }
                                 }
+                                if( selected_product.custom_price != item.custom_price ) {
+                                    is_update = true; is_need_indexer = true;
+                                    bool? temp_is_inserted = Helper.UpdateProductCustomPrice( item, rates );
+                                    if( temp_is_inserted.HasValue && temp_is_inserted.Value ) {
+                                        Console.WriteLine( "[" + DateTime.Now.ToString() + "] Sku:" + item.sku + " updated " + selected_product.custom_price + " => " + item.custom_price );
+                                        db_helper.LogToServer( thread_id, "product_custom_price_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.custom_price.ToString() + " => " + item.custom_price.ToString(), customer.customer_id, "product" );
+                                    }
+                                    else if( temp_is_inserted.HasValue && !temp_is_inserted.Value ) {
+                                        Console.WriteLine( "[" + DateTime.Now.ToString() + "] Sku:" + item.sku + " cannot update " + selected_product.custom_price + " => " + item.custom_price );
+                                        db_helper.LogToServer( thread_id, "product_custom_price_cannot_update", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.custom_price.ToString() + " => " + item.custom_price.ToString(), customer.customer_id, "product" );
+                                    }
+                                    else {
+                                        is_update = false;
+                                        notifications.Add( new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_CUSTOM_PRICE_UPDATE_ERROR, product_sku = item.sku } );
+                                        db_helper.LogToServer( thread_id, "product_custom_price_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.custom_price.ToString() + " => " + item.custom_price.ToString(), customer.customer_id, "product" );
+                                    }
+                                }
+                                #endregion
                             }
-                            if( selected_product.special_price != item.special_price ) {
-                                is_updated = true; is_need_indexer = true;
-                                if( Helper.UpdateProductSpecialPrice( item, rates ) ) {
-                                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] Sku:" + item.sku + " updated " + selected_product.special_price + " => " + item.special_price );
-                                    db_helper.LogToServer( thread_id, "product_special_price_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.special_price.ToString() + " => " + item.special_price.ToString(), customer.customer_id, "product" );
-                                }
-                                else {
-                                    is_updated = false;
-                                    notifications.Add( new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_SPECIAL_PRICE_UPDATE_ERROR, product_sku = item.sku } );
-                                    db_helper.LogToServer( thread_id, "product_special_price_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.special_price.ToString() + " => " + item.special_price.ToString(), customer.customer_id, "product" );
-                                }
+                            else { //new product
+                                selected_product = new Product() {
+                                    id = 0,
+                                    customer_id = customer.customer_id,
+                                    type = item.type, sku = item.sku, barcode = item.barcode, name = item.name,
+                                    source_product_id = item.source_product_id,
+                                    price = item.price,
+                                    special_price = item.special_price,
+                                    custom_price = item.custom_price,
+                                    tax = item.tax,
+                                    tax_included = item.tax_included,
+                                    currency = item.currency,
+                                    extension = new ProductExtension() {
+                                        customer_id = customer.customer_id,
+                                        sku = item.sku,
+                                        barcode = item.barcode,
+                                        brand_id = item.extension.brand.id,
+                                        is_xml_enabled = item.extension.is_xml_enabled,
+                                        xml_sources = item.extension.xml_sources,
+                                        category_ids = item.extension.category_ids
+                                    },
+                                    total_qty = item.total_qty,
+                                    sources = item.sources
+                                };
+                                is_insert = true;
                             }
-                            if( selected_product.custom_price != item.custom_price ) {
-                                is_updated = true; is_need_indexer = true;
-                                bool? temp_is_inserted = Helper.UpdateProductCustomPrice( item, rates );
-                                if( temp_is_inserted.HasValue && temp_is_inserted.Value ) {
-                                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] Sku:" + item.sku + " updated " + selected_product.custom_price + " => " + item.custom_price );
-                                    db_helper.LogToServer( thread_id, "product_custom_price_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.custom_price.ToString() + " => " + item.custom_price.ToString(), customer.customer_id, "product" );
-                                }
-                                else if( temp_is_inserted.HasValue && !temp_is_inserted.Value ) {
-                                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] Sku:" + item.sku + " cannot update " + selected_product.custom_price + " => " + item.custom_price );
-                                    db_helper.LogToServer( thread_id, "product_custom_price_cannot_update", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.custom_price.ToString() + " => " + item.custom_price.ToString(), customer.customer_id, "product" );
-                                }
-                                else {
-                                    is_updated = false;
-                                    notifications.Add( new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_CUSTOM_PRICE_UPDATE_ERROR, product_sku = item.sku } );
-                                    db_helper.LogToServer( thread_id, "product_custom_price_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.custom_price.ToString() + " => " + item.custom_price.ToString(), customer.customer_id, "product" );
-                                }
-                            }
-                            #endregion
 
-                            if( is_updated ) {
+                            if( is_update ) {
                                 if( selected_product.id > 0 ) {
                                     item.id = selected_product.id;
                                     if( db_helper.UpdateProducts( customer.customer_id, new List<Product> { item }, true ) ) {
@@ -1249,8 +1276,10 @@ namespace MerchanterServer {
                                         Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Sku:" + item.sku + " " + "updated." );
                                     }
                                 }
-                                else {
-                                    if( db_helper.InsertProducts( customer.customer_id, [ item ], true ) ) {
+                            }
+                            if( is_insert ) {
+                                if( selected_product.id == 0 ) {
+                                    if( db_helper.InsertProducts( customer.customer_id, [ selected_product ], true ) ) {
                                         Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Sku:" + item.sku + " " + "inserted." );
                                         Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Sku:" + item.sku + " " + "inserted." );
                                     }
@@ -1258,13 +1287,17 @@ namespace MerchanterServer {
                             }
                         }
 
+                        #region ReIndex Magento for QP
+                        if( is_need_indexer ) { //for magento2 :\
+                            if( customer.customer_id == 1 ) {
+                                Thread th = new Thread( new ParameterizedThreadStart( Helper.PostPageAll ) );
+                                th.Start( "https://www.qp.com.tr/pub/qp/_automation.php" );
+                            }
+                        }
+                        #endregion
+
                         if( notifications.Count > 0 ) {
                             db_helper.InsertNotifications( customer.customer_id, notifications );
-                        }
-
-                        if( is_need_indexer ) { //for magento2 :\
-                            Thread th = new Thread( new ParameterizedThreadStart( Helper.PostPageAll ) );
-                            th.Start( "https://www.qp.com.tr/pub/qp/_automation.php" );
                         }
                     }
                     //TODO: other sources gonna be here
