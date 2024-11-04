@@ -74,14 +74,6 @@ namespace MerchanterServer {
             }
             #endregion
 
-            #region Notification LOOP
-            notifications = db_helper.GetNotifications( customer.customer_id, false );
-            if( customer.notification_sync_status && !customer.is_notificationsync_working ) {
-                db_helper.notification.SetNotificationSyncWorking( customer.customer_id, true );
-                Task task = Task.Run( this.NotificationLoop );
-            }
-            #endregion
-
             #region Product LOOP
             if( customer.product_sync_status && !customer.is_productsync_working ) {
                 db_helper.SetProductSyncWorking( customer.customer_id, true );
@@ -126,6 +118,14 @@ namespace MerchanterServer {
             else {
                 orders = db_helper.GetOrders( customer.customer_id );
             }
+
+            #region Notification LOOP
+            notifications = db_helper.GetNotifications( customer.customer_id, false );
+            if( customer.notification_sync_status && !customer.is_notificationsync_working ) {
+                db_helper.notification.SetNotificationSyncWorking( customer.customer_id, true );
+                Task task = Task.Run( this.NotificationLoop );
+            }
+            #endregion
             #endregion
 
             return health;
@@ -771,19 +771,15 @@ namespace MerchanterServer {
                                 break;
 
                             case Notification.NotificationTypes.XML_PRODUCT_REMOVED:
-                                selected_product = products?.Where( x => x.barcode == item.xproduct_barcode ).FirstOrDefault();
-
-                                if( selected_product != null ) {
-                                    string mail_title = string.Format( "XML PRODUCT REMOVED {0}", item.xproduct_barcode );
-                                    string mail_body = string.Empty;
+                                    string mail_title1 = string.Format( "XML PRODUCT REMOVED {0}", item.xproduct_barcode );
+                                    string mail_body1 = string.Empty;
 
                                     item.is_notification_sent = true;
-                                    item.notification_content = mail_title;
+                                    item.notification_content = mail_title1;
                                     if( db_helper.notification.UpdateNotifications( customer.customer_id, [ item ] ) ) {
-                                        Console.WriteLine( "[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title + "]" );
-                                        db_helper.notification.LogToServer( thread_id, "XML PRODUCT REMOVED", mail_title + " => " + mail_body, customer.customer_id, "notification" );
+                                        Console.WriteLine( "[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title1 + "]" );
+                                        db_helper.notification.LogToServer( thread_id, "XML PRODUCT REMOVED", mail_title1 + " => " + mail_title1, customer.customer_id, "notification" );
                                     }
-                                }
                                 break;
 
                             case Notification.NotificationTypes.XML_PRICE_CHANGED:
