@@ -20,12 +20,6 @@ namespace Merchanter.Classes.Settings {
         [Required]
         public int daysto_invoicesync { get; set; } = 7;
         [Required]
-        public bool yurtici_kargo { get; set; } = false;
-        [Required]
-        public bool mng_kargo { get; set; } = false;
-        [Required]
-        public bool aras_kargo { get; set; } = false;
-        [Required]
         public bool xml_qty_addictive_enable { get; set; } = true;
         [Required]
         public bool is_barcode_required { get; set; } = true;

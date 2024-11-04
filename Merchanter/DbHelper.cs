@@ -530,7 +530,7 @@ namespace Merchanter {
         public bool SaveCustomerSettings( int _customer_id, SettingsGeneral _settings ) {
             try {
                 int val = 0;
-                string _query = "UPDATE settings SET company_name=@company_name,rate_TL=@rate_TL,rate_USD=@rate_USD,rate_EUR=@rate_EUR,daysto_ordersync=@daysto_ordersync,daysto_invoicesync=@daysto_invoicesync,yurtici_kargo=@yurtici_kargo,mng_kargo=@mng_kargo,aras_kargo=@aras_kargo,xml_qty_addictive_enable=@xml_qty_addictive_enable WHERE customer_id=@customer_id";
+                string _query = "UPDATE settings SET company_name=@company_name,rate_TL=@rate_TL,rate_USD=@rate_USD,rate_EUR=@rate_EUR,daysto_ordersync=@daysto_ordersync,daysto_invoicesync=@daysto_invoicesync,xml_qty_addictive_enable=@xml_qty_addictive_enable WHERE customer_id=@customer_id";
                 MySqlCommand cmd = new MySqlCommand( _query, connection );
                 cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
                 cmd.Parameters.Add( new MySqlParameter( "company_name", _settings.company_name ) );
@@ -539,9 +539,6 @@ namespace Merchanter {
                 cmd.Parameters.Add( new MySqlParameter( "rate_EUR", _settings.rate_EUR ) );
                 cmd.Parameters.Add( new MySqlParameter( "daysto_ordersync", _settings.daysto_ordersync ) );
                 cmd.Parameters.Add( new MySqlParameter( "daysto_invoicesync", _settings.daysto_invoicesync ) );
-                cmd.Parameters.Add( new MySqlParameter( "yurtici_kargo", _settings.yurtici_kargo ) );
-                cmd.Parameters.Add( new MySqlParameter( "mng_kargo", _settings.mng_kargo ) );
-                cmd.Parameters.Add( new MySqlParameter( "aras_kargo", _settings.aras_kargo ) );
                 cmd.Parameters.Add( new MySqlParameter( "xml_qty_addictive_enable", _settings.xml_qty_addictive_enable ) );
 
                 if( state != System.Data.ConnectionState.Open ) connection.Open();
@@ -601,20 +598,18 @@ namespace Merchanter {
                 db_settings = this.GetSettings( _customer_id );
                 Helper.global = new SettingsMerchanter( _customer_id ) {
                     customer_id = _customer_id,
-                    customer_root_category = GetRootCategory( _customer_id ).id,
+                    customer_root_category = GetRootCategory( _customer_id )?.id ?? 1,
                     settings = GetCustomerSettings( _customer_id ),
                     magento = GetMagentoSettings( _customer_id ),
                     netsis = GetNetsisSettings( _customer_id ),
                     entegra = GetEntegraSettings( _customer_id ),
+                    shipment = GetShipmentSettings( _customer_id ),
                     order_statuses = LoadOrderStatuses( _customer_id ),
                     payment_methods = LoadPaymentMethods( _customer_id ),
                     shipment_methods = LoadShipmentMethods( _customer_id ),
                     work_sources = LoadWorkSources( _customer_id ),
                     sync_mappings = GetCustomerSyncMappings( _customer_id ),
                     DefaultBrand = db_settings.Where( x => x.name == "DefaultBrand" ).First().value,
-                    yurtici_kargo_user_name = db_settings.Where( x => x.name == "yurtici_kargo_user_name" ).First().value,
-                    yurtici_kargo_password = db_settings.Where( x => x.name == "yurtici_kargo_password" ).First().value,
-                    yurtici_kargo_user_language = db_settings.Where( x => x.name == "yurtici_kargo_user_language" ).First().value,
                     erp_invoice_ftp_username = db_settings.Where( x => x.name == "erp_invoice_ftp_username" ).First().value,
                     erp_invoice_ftp_password = db_settings.Where( x => x.name == "erp_invoice_ftp_password" ).First().value,
                     erp_invoice_ftp_url = db_settings.Where( x => x.name == "erp_invoice_ftp_url" ).First().value,
@@ -629,11 +624,11 @@ namespace Merchanter {
                 };
 
                 #region Decyrption
+                Helper.global.shipment.yurtici_kargo_password = DBSetting.Decrypt( Helper.global.shipment.yurtici_kargo_password );
                 Helper.global.magento.token = DBSetting.Decrypt( Helper.global.magento.token );
                 Helper.global.entegra.api_password = DBSetting.Decrypt( Helper.global.entegra.api_password );
                 Helper.global.netsis.netopenx_password = DBSetting.Decrypt( Helper.global.netsis.netopenx_password );
                 Helper.global.netsis.dbpassword = DBSetting.Decrypt( Helper.global.netsis.dbpassword );
-                Helper.global.yurtici_kargo_password = DBSetting.Decrypt( Helper.global.yurtici_kargo_password );
                 Helper.global.erp_invoice_ftp_password = DBSetting.Decrypt( Helper.global.erp_invoice_ftp_password );
 
                 #endregion
@@ -671,9 +666,6 @@ namespace Merchanter {
                         rate_EUR = Convert.ToDecimal( dataReader[ "rate_EUR" ].ToString() ),
                         daysto_ordersync = Convert.ToInt32( dataReader[ "daysto_ordersync" ].ToString() ),
                         daysto_invoicesync = Convert.ToInt32( dataReader[ "daysto_invoicesync" ].ToString() ),
-                        yurtici_kargo = Convert.ToBoolean( Convert.ToInt32( dataReader[ "yurtici_kargo" ].ToString() ) ),
-                        mng_kargo = Convert.ToBoolean( Convert.ToInt32( dataReader[ "mng_kargo" ].ToString() ) ),
-                        aras_kargo = Convert.ToBoolean( Convert.ToInt32( dataReader[ "aras_kargo" ].ToString() ) ),
                         xml_qty_addictive_enable = Convert.ToBoolean( Convert.ToInt32( dataReader[ "xml_qty_addictive_enable" ].ToString() ) )
                     };
                 }
@@ -818,6 +810,42 @@ namespace Merchanter {
                 if( state == System.Data.ConnectionState.Open )
                     connection.Close();
                 return ns;
+            }
+            catch( Exception ex ) {
+                OnError( ex.ToString() );
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets the shipment settings from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <returns>[Error] returns 'null'</returns>
+        public SettingsShipment GetShipmentSettings( int _customer_id ) {
+            try {
+                if( state != System.Data.ConnectionState.Open )
+                    connection.Open();
+                string _query = "SELECT * FROM settings_shipment WHERE customer_id=@customer_id";
+                SettingsShipment? ss = null;
+                MySqlCommand cmd = new MySqlCommand( _query, connection );
+                cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+                MySqlDataReader dataReader = cmd.ExecuteReader( System.Data.CommandBehavior.CloseConnection );
+                while( dataReader.Read() ) {
+                    ss = new SettingsShipment {
+                        id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+                        customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
+                        yurtici_kargo = Convert.ToBoolean( Convert.ToInt32( dataReader[ "yurtici_kargo" ].ToString() ) ),
+                        mng_kargo = Convert.ToBoolean( Convert.ToInt32( dataReader[ "mng_kargo" ].ToString() ) ),
+                        aras_kargo = Convert.ToBoolean( Convert.ToInt32( dataReader[ "aras_kargo" ].ToString() ) ),
+                        yurtici_kargo_user_name = dataReader[ "yurtici_kargo_user_name" ].ToString(),
+                        yurtici_kargo_password = dataReader[ "yurtici_kargo_password" ].ToString(),
+                    };
+                }
+                dataReader.Close();
+                if( state == System.Data.ConnectionState.Open )
+                    connection.Close();
+                return ss;
             }
             catch( Exception ex ) {
                 OnError( ex.ToString() );

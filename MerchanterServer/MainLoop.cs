@@ -118,14 +118,15 @@ namespace MerchanterServer {
             else {
                 orders = db_helper.GetOrders( customer.customer_id );
             }
+            #endregion
 
+            //INFO: Need to be last executed
             #region Notification LOOP
             notifications = db_helper.GetNotifications( customer.customer_id, false );
             if( customer.notification_sync_status && !customer.is_notificationsync_working ) {
                 db_helper.notification.SetNotificationSyncWorking( customer.customer_id, true );
                 Task task = Task.Run( this.NotificationLoop );
             }
-            #endregion
             #endregion
 
             return health;
@@ -1521,16 +1522,16 @@ namespace MerchanterServer {
                                 }
                                 else {  //query ship
                                     List<string> tracking_codes = [];
-                                    if( Helper.global.settings.yurtici_kargo && shipments.Contains( Constants.YURTICI ) ) {
-                                        YK yk = new YK( Helper.global.yurtici_kargo_user_name, Helper.global.yurtici_kargo_password, Helper.global.yurtici_kargo_user_language );
+                                    if( Helper.global.shipment.yurtici_kargo && shipments.Contains( Constants.YURTICI ) ) {
+                                        YK yk = new YK( Helper.global.shipment?.yurtici_kargo_user_name, Helper.global.shipment?.yurtici_kargo_password );
                                         List<string>? tk = yk.GetShipment( selected_order.order_shipping_barcode );
                                         if( tk != null ) {
                                             tracking_codes.AddRange( tk );
                                             //Debug.WriteLine( order_item.order_shipping_barcode + ":TK:" + string.Join( "|", tk ) );
                                         }
                                     }
-                                    if( Helper.global.settings.mng_kargo && shipments.Contains( Constants.MNG ) ) { }
-                                    if( Helper.global.settings.aras_kargo && shipments.Contains( Constants.ARAS ) ) { }
+                                    if( Helper.global.shipment.mng_kargo && shipments.Contains( Constants.MNG ) ) { }
+                                    if( Helper.global.shipment.aras_kargo && shipments.Contains( Constants.ARAS ) ) { }
 
                                     if( tracking_codes.Count > 0 ) { //insert tracking code | order status change => complete
                                         Shipment? shipment = db_helper.GetShipment( customer.customer_id, order_item.order_id );
@@ -1571,8 +1572,8 @@ namespace MerchanterServer {
                                 }
                             }
                             else {  //insert shipment barcodes
-                                if( Helper.global.settings.yurtici_kargo && shipments.Contains( Constants.YURTICI ) ) {
-                                    YK yk = new YK( Helper.global.yurtici_kargo_user_name, Helper.global.yurtici_kargo_password, Helper.global.yurtici_kargo_user_language );
+                                if( Helper.global.shipment.yurtici_kargo && shipments.Contains( Constants.YURTICI ) ) {
+                                    YK yk = new YK( Helper.global.shipment.yurtici_kargo_user_name, Helper.global.shipment.yurtici_kargo_password );
                                     order_item.order_shipping_barcode ??= yk.InsertShipment( order_item.order_source, order_item.order_label, order_item.shipping_address.firstname + " " + order_item.shipping_address.lastname, order_item.shipping_address.street, order_item.shipping_address.telephone, order_item.shipping_address.city, order_item.shipping_address.region );
                                     if( order_item.order_shipping_barcode != null ) {
                                         Shipment shipment = new() {
@@ -1598,8 +1599,8 @@ namespace MerchanterServer {
                                         Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + "{1}-shipment_error {0}", order_item.order_id + ":" + order_item.order_label + ":" + order_item.order_source + " => " + order_item.shipment_method, customer.customer_id );
                                     }
                                 }
-                                else if( Helper.global.settings.mng_kargo && shipments.Contains( Constants.MNG ) ) { }
-                                else if( Helper.global.settings.aras_kargo && shipments.Contains( Constants.ARAS ) ) { }
+                                else if( Helper.global.shipment.mng_kargo && shipments.Contains( Constants.MNG ) ) { }
+                                else if( Helper.global.shipment.aras_kargo && shipments.Contains( Constants.ARAS ) ) { }
                             }
                         }
                         else {  //update

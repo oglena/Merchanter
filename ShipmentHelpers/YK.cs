@@ -4,14 +4,24 @@ namespace ShipmentHelpers {
     public class YK {
         private string user_name { get; set; }
         private string password { get; set; }
-        private string lang { get; set; }
+        public static string lang = "TR";
 
-        public YK( string _user_name, string _password, string _lang ) {
+        public YK( string _user_name, string _password ) {
             user_name = _user_name;
             password = _password;
-            lang = _lang;
         }
 
+        /// <summary>
+        /// Yurtiçi Kargo insert shipment
+        /// </summary>
+        /// <param name="_order_source">Order Source</param>
+        /// <param name="_order_label">Order Label</param>
+        /// <param name="_customer_name">Customer Name</param>
+        /// <param name="_receiver_address">Receiver Address</param>
+        /// <param name="_receiver_phone">Receiver Phone</param>
+        /// <param name="_city_name">City Name</param>
+        /// <param name="_town_name">Town Name</param>
+        /// <returns>Shipment Barcode</returns>
         public string? InsertShipment( string _order_source, string _order_label, string _customer_name, string _receiver_address, string _receiver_phone, string _city_name, string _town_name ) {
             try {
                 string barcode = (_order_source == "MAGENTO2" ? "7" : "5") + DateTime.Now.ToString( "yy" ) + DateTime.Now.ToString( "ddMM" ) + _order_label;
@@ -44,6 +54,11 @@ namespace ShipmentHelpers {
             }
         }
 
+        /// <summary>
+        /// Yurtiçi Kargo get shipment
+        /// </summary>
+        /// <param name="_shipment_barcode">Shipment Barcode</param>
+        /// <returns>Tracking Numbers</returns>
         public List<string>? GetShipment( string _shipment_barcode ) {
             try {
                 queryShipment yk_query_shipment = new queryShipment();
