@@ -1,3 +1,4 @@
+using AspNetCore.Swagger.Themes;
 using Merchanter;
 using MerchanterApp.ApiService.Classes;
 using MerchanterApp.ApiService.Repositories;
@@ -6,6 +7,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder( args );
 
@@ -85,6 +87,9 @@ builder.Services.AddAuthentication( options => {
     o.SaveToken = true;
 } );
 builder.Services.AddAuthorization();
+builder.Services.AddControllersWithViews().AddJsonOptions( options => {
+    options.JsonSerializerOptions.Converters.Add( new JsonStringEnumConverter() );
+} );
 
 builder.Services.AddHealthChecks();
 var app = builder.Build();
@@ -98,8 +103,8 @@ if( app.Environment.IsDevelopment() ) {
 }
 
 app.UseSwagger();
-app.UseSwaggerUI( c => {
-    c.SwaggerEndpoint( "v1/swagger.json", "Merchanter.API V1" );
+app.UseSwaggerUI( ModernStyle.Dark, options => {
+    options.SwaggerEndpoint( "v1/swagger.json", "Merchanter.API V1" );
 } );
 
 // Configure the HTTP request pipeline.
