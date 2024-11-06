@@ -17,8 +17,4 @@
 		<Folder Include="Components\Pages\Settings\" />
 		<Folder Include="Services\" />
 	</ItemGroup>
-
-	<ItemGroup>
-		<None Include="appsettings.Development.json" CopyToPublishDirectory="Always" />
-	</ItemGroup>
 </Project>

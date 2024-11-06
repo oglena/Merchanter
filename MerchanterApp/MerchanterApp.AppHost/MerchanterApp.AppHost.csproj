@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
+  <Sdk Name="Aspire.AppHost.Sdk" Version="9.0.0-rc.1.24511.1" />
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
@@ -8,7 +8,6 @@
     <IsAspireHost>true</IsAspireHost>
     <UserSecretsId>9645011e-823f-4438-b237-87343e815aa6</UserSecretsId>
   </PropertyGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\Merchanter.ServerService\Merchanter.ServerService.csproj" />
     <ProjectReference Include="..\..\MerchanterApp.CMS\MerchanterApp.CMS.csproj" />
@@ -16,11 +15,9 @@
     <ProjectReference Include="..\MerchanterApp.ServiceDefaults\MerchanterApp.ServiceDefaults.csproj" />
     <!--<ProjectReference Include="..\MerchanterApp.Web\MerchanterApp.Web.csproj" />-->
   </ItemGroup>
-
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.AppHost" Version="8.2.2" />
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="9.0.0-rc.1.24511.1" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.2.0" />
     <PackageReference Include="System.Text.Json" Version="8.0.5" />
   </ItemGroup>
-
 </Project>

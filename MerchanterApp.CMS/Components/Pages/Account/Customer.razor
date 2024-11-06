@@ -11,7 +11,7 @@
 @inject IConfiguration configuration
 @inject IPostHelper PostHelper
 
-<PageTitle>Customer [@company_name] | Merchanter</PageTitle>
+<PageTitle>Customer [@CID] | Merchanter</PageTitle>
 <div class="row mt-3 pb-2">
 	<div class="col-12 pb-2 bg-light rounded-3">
 		@if (customer != null && customer_id > 0)
@@ -23,7 +23,7 @@
 							<h1>
 								Customer:&nbsp; @company_name &nbsp;&nbsp;&nbsp;
 								<a href="@("Account/Customer/" + customer.customer_id.ToString() + "/Logs")" class="btn btn-primary">Logs</a>
-								<a href="@("Account/Customer/" + customer.customer_id.ToString() + "/Notifications")" class="btn btn-primary">Notifications</a>
+								@* <a href="@("Account/Customer/" + customer.customer_id.ToString() + "/Notifications")" class="btn btn-primary">Notifications</a> *@
 								<a href="@("Account/Customer/" + customer.customer_id.ToString() + "/Settings")" class="btn btn-primary">Settings</a>
 								<button type="submit" class="btn btn-outline-primary" @onclick="@(() => RefreshCustomer())">Refresh</button>
 								<button type="submit" class="btn btn-success" @onclick="@(() => SaveCustomer(customer))">Save</button>
@@ -202,14 +202,17 @@
 	private string loading = "...LOADING...";
 	private string page_message = string.Empty;
 
-	protected override async Task OnParametersSetAsync()
+	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
-		if (int.TryParse(CID, out customer_id))
+		if (firstRender)
 		{
-			int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
-			if (admin_id > 0)
+			if (int.TryParse(CID, out customer_id))
 			{
-				await LoadCustomer(customer_id);
+				int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
+				if (admin_id > 0)
+				{
+					await LoadCustomer(customer_id);
+				}
 			}
 		}
 		StateHasChanged();

@@ -54,7 +54,7 @@ namespace Merchanter.CustomerService.Repositories {
 
         public async Task<int> GetCustomerLogCount( int _customer_id, ApiFilter _filters ) {
             if( _filters.Filters != null && _filters.Filters.Count > 0 ) {
-                Dictionary<string, string?> filters = new Dictionary<string, string?>();
+                Dictionary<string, string?> filters = [];
                 foreach( var item in _filters.Filters ) {
                     filters.Add( item.Field, Convert.ToString( item.Value ) );
                 }

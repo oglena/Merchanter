@@ -9,30 +9,29 @@ builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
-
-builder.Services.AddTransient<IPostHelper, PostHelper>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
-
-builder.Services.AddServerSideBlazor().AddCircuitOptions( o => {
-    o.DetailedErrors = true;
+builder.WebHost.UseWebRoot( "wwwroot" ).UseStaticWebAssets();
+builder.Services.AddServerSideBlazor().AddCircuitOptions( x => {
+    x.DetailedErrors = true;
 } );
 
-builder.Services.AddAuthentication( Variables.auth_cookie ).AddCookie( Variables.auth_cookie, options => {
-    options.Cookie.Name = Variables.auth_cookie;
-    options.LoginPath = "/Account/Login";
-    options.LogoutPath = "/Account/Logout";
-    options.AccessDeniedPath = "/Account/AccessDenied";
+builder.Services.AddTransient<IPostHelper, PostHelper>();
+
+builder.Services.AddAuthentication( Variables.auth_cookie ).AddCookie( Variables.auth_cookie, x => {
+    x.Cookie.Name = Variables.auth_cookie;
+    x.LoginPath = "/Account/Login";
+    x.LogoutPath = "/Account/Logout";
+    x.AccessDeniedPath = "/Account/AccessDenied";
 } );
 
-builder.Services.AddAuthorization( options => {
-    options.AddPolicy( Variables.admin_role, policy => policy.RequireRole( Variables.admin_role ) );
-    options.AddPolicy( Variables.admin_id, policy => policy.RequireClaim( Variables.admin_id ) );
+builder.Services.AddAuthorization( x => {
+    x.AddPolicy( Variables.admin_role, policy => policy.RequireRole( Variables.admin_role ) );
+    x.AddPolicy( Variables.admin_id, policy => policy.RequireClaim( Variables.admin_id ) );
 } );
 builder.Services.AddCascadingAuthenticationState();
 
 var app = builder.Build();
-
 // Configure the HTTP request pipeline.
 if( !app.Environment.IsDevelopment() ) {
     app.UseExceptionHandler( "/Error", createScopeForErrors: true );
@@ -41,15 +40,12 @@ if( !app.Environment.IsDevelopment() ) {
 }
 
 app.UseHttpsRedirection();
-
-
 app.UseStaticFiles();
-app.UseAntiforgery();
 
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
-
 app.UseAuthentication();
-//app.UseRouting();
 app.UseAuthorization();
+
+app.UseAntiforgery();
 
 app.Run();
