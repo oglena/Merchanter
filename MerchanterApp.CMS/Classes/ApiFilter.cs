@@ -1,13 +1,10 @@
-﻿using Swashbuckle.AspNetCore.Annotations;
-using System.Runtime.Serialization;
+﻿using System.Runtime.Serialization;
 
-namespace Merchanter.ServerService.Classes {
+namespace MerchanterApp.CMS.Classes {
     [Serializable]
     public class ApiFilter {
         public List<Filter<dynamic>>? Filters { get; set; }
         public Pager? Pager { get; set; }
-
-        [SwaggerSchema( ReadOnly = true )]
         public int? TotalCount { get; set; }
     }
 

@@ -555,9 +555,12 @@ namespace Merchanter {
                         var m2_json = executioner.Execute( url_product, RestSharp.Method.Get, _json: null, Helper.global.magento.token );
                         if( m2_json != null ) {
                             var query_products = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Products>( m2_json )?.items?.ToList();
-                            if( query_products != null && query_products.Count > 0 ) {
-                                m2_products.AddRange( query_products );
-                                _current_page++; Thread.Sleep( 10 ); goto START;
+                            if( query_products != null ) {
+                                if( query_products.Count == _page_size || query_products.Count > 0 ) {
+                                    m2_products.AddRange( query_products );
+                                    _current_page++;
+                                    Thread.Sleep( 10 ); goto START;
+                                }
                             }
 
                             if( m2_products == null ) { Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Magento Products Load Failed. Exiting." ); return new List<M2_Product>(); }
@@ -918,12 +921,12 @@ namespace Merchanter {
         public static string? CreateOrderInvoice( Order _order ) {
             try {
                 var invoice = new M2_InvoiceRequest() {
-                    capture = true, appendComment = true, notify = true, comment = new M2_InvoiceComment() {
+                    capture = true, appendComment = true, notify = true, comment = new M2_InvoiceRequestInvoiceComment() {
                         comment = Helper.global.magento.order_processing_comment, is_visible_on_front = 0, extension_attributes = new()
                     }, items = [], arguments = new() { extension_attributes = new() }
                 };
                 foreach( var item in _order.order_items ) {
-                    invoice.items.Add( new M2_InvoiceItems() { order_item_id = item.order_item_id, qty = item.qty_ordered, extension_attributes = new() } );
+                    invoice.items.Add( new M2_InvoiceRequestInvoiceItems() { order_item_id = item.order_item_id, qty = item.qty_ordered, extension_attributes = new() } );
                 }
 
                 using( Executioner executioner = new Executioner() ) {
@@ -957,10 +960,10 @@ namespace Merchanter {
         public static string? CreateOrderShipment( int _order_id, string _order_label, string _tracking_numbers, string _comment, string _carrier_code, string _carrier_title ) {
             try {
                 var ship = new M2_ShippingRequest() {
-                    notify = true, appendComment = true, comment = new M2_Shipment_Comment() {
-                        comment = _comment, extension_attributes = new M2_Shipment_Extension_Attributes(), is_visible_on_front = 1
-                    }, tracks = [ new M2_Shipment_Track(){
-                         carrier_code = _carrier_code, title = _carrier_title, extension_attributes = new M2_Shipment_Extension_Attributes(),
+                    notify = true, appendComment = true, comment = new M2_ShippingRequestShipment_Comment() {
+                        comment = _comment, extension_attributes = new M2_ShippingRequestShipment_Extension_Attributes(), is_visible_on_front = 1
+                    }, tracks = [ new M2_ShippingRequestShipment_Track(){
+                         carrier_code = _carrier_code, title = _carrier_title, extension_attributes = new M2_ShippingRequestShipment_Extension_Attributes(),
                          track_number = _tracking_numbers
                     }]
                 };
@@ -1028,7 +1031,7 @@ namespace Merchanter {
                             , 2, MidpointRounding.AwayFromZero ),
                             store_id = 0,
                             sku = item.sku,
-                            extension_attributes = { }
+                            extension_attributes = []
                         } );
                     }
                     if( item.special_price > 0 ) {
@@ -1040,7 +1043,7 @@ namespace Merchanter {
                             , 2, MidpointRounding.AwayFromZero ),
                             store_id = 0,
                             sku = item.sku,
-                            extension_attributes = { },
+                            extension_attributes = [],
                             price_from = DateTime.Now.AddDays( -1 ).ToString( "yyyy-MM-dd 00:00:00" ),
                             price_to = ""
                         } );
@@ -1052,7 +1055,7 @@ namespace Merchanter {
                             sku = item.sku,
                             price_from = "",
                             price_to = "",
-                            extension_attributes = { }
+                            extension_attributes = []
                         } );
                     }
                 }
@@ -1102,7 +1105,7 @@ namespace Merchanter {
                             , 2, MidpointRounding.AwayFromZero ),
                             store_id = 0,
                             sku = _product.sku,
-                            extension_attributes = new M2_PriceExtensionAttributes[] { }
+                            extension_attributes = []
                     } }
                 };
                 using( Executioner executioner = new Executioner() ) {
@@ -1143,7 +1146,7 @@ namespace Merchanter {
                                 sku = _product.sku,
                                 price_from = DateTime.Now.AddDays( -2 ).ToString( "yyyy-MM-dd 00:00:00" ),
                                 price_to = "",
-                                extension_attributes = { }
+                                extension_attributes = []
                         } }
                     };
                     using( Executioner executioner = new Executioner() ) {
@@ -1165,7 +1168,7 @@ namespace Merchanter {
                             sku = _product.sku,
                             price_from = "",
                             price_to = "",
-                            extension_attributes = { }
+                            extension_attributes = []
                         } }
                     };
                     using( Executioner executioner = new Executioner() ) {
@@ -1266,10 +1269,10 @@ namespace Merchanter {
         public static string? InsertAttributeOption( string _attribute_code, string? _attribute_value ) {
             try {
                 if( !string.IsNullOrWhiteSpace( _attribute_value ) ) return null;
-                var attribute_option = new M2_AttributeOption() {
-                    option = new M2_Option() {
+                var attribute_option = new {
+                    option = new M2_AttributeOption() {
                         value = _attribute_value,
-                        store_labels = [ new M2_StoreLabels() { store_id = 0, label = _attribute_value } ],
+                        store_labels = [ new M2_StoreLabel() { store_id = 0, label = _attribute_value } ],
                         is_default = false,
                         sort_order = 0
                     }

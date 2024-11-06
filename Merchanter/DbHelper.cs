@@ -285,6 +285,7 @@ namespace Merchanter {
                 object val; int inserted_id;
                 string _query = "START TRANSACTION;" +
                     "UPDATE customer SET customer_id=LAST_INSERT_ID(@customer_id),user_name=@user_name,password=@password,status=@status,product_sync_status=@product_sync_status,order_sync_status=@order_sync_status,xml_sync_status=@xml_sync_status,invoice_sync_status=@invoice_sync_status,notification_sync_status=@notification_sync_status" +
+                    ",product_sync_timer=@product_sync_timer,order_sync_timer=@order_sync_timer,xml_sync_timer=@xml_sync_timer,invoice_sync_timer=@invoice_sync_timer,notification_sync_timer=@notification_sync_timer" +
                     (_with_working_parameters ? ",is_productsync_working=@is_productsync_working,is_ordersync_working=@is_ordersync_working,is_xmlsync_working=@is_xmlsync_working,is_invoicesync_working=@is_invoicesync_working,is_notificationsync_working=@is_notificationsync_working" : "") + " WHERE customer_id=@customer_id;" +
                     "SELECT LAST_INSERT_ID();" +
                     "COMMIT;";
@@ -298,6 +299,11 @@ namespace Merchanter {
                 cmd.Parameters.Add( new MySqlParameter( "xml_sync_status", _customer.xml_sync_status ) );
                 cmd.Parameters.Add( new MySqlParameter( "invoice_sync_status", _customer.invoice_sync_status ) );
                 cmd.Parameters.Add( new MySqlParameter( "notification_sync_status", _customer.notification_sync_status ) );
+                cmd.Parameters.Add( new MySqlParameter( "product_sync_timer", _customer.product_sync_timer ) );
+                cmd.Parameters.Add( new MySqlParameter( "order_sync_timer", _customer.order_sync_timer ) );
+                cmd.Parameters.Add( new MySqlParameter( "xml_sync_timer", _customer.xml_sync_timer ) );
+                cmd.Parameters.Add( new MySqlParameter( "invoice_sync_timer", _customer.invoice_sync_timer ) );
+                cmd.Parameters.Add( new MySqlParameter( "notification_sync_timer", _customer.notification_sync_timer ) );
                 if( _with_working_parameters ) {
                     cmd.Parameters.Add( new MySqlParameter( "is_productsync_working", _customer.is_productsync_working ) );
                     cmd.Parameters.Add( new MySqlParameter( "is_ordersync_working", _customer.is_ordersync_working ) );
@@ -417,6 +423,7 @@ namespace Merchanter {
                         worker = dataReader[ "worker" ]?.ToString() ?? string.Empty,
                         title = dataReader[ "title" ].ToString() ?? string.Empty,
                         message = dataReader[ "message" ]?.ToString() ?? string.Empty,
+                        thread_id = dataReader[ "thread_id" ]?.ToString(),
                         update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() ),
                     };
                     list.Add( l );
@@ -444,16 +451,16 @@ namespace Merchanter {
             try {
                 if( state != System.Data.ConnectionState.Open ) connection.Open();
                 string _query = "SELECT * FROM log WHERE customer_id=@customer_id";
-                string? filtered_worker = _filters[ "filtered_worker" ];
-                string? filtered_title = _filters[ "filtered_title" ];
-                string? filtered_message = _filters[ "filtered_message" ];
-                string? filtered_date = _filters[ "filtered_date" ];
-                List<Log> list = new List<Log>();
-                if( filtered_worker != null && filtered_title != null && filtered_message != null && filtered_date != null ) {
+                string? filtered_worker = _filters[ "worker" ];
+                string? filtered_title = _filters[ "title" ];
+                string? filtered_message = _filters[ "message" ];
+                string? filtered_date = _filters[ "date" ];
+                List<Log> list = [];
+                if( filtered_worker != null || filtered_title != null || filtered_message != null || filtered_date != null ) {
                     _query += !string.IsNullOrWhiteSpace( filtered_worker ) && filtered_worker != "0" ? " AND worker='" + filtered_worker + "'" : string.Empty;
                     _query += !string.IsNullOrWhiteSpace( filtered_title ) && filtered_title != "0" ? " AND title='" + filtered_title + "'" : string.Empty;
                     _query += !string.IsNullOrWhiteSpace( filtered_message ) && filtered_message != "0" ? " AND message LIKE '%" + filtered_message + "%'" : string.Empty;
-                    //_query += !string.IsNullOrWhiteSpace( filtered_date ) && filtered_worker != "0" ? " AND update_date='" + filtered_date + "'" : string.Empty;
+                    //_query += !string.IsNullOrWhiteSpace( filtered_date ) && filtered_worker != "0" ? " AND update_date='" + filtered_date + "'" : string.Empty; TODO: Date filter in GetLastLogs
                     _query += " ORDER BY id DESC LIMIT @start,@end";
                     MySqlCommand cmd = new MySqlCommand( _query, connection );
                     cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
@@ -461,12 +468,13 @@ namespace Merchanter {
                     cmd.Parameters.Add( new MySqlParameter( "end", _items_per_page ) );
                     MySqlDataReader dataReader = cmd.ExecuteReader();
                     while( dataReader.Read() ) {
-                        Log l = new Log {
+                        Log l = new() {
                             id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
                             customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
                             worker = dataReader[ "worker" ]?.ToString() ?? string.Empty,
                             title = dataReader[ "title" ].ToString() ?? string.Empty,
                             message = dataReader[ "message" ]?.ToString() ?? string.Empty,
+                            thread_id = dataReader[ "thread_id" ]?.ToString(),
                             update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() ),
                         };
                         list.Add( l );
@@ -474,6 +482,9 @@ namespace Merchanter {
                     dataReader.Close();
 
 
+                }
+                else {
+                    list = GetLastLogs( _customer_id, _items_per_page, _current_page_index );
                 }
                 return list;
             }
@@ -1502,6 +1513,7 @@ namespace Merchanter {
                 MySqlCommand cmd = new MySqlCommand( _query, connection );
                 cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
                 int.TryParse( cmd.ExecuteScalar().ToString(), out int total_count );
+                if( state == System.Data.ConnectionState.Open ) connection.Close();
                 return total_count;
             }
             catch( Exception ex ) {
@@ -1522,6 +1534,63 @@ namespace Merchanter {
                 MySqlCommand cmd = new MySqlCommand( _query, connection );
                 cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
                 int.TryParse( cmd.ExecuteScalar().ToString(), out int total_count );
+                if( state == System.Data.ConnectionState.Open ) connection.Close();
+                return total_count;
+            }
+            catch( Exception ex ) {
+                OnError( ex.ToString() );
+                return -1;
+            }
+        }
+
+        /// <summary>
+        /// Gets log count from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <returns>Error returns 'int:-1'</returns>
+        public int GetLogsCount( int _customer_id ) {
+            try {
+                if( state != System.Data.ConnectionState.Open ) connection.Open();
+                string _query = "SELECT COUNT(*) FROM log WHERE customer_id=@customer_id";
+                MySqlCommand cmd = new MySqlCommand( _query, connection );
+                cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+                int.TryParse( cmd.ExecuteScalar().ToString(), out int total_count );
+                if( state == System.Data.ConnectionState.Open ) connection.Close();
+                return total_count;
+            }
+            catch( Exception ex ) {
+                OnError( ex.ToString() );
+                return -1;
+            }
+        }
+
+        /// <summary>
+        /// Gets log count from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_filters">Filters</param>
+        /// <param name="_items_per_page">Items Per Page</param>
+        /// <param name="_current_page_index">Current Page Index</param>
+        /// <returns>Error returns 'int:-1'</returns>
+        public int GetLogsCount( int _customer_id, Dictionary<string, string?> _filters ) {
+            try {
+                if( state != System.Data.ConnectionState.Open ) connection.Open();
+                string _query = "SELECT COUNT(*) FROM log WHERE customer_id=@customer_id";
+                string? filtered_worker = _filters[ "worker" ];
+                string? filtered_title = _filters[ "title" ];
+                string? filtered_message = _filters[ "message" ];
+                string? filtered_date = _filters[ "date" ];
+                int total_count = 0;
+                if( filtered_worker != null || filtered_title != null || filtered_message != null || filtered_date != null ) {
+                    _query += !string.IsNullOrWhiteSpace( filtered_worker ) && filtered_worker != "0" ? " AND worker='" + filtered_worker + "'" : string.Empty;
+                    _query += !string.IsNullOrWhiteSpace( filtered_title ) && filtered_title != "0" ? " AND title='" + filtered_title + "'" : string.Empty;
+                    _query += !string.IsNullOrWhiteSpace( filtered_message ) && filtered_message != "0" ? " AND message LIKE '%" + filtered_message + "%'" : string.Empty;
+                    //_query += !string.IsNullOrWhiteSpace( filtered_date ) && filtered_worker != "0" ? " AND update_date='" + filtered_date + "'" : string.Empty; TODO: Date filter in GetLastLogs
+                    MySqlCommand cmd = new MySqlCommand( _query, connection );
+                    cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+                    int.TryParse( cmd.ExecuteScalar().ToString(), out total_count );
+                }
+                if( state == System.Data.ConnectionState.Open ) connection.Close();
                 return total_count;
             }
             catch( Exception ex ) {

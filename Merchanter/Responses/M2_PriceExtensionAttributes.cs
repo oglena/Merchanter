@@ -1,4 +1,4 @@
-﻿public class M2_PriceExtensionAttributes {
-    public M2_PriceExtensionAttributes() {
+﻿public class M2_PriceRequestPriceExtensionAttributes {
+    public M2_PriceRequestPriceExtensionAttributes() {
     }
 }

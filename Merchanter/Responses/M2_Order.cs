@@ -1,23 +1,17 @@
 ﻿public class M2_Orders {
     public M2_Order[] items { get; set; }
-    public M2_Search_Criteria search_criteria { get; set; }
+    public M2_OrderSearchCriteria search_criteria { get; set; }
     public int total_count { get; set; }
 }
 
-public class M2_Search_Criteria {
-    public M2_Filter_Groups[] filter_groups { get; set; }
+public class M2_OrderSearchCriteria {
+    public M2_OrderFilterGroups[] filter_groups { get; set; }
     public int page_size { get; set; }
     public int current_page { get; set; }
 }
 
-public class M2_Filter_Groups {
+public class M2_OrderFilterGroups {
     public M2_Filter[] filters { get; set; }
-}
-
-public class M2_Filter {
-    public string field { get; set; }
-    public string value { get; set; }
-    public string condition_type { get; set; }
 }
 
 public class M2_Order {

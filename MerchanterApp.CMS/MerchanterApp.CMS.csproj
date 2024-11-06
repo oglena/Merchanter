@@ -1,26 +1,24 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <UserSecretsId>8970e70b-1c4a-4faf-983a-40da9c59ebb5</UserSecretsId>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UserSecretsId>8970e70b-1c4a-4faf-983a-40da9c59ebb5</UserSecretsId>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Faso.Blazor.SpinKit" Version="1.0.1" />
-    <PackageReference Include="RestSharp" Version="112.0.0" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Merchanter\Merchanter.csproj" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Merchanter\Merchanter.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<Folder Include="Components\Pages\Catalog\" />
+		<Folder Include="Components\Pages\Customer\" />
+		<Folder Include="Components\Pages\Settings\" />
+		<Folder Include="Services\" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Components\Pages\Catalog\" />
-    <Folder Include="Components\Pages\Customer\" />
-    <Folder Include="Components\Pages\Settings\" />
-    <Folder Include="Services\" />
-  </ItemGroup>
-
+	<ItemGroup>
+		<None Include="appsettings.Development.json" CopyToPublishDirectory="Always" />
+	</ItemGroup>
 </Project>

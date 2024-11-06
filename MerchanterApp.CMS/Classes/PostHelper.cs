@@ -7,7 +7,7 @@ using static MerchanterApp.CMS.Classes.PostHelper;
 
 namespace MerchanterApp.CMS.Classes {
     public interface IPostHelper {
-        public Task<BaseResponseModel?> Request( string? _token, PostMethod _method, string _url, StringContent? _body = null );
+        public Task<BaseResponseModel<T>?> Request<T>( string? _token, PostMethod _method, string _url, StringContent? _body = null );
     }
 
     public class PostHelper :IPostHelper {
@@ -18,20 +18,27 @@ namespace MerchanterApp.CMS.Classes {
             configuration = _configuration;
             logger = _logger;
         }
-        public async Task<BaseResponseModel?> Request( string? _token, PostMethod _method, string _url, StringContent? _body = null ) {
-            BaseResponseModel? model = null;
+        public async Task<BaseResponseModel<T>?> Request<T>( string? _token, PostMethod _method, string _url, StringContent? _body = null ) {
+            BaseResponseModel<T>? model = null;
+            var baseAddress = configuration?.GetSection( "AppSettings:MerchanterServerUrl" )?.Value;
+
+            if( string.IsNullOrWhiteSpace( baseAddress ) ) {
+                logger.LogError( "Base address is not configured." );
+                return null;
+            }
+
             switch( _method ) {
                 case PostMethod.Login:
                     using( HttpClient httpClient = new HttpClient() ) {
-                        httpClient.BaseAddress = new Uri( configuration[ "AppSettings:MerchanterServerUrl" ] );
+                        httpClient.BaseAddress = new Uri( baseAddress );
                         using HttpResponseMessage response = await httpClient.PostAsync( _url, _body );
                         if( response.IsSuccessStatusCode ) {
                             var login_response = JsonConvert.DeserializeObject<UserLoginResponseModel>( response.Content.ReadAsStringAsync().Result );
                             if( login_response != null && login_response.AuthenticateResult && !string.IsNullOrWhiteSpace( login_response.AuthToken ) && login_response.AdminInformation != null ) {
-                                model = new BaseResponseModel() {
+                                model = new BaseResponseModel<T>() {
                                     Success = true,
                                     ErrorMessage = "",
-                                    Data = login_response
+                                    Data = (T)(object)login_response
                                 };
                                 logger.LogInformation( "LOGIN[" + login_response.AdminInformation.name + "]: " + _url, DateTime.UtcNow.ToLongTimeString() );
                             }
@@ -44,12 +51,12 @@ namespace MerchanterApp.CMS.Classes {
                 case PostMethod.Get:
                     if( !string.IsNullOrWhiteSpace( _token ) ) {
                         using( HttpClient httpClient = new HttpClient() ) {
-                            httpClient.BaseAddress = new Uri( configuration[ "AppSettings:MerchanterServerUrl" ] );
+                            httpClient.BaseAddress = new Uri( baseAddress );
                             httpClient.DefaultRequestHeaders.Add( "Authorization", "Bearer " + _token );
                             using HttpResponseMessage response = await httpClient.GetAsync( _url );
                             if( response.IsSuccessStatusCode ) {
                                 var response_json = response.Content.ReadAsStringAsync().Result;
-                                model = JsonConvert.DeserializeObject<BaseResponseModel>( response_json );
+                                model = JsonConvert.DeserializeObject<BaseResponseModel<T>>( response_json );
                                 logger.LogInformation( "GET: " + _url, DateTime.UtcNow.ToLongTimeString() );
                             }
                         }
@@ -57,19 +64,30 @@ namespace MerchanterApp.CMS.Classes {
                     break;
                 case PostMethod.Post:
                     if( !string.IsNullOrWhiteSpace( _token ) ) {
-                        using( HttpClient httpClient = new HttpClient() ) {
-                            httpClient.BaseAddress = new Uri( configuration[ "AppSettings:MerchanterServerUrl" ] );
-                            httpClient.DefaultRequestHeaders.Add( "Authorization", "Bearer " + _token );
-                            using HttpResponseMessage response = await httpClient.PostAsync( _url, _body );
-                            if( response.IsSuccessStatusCode ) {
-                                model = JsonConvert.DeserializeObject<BaseResponseModel>( response.Content.ReadAsStringAsync().Result );
-                                logger.LogInformation( "POST: " + _url, DateTime.UtcNow.ToLongTimeString() );
-                            }
+                        using HttpClient httpClient = new HttpClient();
+                        httpClient.BaseAddress = new Uri( baseAddress );
+                        httpClient.DefaultRequestHeaders.Add( "Authorization", "Bearer " + _token );
+                        using HttpResponseMessage response = await httpClient.PostAsync( _url, _body );
+                        if( response.IsSuccessStatusCode ) {
+                            model = JsonConvert.DeserializeObject<BaseResponseModel<T>>( response.Content.ReadAsStringAsync().Result );
+                            logger.LogInformation( "POST: " + _url, DateTime.UtcNow.ToLongTimeString() );
                         }
 
                     }
                     break;
                 case PostMethod.Put:
+                    if( !string.IsNullOrWhiteSpace( _token ) ) {
+                        using( HttpClient httpClient = new HttpClient() ) {
+                            httpClient.BaseAddress = new Uri( baseAddress );
+                            httpClient.DefaultRequestHeaders.Add( "Authorization", "Bearer " + _token );
+                            using HttpResponseMessage response = await httpClient.PutAsync( _url, _body );
+                            if( response.IsSuccessStatusCode ) {
+                                model = JsonConvert.DeserializeObject<BaseResponseModel<T>>( response.Content.ReadAsStringAsync().Result );
+                                logger.LogInformation( "PUT: " + _url, DateTime.UtcNow.ToLongTimeString() );
+                            }
+                        }
+
+                    }
                     return null;
                 case PostMethod.Delete:
                     return null;

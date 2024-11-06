@@ -1,6 +1,6 @@
 ﻿public class M2_Attributes {
     public M2_Attribute[] items { get; set; }
-    public SearchCriteria search_criteria { get; set; }
+    public M2_SearchCriteria search_criteria { get; set; }
     public int total_count { get; set; }
 }
 
@@ -28,10 +28,10 @@ public class M2_Attribute {
     public string frontend_input { get; set; }
     public string entity_type_id { get; set; }
     public bool is_required { get; set; }
-    public List<AttributeOption> options { get; set; }
+    public List<M2_AttributeOption> options { get; set; }
     public bool is_user_defined { get; set; }
     public string default_frontend_label { get; set; }
-    public List<FrontendLabel> frontend_labels { get; set; }
+    public List<M2_FrontendLabel> frontend_labels { get; set; }
     public string backend_type { get; set; }
     public string is_unique { get; set; }
     public object[] validation_rules { get; set; }
@@ -41,32 +41,25 @@ public class M2_Attribute {
     public string default_value { get; set; }
 }
 
-public class FrontendLabel {
+public class M2_FrontendLabel {
     public int store_id { get; set; }
     public string label { get; set; }
 }
 
-public class SearchCriteria {
-    public Filters[] filter_groups { get; set; }
+public class M2_SearchCriteria {
+    public M2_Filters[] filter_groups { get; set; }
     public int page_size { get; set; }
     public int current_page { get; set; }
 }
-public class AttributeOption {
-    public string label { get; set; }
-    public string value { get; set; }
-    public int sort_order { get; set; }
-    public bool is_default { get; set; }
-    public List<AttributeStoreLabel>? store_labels { get; set; }
-}
-public class AttributeStoreLabel {
+public class M2_StoreLabel {
     public int store_id { get; set; }
     public string label { get; set; }
 }
 
-public class Filters {
-    public Filter[] filters { get; set; }
+public class M2_Filters {
+    public M2_Filter[] filters { get; set; }
 }
-public class Filter {
+public class M2_Filter {
     public string field { get; set; }
     public string value { get; set; }
     public string condition_type { get; set; }

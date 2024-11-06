@@ -14,64 +14,66 @@ namespace Merchanter.ServerService.Controllers {
 
         [HttpGet( "{CID}/GetCustomer" )]
         [Authorize]
-        public async Task<ActionResult<BaseResponseModel>> GetCustomer( string CID ) {
+        public async Task<ActionResult<BaseResponseModel<Customer>>> GetCustomer( string CID ) {
             int customer_id;
             if( int.TryParse( CID, out customer_id ) && customer_id > 0 ) {
                 Customer customer = await customerService.GetCustomer( customer_id );
                 if( customer != null ) {
-                    return Ok( new BaseResponseModel() { Success = customer != null, Data = customer != null ? customer : new(), ErrorMessage = customer != null ? "" : "Error -1" } );
+                    return Ok( new BaseResponseModel<Customer>() { Success = customer != null, Data = customer ?? new(), ErrorMessage = customer != null ? "" : "Error -1" } );
                 }
                 else {
-                    return BadRequest();
+                    return NotFound();
                 }
             }
-            return BadRequest();
+            return Unauthorized();
         }
 
         [HttpPost( "{CID}/GetCustomerLogs" )]
         [Authorize]
-        public async Task<ActionResult<BaseResponseModel>> GetCustomerLogs( string CID, [FromBody] ApiFilter _api_filter ) {
+        public async Task<ActionResult<BaseResponseModel<List<Log>>>> GetCustomerLogs( string CID, [FromBody] ApiFilter _api_filter ) {
             int customer_id;
             if( int.TryParse( CID, out customer_id ) && customer_id > 0 ) {
-                if( _api_filter.pager != null && _api_filter.filters != null ) {
-                    List<Log> customer_logs = await customerService.GetCustomerLogs( customer_id, _api_filter.pager.items_per_page, _api_filter.pager.current_page_index, _api_filter.filters );
+                if( _api_filter.Pager != null ) {
+                    List<Log> customer_logs = await customerService.GetCustomerLogs( customer_id, _api_filter );
+                    _api_filter.TotalCount = await customerService.GetCustomerLogCount( customer_id, _api_filter );
+
                     if( customer_logs != null ) {
-                        return Ok( new BaseResponseModel() { Success = customer_logs != null, Data = customer_logs != null ? customer_logs : new(), ErrorMessage = customer_logs != null ? "" : "Error -1" } );
+                        return Ok( new BaseResponseModel<List<Log>>() { ApiFilter = _api_filter, Success = customer_logs != null, Data = customer_logs ?? [], ErrorMessage = customer_logs != null ? "" : "Error -1" } );
                     }
                     else {
-                        return BadRequest();
+                        return BadRequest( "Filter response empty." );
                     }
                 }
-                return BadRequest();
+                return StatusCode( 500 );
             }
-            return BadRequest();
+            return Unauthorized();
         }
 
         [HttpPost( "{CID}/GetCustomerNotifications" )]
         [Authorize]
-        public async Task<ActionResult<BaseResponseModel>> GetCustomerNotifications( string CID, [FromBody] ApiFilter _api_filter ) {
+        public async Task<ActionResult<BaseResponseModel<List<Notification>>>> GetCustomerNotifications( string CID, [FromBody] ApiFilter _api_filter ) {
             int customer_id;
             if( int.TryParse( CID, out customer_id ) && customer_id > 0 ) {
-                if( _api_filter.pager != null && _api_filter.filters != null ) {
-                    List<Notification> customer_notifications = await customerService.GetCustomerNotifications( customer_id, _api_filter.pager.items_per_page, _api_filter.pager.current_page_index, _api_filter.filters );
+                if( _api_filter.Pager != null && _api_filter.Filters != null ) {
+                    List<Notification> customer_notifications = await customerService.GetCustomerNotifications( customer_id, _api_filter );
                     if( customer_notifications != null ) {
-                        return Ok( new BaseResponseModel() { Success = customer_notifications != null, ErrorMessage = customer_notifications != null ? "" : "Error -1", Data = customer_notifications != null ? customer_notifications : new() } );
+                        return Ok( new BaseResponseModel<List<Notification>>() { Success = customer_notifications != null, ErrorMessage = customer_notifications != null ? "" : "Error -1", Data = customer_notifications ?? [] } );
                     }
                     else {
-                        return BadRequest();
+                        return BadRequest( "Filter response empty." );
                     }
                 }
-                return BadRequest();
+                return StatusCode( 500 );
             }
-            return BadRequest();
+            return Unauthorized();
         }
 
         [HttpGet( "GetCustomers" )]
         [Authorize]
-        public async Task<ActionResult<BaseResponseModel>> GetCustomers() {
+        public async Task<ActionResult<BaseResponseModel<List<Customer>>>> GetCustomers() {
             List<Customer> customers = await customerService.GetCustomers();
             if( customers != null ) {
-                return Ok( new BaseResponseModel() { Success = customers != null, Data = customers != null ? customers : new(), ErrorMessage = customers != null ? "" : "Error -1" } );
+                return Ok( new BaseResponseModel<List<Customer>>() { Success = customers != null, Data = customers ?? [], ErrorMessage = customers != null ? "" : "Error -1" } );
             }
             else {
                 return BadRequest();
@@ -80,18 +82,18 @@ namespace Merchanter.ServerService.Controllers {
 
         [HttpPut( "{CID}/SaveCustomer" )]
         [Authorize]
-        public async Task<ActionResult<BaseResponseModel>> SaveCustomer( string CID, [FromBody] Customer _customer ) {
+        public async Task<ActionResult<BaseResponseModel<Customer>>> SaveCustomer( string CID, [FromBody] Customer _customer ) {
             int customer_id;
             if( int.TryParse( CID, out customer_id ) && customer_id > 0 ) {
                 Customer customer = await customerService.SaveCustomer( customer_id, _customer );
                 if( customer != null ) {
-                    return Ok( new BaseResponseModel() { Success = customer != null, Data = customer != null ? customer : new(), ErrorMessage = customer != null ? "" : "Error -1" } );
+                    return Ok( new BaseResponseModel<Customer>() { Success = customer != null, Data = customer ?? new(), ErrorMessage = customer != null ? "" : "Error -1" } );
                 }
                 else {
-                    return BadRequest();
+                    return NotFound();
                 }
             }
-            return BadRequest();
+            return Unauthorized();
         }
     }
 }

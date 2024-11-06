@@ -9,6 +9,7 @@
 @inject NavigationManager navigationManager
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IConfiguration configuration
+@inject IPostHelper PostHelper
 
 <PageTitle>Customer [@company_name] | Merchanter</PageTitle>
 <div class="row mt-3 pb-2">
@@ -61,7 +62,7 @@
 						</div>
 					</div>
 					<div class="row mt-3">
-							<div class="col-12 ps-2 mb-3 table-overflow">
+						<div class="col-12 ps-2 mb-3 table-overflow">
 							<table class="table table-responsive table-hover">
 								<thead>
 									<tr>
@@ -154,7 +155,6 @@
 										</td>
 										<td>
 											<InputDate Type="InputDateType.DateTimeLocal" class="form-control form-control-sm col-4" format-value="yyyy-MM-dd hh:MM:ss" @bind-Value="customer.last_xml_sync_date"></InputDate>
-											@* <label class="form-check-label">@customer.last_xml_sync_date</label> *@
 										</td>
 									</tr>
 									<tr>
@@ -185,8 +185,9 @@
 		}
 		else
 		{
-			<SpinKitChasingDots />
-			@* @loading *@
+			<div class="container-fluid mt-5">
+				<h3 class="text-center">@loading</h3>
+			</div>
 		}
 	</div>
 </div>
@@ -198,7 +199,7 @@
 
 	public Merchanter.Classes.Customer? customer { get; set; }
 
-	private string loading = "Loading...";
+	private string loading = "...LOADING...";
 	private string page_message = string.Empty;
 
 	protected override async Task OnParametersSetAsync()
@@ -208,151 +209,78 @@
 			int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
 			if (admin_id > 0)
 			{
-				string? token = HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value;
+				await LoadCustomer(customer_id);
+			}
+		}
+		StateHasChanged();
+	}
 
-				if (!string.IsNullOrWhiteSpace(token))
-				{
-					using (HttpClient httpClient = new HttpClient())
-					{
-						httpClient.BaseAddress = new Uri(configuration["AppSettings:MerchanterServerUrl"]);
-						httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-						using HttpResponseMessage response = await httpClient.GetAsync("api/Customer/" + CID + "/GetCustomer");
+	protected async Task LoadCustomer(int CID)
+	{
+		var response = await PostHelper.Request<Merchanter.Classes.Customer>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+					Classes.PostHelper.PostMethod.Get,
+					"api/Customer/" + CID + "/GetCustomer");
 
-						if (response.IsSuccessStatusCode)
-						{
-							var base_respond = JsonConvert.DeserializeObject<BaseResponseModel>(response.Content.ReadAsStringAsync().Result);
-							if (base_respond != null && base_respond.Success && base_respond.Data != null)
-							{
-								customer = JsonConvert.DeserializeObject<Merchanter.Classes.Customer>(base_respond.Data.ToString());
-								if (customer == null)
-									page_message = "Customer not found.";
-								else
-									company_name = customer.user_name;
-								loading = string.Empty;
-							}
-							else
-							{
-								page_message = "ServerAPI Data failed.";
-							}
-						}
-						else
-						{
-							page_message = "ServerAPI failed.";
-						}
-					}
-				}
-				else
-				{
-					page_message = "Customer login failed.";
-				}
+		if (response != null && response.Success && response.Data != null)
+		{
+			customer = response.Data;
+			if (customer != null)
+			{
+				company_name = customer.user_name;
+				page_message = string.Empty;
 			}
 			else
-			{
-				navigationManager.NavigateTo("/account/login", true);
-			}
+				page_message = "Customer not found.";
+		}
+		else
+		{
+			page_message = "Merchanter Server ServiceAPI data response empty.";
 		}
 	}
 
-
 	private async Task RefreshCustomer()
 	{
-		try
+		if (int.TryParse(CID, out customer_id))
 		{
-			if (int.TryParse(CID, out customer_id))
+			customer = null;
+			StateHasChanged();
+			int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
+			if (admin_id > 0)
 			{
-				customer = null;
-
-				int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
-				if (admin_id > 0)
-				{
-					string? token = HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value;
-					if (!string.IsNullOrWhiteSpace(token))
-					{
-						using (HttpClient httpClient = new HttpClient())
-						{
-							httpClient.BaseAddress = new Uri(configuration["AppSettings:MerchanterServerUrl"]);
-							httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-							using HttpResponseMessage response = await httpClient.GetAsync("api/Customer/" + CID + "/GetCustomer");
-
-							if (response.IsSuccessStatusCode)
-							{
-								customer = null;
-								var base_respond = JsonConvert.DeserializeObject<BaseResponseModel>(response.Content.ReadAsStringAsync().Result);
-								if (base_respond != null && base_respond.Success && base_respond.Data != null)
-								{
-									customer = JsonConvert.DeserializeObject<Merchanter.Classes.Customer>(base_respond.Data.ToString());
-									if (customer == null)
-										page_message = "Customer not found.";
-
-									loading = string.Empty;
-								}
-								else
-								{
-									page_message = "ServerAPI Data failed.";
-								}
-							}
-							else
-							{
-								page_message = "ServerAPI failed.";
-							}
-						}
-					}
-				}
+				await LoadCustomer(customer_id);
 			}
 		}
-		catch
-		{
-		}
-		finally
-		{
-
-		}
+		StateHasChanged();
 	}
 
 
 	private async Task SaveCustomer(Merchanter.Classes.Customer _customer)
 	{
-		try
+		if (int.TryParse(CID, out customer_id))
 		{
-			if (int.TryParse(CID, out customer_id))
+			int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
+			if (admin_id > 0)
 			{
-				int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
-				if (admin_id > 0)
-				{
-					string? token = HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value;
-					if (!string.IsNullOrWhiteSpace(token))
-					{
-						using (HttpClient httpClient = new HttpClient())
-						{
-							httpClient.BaseAddress = new Uri(configuration["AppSettings:MerchanterServerUrl"]);
-							httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-							using HttpResponseMessage response = await httpClient.PutAsync("api/Customer/" + CID + "/SaveCustomer", new StringContent(JsonConvert.SerializeObject(_customer), Encoding.UTF8, "application/json"));
-							if (response.IsSuccessStatusCode)
-							{
-								customer = null;
-								var base_respond = JsonConvert.DeserializeObject<BaseResponseModel>(response.Content.ReadAsStringAsync().Result);
-								if (base_respond != null && base_respond.Success && base_respond.Data != null)
-								{
-									customer = JsonConvert.DeserializeObject<Merchanter.Classes.Customer>(base_respond.Data.ToString());
-									if (customer == null)
-										page_message = "Customer not found.";
+				var response = await PostHelper.Request<Merchanter.Classes.Customer>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+				Classes.PostHelper.PostMethod.Put,
+				"api/Customer/" + CID + "/SaveCustomer");
 
-									loading = string.Empty;
-								}
-								else
-								{
-									page_message = "ServerAPI Data failed.";
-								}
-							}
-							else
-							{
-								page_message = "ServerAPI failed.";
-							}
-						}
+				if (response != null && response.Success && response.Data != null)
+				{
+					customer = response.Data;
+					if (customer != null)
+					{
+						company_name = customer.user_name;
+						page_message = string.Empty;
 					}
+					else
+						page_message = "Customer update fail.";
+				}
+				else
+				{
+					page_message = "Merchanter Server ServiceAPI data response empty.";
 				}
 			}
 		}
-		catch { }
 	}
 }

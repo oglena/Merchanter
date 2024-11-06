@@ -8,6 +8,7 @@
 @inject NavigationManager navigationManager
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IConfiguration configuration
+@inject IPostHelper PostHelper
 
 <PageTitle>Customers | Merchanter</PageTitle>
 
@@ -83,58 +84,45 @@
 		}
 		else
 		{
-			<SpinKitChasingDots />
+			<div class="container-fluid w-100">
+				<h3 class="text-center">@loading</h3>
+			</div>
 		}
 	</div>
 </div>
 
 @code {
 	private List<Merchanter.Classes.Customer>? customers { get; set; }
-	private string loading = "Loading...";
+	private string loading = "...LOADING...";
 	private string page_message = "";
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
-		if (firstRender && HttpContextAccessor.HttpContext != null)
+		if (firstRender)
 		{
-			int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
-			if (admin_id > 0)
-			{
-				string? token = HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value;
-				if (!string.IsNullOrWhiteSpace(token))
-				{
-					using (HttpClient httpClient = new HttpClient())
-					{
-						httpClient.BaseAddress = new Uri(configuration["AppSettings:MerchanterServerUrl"]);
-						httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-						using HttpResponseMessage response = await httpClient.GetAsync("api/Customer/GetCustomers");
+			await LoadCustomers();
+		}
+		StateHasChanged();
+	}
 
-						if (response.IsSuccessStatusCode)
-						{
-							var base_respond = JsonConvert.DeserializeObject<BaseResponseModel>(response.Content.ReadAsStringAsync().Result);
-							if (base_respond != null && base_respond.Success && base_respond.Data != null)
-							{
-								customers = JsonConvert.DeserializeObject<List<Merchanter.Classes.Customer>>(base_respond.Data.ToString());
-								if (customers != null && customers.Count == 0)
-									page_message = "No servers working.";
-								else
-									page_message = string.Empty;
+	protected async Task LoadCustomers()
+	{
+		var response = await PostHelper.Request<List<Merchanter.Classes.Customer>?>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+					Classes.PostHelper.PostMethod.Get,
+					"api/Customer/GetCustomers");
 
-								loading = string.Empty;
-							}
-							else
-							{
-								page_message = "ServerAPI Data failed.";
-							}
-						}
-						else
-						{
-							page_message = "ServerAPI failed.";
-						}
-					}
-				}
-			}
-			StateHasChanged();
+
+		if (response != null && response.Success && response.Data != null)
+		{
+			customers = response.Data;
+			if (customers != null && customers.Count == 0)
+				page_message = "No servers working.";
+			else
+				page_message = string.Empty;
+		}
+		else
+		{
+			page_message = "Merchanter Server ServiceAPI data response empty.";
 		}
 	}
 }

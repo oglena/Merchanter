@@ -67,7 +67,7 @@
 		{
 			if (admin != null && !string.IsNullOrWhiteSpace(admin.UserName) && !string.IsNullOrEmpty(admin.Password))
 			{
-				var response = await PostHelper.Request(null,
+				var response = await PostHelper.Request<UserLoginResponseModel>(null,
 						Classes.PostHelper.PostMethod.Login,
 						"api/Auth/Login",
 						new StringContent(JsonConvert.SerializeObject(admin), Encoding.UTF8, "application/json")

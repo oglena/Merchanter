@@ -111,11 +111,14 @@
 }
 else
 {
-	<SpinKitChasingDots />
+	<div class="container-fluid w-100">
+		<h3 class="text-center mt-5">@loading</h3>
+	</div>
 }
 @code {
 	private List<MerchanterServer> servers { get; set; } = new List<MerchanterServer>();
 	private List<Customer>? customers { get; set; }
+	private string loading = "...LOADING...";
 	private string customers_loading = "Loading Customers...";
 	private string server_message = "";
 	private string page_message = "No servers working.";
@@ -139,14 +142,14 @@ else
 	private async Task RefreshServers()
 	{
 		is_refreshing = true;
-		var response = await PostHelper.Request(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+		var response = await PostHelper.Request<List<MerchanterServer>>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
 						Classes.PostHelper.PostMethod.Get,
 						"api/Server/GetServers");
 
 
 		if (response != null && response.Success && response.Data != null)
 		{
-			servers = JsonConvert.DeserializeObject<List<MerchanterServer>>(response.Data.ToString());
+			servers = response.Data;
 			if (servers != null && servers.Count == 0)
 				page_message = "No servers working.";
 			else
@@ -163,13 +166,13 @@ else
 
 	private async Task RefreshCustomers()
 	{
-		var response = await PostHelper.Request(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+		var response = await PostHelper.Request<List<Customer>>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
 						Classes.PostHelper.PostMethod.Get,
 						"api/Customer/GetCustomers");
 
 		if (response != null && response.Success && response.Data != null)
 		{
-			customers = JsonConvert.DeserializeObject<List<Customer>>(response.Data.ToString());
+			customers = response.Data;
 			if (customers != null && customers.Count == 0)
 				page_message = "No customers found.";
 			else
@@ -185,13 +188,13 @@ else
 
 	private async Task StartServer(int _customer_id)
 	{
-		var response = await PostHelper.Request(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+		var response = await PostHelper.Request<MerchanterServer>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
 						Classes.PostHelper.PostMethod.Get,
 						"api/Server/" + _customer_id.ToString() + "/StartServer");
 
 		if (response != null && response.Success && response.Data != null)
 		{
-			var started_server = JsonConvert.DeserializeObject<MerchanterServer>(response.Data.ToString());
+			var started_server = response.Data;
 			if (started_server != null)
 			{
 				if (servers.Where(x => x.customer_id == _customer_id).FirstOrDefault() == null)
@@ -219,13 +222,13 @@ else
 
 	private async Task StopServer(int _customer_id)
 	{
-		var response = await PostHelper.Request(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+		var response = await PostHelper.Request<MerchanterServer>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
 							Classes.PostHelper.PostMethod.Get,
 							"api/Server/" + _customer_id.ToString() + "/StopServer");
 
 		if (response != null && response.Success && response.Data != null)
 		{
-			var stopped_server = JsonConvert.DeserializeObject<MerchanterServer>(response.Data.ToString());
+			var stopped_server = response.Data;
 			if (stopped_server != null)
 			{
 				var remove_this = servers.Where(x => x.customer_id == _customer_id).FirstOrDefault();

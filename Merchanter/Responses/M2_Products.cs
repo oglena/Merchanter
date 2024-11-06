@@ -1,6 +1,6 @@
 ﻿public class M2_Products {
     public M2_Product[] items { get; set; }
-    public SearchCriteria search_criteria { get; set; }
+    public M2_SearchCriteria search_criteria { get; set; }
     public int total_count { get; set; }
 }
 

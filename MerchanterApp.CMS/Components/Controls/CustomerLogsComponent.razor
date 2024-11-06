@@ -38,7 +38,7 @@
 			<div class="col-4 ps-2 align-content-center text-end">
 				@if (!string.IsNullOrWhiteSpace(CID) && int.Parse(CID) > 0)
 				{
-					<span class="badge text-bg-dark text-light">@currentPage of ? page</span>
+					<span class="badge text-bg-dark text-light">@currentPage of @pageCount page</span>
 					<button type="button" class="btn btn-primary btn-sm" @onclick="NextPage">Next</button>
 					<button type="button" class="btn btn-primary btn-sm" @onclick="PreviousPage">Previous</button>
 				}
@@ -58,7 +58,7 @@
 									<div class="form-floating">
 										<select class="form-select text-start" aria-label="servers-select" @onchange="FilterWorkerChanged">
 											<option value="0" selected='@(filtered_worker == null || filtered_worker == "0" ? true : false)'>Select Worker...</option>
-											<option value="helper_instance" selected='@(filtered_worker == "helper_instance" ? true : false)'>Helper Instance</option>
+											<option value="main_thread" selected='@(filtered_worker == "main_thread" ? true : false)'>Main Thread</option>
 											<option value="customer" selected='@(filtered_worker == "customer" ? true : false)'>Customer</option>
 											<option value="helper_settings" selected='@(filtered_worker == "helper_settings" ? true : false)'>Helper Settings</option>
 											<option value="invoice" selected='@(filtered_worker == "invoice" ? true : false)'>Invoice</option>
@@ -75,19 +75,27 @@
 									<div class="form-floating">
 										<select class="form-select text-start" aria-label="servers-select" @onchange="FilterTitleChanged">
 											<option value="0" selected='@(filtered_title == null || filtered_title == "0" ? true : false)'>Select Title...</option>
-											<option value="thread" selected='@(filtered_title == "thread" ? true : false)'>Thread</option>
+											<option value="merchanter" selected='@(filtered_title == "merchanter" ? true : false)'>Thread</option>
 											<option value="error" selected='@(filtered_title == "error" ? true : false)'>Error</option>
 											<option value="friendly_error" selected='@(filtered_title == "friendly_error" ? true : false)'>Friendly Error</option>
-											<option value="ftpupload" selected='@(filtered_title == "ftpupload" ? true : false)'>FTP Upload</option>
 											<option value="helper_error" selected='@(filtered_title == "helper_error" ? true : false)'>Helper Error</option>
+											<option value="xml_product_removed" selected='@(filtered_title == "xml_product_removed" ? true : false)'>XML Product Removed</option>
+											<option value="xml_price_changed" selected='@(filtered_title == "xml_price_changed" ? true : false)'>XML Price Changed</option>
+											<option value="xml_qty_changed" selected='@(filtered_title == "xml_qty_changed" ? true : false)'>XML Qty Changed</option>
 											<option value="info" selected='@(filtered_title == "info" ? true : false)'>Info</option>
 											<option value="notification" selected='@(filtered_title == "notification" ? true : false)'>Notification</option>
-											<option value="product" selected='@(filtered_title == "order_complete" ? true : false)'>Order Complete</option>
-											<option value="shipment" selected='@(filtered_title == "order_processed" ? true : false)'>Order Processed</option>
-											<option value="xml" selected='@(filtered_title == "xml" ? true : false)'>XML</option>
+											<option value="new_order" selected='@(filtered_title == "new_order" ? true : false)'>New Order</option>
+											<option value="order_complete" selected='@(filtered_title == "order_complete" ? true : false)'>Order Complete</option>
+											<option value="order_process" selected='@(filtered_title == "order_process" ? true : false)'>Order Process</option>
+											<option value="order_processed" selected='@(filtered_title == "order_processed" ? true : false)'>Order Processed</option>
 											<option value="order_shipped" selected='@(filtered_title == "order_shipped" ? true : false)'>Order Shipped</option>
 											<option value="order_source_error" selected='@(filtered_title == "order_source_error" ? true : false)'>Order Source Error</option>
 											<option value="order_update_error" selected='@(filtered_title == "order_update_error" ? true : false)'>Order Update Error</option>
+											<option value="new_invoice" selected='@(filtered_title == "new_invoice" ? true : false)'>New Invoice</option>
+											<option value="shipment_error" selected='@(filtered_title == "shipment_error" ? true : false)'>Shipment Error</option>
+											<option value="product_in_stock" selected='@(filtered_title == "product_in_stock" ? true : false)'>Product in Stock</option>
+											<option value="product_out_of_stock" selected='@(filtered_title == "product_out_of_stock" ? true : false)'>Product out of Stock</option>
+											<option value="product_removed" selected='@(filtered_title == "product_removed" ? true : false)'>Product Removed</option>
 											<option value="product_custom_price_cannot_update" selected='@(filtered_title == "product_custom_price_cannot_update" ? true : false)'>Product Custom Price cannot Update</option>
 											<option value="product_custom_price_cannot_updated" selected='@(filtered_title == "product_custom_price_cannot_updated" ? true : false)'>Product Custom Price cannot Updated</option>
 											<option value="product_custom_price_updated" selected='@(filtered_title == "product_custom_price_updated" ? true : false)'>Product Custom Price Updated</option>
@@ -98,8 +106,8 @@
 											<option value="product_qty_update_error" selected='@(filtered_title == "product_qty_update_error" ? true : false)'>Product Qty Update Error</option>
 											<option value="product_special_price_updated" selected='@(filtered_title == "product_special_price_updated" ? true : false)'>Product Special Price Updated</option>
 											<option value="product_special_price_update_error" selected='@(filtered_title == "product_special_price_update_error" ? true : false)'>Product Special Price Update Error</option>
+											<option value="ftpupload" selected='@(filtered_title == "ftpupload" ? true : false)'>FTP Upload</option>
 											<option value="qp_mysqlupdate" selected='@(filtered_title == "qp_mysqlupdate" ? true : false)'>QP MySQL Update</option>
-											<option value="shipment_error" selected='@(filtered_title == "shipment_error" ? true : false)'>Shipment Error</option>
 										</select>
 										<label>Title</label>
 									</div>
@@ -136,7 +144,7 @@
 									<td class="align-content-center">
 										<span class='badge @(item.title == "thread" ? "text-bg-dark" : item.title.Contains("error") ? "text-bg-danger" : (item.title == "info" || item.title == "qp_mysqlupdate") ? "text-bg-info" : "text-bg-secondary")'>@item.title</span>
 									</td>
-									@if (item.worker == "notification" || item.title == "error" || item.title == "helper_error" || item.title == "qp_mysqlupdate")
+									@if (item.worker == "notification")
 									{
 										<td class="align-content-center">
 											@(item.message.Split("=>")[0])
@@ -159,13 +167,13 @@
 					}
 					else
 					{
-						@* <tbody class="table-group-divider">
+						<tbody class="table-group-divider">
 							<tr>
 								<td class="text-center" colspan="4">
 									<span>No data.</span>
 								</td>
 							</tr>
-						</tbody> *@
+						</tbody>
 					}
 				</table>
 			</div>
@@ -174,7 +182,9 @@
 }
 else
 {
-	<SpinKitChasingDots />
+	<div class="container-fluid w-100">
+		<h3 class="text-center mt-5">@loading</h3>
+	</div>
 }
 
 @code {
@@ -182,12 +192,14 @@ else
 	public string? CID { get; set; }
 	List<Log> customer_logs { get; set; } = new List<Log>();
 	List<Customer>? customers { get; set; }
+	private string loading = "...LOADING...";
 	private string page_message = "Logs not found for this customer.";
+	private int pageCount { get; set; } = 0;
 	private int currentPage { get; set; } = 1;
 	private int pageItemsCount { get; set; } = 50;
-	private string? filtered_worker { get; set; } = "0";
+	private string? filtered_worker { get; set; } = "";
 	private string? filtered_message { get; set; } = string.Empty;
-	private string? filtered_title { get; set; } = "0";
+	private string? filtered_title { get; set; } = "";
 	private int filtered_date { get; set; } = 0;
 	private bool is_refreshing { get; set; } = false;
 
@@ -218,10 +230,10 @@ else
 			else
 			{
 				await SetSessionValueAsync("selected_customer_id", "0");
-				await SetSessionValueAsync("filtered_worker", "0");
+				await SetSessionValueAsync("filtered_worker", string.Empty);
 				await SetSessionValueAsync("filtered_message", string.Empty);
-				await SetSessionValueAsync("filtered_title", "0");
-				await SetSessionValueAsync("filtered_date", "0");
+				await SetSessionValueAsync("filtered_title", string.Empty);
+				await SetSessionValueAsync("filtered_date", string.Empty);
 				customer_logs.Clear();
 				StateHasChanged();
 			}
@@ -239,14 +251,13 @@ else
 
 	protected async Task LoadCustomers()
 	{
-		var response = await PostHelper.Request(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
-					Classes.PostHelper.PostMethod.Get,
-					"api/Customer/GetCustomers");
-
+		var response = await PostHelper.Request<List<Customer>?>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+			Classes.PostHelper.PostMethod.Get,
+			"api/Customer/GetCustomers");
 
 		if (response != null && response.Success && response.Data != null)
 		{
-			customers = JsonConvert.DeserializeObject<List<Customer>?>(response.Data.ToString());
+			customers = response.Data;
 			if (customers != null && customers.Count == 0)
 				page_message = "No servers working.";
 			else
@@ -262,19 +273,32 @@ else
 	{
 		if (_customer_id > 0)
 		{
-			var response = await PostHelper.Request(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
-					Classes.PostHelper.PostMethod.Post,
-					"api/Customer/" + _customer_id.ToString() + "/GetCustomerLogs",
-				new StringContent(JsonConvert.SerializeObject(new ApiFilter()
+			string json = JsonConvert.SerializeObject(
+				new ApiFilter()
 					{
-						pager = new Pager() { items_per_page = pageItemsCount, current_page_index = currentPage - 1 },
-						filters = new() { { "filtered_worker", filtered_worker }, { "filtered_title", filtered_title }, { "filtered_message", filtered_message }, { "filtered_date", filtered_date.ToString() } }
-					}), Encoding.UTF8, "application/json")
+						Pager = new Pager()
+						{
+							ItemsPerPage = pageItemsCount,
+							CurrentPageIndex = currentPage - 1
+						},
+						Filters = new List<Filter<dynamic>>() {
+						new Filter<dynamic> { Field = "worker", Value = filtered_worker },
+						new Filter<dynamic> { Field = "title", Value = filtered_title },
+						new Filter<dynamic> { Field = "message", Value = filtered_message },
+						new Filter<dynamic> { Field = "date", Value = filtered_date } },
+					});
+			var response = await PostHelper.Request<List<Log>>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+				Classes.PostHelper.PostMethod.Post,
+				"api/Customer/" + _customer_id.ToString() + "/GetCustomerLogs",
+				new StringContent(json, Encoding.UTF8, "application/json")
 				);
 
 			if (response != null && response.Success && response.Data != null)
 			{
-				customer_logs = JsonConvert.DeserializeObject<List<Log>?>(response.Data.ToString());
+				customer_logs = response.Data;
+				if (response.ApiFilter != null)
+					pageCount = response.ApiFilter.TotalCount.GetValueOrDefault();
+
 				if (customer_logs != null && customer_logs.Count == 0)
 					page_message = "No servers working.";
 				else
@@ -284,7 +308,7 @@ else
 			}
 			else
 			{
-				page_message = "Merchanter Server ServiceAPI data response empty.";
+				page_message = "Merchanter Server ServiceAPI data response";
 			}
 		}
 	}
@@ -305,7 +329,7 @@ else
 		if (e.Value != null)
 		{
 			filtered_worker = e.Value.ToString();
-			await SetSessionValueAsync("filtered_worker", filtered_worker != null ? filtered_worker : "0");
+			await SetSessionValueAsync("filtered_worker", filtered_worker != null ? filtered_worker : string.Empty);
 			await RefreshLogs();
 		}
 	}
@@ -315,7 +339,7 @@ else
 		if (e.Value != null)
 		{
 			filtered_title = e.Value.ToString();
-			await SetSessionValueAsync("filtered_title", filtered_title != null ? filtered_title : "0");
+			await SetSessionValueAsync("filtered_title", filtered_title != null ? filtered_title : string.Empty);
 			await RefreshLogs();
 		}
 	}

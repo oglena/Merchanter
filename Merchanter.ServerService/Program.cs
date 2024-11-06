@@ -1,5 +1,6 @@
 using Merchanter;
 using Merchanter.CustomerService.Repositories;
+using Merchanter.ServerService;
 using Merchanter.ServerService.Classes;
 using Merchanter.ServerService.Repositories;
 using Merchanter.ServerService.Services;
@@ -42,6 +43,8 @@ builder.Services.AddSwaggerGen( c => {
             new string[] { }
         }
     } );
+    c.EnableAnnotations();
+    c.OperationFilter<IgnorePropertyFilter>();
 } );
 
 builder.Services.AddTransient<IAuthService, AuthService>();

@@ -1,7 +1,7 @@
 ﻿
 public class M2_Customers {
     public M2_Customer[] items { get; set; }
-    public M2_Search_Criteria search_criteria { get; set; }
+    public M2_OrderSearchCriteria search_criteria { get; set; }
     public int total_count { get; set; }
 }
 

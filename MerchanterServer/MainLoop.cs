@@ -1,6 +1,7 @@
 ﻿using Merchanter;
 using Merchanter.Classes;
 using MerchanterHelpers;
+using Org.BouncyCastle.Utilities.Encoders;
 using ShipmentHelpers;
 using System.Diagnostics;
 
@@ -178,6 +179,7 @@ namespace MerchanterServer {
                                     db_helper.xml.UpdateXMLStatusByProductBarcode( customer.customer_id, item.barcode, false, null );
 
                                     #region Notification of XML_PRODUCT_REMOVED_BY_USER
+                                    db_helper.xml.LogToServer( thread_id, "xml_product_removed_by_user", item.barcode, customer.customer_id, "xml" );
                                     notifications.Add( new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_PRODUCT_REMOVED_BY_USER, xproduct_barcode = item.barcode } );
                                     #endregion
                                 }
@@ -410,8 +412,8 @@ namespace MerchanterServer {
                             Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + item.barcode + " source=" + item.xml_source + " " + " xproduct removed." );
 
                             #region Notify - XML_PRODUCT_REMOVED
-                            db_helper.xml.LogToServer( thread_id, "product_removed", item.xml_source + ":" + item.barcode + ": " + item.qty, customer.customer_id, "xml" );
-                            if( xml_enabled_products?.Where( x => x.barcode == item.barcode ).ToList().Count() == 0 ) {
+                            db_helper.xml.LogToServer( thread_id, "xml_product_removed", item.xml_source + ":" + item.barcode + ": " + item.qty, customer.customer_id, "xml" );
+                            if( xml_enabled_products?.Where( x => x.barcode == item.barcode ).ToList().Count == 0 ) {
                                 notifications.Add( new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_PRODUCT_REMOVED, xproduct_barcode = item.barcode, notification_content = item.xml_source } );
                             }
                             #endregion
@@ -426,9 +428,9 @@ namespace MerchanterServer {
                             item.is_infosent = tempx.is_infosent;
 
                             #region Notify - XML_PRICE_CHANGED
-                            if( xml_enabled_products?.Where( x => x.barcode == item.barcode ).ToList().Count() > 0 ) {
+                            if( xml_enabled_products?.Where( x => x.barcode == item.barcode ).ToList().Count > 0 ) {
                                 if( item.price2 != tempx.price2 ) {
-                                    db_helper.xml.LogToServer( thread_id, "price_change", item.xml_source + ":" + item.barcode + "=>" + item.price2 + "|" + tempx.price2, customer.customer_id, "xml" );
+                                    db_helper.xml.LogToServer( thread_id, "xml_price_changed", item.xml_source + ":" + item.barcode + "=>" + item.price2 + "|" + tempx.price2, customer.customer_id, "xml" );
                                     notifications.Add( new Notification() {
                                         customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_PRICE_CHANGED, xproduct_barcode = item.barcode,
                                         notification_content = item.xml_source + "=" + item.price2 + "|" + tempx.price2
@@ -438,9 +440,9 @@ namespace MerchanterServer {
                             #endregion
 
                             #region Notify - XML_QTY_CHANGED
-                            if( xml_enabled_products?.Where( x => x.barcode == item.barcode ).ToList().Count() > 0 ) {
+                            if( xml_enabled_products?.Where( x => x.barcode == item.barcode ).ToList().Count > 0 ) {
                                 if( item.qty != tempx.qty ) {
-                                    db_helper.xml.LogToServer( thread_id, "qty_change", item.xml_source + ":" + item.barcode + "=>" + item.qty + "|" + tempx.qty, customer.customer_id, "xml" );
+                                    db_helper.xml.LogToServer( thread_id, "xml_qty_changed", item.xml_source + ":" + item.barcode + "=>" + item.qty + "|" + tempx.qty, customer.customer_id, "xml" );
                                     notifications.Add( new Notification() {
                                         customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_QTY_CHANGED, xproduct_barcode = item.barcode,
                                         notification_content = item.xml_source + "=" + item.qty + "|" + tempx.qty
@@ -451,8 +453,8 @@ namespace MerchanterServer {
                         }
                         else {
                             #region Notify - XML_PRODUCT_ADDED
-                            if( xml_enabled_products?.Where( x => x.barcode == item.barcode ).ToList().Count() > 0 ) {
-                                db_helper.xml.LogToServer( thread_id, "product_added", item.xml_source + ":" + item.barcode + ": " + item.qty, customer.customer_id, "xml" );
+                            if( xml_enabled_products?.Where( x => x.barcode == item.barcode ).ToList().Count > 0 ) {
+                                db_helper.xml.LogToServer( thread_id, "xml_product_added", item.xml_source + ":" + item.barcode + ": " + item.qty, customer.customer_id, "xml" );
                                 notifications.Add( new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_PRODUCT_ADDED, xproduct_barcode = item.barcode } );
                             }
                             #endregion
@@ -616,7 +618,7 @@ namespace MerchanterServer {
                                     item.notification_content = mail_title;
                                     if( db_helper.notification.UpdateNotifications( customer.customer_id, [ item ] ) ) {
                                         Console.WriteLine( "[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title + "]" );
-                                        db_helper.notification.LogToServer( thread_id, "NEW ORDER", mail_title + " => " + mail_body, customer.customer_id, "notification" );
+                                        db_helper.notification.LogToServer( thread_id, "new_order", mail_title + " => " + mail_body, customer.customer_id, "notification" );
                                     }
                                 }
                                 break;
@@ -665,7 +667,7 @@ namespace MerchanterServer {
                                         item.notification_content = mail_body;
                                         if( db_helper.notification.UpdateNotifications( customer.customer_id, [ item ] ) ) {
                                             Console.WriteLine( "[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title + "]" );
-                                            db_helper.notification.LogToServer( thread_id, "OUT OF STOCK PRODUCT SOLD", mail_title + " => " + mail_body, customer.customer_id, "notification" );
+                                            db_helper.notification.LogToServer( thread_id, "out_of_stock_product_sold", mail_title + " => " + mail_body, customer.customer_id, "notification" );
                                         }
                                     }
                                     selected_product = null;
@@ -713,7 +715,7 @@ namespace MerchanterServer {
                                         item.notification_content = mail_body;
                                         if( db_helper.notification.UpdateNotifications( customer.customer_id, [ item ] ) ) {
                                             Console.WriteLine( "[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title + "]" );
-                                            db_helper.notification.LogToServer( thread_id, "PRODUCT IN STOCK", mail_title + " => " + mail_body, customer.customer_id, "notification" );
+                                            db_helper.notification.LogToServer( thread_id, "product_in_stock", mail_title + " => " + mail_body, customer.customer_id, "notification" );
                                         }
                                     }
                                     selected_product = null;
@@ -761,7 +763,7 @@ namespace MerchanterServer {
                                         item.notification_content = mail_body;
                                         if( db_helper.notification.UpdateNotifications( customer.customer_id, [ item ] ) ) {
                                             Console.WriteLine( "[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title + "]" );
-                                            db_helper.notification.LogToServer( thread_id, "PRODUCT OUT OF STOCK", mail_title + " => " + mail_body, customer.customer_id, "notification" );
+                                            db_helper.notification.LogToServer( thread_id, "product_out_of_stock", mail_title + " => " + mail_body, customer.customer_id, "notification" );
                                         }
                                     }
                                     selected_product = null;
@@ -779,7 +781,7 @@ namespace MerchanterServer {
                                 item.notification_content = mail_title1;
                                 if( db_helper.notification.UpdateNotifications( customer.customer_id, [ item ] ) ) {
                                     Console.WriteLine( "[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title1 + "]" );
-                                    db_helper.notification.LogToServer( thread_id, "XML PRODUCT REMOVED", mail_title1 + " => " + mail_title1, customer.customer_id, "notification" );
+                                    db_helper.notification.LogToServer( thread_id, "xml_product_removed", mail_title1 + " => " + mail_title1, customer.customer_id, "notification" );
                                 }
                                 break;
 
@@ -819,7 +821,7 @@ namespace MerchanterServer {
                                             item.notification_content = mail_body;
                                             if( db_helper.notification.UpdateNotifications( customer.customer_id, [ item ] ) ) {
                                                 Console.WriteLine( "[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title + "]" );
-                                                db_helper.notification.LogToServer( thread_id, "XML PRICE CHANGED", mail_title + " => " + mail_body, customer.customer_id, "notification" );
+                                                db_helper.notification.LogToServer( thread_id, "xml_price_changed", mail_title + " => " + mail_body, customer.customer_id, "notification" );
                                             }
                                         }
                                         selected_product = null;
@@ -839,21 +841,21 @@ namespace MerchanterServer {
                             case Notification.NotificationTypes.PRODUCT_QTY_UPDATE_ERROR:
                                 break;
 
-                            case Notification.NotificationTypes.XML_QTY_CHANGED:
-                                item.is_notification_sent = true;
-                                item.notification_content = string.Format( "XML QTY CHANGED {0}", item.xproduct_barcode );
-                                if( db_helper.notification.UpdateNotifications( customer.customer_id, [ item ] ) ) {
-                                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + item.xproduct_barcode + "]" );
-                                    db_helper.notification.LogToServer( thread_id, "XML QTY CHANGED", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification" );
-                                }
-                                break;
-
                             case Notification.NotificationTypes.XML_SYNC_ERROR:
                                 item.is_notification_sent = true;
                                 item.notification_content = string.Format( "XML SYNC ERROR {0}", item.xproduct_barcode );
                                 if( db_helper.notification.UpdateNotifications( customer.customer_id, [ item ] ) ) {
                                     Console.WriteLine( "[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + item.xproduct_barcode + "]" );
-                                    db_helper.notification.LogToServer( thread_id, "XML SYNC ERROR", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification" );
+                                    db_helper.notification.LogToServer( thread_id, "xml_sync_error", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification" );
+                                }
+                                break;
+
+                            case Notification.NotificationTypes.XML_QTY_CHANGED:
+                                item.is_notification_sent = true;
+                                item.notification_content = string.Format( "XML QTY CHANGED {0}", item.xproduct_barcode );
+                                if( db_helper.notification.UpdateNotifications( customer.customer_id, [ item ] ) ) {
+                                    Console.WriteLine( "[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + item.xproduct_barcode + "]" );
+                                    db_helper.notification.LogToServer( thread_id, "xml_qty_changed", item.notification_content, customer.customer_id, "notification" );
                                 }
                                 break;
 
@@ -862,7 +864,7 @@ namespace MerchanterServer {
                                 item.notification_content = string.Format( "XML PRODUCT REMOVED BY USER {0}", item.xproduct_barcode );
                                 if( db_helper.notification.UpdateNotifications( customer.customer_id, [ item ] ) ) {
                                     Console.WriteLine( "[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + item.xproduct_barcode + "]" );
-                                    db_helper.notification.LogToServer( thread_id, "XML PRODUCT REMOVED BY USER", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification" );
+                                    db_helper.notification.LogToServer( thread_id, "xml_product_removed_by_user", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification" );
                                 }
                                 break;
 
@@ -871,7 +873,7 @@ namespace MerchanterServer {
                                 item.notification_content = string.Format( "XML PRODUCT REMOVED {0}", item.xproduct_barcode );
                                 if( db_helper.notification.UpdateNotifications( customer.customer_id, [ item ] ) ) {
                                     Console.WriteLine( "[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + item.xproduct_barcode + "]" );
-                                    db_helper.notification.LogToServer( thread_id, "XML SOURCE FAILED", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification" );
+                                    db_helper.notification.LogToServer( thread_id, "xml_product_removed", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification" );
                                 }
                                 break;
 
@@ -880,7 +882,7 @@ namespace MerchanterServer {
                                 item.notification_content = string.Format( "NEW INVOICE {0}", item.invoice_no );
                                 if( db_helper.notification.UpdateNotifications( customer.customer_id, [ item ] ) ) {
                                     Console.WriteLine( "[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + item.xproduct_barcode + "]" );
-                                    db_helper.notification.LogToServer( thread_id, "NEW INVOICE", item.notification_content + " => " + item.invoice_no, customer.customer_id, "notification" );
+                                    db_helper.notification.LogToServer( thread_id, "new_invoice", item.notification_content + " => " + item.invoice_no, customer.customer_id, "notification" );
                                 }
                                 break;
 
@@ -895,7 +897,7 @@ namespace MerchanterServer {
                                     item.notification_content = mail_title;
                                     if( db_helper.notification.UpdateNotifications( customer.customer_id, [ item ] ) ) {
                                         Console.WriteLine( "[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title + "]" );
-                                        db_helper.notification.LogToServer( thread_id, "ORDER COMPLETE", mail_title + " => " + mail_body, customer.customer_id, "notification" );
+                                        db_helper.notification.LogToServer( thread_id, "order_complete", mail_title + " => " + mail_body, customer.customer_id, "notification" );
                                     }
                                 }
                                 break;
@@ -911,7 +913,7 @@ namespace MerchanterServer {
                                     item.notification_content = mail_title;
                                     if( db_helper.notification.UpdateNotifications( customer.customer_id, [ item ] ) ) {
                                         Console.WriteLine( "[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title + "]" );
-                                        db_helper.notification.LogToServer( thread_id, "ORDER PROCESS", mail_title + " => " + mail_body, customer.customer_id, "notification" );
+                                        db_helper.notification.LogToServer( thread_id, "order_process", mail_title + " => " + mail_body, customer.customer_id, "notification" );
                                     }
                                 }
                                 break;
@@ -927,7 +929,7 @@ namespace MerchanterServer {
                                     item.notification_content = mail_title;
                                     if( db_helper.notification.UpdateNotifications( customer.customer_id, [ item ] ) ) {
                                         Console.WriteLine( "[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title + "]" );
-                                        db_helper.notification.LogToServer( thread_id, "ORDER SHIPPED", mail_title + " => " + mail_body, customer.customer_id, "notification" );
+                                        db_helper.notification.LogToServer( thread_id, "order_shipped", mail_title + " => " + mail_body, customer.customer_id, "notification" );
                                     }
                                 }
                                 break;
@@ -1180,19 +1182,22 @@ namespace MerchanterServer {
                                         #region Notify Product - PRODUCT_IN_STOCK, PRODUCT_OUT_OF_STOCK
                                         if( selected_product.total_qty <= 0 && item.total_qty > 0 ) {
                                             notifications.Add( new Notification() {
-                                                customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_IN_STOCK, product_sku = item.sku, xproduct_barcode = item.sources.Count > 1 ? item.barcode : null
+                                                customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_IN_STOCK, product_sku = item.sku, xproduct_barcode = item.sources.Count > 1 ? item.barcode : null, 
+                                                notification_content = Constants.MAGENTO2
                                             } );
                                         }
                                         if( selected_product.total_qty > 0 && item.total_qty <= 0 ) {
                                             notifications.Add( new Notification() {
-                                                customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_OUT_OF_STOCK, product_sku = item.sku, xproduct_barcode = item.sources.Count > 1 ? item.barcode : null
+                                                customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_OUT_OF_STOCK, product_sku = item.sku, xproduct_barcode = item.sources.Count > 1 ? item.barcode : null,
+                                                notification_content = Constants.MAGENTO2
                                             } );
                                         }
                                         #endregion
                                     }
                                     else {
                                         is_update = false;
-                                        notifications.Add( new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_QTY_UPDATE_ERROR, product_sku = item.sku } );
+                                        //TODO: Add error source as MAGENTO
+                                        notifications.Add( new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_QTY_UPDATE_ERROR, product_sku = item.sku, notification_content = Constants.MAGENTO2 } );
                                         db_helper.LogToServer( thread_id, "product_qty_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.total_qty.ToString() + " => " + item.total_qty.ToString(), customer.customer_id, "product" );
                                     }
                                 }
@@ -1207,7 +1212,7 @@ namespace MerchanterServer {
                                     }
                                     else {
                                         is_update = false;
-                                        notifications.Add( new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_PRICE_UPDATE_ERROR, product_sku = item.sku } );
+                                        notifications.Add( new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_PRICE_UPDATE_ERROR, product_sku = item.sku, notification_content = Constants.MAGENTO2 } );
                                         db_helper.LogToServer( thread_id, "product_price_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.price.ToString() + " => " + item.price.ToString(), customer.customer_id, "product" );
                                     }
                                 }
@@ -1219,7 +1224,7 @@ namespace MerchanterServer {
                                     }
                                     else {
                                         is_update = false;
-                                        notifications.Add( new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_SPECIAL_PRICE_UPDATE_ERROR, product_sku = item.sku } );
+                                        notifications.Add( new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_SPECIAL_PRICE_UPDATE_ERROR, product_sku = item.sku, notification_content = Constants.MAGENTO2 } );
                                         db_helper.LogToServer( thread_id, "product_special_price_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.special_price.ToString() + " => " + item.special_price.ToString(), customer.customer_id, "product" );
                                     }
                                 }
@@ -1236,7 +1241,7 @@ namespace MerchanterServer {
                                     }
                                     else {
                                         is_update = false;
-                                        notifications.Add( new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_CUSTOM_PRICE_UPDATE_ERROR, product_sku = item.sku } );
+                                        notifications.Add( new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_CUSTOM_PRICE_UPDATE_ERROR, product_sku = item.sku, notification_content = Constants.MAGENTO2 } );
                                         db_helper.LogToServer( thread_id, "product_custom_price_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.custom_price.ToString() + " => " + item.custom_price.ToString(), customer.customer_id, "product" );
                                     }
                                 }
@@ -1283,6 +1288,7 @@ namespace MerchanterServer {
                                     if( db_helper.InsertProducts( customer.customer_id, [ selected_product ], true ) ) {
                                         Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Sku:" + item.sku + " " + "inserted." );
                                         Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Sku:" + item.sku + " " + "inserted." );
+                                        db_helper.LogToServer( thread_id, "new_product", Helper.global.settings.company_name + " Sku:" + item.sku, customer.customer_id, "product" );
                                     }
                                 }
                             }

@@ -1,11 +1,11 @@
 ﻿
 public class M2_ProductStocks {
     public M2_ProductStock[] items { get; set; }
-    public Stock_Search_Criteria search_criteria { get; set; }
+    public M2_StockSearchCriteria search_criteria { get; set; }
     public int total_count { get; set; }
 }
 
-public class Stock_Search_Criteria {
+public class M2_StockSearchCriteria {
     public string mapper_interface_name { get; set; } = string.Empty;
     public object[] criteria_list { get; set; }
     public object[] filters { get; set; }

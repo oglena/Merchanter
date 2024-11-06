@@ -8,6 +8,6 @@ public class M2_AttributeSet {
 
 public class M2_AttributeSets {
     public List<M2_AttributeSet> items { get; set; }
-    public SearchCriteria search_criteria { get; set; }
+    public M2_SearchCriteria search_criteria { get; set; }
     public int total_count { get; set; }
 }
