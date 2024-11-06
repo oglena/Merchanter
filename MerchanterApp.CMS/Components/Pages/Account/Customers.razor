@@ -62,8 +62,8 @@
 								@(item.order_sync_status ? "Enabled" : "Disabled")
 							</td>
 							<td class="align-content-center">
-								@(item.notification_sync_status ? "Enabled" : "Disabled")&nbsp;&nbsp;
-								<a class="btn btn-outline-primary" href="@("Account/Customer/" + item.customer_id.ToString()+"/Notifications")">Show</a>
+								@(item.notification_sync_status ? "Enabled" : "Disabled")
+								@* &nbsp;&nbsp;<a class="btn btn-outline-primary" href="@("Account/Customer/" + item.customer_id.ToString()+"/Notifications")">Show</a> *@
 
 							</td>
 							<td class="align-content-center">

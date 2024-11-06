@@ -11,180 +11,182 @@
 
 @if (customers != null)
 {
-	<div class="container-fluid sticky-top-lg bg-dark text-light rounded-2 p-3">
-		<div class="row mt-3">
-			<div class="col-12 ps-2">
-				<h1>Customer Logs: @(!string.IsNullOrWhiteSpace(CID) && int.Parse(CID) > 0 ? customers.Where(x => x.customer_id == int.Parse(CID)).FirstOrDefault()?.user_name : "N/A") <button type="button" class="btn btn-primary" @onclick="RefreshLogs" disabled="@(is_refreshing)">Refresh Logs&nbsp;&nbsp;<span class='spinner-border spinner-border-sm @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button></h1>
-			</div>
-		</div>
-		@if (!string.IsNullOrWhiteSpace(@page_message))
-		{
-			<hr />
-			<span>@page_message</span>
-		}
-		<div class="row mt-3">
-			<div class="col-8 ps-2">
-				<div class="form-floating">
-					<select class="form-select text-start" aria-label="servers-select" @onchange="CustomerSelected">
-						<option value="0" selected>Select to Show Customer Logs...</option>
-						@foreach (var item in customers)
-						{
-							<option value="@item.customer_id" selected="@(item.customer_id == int.Parse(!string.IsNullOrWhiteSpace(CID) ? CID : "0"))">@item.user_name</option>
-						}
-					</select>
-					<label>Available Servers</label>
+		<div class="container-fluid sticky-top-lg bg-dark text-light rounded-2 p-3">
+			<div class="row mt-3">
+				<div class="col-12 ps-2">
+					<h1>Customer Logs: @(!string.IsNullOrWhiteSpace(CID) && int.Parse(CID) > 0 ? customers.Where(x => x.customer_id == int.Parse(CID)).FirstOrDefault()?.user_name : "N/A") <button type="button" class="btn btn-primary" @onclick="RefreshLogs" disabled="@(is_refreshing)">Refresh Logs&nbsp;&nbsp;<span class='spinner-border spinner-border-sm @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button></h1>
 				</div>
 			</div>
-			<div class="col-4 ps-2 align-content-center text-end">
+		@if (!string.IsNullOrWhiteSpace(@page_message))
+		{
+					<hr />
+					<span>@page_message</span>
+		}
+			<div class="row mt-3">
+				<div class="col-8 ps-2">
+					<div class="form-floating">
+						<select class="form-select text-start" aria-label="servers-select" @onchange="CustomerSelected">
+							<option value="0" selected>Select to Show Customer Logs...</option>
+						@foreach (var item in customers)
+						{
+									<option value="@item.customer_id" selected="@(item.customer_id == int.Parse(!string.IsNullOrWhiteSpace(CID) ? CID : "0"))">@item.user_name</option>
+						}
+						</select>
+						<label>Available Servers</label>
+					</div>
+				</div>
+				<div class="col-4 ps-2 align-content-center text-end">
 				@if (!string.IsNullOrWhiteSpace(CID) && int.Parse(CID) > 0)
 				{
-					<span class="badge text-bg-dark text-light">@currentPage of @pageCount page</span>
-					<button type="button" class="btn btn-primary btn-sm" @onclick="NextPage">Next</button>
-					<button type="button" class="btn btn-primary btn-sm" @onclick="PreviousPage">Previous</button>
+							<span class="badge text-bg-dark text-light">
+						@currentPage of @pageCount page
+							</span>
+							<button type="button" class="btn btn-primary btn-sm" @onclick="NextPage" disabled="@(is_refreshing)">@("<")</button>
+							<button type="button" class="btn btn-primary btn-sm" @onclick="PreviousPage" disabled="@(is_refreshing)">@(">")</button>
 				}
+				</div>
 			</div>
 		</div>
-	</div>
-	<hr />
-	<div class="container-fluid">
-		<div class="row mt-3">
-			<div class="col-12 table-overflow">
-				<table class="table table-striped table-hover w-auto">
-					<thead>
+		<hr />
+		<div class="container-fluid">
+			<div class="row mt-3">
+				<div class="col-12 table-overflow">
+					<table class="table table-striped table-hover w-auto">
+						<thead>
 						@if (!string.IsNullOrWhiteSpace(CID))
 						{
-							<tr class="border-1">
-								<td class="w-25">
-									<div class="form-floating">
-										<select class="form-select text-start" aria-label="servers-select" @onchange="FilterWorkerChanged">
-											<option value="0" selected='@(filtered_worker == null || filtered_worker == "0" ? true : false)'>Select Worker...</option>
-											<option value="main_thread" selected='@(filtered_worker == "main_thread" ? true : false)'>Main Thread</option>
-											<option value="customer" selected='@(filtered_worker == "customer" ? true : false)'>Customer</option>
-											<option value="helper_settings" selected='@(filtered_worker == "helper_settings" ? true : false)'>Helper Settings</option>
-											<option value="invoice" selected='@(filtered_worker == "invoice" ? true : false)'>Invoice</option>
-											<option value="notification" selected='@(filtered_worker == "notification" ? true : false)'>Notification</option>
-											<option value="order" selected='@(filtered_worker == "order" ? true : false)'>Order</option>
-											<option value="product" selected='@(filtered_worker == "product" ? true : false)'>Product</option>
-											<option value="shipment" selected='@(filtered_worker == "shipment" ? true : false)'>Shipment</option>
-											<option value="xml" selected='@(filtered_worker == "xml" ? true : false)'>XML</option>
-										</select>
-										<label>Worker</label>
-									</div>
-								</td>
-								<td class="w-25">
-									<div class="form-floating">
-										<select class="form-select text-start" aria-label="servers-select" @onchange="FilterTitleChanged">
-											<option value="0" selected='@(filtered_title == null || filtered_title == "0" ? true : false)'>Select Title...</option>
-											<option value="merchanter" selected='@(filtered_title == "merchanter" ? true : false)'>Thread</option>
-											<option value="error" selected='@(filtered_title == "error" ? true : false)'>Error</option>
-											<option value="friendly_error" selected='@(filtered_title == "friendly_error" ? true : false)'>Friendly Error</option>
-											<option value="helper_error" selected='@(filtered_title == "helper_error" ? true : false)'>Helper Error</option>
-											<option value="xml_product_removed" selected='@(filtered_title == "xml_product_removed" ? true : false)'>XML Product Removed</option>
-											<option value="xml_price_changed" selected='@(filtered_title == "xml_price_changed" ? true : false)'>XML Price Changed</option>
-											<option value="xml_qty_changed" selected='@(filtered_title == "xml_qty_changed" ? true : false)'>XML Qty Changed</option>
-											<option value="info" selected='@(filtered_title == "info" ? true : false)'>Info</option>
-											<option value="notification" selected='@(filtered_title == "notification" ? true : false)'>Notification</option>
-											<option value="new_order" selected='@(filtered_title == "new_order" ? true : false)'>New Order</option>
-											<option value="order_complete" selected='@(filtered_title == "order_complete" ? true : false)'>Order Complete</option>
-											<option value="order_process" selected='@(filtered_title == "order_process" ? true : false)'>Order Process</option>
-											<option value="order_processed" selected='@(filtered_title == "order_processed" ? true : false)'>Order Processed</option>
-											<option value="order_shipped" selected='@(filtered_title == "order_shipped" ? true : false)'>Order Shipped</option>
-											<option value="order_source_error" selected='@(filtered_title == "order_source_error" ? true : false)'>Order Source Error</option>
-											<option value="order_update_error" selected='@(filtered_title == "order_update_error" ? true : false)'>Order Update Error</option>
-											<option value="new_invoice" selected='@(filtered_title == "new_invoice" ? true : false)'>New Invoice</option>
-											<option value="shipment_error" selected='@(filtered_title == "shipment_error" ? true : false)'>Shipment Error</option>
-											<option value="product_in_stock" selected='@(filtered_title == "product_in_stock" ? true : false)'>Product in Stock</option>
-											<option value="product_out_of_stock" selected='@(filtered_title == "product_out_of_stock" ? true : false)'>Product out of Stock</option>
-											<option value="product_removed" selected='@(filtered_title == "product_removed" ? true : false)'>Product Removed</option>
-											<option value="product_custom_price_cannot_update" selected='@(filtered_title == "product_custom_price_cannot_update" ? true : false)'>Product Custom Price cannot Update</option>
-											<option value="product_custom_price_cannot_updated" selected='@(filtered_title == "product_custom_price_cannot_updated" ? true : false)'>Product Custom Price cannot Updated</option>
-											<option value="product_custom_price_updated" selected='@(filtered_title == "product_custom_price_updated" ? true : false)'>Product Custom Price Updated</option>
-											<option value="product_custom_price_update_error" selected='@(filtered_title == "product_custom_price_update_error" ? true : false)'>Product Custom Price Update Error</option>
-											<option value="product_price_updated" selected='@(filtered_title == "product_price_updated" ? true : false)'>Product Price Updated</option>
-											<option value="product_price_update_error" selected='@(filtered_title == "product_price_update_error" ? true : false)'>Product Price Update Error</option>
-											<option value="product_qty_updated" selected='@(filtered_title == "product_qty_updated" ? true : false)'>Product Qty Updated</option>
-											<option value="product_qty_update_error" selected='@(filtered_title == "product_qty_update_error" ? true : false)'>Product Qty Update Error</option>
-											<option value="product_special_price_updated" selected='@(filtered_title == "product_special_price_updated" ? true : false)'>Product Special Price Updated</option>
-											<option value="product_special_price_update_error" selected='@(filtered_title == "product_special_price_update_error" ? true : false)'>Product Special Price Update Error</option>
-											<option value="ftpupload" selected='@(filtered_title == "ftpupload" ? true : false)'>FTP Upload</option>
-											<option value="qp_mysqlupdate" selected='@(filtered_title == "qp_mysqlupdate" ? true : false)'>QP MySQL Update</option>
-										</select>
-										<label>Title</label>
-									</div>
-								</td>
-								<td class="w-25">
-									<div class="form-floating">
-										<input class="form-control" type="text" name="filter-message" @bind-value="@this.filtered_message" @bind-value:event="oninput"
-											   @onkeydown="FilterMessageChanged">
-										<label>Message</label>
-									</div>
-								</td>
-								<td class="w-25">
-									<div class="form-floating">
-										<select class="form-select text-start" aria-label="servers-select" @onchange="FilterDateChanged">
-											<option value="0" selected='@(filtered_date == 0 ? true : false)'>All Time...</option>
-											<option value="7" selected='@(filtered_date == 7 ? true : false)'>Weekly</option>
-											<option value="31" selected='@(filtered_date == 31 ? true : false)'>Monthly</option>
-										</select>
-										<label>Date</label>
-									</div>
-								</td>
-							</tr>
+									<tr class="border-1">
+										<td class="w-25">
+											<div class="form-floating">
+												<select class="form-select text-start" aria-label="servers-select" @onchange="FilterWorkerChanged">
+													<option value="0" selected='@(filtered_worker == null || filtered_worker == "0" ? true : false)'>Select Worker...</option>
+													<option value="main_thread" selected='@(filtered_worker == "main_thread" ? true : false)'>Main Thread</option>
+													<option value="customer" selected='@(filtered_worker == "customer" ? true : false)'>Customer</option>
+													<option value="helper_settings" selected='@(filtered_worker == "helper_settings" ? true : false)'>Helper Settings</option>
+													<option value="invoice" selected='@(filtered_worker == "invoice" ? true : false)'>Invoice</option>
+													<option value="notification" selected='@(filtered_worker == "notification" ? true : false)'>Notification</option>
+													<option value="order" selected='@(filtered_worker == "order" ? true : false)'>Order</option>
+													<option value="product" selected='@(filtered_worker == "product" ? true : false)'>Product</option>
+													<option value="shipment" selected='@(filtered_worker == "shipment" ? true : false)'>Shipment</option>
+													<option value="xml" selected='@(filtered_worker == "xml" ? true : false)'>XML</option>
+												</select>
+												<label>Worker</label>
+											</div>
+										</td>
+										<td class="w-25">
+											<div class="form-floating">
+												<select class="form-select text-start" aria-label="servers-select" @onchange="FilterTitleChanged">
+													<option value="0" selected='@(filtered_title == null || filtered_title == "0" ? true : false)'>Select Title...</option>
+													<option value="merchanter" selected='@(filtered_title == "merchanter" ? true : false)'>Thread</option>
+													<option value="error" selected='@(filtered_title == "error" ? true : false)'>Error</option>
+													<option value="friendly_error" selected='@(filtered_title == "friendly_error" ? true : false)'>Friendly Error</option>
+													<option value="helper_error" selected='@(filtered_title == "helper_error" ? true : false)'>Helper Error</option>
+													<option value="xml_product_removed" selected='@(filtered_title == "xml_product_removed" ? true : false)'>XML Product Removed</option>
+													<option value="xml_price_changed" selected='@(filtered_title == "xml_price_changed" ? true : false)'>XML Price Changed</option>
+													<option value="xml_qty_changed" selected='@(filtered_title == "xml_qty_changed" ? true : false)'>XML Qty Changed</option>
+													<option value="info" selected='@(filtered_title == "info" ? true : false)'>Info</option>
+													<option value="notification" selected='@(filtered_title == "notification" ? true : false)'>Notification</option>
+													<option value="new_order" selected='@(filtered_title == "new_order" ? true : false)'>New Order</option>
+													<option value="order_complete" selected='@(filtered_title == "order_complete" ? true : false)'>Order Complete</option>
+													<option value="order_process" selected='@(filtered_title == "order_process" ? true : false)'>Order Process</option>
+													<option value="order_processed" selected='@(filtered_title == "order_processed" ? true : false)'>Order Processed</option>
+													<option value="order_shipped" selected='@(filtered_title == "order_shipped" ? true : false)'>Order Shipped</option>
+													<option value="order_source_error" selected='@(filtered_title == "order_source_error" ? true : false)'>Order Source Error</option>
+													<option value="order_update_error" selected='@(filtered_title == "order_update_error" ? true : false)'>Order Update Error</option>
+													<option value="new_invoice" selected='@(filtered_title == "new_invoice" ? true : false)'>New Invoice</option>
+													<option value="shipment_error" selected='@(filtered_title == "shipment_error" ? true : false)'>Shipment Error</option>
+													<option value="product_in_stock" selected='@(filtered_title == "product_in_stock" ? true : false)'>Product in Stock</option>
+													<option value="product_out_of_stock" selected='@(filtered_title == "product_out_of_stock" ? true : false)'>Product out of Stock</option>
+													<option value="product_removed" selected='@(filtered_title == "product_removed" ? true : false)'>Product Removed</option>
+													<option value="product_custom_price_cannot_update" selected='@(filtered_title == "product_custom_price_cannot_update" ? true : false)'>Product Custom Price cannot Update</option>
+													<option value="product_custom_price_cannot_updated" selected='@(filtered_title == "product_custom_price_cannot_updated" ? true : false)'>Product Custom Price cannot Updated</option>
+													<option value="product_custom_price_updated" selected='@(filtered_title == "product_custom_price_updated" ? true : false)'>Product Custom Price Updated</option>
+													<option value="product_custom_price_update_error" selected='@(filtered_title == "product_custom_price_update_error" ? true : false)'>Product Custom Price Update Error</option>
+													<option value="product_price_updated" selected='@(filtered_title == "product_price_updated" ? true : false)'>Product Price Updated</option>
+													<option value="product_price_update_error" selected='@(filtered_title == "product_price_update_error" ? true : false)'>Product Price Update Error</option>
+													<option value="product_qty_updated" selected='@(filtered_title == "product_qty_updated" ? true : false)'>Product Qty Updated</option>
+													<option value="product_qty_update_error" selected='@(filtered_title == "product_qty_update_error" ? true : false)'>Product Qty Update Error</option>
+													<option value="product_special_price_updated" selected='@(filtered_title == "product_special_price_updated" ? true : false)'>Product Special Price Updated</option>
+													<option value="product_special_price_update_error" selected='@(filtered_title == "product_special_price_update_error" ? true : false)'>Product Special Price Update Error</option>
+													<option value="ftpupload" selected='@(filtered_title == "ftpupload" ? true : false)'>FTP Upload</option>
+													<option value="qp_mysqlupdate" selected='@(filtered_title == "qp_mysqlupdate" ? true : false)'>QP MySQL Update</option>
+												</select>
+												<label>Title</label>
+											</div>
+										</td>
+										<td class="w-25">
+											<div class="form-floating">
+												<input class="form-control" type="text" name="filter-message" @bind-value="@this.filtered_message" @bind-value:event="oninput"
+												@onkeydown="FilterMessageChanged">
+												<label>Message</label>
+											</div>
+										</td>
+										<td class="w-25">
+											<div class="form-floating">
+												<select class="form-select text-start" aria-label="servers-select" @onchange="FilterDateChanged">
+													<option value="0" selected='@(filtered_date == 0 ? true : false)'>All Time...</option>
+													<option value="7" selected='@(filtered_date == 7 ? true : false)'>Weekly</option>
+													<option value="31" selected='@(filtered_date == 31 ? true : false)'>Monthly</option>
+												</select>
+												<label>Date</label>
+											</div>
+										</td>
+									</tr>
 						}
-					</thead>
+						</thead>
 					@if (customer_logs.Count > 0)
 					{
-						<tbody class="table-group-divider">
+								<tbody class="table-group-divider">
 							@foreach (var item in customer_logs)
 							{
-								<tr>
-									<td class="align-content-center">
-										<span class='badge @(item.worker != "helper_instance" ? "text-bg-primary" : "text-bg-secondary")'>@item.worker</span>
-									</td>
-									<td class="align-content-center">
-										<span class='badge @(item.title == "thread" ? "text-bg-dark" : item.title.Contains("error") ? "text-bg-danger" : (item.title == "info" || item.title == "qp_mysqlupdate") ? "text-bg-info" : "text-bg-secondary")'>@item.title</span>
-									</td>
+											<tr>
+												<td class="align-content-center">
+													<span class='badge @(item.worker != "helper_instance" ? "text-bg-primary" : "text-bg-secondary")'>@item.worker</span>
+												</td>
+												<td class="align-content-center">
+													<span class='badge @(item.title == "thread" ? "text-bg-dark" : item.title.Contains("error") ? "text-bg-danger" : (item.title == "info" || item.title == "qp_mysqlupdate") ? "text-bg-info" : "text-bg-secondary")'>@item.title</span>
+												</td>
 									@if (item.worker == "notification")
 									{
-										<td class="align-content-center">
+														<td class="align-content-center">
 											@(item.message.Split("=>")[0])
-											<button type="button" class="btn btn-warning btn-sm" @onclick='() => Modal.Open(item.title,item.message.Split("=>")[0].Trim(),item.message.Split("=>")[1].Trim())'>Show</button>
-											<ModalComponent @ref="Modal"></ModalComponent>
-										</td>
+															<button type="button" class="btn btn-warning btn-sm" @onclick='() => Modal.Open(item.title,item.message.Split("=>")[0].Trim(),item.message.Split("=>")[1].Trim())'>Show</button>
+															<ModalComponent @ref="Modal"></ModalComponent>
+														</td>
 									}
 									else
 									{
-										<td class="align-content-center">
+														<td class="align-content-center">
 											@item.message
-										</td>
+														</td>
 									}
-									<td class="align-content-center">
+												<td class="align-content-center">
 										@item.update_date.ToString()
-									</td>
-								</tr>
+												</td>
+											</tr>
 							}
-						</tbody>
+								</tbody>
 					}
 					else
 					{
-						<tbody class="table-group-divider">
-							<tr>
-								<td class="text-center" colspan="4">
-									<span>No data.</span>
-								</td>
-							</tr>
-						</tbody>
+								<tbody class="table-group-divider">
+									<tr>
+										<td class="text-center" colspan="4">
+											<span>No data.</span>
+										</td>
+									</tr>
+								</tbody>
 					}
-				</table>
+					</table>
+				</div>
 			</div>
 		</div>
-	</div>
 }
 else
 {
-	<div class="container-fluid w-100">
-		<h3 class="text-center mt-5">@loading</h3>
-	</div>
+		<div class="container-fluid w-100">
+			<h3 class="text-center mt-5">@loading</h3>
+		</div>
 }
 
 @code {
@@ -194,7 +196,7 @@ else
 	List<Customer>? customers { get; set; }
 	private string loading = "...LOADING...";
 	private string page_message = "Logs not found for this customer.";
-	private int pageCount { get; set; } = 0;
+	private int pageCount { get; set; } = 1;
 	private int currentPage { get; set; } = 1;
 	private int pageItemsCount { get; set; } = 50;
 	private string? filtered_worker { get; set; } = "";
@@ -297,7 +299,7 @@ else
 			{
 				customer_logs = response.Data;
 				if (response.ApiFilter != null)
-					pageCount = response.ApiFilter.TotalCount.GetValueOrDefault();
+					pageCount = (response.ApiFilter.TotalCount.GetValueOrDefault() + pageItemsCount - 1) / pageItemsCount;
 
 				if (customer_logs != null && customer_logs.Count == 0)
 					page_message = "No servers working.";
@@ -393,9 +395,12 @@ else
 
 	private async Task PreviousPage()
 	{
-		currentPage += 1;
-		customer_logs.Clear();
-		await RefreshLogs();
+		if (currentPage != pageCount)
+		{
+			currentPage += 1;
+			customer_logs.Clear();
+			await RefreshLogs();
+		}
 	}
 
 	private async Task NextPage()
