@@ -1,17 +1,14 @@
-﻿using System.ComponentModel;
+﻿using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
-using System.Configuration;
-using System.Diagnostics.CodeAnalysis;
-using System.Text.Json.Serialization;
 
 namespace Merchanter.Classes {
     public class Customer {
-        [Required, IntegerValidator]
+        [Required]
         public int customer_id { get; set; }
         [Required]
         public string user_name { get; set; }
-        [Required, PasswordPropertyText, JsonIgnore]
-        public string password { get; set; }
+        //[JsonIgnore]
+        public string? password { get; set; }
         public bool status { get; set; } = true;
         public bool product_sync_status { get; set; } = false;
         public bool order_sync_status { get; set; } = false;

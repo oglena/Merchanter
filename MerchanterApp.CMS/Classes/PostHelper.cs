@@ -88,11 +88,9 @@ namespace MerchanterApp.CMS.Classes {
                         }
 
                     }
-                    return null;
+                    break;
                 case PostMethod.Delete:
-                    return null;
-                default:
-                    return null;
+                    break;
             }
             return model;
         }

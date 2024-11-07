@@ -12,20 +12,22 @@
 @inject IPostHelper PostHelper
 
 <PageTitle>Customer [@CID] | Merchanter</PageTitle>
-<div class="row mt-3 pb-2">
-	<div class="col-12 pb-2 bg-light rounded-3">
-		@if (customer != null && customer_id > 0)
-		{
-			<EditForm Model="customer" Context="formContext" class="container-fluid">
+@if (customer != null && customer_id > 0)
+{
+	<EditForm Model="customer" Context="formContext" class="container-fluid">
+		<div class="row mt-3 pb-2">
+			<div class="col-6 pb-2 bg-light rounded-3">
 				<div class="container-fluid">
 					<div class="row mt-3">
 						<div class="col-12 ps-2">
 							<h1>
 								Customer:&nbsp; @company_name &nbsp;&nbsp;&nbsp;
+								<button type="submit" class="btn btn-outline-primary" @onclick="@(() => RefreshCustomer())">Refresh</button>
+							</h1>
+							<h1>
 								<a href="@("Account/Customer/" + customer.customer_id.ToString() + "/Logs")" class="btn btn-primary">Logs</a>
 								@* <a href="@("Account/Customer/" + customer.customer_id.ToString() + "/Notifications")" class="btn btn-primary">Notifications</a> *@
 								<a href="@("Account/Customer/" + customer.customer_id.ToString() + "/Settings")" class="btn btn-primary">Settings</a>
-								<button type="submit" class="btn btn-outline-primary" @onclick="@(() => RefreshCustomer())">Refresh</button>
 								<button type="submit" class="btn btn-success" @onclick="@(() => SaveCustomer(customer))">Save</button>
 							</h1>
 						</div>
@@ -40,18 +42,18 @@
 
 				<div class="container-fluid">
 					<div class="row mt-3">
-						<div class="col-3 ps-2 mb-3">
+						<div class="col-6 ps-2 mb-3">
 							<label for="user_name" class="form-label">User Name</label>
 							<InputText type="text" class="form-control" placeholder="User Name cannot be empty!" @bind-Value="customer.user_name" />
 						</div>
-						<div class="col-3 ps-2 mb-3">
+						<div class="col-6 ps-2 mb-3">
 							<label for="password" class="form-label">Password</label>
-							<InputText type="text" class="form-control" placeholder="Password cannot be empty!" @bind-Value="customer.password" />
+							<InputText type="password" class="form-control" placeholder="Password cannot be empty!" @bind-Value="customer.password" />
+						</div>
+						@* <div class="col-3 ps-2 mb-3">
 						</div>
 						<div class="col-3 ps-2 mb-3">
-						</div>
-						<div class="col-3 ps-2 mb-3">
-						</div>
+						</div> *@
 					</div>
 					<div class="row mt-3">
 						<div class="col-12 ps-2 mb-3">
@@ -67,13 +69,13 @@
 								<thead>
 									<tr>
 										<th>
-											Worker Status
+											Sync Status
 										</th>
 										<th>
 											Period
 										</th>
 										<th>
-											Is Working
+											Working Status
 										</th>
 										<th>
 											Last Worked
@@ -181,16 +183,21 @@
 						</div>
 					</div>
 				</div>
-			</EditForm>
-		}
-		else
-		{
-			<div class="container-fluid mt-5">
-				<h3 class="text-center">@loading</h3>
+
+
 			</div>
-		}
+			<div class="col-6 pb-2 rounded-3">
+				<CustomerLogsComponent CID="@CID" />
+			</div>
+		</div>
+	</EditForm>
+}
+else
+{
+	<div class="container-fluid mt-5">
+		<h3 class="text-center">@loading</h3>
 	</div>
-</div>
+}
 @code {
 	[Parameter]
 	public string? CID { get; set; }
@@ -264,9 +271,10 @@
 			int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
 			if (admin_id > 0)
 			{
+				string json = JsonConvert.SerializeObject(_customer);
 				var response = await PostHelper.Request<Merchanter.Classes.Customer>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
 				Classes.PostHelper.PostMethod.Put,
-				"api/Customer/" + CID + "/SaveCustomer");
+				"api/Customer/" + CID + "/SaveCustomer", new StringContent(json, Encoding.UTF8, "application/json"));
 
 				if (response != null && response.Success && response.Data != null)
 				{
@@ -274,7 +282,7 @@
 					if (customer != null)
 					{
 						company_name = customer.user_name;
-						page_message = string.Empty;
+						page_message = "Customer saved. [" + DateTime.Now.ToString() + "]";
 					}
 					else
 						page_message = "Customer update fail.";

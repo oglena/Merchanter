@@ -130,6 +130,7 @@ namespace Merchanter {
                     c = new Customer {
                         customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
                         user_name = dataReader[ "user_name" ].ToString(),
+                        password = dataReader[ "password" ].ToString(),
                         status = Convert.ToBoolean( Convert.ToInt32( dataReader[ "status" ]?.ToString() ) ),
                         product_sync_status = Convert.ToBoolean( Convert.ToInt32( dataReader[ "product_sync_status" ].ToString() ) ),
                         order_sync_status = Convert.ToBoolean( Convert.ToInt32( dataReader[ "order_sync_status" ].ToString() ) ),
@@ -277,22 +278,21 @@ namespace Merchanter {
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_customer">Customer</param>
-        /// <param name="_with_working_parameters">With working parameters</param>
+        /// <param name="_with_parameters">With working parameters</param>
         /// <returns>[Error] returns 'null'</returns>
-        public Customer? SaveCustomer( int _customer_id, Customer _customer, bool _with_working_parameters = false ) {
+        public Customer? SaveCustomer( int _customer_id, Customer _customer, bool _with_parameters = true ) {
             try {
                 if( state != System.Data.ConnectionState.Open ) connection.Open();
                 object val; int inserted_id;
                 string _query = "START TRANSACTION;" +
-                    "UPDATE customer SET customer_id=LAST_INSERT_ID(@customer_id),user_name=@user_name,password=@password,status=@status,product_sync_status=@product_sync_status,order_sync_status=@order_sync_status,xml_sync_status=@xml_sync_status,invoice_sync_status=@invoice_sync_status,notification_sync_status=@notification_sync_status" +
+                    "UPDATE customer SET customer_id=LAST_INSERT_ID(@customer_id),user_name=@user_name,status=@status,product_sync_status=@product_sync_status,order_sync_status=@order_sync_status,xml_sync_status=@xml_sync_status,invoice_sync_status=@invoice_sync_status,notification_sync_status=@notification_sync_status" +
                     ",product_sync_timer=@product_sync_timer,order_sync_timer=@order_sync_timer,xml_sync_timer=@xml_sync_timer,invoice_sync_timer=@invoice_sync_timer,notification_sync_timer=@notification_sync_timer" +
-                    (_with_working_parameters ? ",is_productsync_working=@is_productsync_working,is_ordersync_working=@is_ordersync_working,is_xmlsync_working=@is_xmlsync_working,is_invoicesync_working=@is_invoicesync_working,is_notificationsync_working=@is_notificationsync_working" : "") + " WHERE customer_id=@customer_id;" +
+                    (_with_parameters ? ",password=@password,is_productsync_working=@is_productsync_working,is_ordersync_working=@is_ordersync_working,is_xmlsync_working=@is_xmlsync_working,is_invoicesync_working=@is_invoicesync_working,is_notificationsync_working=@is_notificationsync_working" : "") + " WHERE customer_id=@customer_id;" +
                     "SELECT LAST_INSERT_ID();" +
                     "COMMIT;";
                 MySqlCommand cmd = new MySqlCommand( _query, connection );
                 cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
                 cmd.Parameters.Add( new MySqlParameter( "user_name", _customer.user_name ) );
-                cmd.Parameters.Add( new MySqlParameter( "password", _customer.password ) );
                 cmd.Parameters.Add( new MySqlParameter( "status", _customer.status ) );
                 cmd.Parameters.Add( new MySqlParameter( "product_sync_status", _customer.product_sync_status ) );
                 cmd.Parameters.Add( new MySqlParameter( "order_sync_status", _customer.order_sync_status ) );
@@ -304,12 +304,13 @@ namespace Merchanter {
                 cmd.Parameters.Add( new MySqlParameter( "xml_sync_timer", _customer.xml_sync_timer ) );
                 cmd.Parameters.Add( new MySqlParameter( "invoice_sync_timer", _customer.invoice_sync_timer ) );
                 cmd.Parameters.Add( new MySqlParameter( "notification_sync_timer", _customer.notification_sync_timer ) );
-                if( _with_working_parameters ) {
+                if( _with_parameters ) {
                     cmd.Parameters.Add( new MySqlParameter( "is_productsync_working", _customer.is_productsync_working ) );
                     cmd.Parameters.Add( new MySqlParameter( "is_ordersync_working", _customer.is_ordersync_working ) );
                     cmd.Parameters.Add( new MySqlParameter( "is_xmlsync_working", _customer.is_xmlsync_working ) );
                     cmd.Parameters.Add( new MySqlParameter( "is_invoicesync_working", _customer.is_invoicesync_working ) );
                     cmd.Parameters.Add( new MySqlParameter( "is_notificationsync_working", _customer.is_notificationsync_working ) );
+                    cmd.Parameters.Add( new MySqlParameter( "password", _customer.password ) );
                 }
                 val = cmd.ExecuteScalar();
                 if( state == System.Data.ConnectionState.Open ) connection.Close();

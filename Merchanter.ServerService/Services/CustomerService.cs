@@ -1,6 +1,7 @@
 ﻿using Merchanter.Classes;
 using Merchanter.CustomerService.Repositories;
 using Merchanter.ServerService.Classes;
+using Merchanter.ServerService.Models;
 using Merchanter.ServerService.Repositories;
 
 namespace Merchanter.ServerService.Services {
@@ -8,7 +9,7 @@ namespace Merchanter.ServerService.Services {
         Task<Customer> GetCustomer( int _customer_id );
         Task<List<Log>> GetCustomerLogs( int _customer_id, ApiFilter _filters );
         Task<List<Notification>> GetCustomerNotifications( int _customer_id, ApiFilter _filters );
-        Task<Customer> SaveCustomer( int _customer_id, Customer _customer );
+        Task<Customer?> SaveCustomer( int _customer_id, Customer _customer );
         Task<List<Customer>> GetCustomers();
         Task<int> GetCustomerLogCount( int _customer_id );
         Task<int> GetCustomerLogCount( int _customer_id, ApiFilter _filters );
@@ -36,7 +37,7 @@ namespace Merchanter.ServerService.Services {
             return customerRepository.GetCustomerNotificationsById( _customer_id, _filters );
         }
 
-        public Task<Customer> SaveCustomer( int _customer_id, Customer _customer ) {
+        public Task<Customer?> SaveCustomer( int _customer_id, Customer _customer ) {
             return customerRepository.SaveCustomer( _customer_id, _customer );
         }
 

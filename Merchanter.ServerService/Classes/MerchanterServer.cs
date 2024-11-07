@@ -1,4 +1,5 @@
 ﻿using Merchanter.Classes;
+using Merchanter.ServerService.Models;
 
 namespace Merchanter.ServerService.Classes {
     public class MerchanterServer {

@@ -25,7 +25,7 @@ namespace Merchanter.ServerService.Controllers {
                     return NotFound();
                 }
             }
-            return Unauthorized();
+            return BadRequest( "Invalid customer ID." );
         }
 
         [HttpPost( "{CID}/GetCustomerLogs" )]
@@ -46,7 +46,7 @@ namespace Merchanter.ServerService.Controllers {
                 }
                 return StatusCode( 500 );
             }
-            return Unauthorized();
+            return BadRequest( "Invalid customer ID." );
         }
 
         [HttpPost( "{CID}/GetCustomerNotifications" )]
@@ -65,7 +65,7 @@ namespace Merchanter.ServerService.Controllers {
                 }
                 return StatusCode( 500 );
             }
-            return Unauthorized();
+            return BadRequest( "Invalid customer ID." );
         }
 
         [HttpGet( "GetCustomers" )]
@@ -82,18 +82,18 @@ namespace Merchanter.ServerService.Controllers {
 
         [HttpPut( "{CID}/SaveCustomer" )]
         [Authorize]
-        public async Task<ActionResult<BaseResponseModel<Customer>>> SaveCustomer( string CID, [FromBody] Customer _customer ) {
+        public async Task<ActionResult<BaseResponseModel<Customer?>>> SaveCustomer( string CID, [FromBody] Customer _customer ) {
             int customer_id;
             if( int.TryParse( CID, out customer_id ) && customer_id > 0 ) {
-                Customer customer = await customerService.SaveCustomer( customer_id, _customer );
+                Customer? customer = await customerService.SaveCustomer( customer_id, _customer );
                 if( customer != null ) {
                     return Ok( new BaseResponseModel<Customer>() { Success = customer != null, Data = customer ?? new(), ErrorMessage = customer != null ? "" : "Error -1" } );
                 }
                 else {
-                    return NotFound();
+                    return BadRequest( "Insert failed." );
                 }
             }
-            return Unauthorized();
+            return BadRequest( "Invalid customer ID." );
         }
     }
 }

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Management;
 using Microsoft.Extensions.Configuration;
 using Merchanter.Classes;
+using Merchanter.ServerService.Models;
 
 namespace Merchanter.ServerService.Repositories {
     public interface IServerRepository {
@@ -49,7 +50,7 @@ namespace Merchanter.ServerService.Repositories {
                         is_changed = true;
                     }
                     if( is_changed )
-                        merchanterService.helper.SaveCustomer( _customer_id, customer, true );
+                        merchanterService.helper.SaveCustomer( _customer_id, customer );
 
                     ProcessStartInfo process = new ProcessStartInfo();
                     process.WorkingDirectory = configuration[ "AppSettings:MerchanterServerFilePath" ];
