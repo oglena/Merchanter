@@ -1,8 +1,6 @@
 ﻿using Merchanter.Classes;
 using Merchanter.CustomerService.Repositories;
 using Merchanter.ServerService.Classes;
-using Merchanter.ServerService.Models;
-using Merchanter.ServerService.Repositories;
 
 namespace Merchanter.ServerService.Services {
     public interface ICustomerService {

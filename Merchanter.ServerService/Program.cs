@@ -65,6 +65,8 @@ builder.Services.AddScoped<IServerService, ServerService>();
 builder.Services.AddScoped<IServerRepository, ServerRepository>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
+builder.Services.AddScoped<ISettingsService, SettingsService>();
+builder.Services.AddScoped<ISettingsRepository, SettingsRepository>();
 
 // Add services to the container.
 builder.Services.AddProblemDetails();

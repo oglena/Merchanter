@@ -678,6 +678,7 @@ namespace Merchanter {
                         rate_EUR = Convert.ToDecimal( dataReader[ "rate_EUR" ].ToString() ),
                         daysto_ordersync = Convert.ToInt32( dataReader[ "daysto_ordersync" ].ToString() ),
                         daysto_invoicesync = Convert.ToInt32( dataReader[ "daysto_invoicesync" ].ToString() ),
+                        //is_barcode_required = Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_barcode_required" ].ToString() ) ),
                         xml_qty_addictive_enable = Convert.ToBoolean( Convert.ToInt32( dataReader[ "xml_qty_addictive_enable" ].ToString() ) )
                     };
                 }

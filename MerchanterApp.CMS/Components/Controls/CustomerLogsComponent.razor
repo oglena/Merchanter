@@ -3,7 +3,6 @@
 @using Newtonsoft.Json
 @using System.Text
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
-@inject IHttpClientFactory ClientFactory
 @inject NavigationManager navigationManager
 @inject IHttpContextAccessor HttpContextAccessor
 @inject ProtectedLocalStorage ProtectedLocalStorage
@@ -194,11 +193,11 @@ else
 	public string? CID { get; set; }
 	List<Log> customer_logs { get; set; } = new List<Log>();
 	List<Customer>? customers { get; set; }
-	private string loading = "...LOADING...";
+	private string loading = "...RELOADING...";
 	private string page_message = "Logs not found for this customer.";
 	private int pageCount { get; set; } = 1;
 	private int currentPage { get; set; } = 1;
-	private int pageItemsCount { get; set; } = 5;
+	private int pageItemsCount { get; set; } = 10;
 	private string? filtered_worker { get; set; } = "";
 	private string? filtered_message { get; set; } = string.Empty;
 	private string? filtered_title { get; set; } = "";
@@ -213,7 +212,9 @@ else
 		{
 			int customer_id = 0;
 			if (!string.IsNullOrWhiteSpace(CID) && int.TryParse(CID, out customer_id))
+			{
 				await SetSessionValueAsync("selected_customer_id", CID != null ? CID : "0");
+			}
 			else
 			{
 				await GetSessionValueAsync("selected_customer_id");

@@ -2,7 +2,6 @@
 @using System.Text.Json.Serialization
 @using Newtonsoft.Json
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
-@inject IHttpClientFactory ClientFactory
 @inject NavigationManager navigationManager
 @inject IHttpContextAccessor HttpContextAccessor
 @inject ProtectedLocalStorage ProtectedLocalStorage
@@ -119,9 +118,9 @@ else
 	private List<MerchanterServer> servers { get; set; } = new List<MerchanterServer>();
 	private List<Customer>? customers { get; set; }
 	private string loading = "...LOADING...";
-	private string customers_loading = "Loading Customers...";
+	private string customers_loading = "Loading All Servers...";
 	private string server_message = "";
-	private string page_message = "No servers working.";
+	private string page_message = "No servers working";
 	private bool is_refreshing { get; set; } = false;
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)

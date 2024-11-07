@@ -5,7 +5,6 @@
 @using System.Text.Json.Serialization
 @using Newtonsoft.Json
 @using System.Text
-@inject IHttpClientFactory ClientFactory
 @inject NavigationManager navigationManager
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IConfiguration configuration
@@ -14,183 +13,184 @@
 <PageTitle>Customer [@CID] | Merchanter</PageTitle>
 @if (customer != null && customer_id > 0)
 {
-	<EditForm Model="customer" Context="formContext" class="container-fluid">
-		<div class="row mt-3 pb-2">
-			<div class="col-6 pb-2 bg-light rounded-3">
-				<div class="container-fluid">
-					<div class="row mt-3">
-						<div class="col-12 ps-2">
-							<h1>
-								Customer:&nbsp; @company_name &nbsp;&nbsp;&nbsp;
-								<button type="submit" class="btn btn-outline-primary" @onclick="@(() => RefreshCustomer())">Refresh</button>
-							</h1>
-							<h1>
-								<a href="@("Account/Customer/" + customer.customer_id.ToString() + "/Logs")" class="btn btn-primary">Logs</a>
-								@* <a href="@("Account/Customer/" + customer.customer_id.ToString() + "/Notifications")" class="btn btn-primary">Notifications</a> *@
-								<a href="@("Account/Customer/" + customer.customer_id.ToString() + "/Settings")" class="btn btn-primary">Settings</a>
-								<button type="submit" class="btn btn-success" @onclick="@(() => SaveCustomer(customer))">Save</button>
-							</h1>
-						</div>
+	<div class="row mt-3 pb-2">
+		<div class="col-md-6 pb-2 bg-light rounded-3">
+			<EditForm Model="customer" Context="formContext" class="container-fluid">
+				<div class="row mt-3">
+					<div class="col-12 ps-2">
+						<h1>
+							Customer:&nbsp; @company_name &nbsp;&nbsp;&nbsp;
+							<button type="button" class="btn btn-outline-primary" @onclick="@(() => RefreshCustomer())" disabled="@(!can_refresh)">Refresh</button>
+						</h1>
+						<h1>
+							<button type="submit" class="btn btn-primary" @onclick="@(() => SetActiveTab("logs") )" disabled="@(logs_active)">Logs</button>
+							<button type="submit" class="btn btn-primary" @onclick="@(() => SetActiveTab("settings") )" disabled="@(settings_active)">Settings</button>
+							<button type="submit" class="btn btn-success" @onclick="@(() => SaveCustomer(customer))" disabled="@(!can_refresh)">Save Customer</button>
+						</h1>
 					</div>
 				</div>
 				@if (!string.IsNullOrWhiteSpace(@page_message))
 				{
 					<hr />
-					<span>@page_message</span>
+					<div class="alert alert-@(message_status)">@page_message</div>
 				}
 				<hr />
 
-				<div class="container-fluid">
-					<div class="row mt-3">
-						<div class="col-6 ps-2 mb-3">
-							<label for="user_name" class="form-label">User Name</label>
-							<InputText type="text" class="form-control" placeholder="User Name cannot be empty!" @bind-Value="customer.user_name" />
-						</div>
-						<div class="col-6 ps-2 mb-3">
-							<label for="password" class="form-label">Password</label>
-							<InputText type="password" class="form-control" placeholder="Password cannot be empty!" @bind-Value="customer.password" />
-						</div>
-						@* <div class="col-3 ps-2 mb-3">
+				<div class="row mt-3">
+					<div class="col-6 ps-2 mb-3">
+						<label for="user_name" class="form-label">User Name</label>
+						<InputText type="text" class="form-control" placeholder="User Name cannot be empty!" @bind-Value="customer.user_name" />
+					</div>
+					<div class="col-6 ps-2 mb-3">
+						<label for="password" class="form-label">Password</label>
+						<InputText type="password" class="form-control" placeholder="Password cannot be empty!" @bind-Value="customer.password" />
+					</div>
+					@* <div class="col-3 ps-2 mb-3">
 						</div>
 						<div class="col-3 ps-2 mb-3">
 						</div> *@
-					</div>
-					<div class="row mt-3">
-						<div class="col-12 ps-2 mb-3">
-							<div class="form-check form-switch">
-								<label class="form-check-label">&nbsp;Customer Status</label>
-								<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.status"></InputCheckbox>
-							</div>
-						</div>
-					</div>
-					<div class="row mt-3">
-						<div class="col-12 ps-2 mb-3 table-overflow">
-							<table class="table table-responsive table-hover">
-								<thead>
-									<tr>
-										<th>
-											Sync Status
-										</th>
-										<th>
-											Period
-										</th>
-										<th>
-											Working Status
-										</th>
-										<th>
-											Last Worked
-										</th>
-									</tr>
-								</thead>
-								<tbody class="table-group-divider">
-									<tr>
-										<td>
-											<div class="form-check form-switch mt-2">
-												<label class="form-check-label">&nbsp;Product Sync Status</label>
-												<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.product_sync_status"></InputCheckbox>
-											</div>
-										</td>
-										<td>
-											<InputNumber type="text" class="form-control" placeholder="Password cannot be empty!" @bind-Value="customer.product_sync_timer" />
-										</td>
-										<td>
-											<div class="form-check form-switch mt-2">
-												<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.is_productsync_working" disabled></InputCheckbox>
-											</div>
-										</td>
-										<td>
-											<InputDate Type="InputDateType.DateTimeLocal" class="form-control form-control-sm col-4" @bind-Value:format="dd/MM/yyyy hh:MM:ss" @bind-Value="customer.last_product_sync_date"></InputDate>
-										</td>
-									</tr>
-									<tr>
-										<td>
-											<div class="form-check form-switch mt-2">
-												<label class="form-check-label">&nbsp;Order Sync Status</label>
-												<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.order_sync_status"></InputCheckbox>
-											</div>
-										</td>
-										<td>
-											<InputNumber type="text" class="form-control" placeholder="Password cannot be empty!" @bind-Value="customer.order_sync_timer" />
-										</td>
-										<td>
-											<div class="form-check form-switch mt-2">
-												<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.is_ordersync_working" disabled></InputCheckbox>
-											</div>
-										</td>
-										<td>
-											<InputDate Type="InputDateType.DateTimeLocal" class="form-control form-control-sm col-4" format-value="yyyy-MM-dd hh:MM:ss" @bind-Value="customer.last_order_sync_date"></InputDate>
-										</td>
-									</tr>
-									<tr>
-										<td>
-											<div class="form-check form-switch mt-2">
-												<label class="form-check-label">&nbsp;Notification Sync Status</label>
-												<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.notification_sync_status"></InputCheckbox>
-											</div>
-										</td>
-										<td>
-											<InputNumber type="text" class="form-control" placeholder="Password cannot be empty!" @bind-Value="customer.notification_sync_timer" />
-										</td>
-										<td>
-											<div class="form-check form-switch mt-2">
-												<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.is_notificationsync_working" disabled></InputCheckbox>
-											</div>
-										</td>
-										<td>
-											<InputDate Type="InputDateType.DateTimeLocal" class="form-control form-control-sm col-4" format-value="yyyy-MM-dd hh:MM:ss" @bind-Value="customer.last_notification_sync_date"></InputDate>
-										</td>
-									</tr>
-									<tr>
-										<td>
-											<div class="form-check form-switch mt-2">
-												<label class="form-check-label">&nbsp;XML Sync Status</label>
-												<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.xml_sync_status"></InputCheckbox>
-											</div>
-										</td>
-										<td>
-											<InputNumber type="text" class="form-control" placeholder="Password cannot be empty!" @bind-Value="customer.xml_sync_timer" />
-										</td>
-										<td>
-											<div class="form-check form-switch mt-2">
-												<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.is_xmlsync_working" disabled></InputCheckbox>
-											</div>
-										</td>
-										<td>
-											<InputDate Type="InputDateType.DateTimeLocal" class="form-control form-control-sm col-4" format-value="yyyy-MM-dd hh:MM:ss" @bind-Value="customer.last_xml_sync_date"></InputDate>
-										</td>
-									</tr>
-									<tr>
-										<td>
-											<div class="form-check form-switch mt-2">
-												<label class="form-check-label">&nbsp;Invoice Sync Status</label>
-												<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.invoice_sync_status"></InputCheckbox>
-											</div>
-										</td>
-										<td>
-											<InputNumber type="text" class="form-control" placeholder="Password cannot be empty!" @bind-Value="customer.invoice_sync_timer" />
-										</td>
-										<td>
-											<div class="form-check form-switch mt-2">
-												<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.is_invoicesync_working" disabled></InputCheckbox>
-											</div>
-										</td>
-										<td>
-											<InputDate Type="InputDateType.DateTimeLocal" class="form-control form-control-sm col-4" format-value="yyyy-MM-dd hh:MM:ss" @bind-Value="customer.last_invoice_sync_date"></InputDate>
-										</td>
-									</tr>
-								</tbody>
-							</table>
+				</div>
+				<div class="row mt-3">
+					<div class="col-12 ps-2 mb-3">
+						<div class="form-check form-switch">
+							<label class="form-check-label">&nbsp;Customer Status</label>
+							<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.status"></InputCheckbox>
 						</div>
 					</div>
 				</div>
+				<div class="row mt-3">
+					<div class="col-12 mb-3 table-overflow">
+						<table class="table table-responsive table-hover">
+							<thead>
+								<tr>
+									<th>
+										Sync Status
+									</th>
+									<th>
+										Period
+									</th>
+									<th>
+										Working Status
+									</th>
+									<th>
+										Last Worked
+									</th>
+								</tr>
+							</thead>
+							<tbody class="table-group-divider">
+								<tr>
+									<td>
+										<div class="form-check form-switch mt-2">
+											<label class="form-check-label">&nbsp;Product Sync Status</label>
+											<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.product_sync_status"></InputCheckbox>
+										</div>
+									</td>
+									<td>
+										<InputNumber type="text" class="form-control" placeholder="Password cannot be empty!" @bind-Value="customer.product_sync_timer" />
+									</td>
+									<td>
+										<div class="form-check form-switch mt-2">
+											<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.is_productsync_working" disabled></InputCheckbox>
+										</div>
+									</td>
+									<td>
+										<InputDate Type="InputDateType.DateTimeLocal" class="form-control form-control-sm col-4" @bind-Value="customer.last_product_sync_date" disabled></InputDate>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										<div class="form-check form-switch mt-2">
+											<label class="form-check-label">&nbsp;Order Sync Status</label>
+											<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.order_sync_status"></InputCheckbox>
+										</div>
+									</td>
+									<td>
+										<InputNumber type="text" class="form-control" placeholder="Password cannot be empty!" @bind-Value="customer.order_sync_timer" />
+									</td>
+									<td>
+										<div class="form-check form-switch mt-2">
+											<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.is_ordersync_working" disabled></InputCheckbox>
+										</div>
+									</td>
+									<td>
+										<InputDate Type="InputDateType.DateTimeLocal" class="form-control form-control-sm col-4" @bind-Value="customer.last_order_sync_date" disabled></InputDate>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										<div class="form-check form-switch mt-2">
+											<label class="form-check-label">&nbsp;Notification Sync Status</label>
+											<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.notification_sync_status"></InputCheckbox>
+										</div>
+									</td>
+									<td>
+										<InputNumber type="text" class="form-control" placeholder="Password cannot be empty!" @bind-Value="customer.notification_sync_timer" />
+									</td>
+									<td>
+										<div class="form-check form-switch mt-2">
+											<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.is_notificationsync_working" disabled></InputCheckbox>
+										</div>
+									</td>
+									<td>
+										<InputDate Type="InputDateType.DateTimeLocal" class="form-control form-control-sm col-4" @bind-Value="customer.last_notification_sync_date" disabled></InputDate>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										<div class="form-check form-switch mt-2">
+											<label class="form-check-label">&nbsp;XML Sync Status</label>
+											<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.xml_sync_status"></InputCheckbox>
+										</div>
+									</td>
+									<td>
+										<InputNumber type="text" class="form-control" placeholder="Password cannot be empty!" @bind-Value="customer.xml_sync_timer" />
+									</td>
+									<td>
+										<div class="form-check form-switch mt-2">
+											<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.is_xmlsync_working" disabled></InputCheckbox>
+										</div>
+									</td>
+									<td>
+										<InputDate Type="InputDateType.DateTimeLocal" class="form-control form-control-sm col-4" @bind-Value="customer.last_xml_sync_date" disabled></InputDate>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										<div class="form-check form-switch mt-2">
+											<label class="form-check-label">&nbsp;Invoice Sync Status</label>
+											<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.invoice_sync_status"></InputCheckbox>
+										</div>
+									</td>
+									<td>
+										<InputNumber type="text" class="form-control" placeholder="Password cannot be empty!" @bind-Value="customer.invoice_sync_timer" />
+									</td>
+									<td>
+										<div class="form-check form-switch mt-2">
+											<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.is_invoicesync_working" disabled></InputCheckbox>
+										</div>
+									</td>
+									<td>
+										<InputDate Type="InputDateType.DateTimeLocal" class="form-control form-control-sm col-4" @bind-Value="customer.last_invoice_sync_date" disabled></InputDate>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
 
-
-			</div>
-			<div class="col-6 pb-2 rounded-3">
-				<CustomerLogsComponent CID="@CID" />
-			</div>
+			</EditForm>
 		</div>
-	</EditForm>
+		<div class="col-md-6 pb-2 rounded-3">
+			@if (logs_active)
+			{
+				<CustomerLogsComponent CID="@CID" />
+			}
+			else if (settings_active)
+			{
+				<CustomerSettingsComponent CID="@CID"></CustomerSettingsComponent>
+			}
+		</div>
+	</div>
 }
 else
 {
@@ -201,13 +201,16 @@ else
 @code {
 	[Parameter]
 	public string? CID { get; set; }
+	public Merchanter.Classes.Customer? customer { get; set; }
 	public int customer_id = 0;
 	public string company_name { get; set; } = "";
-
-	public Merchanter.Classes.Customer? customer { get; set; }
-
-	private string loading = "...LOADING...";
+	public bool logs_active = false;
+	private bool can_refresh = true;
+	private string loading = "...CUSTOMER LOADING...";
 	private string page_message = string.Empty;
+	private string message_status = "dark";
+	public bool settings_active = true;
+	public int delay = 2500;
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
@@ -252,17 +255,22 @@ else
 	{
 		if (int.TryParse(CID, out customer_id))
 		{
+			can_refresh = false;
 			customer = null;
 			StateHasChanged();
 			int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
 			if (admin_id > 0)
 			{
 				await LoadCustomer(customer_id);
+				message_status = "dark";
+				page_message = "Customer refreshed. [" + DateTime.Now.ToString() + "]";
+				await Task.Delay(delay);
+				page_message = string.Empty;
+				can_refresh = true;
 			}
 		}
-		StateHasChanged();
+		//StateHasChanged();
 	}
-
 
 	private async Task SaveCustomer(Merchanter.Classes.Customer _customer)
 	{
@@ -271,6 +279,7 @@ else
 			int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
 			if (admin_id > 0)
 			{
+				can_refresh = false;
 				string json = JsonConvert.SerializeObject(_customer);
 				var response = await PostHelper.Request<Merchanter.Classes.Customer>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
 				Classes.PostHelper.PostMethod.Put,
@@ -282,16 +291,42 @@ else
 					if (customer != null)
 					{
 						company_name = customer.user_name;
+						message_status = "success";
 						page_message = "Customer saved. [" + DateTime.Now.ToString() + "]";
+						await Task.Delay(delay);
+						page_message = string.Empty;
 					}
 					else
+					{
+						message_status = "danger";
 						page_message = "Customer update fail.";
+						await Task.Delay(delay);
+						page_message = string.Empty;
+					}
 				}
 				else
 				{
+					message_status = "danger";
 					page_message = "Merchanter Server ServiceAPI data response empty.";
+					await Task.Delay(delay);
+					page_message = string.Empty;
 				}
+				can_refresh = true;
 			}
+		}
+	}
+
+	private async void SetActiveTab(string tab)
+	{
+		if (tab == "logs")
+		{
+			logs_active = true;
+			settings_active = false;
+		}
+		else if (tab == "settings")
+		{
+			logs_active = false;
+			settings_active = true;
 		}
 	}
 }
