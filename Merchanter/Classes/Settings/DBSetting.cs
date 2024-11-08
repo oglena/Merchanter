@@ -13,7 +13,7 @@ namespace Merchanter.Classes.Settings {
         public string? description { get; set; }
         public DateTime update_date { get; set; }
 
-        #region Decryption Functions
+        #region Cryption Functions
         public static string Decrypt(string _text)
         {
             string decryption_key = "420A8A65DA156D24EE2A093277530142";
@@ -76,6 +76,32 @@ namespace Merchanter.Classes.Settings {
 
             // Return the decrypted data as a string
             return plainText;
+        }
+
+        public static string Encrypt( string plainText ) {
+            string encryption_key = "420A8A65DA156D24EE2A093277530142";
+            SHA256 mySHA256 = SHA256.Create();
+            byte[] key = mySHA256.ComputeHash( Encoding.UTF8.GetBytes( encryption_key ) );
+            byte[] iv = new byte[ 16 ] { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 };
+            return EncryptString( plainText, key, iv );
+        }
+
+        private static string EncryptString( string plainText, byte[] key, byte[] iv ) {
+            using( Aes encryptor = Aes.Create() ) {
+                encryptor.Mode = CipherMode.CBC;
+                encryptor.Key = key;
+                encryptor.IV = iv;
+
+                using( MemoryStream memoryStream = new MemoryStream() ) {
+                    using( ICryptoTransform aesEncryptor = encryptor.CreateEncryptor() )
+                    using( CryptoStream cryptoStream = new CryptoStream( memoryStream, aesEncryptor, CryptoStreamMode.Write ) ) {
+                        byte[] plainBytes = Encoding.UTF8.GetBytes( plainText );
+                        cryptoStream.Write( plainBytes, 0, plainBytes.Length );
+                        cryptoStream.FlushFinalBlock();
+                        return Convert.ToBase64String( memoryStream.ToArray() );
+                    }
+                }
+            }
         }
         #endregion
 

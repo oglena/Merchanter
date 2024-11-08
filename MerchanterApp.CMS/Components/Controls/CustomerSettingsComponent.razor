@@ -7,7 +7,14 @@
 
 @if (customer != null)
 {
-	<div class="container-fluid sticky-top-lg rounded-2 p-3">
+	<div class="container-fluid sticky-top-lg bg-dark text-light rounded-2 p-3">
+		<div class="row mt-3">
+			<div class="col-12 ps-2">
+				<h1>Settings: @(!string.IsNullOrWhiteSpace(CID) && int.Parse(CID) > 0 ? customer?.user_name : "N/A") </h1>
+			</div>
+		</div>
+	</div>
+	<div class="container-fluid">
 		@if (settings != null)
 		{
 			<div class="row mt-3">
@@ -27,7 +34,8 @@
 			</div>
 		}
 	</div>
-	<hr />
+
+	<AlertComponent page_message="@page_message" message_status="@message_status" />
 	<div class="container-fluid">
 		@if (settings != null)
 		{
@@ -74,13 +82,13 @@
 									<div class="col-6 ps-2 mb-3">
 										<div class="form-floating">
 											<InputNumber type="text" class="form-control" DisplayName="daysto_ordersync" @bind-Value="settings.settings.daysto_ordersync" />
-											<label for="user_name" class="form-label">Days to Order Sync</label>
+														<label for="daysto_ordersync" class="form-label">Days to Order Sync</label>
 										</div>
 									</div>
 									<div class="col-6 ps-2 mb-3">
 										<div class="form-floating">
 											<InputNumber type="text" class="form-control" DisplayName="daysto_invoicesync" @bind-Value="settings.settings.daysto_invoicesync" />
-											<label for="user_name" class="form-label">Days to Invoice Sync</label>
+											<label for="daysto_invoicesync" class="form-label">Days to Invoice Sync</label>
 										</div>
 									</div>
 								</div>
@@ -90,10 +98,9 @@
 										<label class="form-check-label">&nbsp;Xml Qty Additive Status</label>
 									</div>
 								</div>
-								<AlertComponent page_message="@page_message" message_status="@message_status" />
 								<div class="row mt-3">
 									<div class="col-12 ps-2 mb-3">
-										<button type="submit" class="btn btn-success float-end" @onclick="@(() => SaveGeneralSettings(settings.settings))" disabled="@(is_refreshing)">Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+										<button type="submit" class="btn btn-outline-success float-end" @onclick="@(() => SaveGeneralSettings(settings.settings))" disabled="@(is_refreshing)">Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
 									</div>
 								</div>
 							</div>
@@ -125,7 +132,7 @@
 							<div class="row mt-3">
 								<div class="col-12 ps-2 mb-3">
 									<div class="form-floating">
-										<InputText type="password" class="form-control" DisplayName="netopenx_password" @bind-Value="settings.netsis.netopenx_password" />
+										<InputText autocomplete="off" type="password" class="form-control" DisplayName="netopenx_password" @bind-Value="settings.netsis.netopenx_password" />
 										<label for="netopenx_password" class="form-label">Api Password</label>
 									</div>
 								</div>
@@ -133,7 +140,7 @@
 							<div class="row mt-3">
 								<div class="col-12 ps-2 mb-3">
 									<div class="form-floating">
-										<InputText type="password" class="form-control" DisplayName="dbname" @bind-Value="settings.netsis.dbname" />
+										<InputText autocomplete="off" type="password" class="form-control" DisplayName="dbname" @bind-Value="settings.netsis.dbname" />
 										<label for="dbname" class="form-label">Netsis DB Name</label>
 									</div>
 								</div>
@@ -141,7 +148,7 @@
 							<div class="row mt-3">
 								<div class="col-12 ps-2 mb-3">
 									<div class="form-floating">
-										<InputText type="password" class="form-control" DisplayName="dbuser" @bind-Value="settings.netsis.dbuser" />
+										<InputText autocomplete="off" type="password" class="form-control" DisplayName="dbuser" @bind-Value="settings.netsis.dbuser" />
 										<label for="dbuser" class="form-label">Netsis DB User</label>
 									</div>
 								</div>
@@ -149,7 +156,7 @@
 							<div class="row mt-3">
 								<div class="col-12 ps-2 mb-3">
 									<div class="form-floating">
-										<InputText type="password" class="form-control" DisplayName="dbpassword" @bind-Value="settings.netsis.dbpassword" />
+										<InputText autocomplete="off" type="password" class="form-control" DisplayName="dbpassword" @bind-Value="settings.netsis.dbpassword" />
 										<label for="dbpassword" class="form-label">Netsis DB Password</label>
 									</div>
 								</div>
@@ -334,6 +341,11 @@
 									</div>
 								</div>
 							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<button type="submit" class="btn btn-outline-success float-end" @onclick="@(() => SaveNetsisSettings(settings.netsis))" disabled="@(is_refreshing)">Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+								</div>
+							</div>
 						</EditForm>
 					</div>
 				</div>
@@ -354,7 +366,7 @@
 							<div class="row mt-3">
 								<div class="col-12 ps-2 mb-3">
 									<div class="form-floating">
-										<InputText type="password" class="form-control" DisplayName="token" @bind-Value="settings.magento.token" />
+										<InputText autocomplete="off" type="password" class="form-control" DisplayName="token" @bind-Value="settings.magento.token" />
 										<label for="token" class="form-label">Api Token</label>
 									</div>
 								</div>
@@ -439,6 +451,11 @@
 									</div>
 								</div>
 							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<button type="submit" class="btn btn-outline-success float-end" @onclick="@(() => SaveMagentoSettings(settings.magento))" disabled="@(is_refreshing)">Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+								</div>
+							</div>
 						</EditForm>
 					</div>
 				</div>
@@ -467,9 +484,14 @@
 							<div class="row mt-3">
 								<div class="col-12 ps-2 mb-3">
 									<div class="form-floating">
-										<InputText type="password" class="form-control" DisplayName="api_password" @bind-Value="settings.entegra.api_password" />
+										<InputText autocomplete="off" type="password" class="form-control" DisplayName="api_password" @bind-Value="settings.entegra.api_password" />
 										<label for="api_password" class="form-label">Api Url</label>
 									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<button type="submit" class="btn btn-outline-success float-end" @onclick="@(() => SaveEntegraSettings(settings.entegra))" disabled="@(is_refreshing)">Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
 								</div>
 							</div>
 						</EditForm>
@@ -480,7 +502,66 @@
 			{
 				<div class="row mt-3">
 					<div class="col-md-12 pb-2 bg-light rounded-3">
-						5
+						<EditForm Model="settings.entegra" class="container-fluid">
+							<ul class="nav nav-tabs" role="tablist">
+								<li class="nav-item" role="presentation">
+									<a class="nav-link active" id="tab-yurtici" data-bs-toggle="tab" href="#tab-yurtici-panel" role="tab" aria-controls="tab-yurtici-panel" aria-selected="true">Yurtiçi Kargo</a>
+								</li>
+								<li class="nav-item" role="presentation">
+									<a class="nav-link" id="tab-mng" data-bs-toggle="tab" href="#tab-mng-panel" role="tab" aria-controls="tab-mng-panel" aria-selected="false">MNG Kargo</a>
+								</li>
+								<li class="nav-item" role="presentation">
+									<a class="nav-link" id="tab-aras" data-bs-toggle="tab" href="#tab-aras-panel" role="tab" aria-controls="tab-aras-panel" aria-selected="false">Aras Kargo</a>
+								</li>
+							</ul>
+							<div class="tab-content">
+								<div class="tab-pane active" id="tab-yurtici-panel" role="tabpanel" aria-labelledby="tab-yurtici">
+									<div class="row mt-3">
+										<div class="form-check form-switch mt-2 ms-3">
+											<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="settings.shipment.yurtici_kargo"></InputCheckbox>
+											<label class="form-check-label">&nbsp;Yurtici Kargo Active ?</label>
+										</div>
+									</div>
+									<div class="row mt-3">
+										<div class="col-12 ps-2 mb-3">
+											<div class="form-floating">
+												<InputText type="text" class="form-control" DisplayName="yurtici_kargo_user_name" @bind-Value="settings.shipment.yurtici_kargo_user_name" />
+												<label for="yurtici_kargo_user_name" class="form-label">Yurtici Kargo User Name</label>
+											</div>
+										</div>
+									</div>
+									<div class="row mt-3">
+										<div class="col-12 ps-2 mb-3">
+											<div class="form-floating">
+												<InputText autocomplete="off" type="password" class="form-control" DisplayName="yurtici_kargo_password" @bind-Value="settings.shipment.yurtici_kargo_password" />
+												<label for="yurtici_kargo_password" class="form-label">Yurtici Kargo Password</label>
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="tab-pane" id="tab-mng-panel" role="tabpanel" aria-labelledby="tab-mng">
+									<div class="row mt-3">
+										<div class="form-check form-switch mt-2 ms-3">
+											<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="settings.shipment.mng_kargo"></InputCheckbox>
+											<label class="form-check-label">&nbsp;MNG Kargo Active ?</label>
+										</div>
+									</div>
+								</div>
+								<div class="tab-pane" id="tab-aras-panel" role="tabpanel" aria-labelledby="tab-aras">
+									<div class="row mt-3">
+										<div class="form-check form-switch mt-2 ms-3">
+											<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="settings.shipment.aras_kargo"></InputCheckbox>
+											<label class="form-check-label">&nbsp;Aras Kargo Active ?</label>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<button type="submit" class="btn btn-outline-success float-end" @onclick="@(() => SaveShipmentSettings(settings.shipment))" disabled="@(is_refreshing)">Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+								</div>
+							</div>
+						</EditForm>
 					</div>
 				</div>
 			}
@@ -584,12 +665,12 @@ else
 				if (response != null && response.Success && response.Data != null)
 				{
 					settings.settings = response.Data;
-					page_message = "General Settings saved. [" + DateTime.Now.ToString() + "]";
+					page_message = "General settings saved. [" + DateTime.Now.ToString() + "]";
 					message_status = "success";
 				}
 				else
 				{
-					page_message = "General Settings save failed. [" + DateTime.Now.ToString() + "]";
+					page_message = "General settings save failed. [" + DateTime.Now.ToString() + "]";
 					message_status = "danger";
 				}
 				is_refreshing = false;
@@ -597,8 +678,122 @@ else
 		}
 	}
 
-	private async void CloseButton()
+	public async Task SaveEntegraSettings(SettingsEntegra _settings)
 	{
-		page_message = string.Empty;
+		if (settings != null && int.TryParse(CID, out int customer_id))
+		{
+			int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
+			if (admin_id > 0)
+			{
+				is_refreshing = true;
+				string json = JsonConvert.SerializeObject(_settings);
+				var response = await PostHelper.Request<SettingsEntegra>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+					Classes.PostHelper.PostMethod.Put,
+					"api/Settings/" + CID + "/SaveEntegraSettings",
+					new StringContent(json, Encoding.UTF8, "application/json"));
+
+				if (response != null && response.Success && response.Data != null)
+				{
+					settings.entegra = response.Data;
+					page_message = "Entegra settings saved. [" + DateTime.Now.ToString() + "]";
+					message_status = "success";
+				}
+				else
+				{
+					page_message = "Entegra settings save failed. [" + DateTime.Now.ToString() + "]";
+					message_status = "danger";
+				}
+				is_refreshing = false;
+			}
+		}
+	}
+
+	public async Task SaveMagentoSettings(SettingsMagento _settings)
+	{
+		if (settings != null && int.TryParse(CID, out int customer_id))
+		{
+			int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
+			if (admin_id > 0)
+			{
+				is_refreshing = true;
+				string json = JsonConvert.SerializeObject(_settings);
+				var response = await PostHelper.Request<SettingsMagento>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+					Classes.PostHelper.PostMethod.Put,
+					"api/Settings/" + CID + "/SaveMagentoSettings",
+					new StringContent(json, Encoding.UTF8, "application/json"));
+
+				if (response != null && response.Success && response.Data != null)
+				{
+					settings.magento = response.Data;
+					page_message = "Magento settings saved. [" + DateTime.Now.ToString() + "]";
+					message_status = "success";
+				}
+				else
+				{
+					page_message = "Magento settings save failed. [" + DateTime.Now.ToString() + "]";
+					message_status = "danger";
+				}
+				is_refreshing = false;
+			}
+		}
+	}
+
+	public async Task SaveNetsisSettings(SettingsNetsis _settings)
+	{
+		if (settings != null && int.TryParse(CID, out int customer_id))
+		{
+			int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
+			if (admin_id > 0)
+			{
+				is_refreshing = true;
+				string json = JsonConvert.SerializeObject(_settings);
+				var response = await PostHelper.Request<SettingsNetsis>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+					Classes.PostHelper.PostMethod.Put,
+					"api/Settings/" + CID + "/SaveNetsisSettings",
+					new StringContent(json, Encoding.UTF8, "application/json"));
+
+				if (response != null && response.Success && response.Data != null)
+				{
+					settings.netsis = response.Data;
+					page_message = "Netsis settings saved. [" + DateTime.Now.ToString() + "]";
+					message_status = "success";
+				}
+				else
+				{
+					page_message = "Netsis settings save failed. [" + DateTime.Now.ToString() + "]";
+					message_status = "danger";
+				}
+				is_refreshing = false;
+			}
+		}
+	}
+
+	public async Task SaveShipmentSettings(SettingsShipment _settings)
+	{
+		if (settings != null && int.TryParse(CID, out int customer_id))
+		{
+			int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
+			if (admin_id > 0)
+			{
+				is_refreshing = true;
+				string json = JsonConvert.SerializeObject(_settings);
+				var response = await PostHelper.Request<SettingsShipment>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+					Classes.PostHelper.PostMethod.Put,
+					"api/Settings/" + CID + "/SaveShipmentSettings",
+					new StringContent(json, Encoding.UTF8, "application/json"));
+				if (response != null && response.Success && response.Data != null)
+				{
+					settings.shipment = response.Data;
+					page_message = "Shipment settings saved. [" + DateTime.Now.ToString() + "]";
+					message_status = "success";
+				}
+				else
+				{
+					page_message = "Shipment settings save failed. [" + DateTime.Now.ToString() + "]";
+					message_status = "danger";
+				}
+				is_refreshing = false;
+			}
+		}
 	}
 }

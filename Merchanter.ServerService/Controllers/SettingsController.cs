@@ -46,5 +46,77 @@ namespace Merchanter.ServerService.Controllers {
             }
             return BadRequest( "Invalid customer ID." );
         }
+
+        [HttpPut( "{CID}/SaveEntegraSettings" )]
+        [Authorize]
+        public async Task<ActionResult<BaseResponseModel<SettingsEntegra>>> SaveEntegraSettings( string CID, [FromBody] SettingsEntegra _settings ) {
+            int customer_id;
+            if( int.TryParse( CID, out customer_id ) && customer_id > 0 ) {
+                if( await settingsService.SaveEntegraSettings( customer_id, _settings ) ) {
+                    var saved_settings = settingsService.GetCustomerSettings( customer_id ).Result.entegra;
+                    if( saved_settings != null ) {
+                        return Ok( new BaseResponseModel<SettingsEntegra>() { Success = true, Data = saved_settings, ErrorMessage = "" } );
+                    }
+                }
+                else {
+                    return Ok( new BaseResponseModel<SettingsEntegra>() { Success = false, Data = null, ErrorMessage = "Error saving entegra settings." } );
+                }
+            }
+            return BadRequest( "Invalid customer ID." );
+        }
+
+        [HttpPut( "{CID}/SaveMagentoSettings" )]
+        [Authorize]
+        public async Task<ActionResult<BaseResponseModel<SettingsMagento>>> SaveMagentoSettings( string CID, [FromBody] SettingsMagento _settings ) {
+            int customer_id;
+            if( int.TryParse( CID, out customer_id ) && customer_id > 0 ) {
+                if( await settingsService.SaveMagentoSettings( customer_id, _settings ) ) {
+                    var saved_settings = settingsService.GetCustomerSettings( customer_id ).Result.magento;
+                    if( saved_settings != null ) {
+                        return Ok( new BaseResponseModel<SettingsMagento>() { Success = true, Data = saved_settings, ErrorMessage = "" } );
+                    }
+                }
+                else {
+                    return Ok( new BaseResponseModel<SettingsMagento>() { Success = false, Data = null, ErrorMessage = "Error saving magento settings." } );
+                }
+            }
+            return BadRequest( "Invalid customer ID." );
+        }
+
+        [HttpPut( "{CID}/SaveNetsisSettings" )]
+        [Authorize]
+        public async Task<ActionResult<BaseResponseModel<SettingsNetsis>>> SaveNetsisSettings( string CID, [FromBody] SettingsNetsis _settings ) {
+            int customer_id;
+            if( int.TryParse( CID, out customer_id ) && customer_id > 0 ) {
+                if( await settingsService.SaveNetsisSettings( customer_id, _settings ) ) {
+                    var saved_settings = settingsService.GetCustomerSettings( customer_id ).Result.netsis;
+                    if( saved_settings != null ) {
+                        return Ok( new BaseResponseModel<SettingsNetsis>() { Success = true, Data = saved_settings, ErrorMessage = "" } );
+                    }
+                }
+                else {
+                    return Ok( new BaseResponseModel<SettingsNetsis>() { Success = false, Data = null, ErrorMessage = "Error saving netsis settings." } );
+                }
+            }
+            return BadRequest( "Invalid customer ID." );
+        }
+
+        [HttpPut( "{CID}/SaveShipmentSettings" )]
+        [Authorize]
+        public async Task<ActionResult<BaseResponseModel<SettingsShipment>>> SaveShipmentSettings( string CID, [FromBody] SettingsShipment _settings ) {
+            int customer_id;
+            if( int.TryParse( CID, out customer_id ) && customer_id > 0 ) {
+                if( await settingsService.SaveShipmentSettings( customer_id, _settings ) ) {
+                    var saved_settings = settingsService.GetCustomerSettings( customer_id ).Result.shipment;
+                    if( saved_settings != null ) {
+                        return Ok( new BaseResponseModel<SettingsShipment>() { Success = true, Data = saved_settings, ErrorMessage = "" } );
+                    }
+                }
+                else {
+                    return Ok( new BaseResponseModel<SettingsShipment>() { Success = false, Data = null, ErrorMessage = "Error saving shipment settings." } );
+                }
+            }
+            return BadRequest( "Invalid customer ID." );
+        }
     }
 }

@@ -515,15 +515,12 @@ namespace Merchanter {
                         cmd.Parameters.Add( new MySqlParameter( "value", _value ) );
                         cmd.Parameters.Add( new MySqlParameter( "update_date", DateTime.Now ) );
 
-                        int value = cmd.ExecuteNonQuery();
+                        int val = cmd.ExecuteNonQuery();
 
                         if( state == System.Data.ConnectionState.Open )
                             this.CloseConnection();
 
-                        if( value > 0 )
-                            return true;
-                        else
-                            return false;
+                        return val > 0;
                     }
                 return false;
             }
@@ -534,7 +531,7 @@ namespace Merchanter {
         }
 
         /// <summary>
-        /// Saves the setting to the database
+        /// Saves the customer settings to the database
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_settings">Settings General</param>
@@ -557,9 +554,148 @@ namespace Merchanter {
                 val = cmd.ExecuteNonQuery();
                 if( state == System.Data.ConnectionState.Open ) connection.Close();
 
-                if( val > 0 )
-                    return true;
-                else return false;
+                return val > 0;
+            }
+            catch( Exception ex ) {
+                OnError( ex.ToString() );
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Saves the entegra settings to the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_settings">Settings Entegra</param>
+        /// <returns>[No change] or [Error] returns 'false'</returns>
+        public bool SaveEntegraSettings( int _customer_id, SettingsEntegra _settings ) {
+            try {
+                int val = 0;
+                string _query = "UPDATE settings_entegra SET api_url=@api_url,api_username=@api_username,api_password=@api_password WHERE customer_id=@customer_id";
+                MySqlCommand cmd = new MySqlCommand( _query, connection );
+                cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+                cmd.Parameters.Add( new MySqlParameter( "api_url", _settings.api_url ) );
+                cmd.Parameters.Add( new MySqlParameter( "api_username", _settings.api_username ) );
+                cmd.Parameters.Add( new MySqlParameter( "api_password", !string.IsNullOrWhiteSpace( _settings.api_password ) ? DBSetting.Encrypt( _settings.api_password ) : string.Empty ) );
+
+                if( state != System.Data.ConnectionState.Open ) connection.Open();
+                val = cmd.ExecuteNonQuery();
+                if( state == System.Data.ConnectionState.Open ) connection.Close();
+
+                return val > 0;
+            }
+            catch( Exception ex ) {
+                OnError( ex.ToString() );
+                return false;
+            }
+        }
+
+        public bool SaveShipmentSettings( int _customer_id, SettingsShipment _settings ) {
+            try {
+                int val = 0;
+                string _query = "UPDATE settings_shipment SET yurtici_kargo=@yurtici_kargo,mng_kargo=@mng_kargo,aras_kargo=@aras_kargo,yurtici_kargo_user_name=@yurtici_kargo_user_name,yurtici_kargo_password=@yurtici_kargo_password WHERE customer_id=@customer_id";
+                MySqlCommand cmd = new MySqlCommand( _query, connection );
+                cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+                cmd.Parameters.Add( new MySqlParameter( "yurtici_kargo", _settings.yurtici_kargo ) );
+                cmd.Parameters.Add( new MySqlParameter( "mng_kargo", _settings.mng_kargo ) );
+                cmd.Parameters.Add( new MySqlParameter( "aras_kargo", _settings.aras_kargo ) );
+                cmd.Parameters.Add( new MySqlParameter( "yurtici_kargo_user_name", _settings.yurtici_kargo_user_name ) );
+                cmd.Parameters.Add( new MySqlParameter( "yurtici_kargo_password", !string.IsNullOrWhiteSpace( _settings.yurtici_kargo_password ) ? DBSetting.Encrypt( _settings.yurtici_kargo_password ) : string.Empty ) );
+                if( state != System.Data.ConnectionState.Open ) connection.Open();
+                val = cmd.ExecuteNonQuery();
+                if( state == System.Data.ConnectionState.Open ) connection.Close();
+                return val > 0;
+            }
+            catch( Exception ex ) {
+                OnError( ex.ToString() );
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Saves the magento settings to the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_settings">Settings Magento</param>
+        /// <returns>[No change] or [Error] returns 'false'</returns>
+        public bool SaveMagentoSettings( int _customer_id, SettingsMagento _settings ) {
+            try {
+                int val = 0;
+                string _query = "UPDATE settings_magento SET base_url=@base_url,token=@token,root_category_id=@root_category_id,order_processing_comment=@order_processing_comment,barcode_attribute_code=@barcode_attribute_code,brand_attribute_code=@brand_attribute_code,is_xml_enabled_attribute_code=@is_xml_enabled_attribute_code,xml_sources_attribute_code=@xml_sources_attribute_code,customer_tc_no_attribute_code=@customer_tc_no_attribute_code,customer_firma_ismi_attribute_code=@customer_firma_ismi_attribute_code,customer_firma_vergidairesi_attribute_code=@customer_firma_vergidairesi_attribute_code,customer_firma_vergino_attribute_code=@customer_firma_vergino_attribute_code WHERE customer_id=@customer_id";
+                MySqlCommand cmd = new MySqlCommand( _query, connection );
+                cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+                cmd.Parameters.Add( new MySqlParameter( "base_url", _settings.base_url ) );
+                cmd.Parameters.Add( new MySqlParameter( "token", !string.IsNullOrWhiteSpace( _settings.token ) ? DBSetting.Encrypt( _settings.token ) : string.Empty ) );
+                cmd.Parameters.Add( new MySqlParameter( "root_category_id", _settings.root_category_id ) );
+                cmd.Parameters.Add( new MySqlParameter( "order_processing_comment", _settings.order_processing_comment ) );
+                cmd.Parameters.Add( new MySqlParameter( "barcode_attribute_code", _settings.barcode_attribute_code ) );
+                cmd.Parameters.Add( new MySqlParameter( "brand_attribute_code", _settings.brand_attribute_code ) );
+                cmd.Parameters.Add( new MySqlParameter( "is_xml_enabled_attribute_code", _settings.is_xml_enabled_attribute_code ) );
+                cmd.Parameters.Add( new MySqlParameter( "xml_sources_attribute_code", _settings.xml_sources_attribute_code ) );
+                cmd.Parameters.Add( new MySqlParameter( "customer_tc_no_attribute_code", _settings.customer_tc_no_attribute_code ) );
+                cmd.Parameters.Add( new MySqlParameter( "customer_firma_ismi_attribute_code", _settings.customer_firma_ismi_attribute_code ) );
+                cmd.Parameters.Add( new MySqlParameter( "customer_firma_vergidairesi_attribute_code", _settings.customer_firma_vergidairesi_attribute_code ) );
+                cmd.Parameters.Add( new MySqlParameter( "customer_firma_vergino_attribute_code", _settings.customer_firma_vergino_attribute_code ) );
+
+                if( state != System.Data.ConnectionState.Open ) connection.Open();
+                val = cmd.ExecuteNonQuery();
+                if( state == System.Data.ConnectionState.Open ) connection.Close();
+
+                return val > 0;
+            }
+            catch( Exception ex ) {
+                OnError( ex.ToString() );
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Saves the netsis settings to the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_settings">Settings Netsis</param>
+        /// <returns>[No change] or [Error] returns 'false'</returns>
+        public bool SaveNetsisSettings( int _customer_id, SettingsNetsis _settings ) {
+            try {
+                int val = 0;
+                string _query = "UPDATE settings_netsis SET rest_url=@rest_url,netopenx_user=@netopenx_user,netopenx_password=@netopenx_password,dbname=@dbname,dbuser=@dbuser,dbpassword=@dbpassword,belgeonek_musterisiparisi=@belgeonek_musterisiparisi,siparis_carionek=@siparis_carionek,cari_siparis_grupkodu=@cari_siparis_grupkodu,sipari_caritip=@sipari_caritip,siparis_muhasebekodu=@siparis_muhasebekodu,siparis_kdvdahilmi=@siparis_kdvdahilmi,siparis_subekodu=@siparis_subekodu,siparis_depokodu=@siparis_depokodu,siparis_kargo_sku=@siparis_kargo_sku,siparis_taksitkomisyon_sku=@siparis_taksitkomisyon_sku,is_rewrite_siparis=@is_rewrite_siparis,ebelge_dizayn_earsiv=@ebelge_dizayn_earsiv,ebelge_dizayn_efatura=@ebelge_dizayn_efatura,ebelge_klasorismi=@ebelge_klasorismi,efatura_belge_onek=@efatura_belge_onek,earsiv_belge_onek=@earsiv_belge_onek,fatura_cari_gruplari=@fatura_cari_gruplari,siparis_kod2=@siparis_kod2,siparis_cyedek1=@siparis_cyedek1,siparis_ekack15=@siparis_ekack15,siparis_ekack10=@siparis_ekack10,siparis_ekack11=@siparis_ekack11,siparis_ekack4=@siparis_ekack4 WHERE customer_id=@customer_id";
+                MySqlCommand cmd = new MySqlCommand( _query, connection );
+                cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+                cmd.Parameters.Add( new MySqlParameter( "rest_url", _settings.rest_url ) );
+                cmd.Parameters.Add( new MySqlParameter( "netopenx_user", _settings.netopenx_user ) );
+                cmd.Parameters.Add( new MySqlParameter( "netopenx_password", !string.IsNullOrWhiteSpace( _settings.netopenx_password ) ? DBSetting.Encrypt( _settings.netopenx_password ) : string.Empty ) );
+                cmd.Parameters.Add( new MySqlParameter( "dbname", _settings.dbname ) );
+                cmd.Parameters.Add( new MySqlParameter( "dbuser", _settings.dbuser ) ); //TODO: Add encrypt
+                cmd.Parameters.Add( new MySqlParameter( "dbpassword", !string.IsNullOrWhiteSpace( _settings.dbpassword ) ? DBSetting.Encrypt( _settings.dbpassword ) : string.Empty ) );
+                cmd.Parameters.Add( new MySqlParameter( "belgeonek_musterisiparisi", _settings.belgeonek_musterisiparisi ) );
+                cmd.Parameters.Add( new MySqlParameter( "siparis_carionek", _settings.siparis_carionek ) );
+                cmd.Parameters.Add( new MySqlParameter( "cari_siparis_grupkodu", _settings.cari_siparis_grupkodu ) );
+                cmd.Parameters.Add( new MySqlParameter( "sipari_caritip", _settings.sipari_caritip ) );
+                cmd.Parameters.Add( new MySqlParameter( "siparis_muhasebekodu", _settings.siparis_muhasebekodu ) );
+                cmd.Parameters.Add( new MySqlParameter( "siparis_kdvdahilmi", _settings.siparis_kdvdahilmi ) );
+                cmd.Parameters.Add( new MySqlParameter( "siparis_subekodu", _settings.siparis_subekodu ) );
+                cmd.Parameters.Add( new MySqlParameter( "siparis_depokodu", _settings.siparis_depokodu ) );
+                cmd.Parameters.Add( new MySqlParameter( "siparis_kargo_sku", _settings.siparis_kargo_sku ) );
+                cmd.Parameters.Add( new MySqlParameter( "siparis_taksitkomisyon_sku", _settings.siparis_taksitkomisyon_sku ) );
+                cmd.Parameters.Add( new MySqlParameter( "is_rewrite_siparis", _settings.is_rewrite_siparis ) );
+                cmd.Parameters.Add( new MySqlParameter( "ebelge_dizayn_earsiv", _settings.ebelge_dizayn_earsiv ) );
+                cmd.Parameters.Add( new MySqlParameter( "ebelge_dizayn_efatura", _settings.ebelge_dizayn_efatura ) );
+                cmd.Parameters.Add( new MySqlParameter( "ebelge_klasorismi", _settings.ebelge_klasorismi ) );
+                cmd.Parameters.Add( new MySqlParameter( "efatura_belge_onek", _settings.efatura_belge_onek ) );
+                cmd.Parameters.Add( new MySqlParameter( "earsiv_belge_onek", _settings.earsiv_belge_onek ) );
+                cmd.Parameters.Add( new MySqlParameter( "fatura_cari_gruplari", _settings.fatura_cari_gruplari ) );
+                cmd.Parameters.Add( new MySqlParameter( "siparis_kod2", _settings.siparis_kod2 ) );
+                cmd.Parameters.Add( new MySqlParameter( "siparis_cyedek1", _settings.siparis_cyedek1 ) );
+                cmd.Parameters.Add( new MySqlParameter( "siparis_ekack15", _settings.siparis_ekack15 ) );
+                cmd.Parameters.Add( new MySqlParameter( "siparis_ekack10", _settings.siparis_ekack10 ) );
+                cmd.Parameters.Add( new MySqlParameter( "siparis_ekack11", _settings.siparis_ekack11 ) );
+                cmd.Parameters.Add( new MySqlParameter( "siparis_ekack4", _settings.siparis_ekack4 ) );
+
+                if( state != System.Data.ConnectionState.Open ) connection.Open();
+                val = cmd.ExecuteNonQuery();
+                if( state == System.Data.ConnectionState.Open ) connection.Close();
+
+                return val > 0;
             }
             catch( Exception ex ) {
                 OnError( ex.ToString() );
@@ -636,12 +772,12 @@ namespace Merchanter {
                 };
 
                 #region Decyrption
-                Helper.global.shipment.yurtici_kargo_password = DBSetting.Decrypt( Helper.global.shipment.yurtici_kargo_password );
-                Helper.global.magento.token = DBSetting.Decrypt( Helper.global.magento.token );
-                Helper.global.entegra.api_password = DBSetting.Decrypt( Helper.global.entegra.api_password );
-                Helper.global.netsis.netopenx_password = DBSetting.Decrypt( Helper.global.netsis.netopenx_password );
-                Helper.global.netsis.dbpassword = DBSetting.Decrypt( Helper.global.netsis.dbpassword );
-                Helper.global.erp_invoice_ftp_password = DBSetting.Decrypt( Helper.global.erp_invoice_ftp_password );
+                Helper.global.shipment.yurtici_kargo_password = !string.IsNullOrWhiteSpace( Helper.global.shipment.yurtici_kargo_password ) ? DBSetting.Decrypt( Helper.global.shipment.yurtici_kargo_password ) : string.Empty;
+                Helper.global.magento.token = !string.IsNullOrWhiteSpace( Helper.global.magento.token ) ? DBSetting.Decrypt( Helper.global.magento.token ) : string.Empty;
+                Helper.global.entegra.api_password = !string.IsNullOrWhiteSpace( Helper.global.entegra.api_password ) ? DBSetting.Decrypt( Helper.global.entegra.api_password ) : string.Empty;
+                Helper.global.netsis.netopenx_password = !string.IsNullOrWhiteSpace( Helper.global.netsis.netopenx_password ) ? DBSetting.Decrypt( Helper.global.netsis.netopenx_password ) : string.Empty;
+                Helper.global.netsis.dbpassword = !string.IsNullOrWhiteSpace( Helper.global.netsis.dbpassword ) ? DBSetting.Decrypt( Helper.global.netsis.dbpassword ) : string.Empty;
+                Helper.global.erp_invoice_ftp_password = !string.IsNullOrWhiteSpace( Helper.global.erp_invoice_ftp_password ) ? DBSetting.Decrypt( Helper.global.erp_invoice_ftp_password ) : string.Empty;
 
                 #endregion
 

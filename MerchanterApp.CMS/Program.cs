@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder( args );
 builder.Services.AddDataProtection()
-    .PersistKeysToFileSystem( new DirectoryInfo( builder.Environment.ContentRootPath + "\\keys" ) )
+    .PersistKeysToFileSystem( new DirectoryInfo( builder.Environment.ContentRootPath + @"\keys" ) )
     .SetApplicationName( "MerchanterApp.CMS" )
     .SetDefaultKeyLifetime( TimeSpan.FromDays( 90 ) );
 

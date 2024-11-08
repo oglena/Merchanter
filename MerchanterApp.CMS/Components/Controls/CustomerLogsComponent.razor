@@ -10,46 +10,81 @@
 
 @if (customers != null)
 {
-	<div class="container-fluid sticky-top-lg bg-dark text-light rounded-2 p-3">
-		<div class="row mt-3">
-			<div class="col-12 ps-2">
-				<h1>Customer Logs: @(!string.IsNullOrWhiteSpace(CID) && int.Parse(CID) > 0 ? customers.Where(x => x.customer_id == int.Parse(CID)).FirstOrDefault()?.user_name : "N/A") <button type="button" class="btn btn-primary" @onclick="RefreshLogs" disabled="@(is_refreshing)">Refresh&nbsp;&nbsp;<span class='spinner-border spinner-border-sm @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button></h1>
-			</div>
-		</div>
-		@if (!string.IsNullOrWhiteSpace(@page_message))
-		{
-			<hr />
-			<span>@page_message</span>
-		}
-		<div class="row mt-3">
-			<div class="col-8 ps-2">
-				<div class="form-floating">
-					<select class="form-select text-start" aria-label="servers-select" @onchange="CustomerSelected">
-						<option value="0" selected>Select to Show Customer Logs...</option>
-						@foreach (var item in customers)
-						{
-							<option value="@item.customer_id" selected="@(item.customer_id == int.Parse(!string.IsNullOrWhiteSpace(CID) ? CID : "0"))">@item.user_name</option>
-						}
-					</select>
-					<label>Available Servers</label>
+	@if (show_customer_select)
+	{
+		<div class="container-fluid sticky-top-lg bg-dark text-light rounded-2 p-3">
+			<div class="row mt-3">
+				<div class="col-12 ps-2">
+					<h1>
+						Logs: @(!string.IsNullOrWhiteSpace(CID) && int.Parse(CID) > 0 ? customers.Where(x => x.customer_id == int.Parse(CID)).FirstOrDefault()?.user_name : "N/A")
+						<button type="button" class="btn btn-primary" @onclick="RefreshLogs" disabled="@(is_refreshing)">Refresh&nbsp;&nbsp;<span class='spinner-border spinner-border-sm @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+					</h1>
 				</div>
 			</div>
-			<div class="col-4 ps-2 align-content-center text-end">
-				@if (!string.IsNullOrWhiteSpace(CID) && int.Parse(CID) > 0)
-				{
-					<span class="badge text-bg-dark text-light">
-						@currentPage of @pageCount page
-					</span>
-					<button type="button" class="btn btn-primary btn-sm" @onclick="NextPage" disabled="@(is_refreshing)">@("<")</button>
-					<button type="button" class="btn btn-primary btn-sm" @onclick="PreviousPage" disabled="@(is_refreshing)">@(">")</button>
-				}
+			@if (!string.IsNullOrWhiteSpace(@page_message))
+			{
+				<hr />
+				<span>@page_message</span>
+			}
+			<div class="row mt-3">
+				<div class="col-12 ps-2">
+					<div class="form-floating">
+						<select class="form-select text-start" aria-label="servers-select" @onchange="CustomerSelected">
+							<option value="0" selected>Select to Show Customer Logs...</option>
+							@foreach (var item in customers)
+							{
+								<option value="@item.customer_id" selected="@(item.customer_id == int.Parse(!string.IsNullOrWhiteSpace(CID) ? CID : "0"))">@item.user_name</option>
+							}
+						</select>
+						<label>Available Servers</label>
+					</div>
+				</div>
 			</div>
 		</div>
-	</div>
-	<hr />
+		<hr />
+	}
+	else
+	{
+		<div class="container-fluid sticky-top-lg bg-dark text-light rounded-2 p-3">
+			<div class="row mt-3">
+				<div class="col-12 ps-2">
+					<h1>
+						Logs: @(!string.IsNullOrWhiteSpace(CID) && int.Parse(CID) > 0 ? customers.Where(x => x.customer_id == int.Parse(CID)).FirstOrDefault()?.user_name : "N/A")
+						<button type="button" class="btn btn-primary" @onclick="RefreshLogs" disabled="@(is_refreshing)">Refresh&nbsp;&nbsp;<span class='spinner-border spinner-border-sm @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+					</h1>
+				</div>
+			</div>
+		</div>
+	}
 	<div class="container-fluid">
 		<div class="row mt-3">
-			<div class="col-12 table-overflow">
+			@if (!string.IsNullOrWhiteSpace(CID) && int.Parse(CID) > 0)
+			{
+				<nav class="d-flex align-items-center justify-content-between bg-dark text-light rounded-2 mb-3">
+					<ul class="pagination my-2">
+						<li class="page-item">
+							@currentPage of @pageCount page
+						</li>
+					</ul>
+					<ul class="pagination my-2">
+						<li class="page-item">
+							<select class="form-select border-0 rounded-0 rounded-start" @onchange="PageCountChanged">
+								<option value="10" selected="@(pageItemsCount == 10 ? true : false)">10</option>
+								<option value="50" selected="@(pageItemsCount == 50 ? true : false)">50</option>
+								<option value="100" selected="@(pageItemsCount == 100 ? true : false)">100</option>
+								<option value="500" selected="@(pageItemsCount == 500 ? true : false)">500</option>
+							</select>
+						</li>
+						<li class="page-item rounded-0 @(is_refreshing ? "disabled" : (currentPage == 1 ? "disabled" : ""))">
+							<button type="button" class="page-link border-0 h-100" @onclick="NextPage" disabled="@(is_refreshing)">Previous</button>
+						</li>
+						<li class="page-item rounded-0 rounded-end @(is_refreshing ? "disabled" : (currentPage == pageCount ? "disabled" : ""))">
+							<button type="button" class="page-link border-0 h-100" @onclick="PreviousPage" disabled="@(is_refreshing)">Next</button>
+						</li>
+					</ul>
+				</nav>
+			}
+			<div class="col-12 table-overflow p-0">
 				<table class="table table-striped table-hover w-100">
 					<thead>
 						@if (!string.IsNullOrWhiteSpace(CID))
@@ -191,13 +226,15 @@ else
 @code {
 	[Parameter]
 	public string? CID { get; set; }
+	[Parameter]
+	public bool show_customer_select { get; set; } = true;
 	List<Log> customer_logs { get; set; } = new List<Log>();
 	List<Customer>? customers { get; set; }
 	private string loading = "Loading...";
 	private string page_message = "Logs not found for this customer.";
 	private int pageCount { get; set; } = 1;
 	private int currentPage { get; set; } = 1;
-	private int pageItemsCount { get; set; } = 50;
+	private int pageItemsCount { get; set; } = 10;
 	private string? filtered_worker { get; set; } = "";
 	private string? filtered_message { get; set; } = string.Empty;
 	private string? filtered_title { get; set; } = "";
@@ -228,6 +265,7 @@ else
 				await GetSessionValueAsync("filtered_message");
 				await GetSessionValueAsync("filtered_title");
 				await GetSessionValueAsync("filtered_date");
+				await GetSessionValueAsync("filtered_pagecount");
 				await LoadCustomerLogs(customer_id);
 			}
 			else
@@ -237,6 +275,7 @@ else
 				await SetSessionValueAsync("filtered_message", string.Empty);
 				await SetSessionValueAsync("filtered_title", string.Empty);
 				await SetSessionValueAsync("filtered_date", string.Empty);
+				await SetSessionValueAsync("filtered_pagecount", string.Empty);
 				customer_logs.Clear();
 				StateHasChanged();
 			}
@@ -323,6 +362,7 @@ else
 		{
 			CID = e.Value.ToString();
 			await SetSessionValueAsync("selected_customer_id", CID != null ? CID : "0");
+			currentPage = 1;
 			await RefreshLogs();
 		}
 	}
@@ -333,7 +373,20 @@ else
 		{
 			filtered_worker = e.Value.ToString();
 			await SetSessionValueAsync("filtered_worker", filtered_worker != null ? filtered_worker : string.Empty);
+			currentPage = 1;
 			await RefreshLogs();
+		}
+	}
+
+	protected async Task PageCountChanged(ChangeEventArgs e)
+	{
+		if (e.Value != null)
+		{
+			pageItemsCount = int.TryParse(e.Value.ToString(), out int pic) ? pic : 10;
+			await SetSessionValueAsync("filtered_pagecount", pageItemsCount.ToString());
+			currentPage = 1;
+			await RefreshLogs();
+
 		}
 	}
 
@@ -343,6 +396,7 @@ else
 		{
 			filtered_title = e.Value.ToString();
 			await SetSessionValueAsync("filtered_title", filtered_title != null ? filtered_title : string.Empty);
+			currentPage = 1;
 			await RefreshLogs();
 		}
 	}
@@ -353,6 +407,7 @@ else
 		{
 			filtered_date = int.TryParse(e.Value.ToString(), out int selected_date) ? selected_date : 0;
 			await SetSessionValueAsync("filtered_date", filtered_date.ToString());
+			currentPage = 1;
 			await RefreshLogs();
 		}
 	}
@@ -363,10 +418,9 @@ else
 		if (e != null)
 			if (e.Code == "Enter" || e.Code == "NumpadEnter")
 			{
-				//if( !string.IsNullOrWhiteSpace( searchparam ) ) {
 				await SetSessionValueAsync("filtered_message", search);
+				currentPage = 1;
 				await RefreshLogs();
-				//}
 			}
 	}
 
@@ -446,6 +500,12 @@ else
 			if (result.Success)
 				filtered_message = result.Value;
 		}
+		if (_session == "filtered_pagecount")
+		{
+			var result = await ProtectedLocalStorage.GetAsync<string>("filtered_pagecount");
+			if (result.Success)
+				pageItemsCount = int.TryParse(result.Value, out int pc) ? pc : 10;
+		}
 	}
 
 	async Task SetSessionValueAsync(string _session, string _value)
@@ -469,6 +529,10 @@ else
 		if (_session == "filtered_message")
 		{
 			await ProtectedLocalStorage.SetAsync("filtered_message", _value);
+		}
+		if (_session == "filtered_pagecount")
+		{
+			await ProtectedLocalStorage.SetAsync("filtered_pagecount", _value);
 		}
 	}
 }

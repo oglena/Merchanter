@@ -11,11 +11,14 @@
 <div class="container-fluid bg-dark text-light rounded-2 p-3">
 	<div class="row mt-3">
 		<div class="col-12 ps-2">
-			<h1>Working Servers&nbsp;&nbsp;&nbsp;<button type="button" class="btn btn-primary" @onclick="RefreshServers" disabled="@is_refreshing">Refresh&nbsp;&nbsp;<span class="spinner-border spinner-border-sm @(is_refreshing ? "" : "d-none")" aria-hidden="true"></span></button></h1>
+			<h1>
+				Servers&nbsp;&nbsp;&nbsp;
+				<button type="button" class="btn btn-primary" @onclick="RefreshServers" disabled="@is_refreshing">Refresh&nbsp;&nbsp;<span class="spinner-border spinner-border-sm @(is_refreshing ? "" : "d-none")" aria-hidden="true"></span></button>
+			</h1>
 		</div>
 		<div class="col-12 ps-2 pb-2">
-			<span>Working Servers: <span class="badge rounded-pill text-bg-primary">@(servers != null ? servers.Count.ToString() : "0")</span></span>&nbsp&nbsp&nbsp;&nbsp
-			<span>Active Customers: <span class="badge rounded-pill text-bg-primary">@(customers != null ? customers.Count.ToString() : "0")</span></span>&nbsp;&nbsp&nbsp;&nbsp
+			<span>Working Servers: <span class="badge rounded-pill text-bg-primary">&nbsp;&nbsp;@(servers != null ? servers.Count.ToString() : "0")&nbsp;&nbsp;</span></span>&nbsp&nbsp&nbsp;&nbsp
+			<span>Active Customers: <span class="badge rounded-pill text-bg-primary">&nbsp;&nbsp;@(customers != null ? customers.Count.ToString() : "0")&nbsp;&nbsp;</span></span>&nbsp;&nbsp&nbsp;&nbsp
 		</div>
 	</div>
 </div>
@@ -40,20 +43,20 @@
 								<h3 class="card-title text-success">Working Server</h3>
 								<h2><span class="badge text-bg-success">@item.customer.user_name</span></h2>
 								<hr />
-								<a class="btn btn btn-primary btn-sm" href="@("Account/Customer/" + item.customer_id.ToString())">Edit Customer</a>
-								<a class="btn btn btn-primary btn-sm" href="@("Account/Customer/" + item.customer_id.ToString()+ "/Settings")">Settings</a>
+								<a class="btn btn btn-outline-primary btn-sm" href="@("Account/Customer/" + item.customer_id.ToString())">Edit Customer</a>
+								<a class="btn btn btn-outline-primary btn-sm" href="@("Account/Customer/" + item.customer_id.ToString()+ "/Settings")">Settings</a>
 								<hr />
 								<p class="card-text">Customer ID:&nbsp; @item.customer_id</p>
 								<p class="card-text">Process ID:&nbsp; @item.PID</p>
 								<hr />
-								<p class='card-text @(!item.customer.product_sync_status ? "text-muted" : "")'>Product Working Status:&nbsp; @(item.customer.is_productsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
-								<p class='card-text @(!item.customer.order_sync_status ? "text-muted" : "")'>Order Working Status:&nbsp; @(item.customer.is_ordersync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
-								<p class='card-text @(!item.customer.notification_sync_status ? "text-muted" : "")'>Notification Working Status:&nbsp; @(item.customer.is_notificationsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
-								<p class='card-text @(!item.customer.invoice_sync_status ? "text-muted" : "")'>Invoice Working Status:&nbsp; @(item.customer.is_invoicesync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
-								<p class='card-text @(!item.customer.xml_sync_status ? "text-muted" : "")'>XML Working Status:&nbsp; @(item.customer.is_xmlsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+								<p class='card-text @(!item.customer.product_sync_status ? "text-muted" : "")'>Product Working Status:&nbsp; @(!item.customer.product_sync_status ? (MarkupString)"<i class='bi bi-x-circle-fill text-danger'></i>" : item.customer.is_productsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+								<p class='card-text @(!item.customer.order_sync_status ? "text-muted" : "")'>Order Working Status:&nbsp; @(!item.customer.order_sync_status ? (MarkupString)"<i class='bi bi-x-circle-fill text-danger'></i>" : item.customer.is_ordersync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+								<p class='card-text @(!item.customer.notification_sync_status ? "text-muted" : "")'>Notification Working Status:&nbsp; @(!item.customer.notification_sync_status ? (MarkupString)"<i class='bi bi-x-circle-fill text-danger'></i>" : item.customer.is_notificationsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+								<p class='card-text @(!item.customer.invoice_sync_status ? "text-muted" : "")'>Invoice Working Status:&nbsp; @(!item.customer.invoice_sync_status ? (MarkupString)"<i class='bi bi-x-circle-fill text-danger'></i>" : item.customer.is_invoicesync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+								<p class='card-text @(!item.customer.xml_sync_status ? "text-muted" : "")'>XML Working Status:&nbsp; @(!item.customer.xml_sync_status ? (MarkupString)"<i class='bi bi-x-circle-fill text-danger'></i>" : item.customer.is_xmlsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
 								<p class="card-footer">
-									<a href="@("Account/Customer/" + item.customer_id.ToString() + "/Logs")" class="btn btn-primary">Logs</a>
-									<button type="button" class="btn btn-danger" @onclick="( () => StopServer(item.customer_id))">
+									<a href="@("Account/Customer/" + item.customer_id.ToString() + "/Logs")" class="btn btn-outline-primary">Logs</a>
+									<button type="button" class="btn btn-outline-danger" @onclick="( () => StopServer(item.customer_id))">
 										Stop Merchanter
 									</button>
 								</p>
@@ -75,20 +78,20 @@
 									<h3 class="card-title text-muted">Idle Server</h3>
 									<h2><span class="badge text-bg-danger">@item.user_name</span></h2>
 									<hr />
-									<a class="btn btn btn-primary btn-sm" href="@("Account/Customer/" + item.customer_id.ToString())">Edit Customer</a>
-									<a class="btn btn btn-primary btn-sm" href="@("Account/Customer/" + item.customer_id.ToString()+ "/Settings")">Settings</a>
+									<a class="btn btn btn-outline-primary btn-sm" href="@("Account/Customer/" + item.customer_id.ToString())">Edit Customer</a>
+									<a class="btn btn btn-outline-primary btn-sm" href="@("Account/Customer/" + item.customer_id.ToString()+ "/Settings")">Settings</a>
 									<hr />
 									<p class="card-text">Customer ID:&nbsp; @item.customer_id</p>
 									<p class="card-text">Process ID:&nbsp; 0</p>
 									<hr />
-									<p class='card-text @(!item.product_sync_status ? "text-muted" : "")'>Product Working Status:&nbsp; @(item.is_productsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
-									<p class='card-text @(!item.order_sync_status ? "text-muted" : "")'>Order Working Status:&nbsp; @(item.is_ordersync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
-									<p class='card-text @(!item.notification_sync_status ? "text-muted" : "")'>Notification Working Status:&nbsp; @(item.is_notificationsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
-									<p class='card-text @(!item.invoice_sync_status ? "text-muted" : "")'>Invoice Working Status:&nbsp; @(item.is_invoicesync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
-									<p class='card-text @(!item.xml_sync_status ? "text-muted" : "")'>XML Working Status:&nbsp; @(item.is_xmlsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+									<p class='card-text @(!item.product_sync_status ? "text-muted" : "")'>Product Working Status:&nbsp; @(!item.product_sync_status ? (MarkupString)"<i class='bi bi-x-circle-fill text-danger'></i>" : item.is_productsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+									<p class='card-text @(!item.order_sync_status ? "text-muted" : "")'>Order Working Status:&nbsp; @(!item.order_sync_status ? (MarkupString)"<i class='bi bi-x-circle-fill text-danger'></i>" : item.is_ordersync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+									<p class='card-text @(!item.notification_sync_status ? "text-muted" : "")'>Notification Working Status:&nbsp; @(!item.notification_sync_status ? (MarkupString)"<i class='bi bi-x-circle-fill text-danger'></i>" : item.is_notificationsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+									<p class='card-text @(!item.invoice_sync_status ? "text-muted" : "")'>Invoice Working Status:&nbsp; @(!item.invoice_sync_status ? (MarkupString)"<i class='bi bi-x-circle-fill text-danger'></i>" : item.is_invoicesync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+									<p class='card-text @(!item.xml_sync_status ? "text-muted" : "")'>XML Working Status:&nbsp; @(!item.xml_sync_status ? (MarkupString)"<i class='bi bi-x-circle-fill text-danger'></i>" : item.is_xmlsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
 									<p class="card-footer">
-										<a href="@("Account/Customer/" + item.customer_id.ToString() + "/Logs")" class="btn btn-primary">Logs</a>
-										<button type="button" class="btn btn-success" @onclick="( () => StartServer(item.customer_id))">
+										<a href="@("Account/Customer/" + item.customer_id.ToString() + "/Logs")" class="btn btn-outline-primary">Logs</a>
+										<button type="button" class="btn btn-outline-success" @onclick="( () => StartServer(item.customer_id))">
 											Start Merchanter
 										</button>
 									</p>
