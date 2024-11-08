@@ -1,8 +1,13 @@
 using MerchanterApp.CMS;
 using MerchanterApp.CMS.Classes;
 using MerchanterApp.CMS.Components;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder( args );
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem( new DirectoryInfo( builder.Environment.ContentRootPath + "\\keys" ) )
+    .SetApplicationName( "MerchanterApp.CMS" )
+    .SetDefaultKeyLifetime( TimeSpan.FromDays( 90 ) );
 
 // Add services to the container.
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();

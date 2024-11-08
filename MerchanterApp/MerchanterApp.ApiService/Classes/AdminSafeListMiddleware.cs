@@ -24,39 +24,39 @@ namespace MerchanterApp.ApiService.Classes
             _logger = logger;
         }
 
-        public async Task Invoke(HttpContext context)
-        {
-            if (context.Request.Method != HttpMethod.Get.Method)
-            {
+        public async Task Invoke( HttpContext context ) {
+            if( context.Request.Method != HttpMethod.Get.Method ) {
                 var remoteIp = context.Connection.RemoteIpAddress;
-                _logger.LogDebug("Request from Remote IP address: {RemoteIp}", remoteIp);
+                if( remoteIp == null ) {
+                    _logger.LogWarning( "Remote IP address is null." );
+                    context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
+                    return;
+                }
+
+                _logger.LogDebug( "Request from Remote IP address: {RemoteIp}", remoteIp );
 
                 var bytes = remoteIp.GetAddressBytes();
                 var badIp = true;
-                foreach (var address in _safelist)
-                {
-                    if (address.SequenceEqual(bytes))
-                    {
+                foreach( var address in _safelist ) {
+                    if( address.SequenceEqual( bytes ) ) {
                         badIp = false;
                         break;
                     }
                 }
 
-                if (badIp)
-                {
+                if( badIp ) {
                     _logger.LogWarning(
-                        "Forbidden Request from Remote IP address: {RemoteIp}", remoteIp);
+                        "Forbidden Request from Remote IP address: {RemoteIp}", remoteIp );
                     context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
                     return;
                 }
-                else
-                {
-                    _logger.LogInformation((context.Request.Path.HasValue ? "[" + context.Request.Path.Value + "]" : "[Invalid path]") + " - " +
-                        string.Format("Remote IP address: {0} in safelist", remoteIp));
+                else {
+                    _logger.LogInformation( (context.Request.Path.HasValue ? "[" + context.Request.Path.Value + "]" : "[Invalid path]") + " - " +
+                        string.Format( "Remote IP address: {0} in safelist", remoteIp ) );
                 }
             }
 
-            await _next.Invoke(context);
+            await _next.Invoke( context );
         }
     }
 }
