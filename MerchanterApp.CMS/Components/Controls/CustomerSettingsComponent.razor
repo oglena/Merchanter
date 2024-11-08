@@ -7,40 +7,484 @@
 
 @if (customer != null)
 {
-	<div class="container-fluid sticky-top-lg bg-dark text-light rounded-2 p-3">
-		<div class="row mt-3">
-			<div class="col-12 ps-2">
-				<h1>Customer Settings: @(!string.IsNullOrWhiteSpace(CID) && int.Parse(CID) > 0 ? customer?.user_name : "N/A") </h1>
-			</div>
-		</div>
-		@if (!string.IsNullOrWhiteSpace(@page_message))
-		{
-			<hr />
-			<span>@page_message</span>
-		}
+	<div class="container-fluid sticky-top-lg rounded-2 p-3">
 		@if (settings != null)
 		{
 			<div class="row mt-3">
 				<div class="col-12 ps-2">
 					<div class="form-floating">
-						<select class="form-select text-start" aria-label="servers-select">
-							<option value="0" selected>Select to Show Customer Settings...</option>
-							<option value="general">General Settings</option>
-							<option value="netsis">Netsis Settings</option>
-							<option value="magento">Magento Settings</option>
-							<option value="entegra">Entegra Settings</option>
-							<option value="shipment">Shipment Settings</option>
+						<select class="form-select text-start" aria-label="settings-select" @onchange="SelectedSettingsChanged">
+							<option value="general" selected="@(selected_settings == "general")">General Settings</option>
+							<option value="netsis" selected="@(selected_settings == "netsis")">Netsis Settings</option>
+							<option value="magento" selected="@(selected_settings == "magento")">Magento Settings</option>
+							<option value="entegra" selected="@(selected_settings == "entegra")">Entegra Settings</option>
+							<option value="shipment" selected="@(selected_settings == "shipment")">Shipment Settings</option>
 						</select>
 						<label>Settings</label>
 					</div>
 				</div>
+				<div class="col-6 ps-2"></div>
 			</div>
 		}
 	</div>
 	<hr />
 	<div class="container-fluid">
-		<div class="row mt-3">
-		</div>
+		@if (settings != null)
+		{
+			@if (settings.settings != null && selected_settings == "general")
+			{
+				<div class="row mt-3">
+					<div class="col-md-12 pb-2 bg-light rounded-3">
+						<EditForm Model="settings.settings" class="container-fluid">
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="user_name" @bind-Value="settings.settings.company_name" />
+										<label for="user_name" class="form-label">Company Name</label>
+									</div>
+								</div>
+							</div>
+							<hr />
+							<div class="row mt-3">
+								<div class="row mt-3">
+									<h4>Currency Rates</h4>
+									<div class="col-4 ps-2 mb-3">
+										<div class="input-group mb-3">
+											<span class="input-group-text">TL</span>
+											<InputNumber type="text" class="form-control" DisplayName="TL_rate" placeholder="Uneditable" @bind-Value="settings.settings.rate_TL" disabled="true" />
+										</div>
+									</div>
+									<div class="col-4 ps-2 mb-3">
+										<div class="input-group mb-3">
+											<span class="input-group-text">USD</span>
+											<InputNumber type="text" class="form-control" DisplayName="USD_rate" @bind-Value="settings.settings.rate_USD" />
+										</div>
+									</div>
+									<div class="col-4 ps-2 mb-3">
+										<div class="input-group mb-3">
+											<span class="input-group-text">EUR</span>
+											<InputNumber type="text" class="form-control" DisplayName="EUR_rate" @bind-Value="settings.settings.rate_EUR" />
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="row mt-3">
+									<h4>Other Settings</h4>
+									<div class="col-6 ps-2 mb-3">
+										<div class="form-floating">
+											<InputNumber type="text" class="form-control" DisplayName="daysto_ordersync" @bind-Value="settings.settings.daysto_ordersync" />
+											<label for="user_name" class="form-label">Days to Order Sync</label>
+										</div>
+									</div>
+									<div class="col-6 ps-2 mb-3">
+										<div class="form-floating">
+											<InputNumber type="text" class="form-control" DisplayName="daysto_invoicesync" @bind-Value="settings.settings.daysto_invoicesync" />
+											<label for="user_name" class="form-label">Days to Invoice Sync</label>
+										</div>
+									</div>
+								</div>
+								<div class="row mt-3">
+									<div class="form-check form-switch mt-2 ms-3">
+										<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="settings.settings.xml_qty_addictive_enable"></InputCheckbox>
+										<label class="form-check-label">&nbsp;Xml Qty Additive Status</label>
+									</div>
+								</div>
+								<AlertComponent page_message="@page_message" message_status="@message_status" />
+								<div class="row mt-3">
+									<div class="col-12 ps-2 mb-3">
+										<button type="submit" class="btn btn-success float-end" @onclick="@(() => SaveGeneralSettings(settings.settings))" disabled="@(is_refreshing)">Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+									</div>
+								</div>
+							</div>
+						</EditForm>
+					</div>
+				</div>
+			}
+			@if (settings.netsis != null && selected_settings == "netsis")
+			{
+				<div class="row mt-3">
+					<div class="col-md-12 pb-2 bg-light rounded-3">
+						<EditForm Model="settings.settings" class="container-fluid">
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="rest_url" @bind-Value="settings.netsis.rest_url" />
+										<label for="rest_url" class="form-label">Rest Url</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="netopenx_user" @bind-Value="settings.netsis.netopenx_user" />
+										<label for="netopenx_user" class="form-label">Api User Name</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="password" class="form-control" DisplayName="netopenx_password" @bind-Value="settings.netsis.netopenx_password" />
+										<label for="netopenx_password" class="form-label">Api Password</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="password" class="form-control" DisplayName="dbname" @bind-Value="settings.netsis.dbname" />
+										<label for="dbname" class="form-label">Netsis DB Name</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="password" class="form-control" DisplayName="dbuser" @bind-Value="settings.netsis.dbuser" />
+										<label for="dbuser" class="form-label">Netsis DB User</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="password" class="form-control" DisplayName="dbpassword" @bind-Value="settings.netsis.dbpassword" />
+										<label for="dbpassword" class="form-label">Netsis DB Password</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="belgeonek_musterisiparisi" @bind-Value="settings.netsis.belgeonek_musterisiparisi" />
+										<label for="belgeonek_musterisiparisi" class="form-label">belgeonek_musterisiparisi</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="siparis_carionek" @bind-Value="settings.netsis.siparis_carionek" />
+										<label for="siparis_carionek" class="form-label">siparis_carionek</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="cari_siparis_grupkodu" @bind-Value="settings.netsis.cari_siparis_grupkodu" />
+										<label for="cari_siparis_grupkodu" class="form-label">cari_siparis_grupkodu</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="sipari_caritip" @bind-Value="settings.netsis.sipari_caritip" />
+										<label for="sipari_caritip" class="form-label">sipari_caritip</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="siparis_muhasebekodu" @bind-Value="settings.netsis.siparis_muhasebekodu" />
+										<label for="siparis_muhasebekodu" class="form-label">siparis_muhasebekodu</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="form-check form-switch mt-2 ms-3">
+									<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="settings.netsis.siparis_kdvdahilmi"></InputCheckbox>
+									<label class="form-check-label">&nbsp;siparis_kdvdahilmi</label>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputNumber type="text" class="form-control" DisplayName="siparis_subekodu" @bind-Value="settings.netsis.siparis_subekodu" />
+										<label for="siparis_subekodu" class="form-label">siparis_subekodu</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputNumber type="text" class="form-control" DisplayName="siparis_depokodu" @bind-Value="settings.netsis.siparis_depokodu" />
+										<label for="siparis_depokodu" class="form-label">siparis_depokodu</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="siparis_kargo_sku" @bind-Value="settings.netsis.siparis_kargo_sku" />
+										<label for="siparis_kargo_sku" class="form-label">siparis_kargo_sku</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="siparis_taksitkomisyon_sku" @bind-Value="settings.netsis.siparis_taksitkomisyon_sku" />
+										<label for="siparis_taksitkomisyon_sku" class="form-label">siparis_taksitkomisyon_sku</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="form-check form-switch mt-2 ms-3">
+									<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="settings.netsis.is_rewrite_siparis"></InputCheckbox>
+									<label class="form-check-label">&nbsp;is_rewrite_siparis</label>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="ebelge_dizayn_earsiv" @bind-Value="settings.netsis.ebelge_dizayn_earsiv" />
+										<label for="ebelge_dizayn_earsiv" class="form-label">ebelge_dizayn_earsiv</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="ebelge_dizayn_efatura" @bind-Value="settings.netsis.ebelge_dizayn_efatura" />
+										<label for="ebelge_dizayn_efatura" class="form-label">ebelge_dizayn_efatura</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="ebelge_klasorismi" @bind-Value="settings.netsis.ebelge_klasorismi" />
+										<label for="ebelge_klasorismi" class="form-label">ebelge_klasorismi</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="efatura_belge_onek" @bind-Value="settings.netsis.efatura_belge_onek" />
+										<label for="efatura_belge_onek" class="form-label">efatura_belge_onek</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="earsiv_belge_onek" @bind-Value="settings.netsis.earsiv_belge_onek" />
+										<label for="earsiv_belge_onek" class="form-label">earsiv_belge_onek</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="fatura_cari_gruplari" @bind-Value="settings.netsis.fatura_cari_gruplari" />
+										<label for="fatura_cari_gruplari" class="form-label">fatura_cari_gruplari</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="siparis_kod2" @bind-Value="settings.netsis.siparis_kod2" />
+										<label for="siparis_kod2" class="form-label">siparis_kod2</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="siparis_cyedek1" @bind-Value="settings.netsis.siparis_cyedek1" />
+										<label for="siparis_cyedek1" class="form-label">siparis_cyedek1</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="siparis_ekack15" @bind-Value="settings.netsis.siparis_ekack15" />
+										<label for="siparis_ekack15" class="form-label">siparis_ekack15</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="siparis_ekack10" @bind-Value="settings.netsis.siparis_ekack10" />
+										<label for="siparis_ekack10" class="form-label">siparis_ekack10</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="siparis_ekack11" @bind-Value="settings.netsis.siparis_ekack11" />
+										<label for="siparis_ekack11" class="form-label">siparis_ekack11</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="siparis_ekack4" @bind-Value="settings.netsis.siparis_ekack4" />
+										<label for="siparis_ekack4" class="form-label">siparis_ekack4</label>
+									</div>
+								</div>
+							</div>
+						</EditForm>
+					</div>
+				</div>
+			}
+			@if (settings.magento != null && selected_settings == "magento")
+			{
+				<div class="row mt-3">
+					<div class="col-md-12 pb-2 bg-light rounded-3">
+						<EditForm Model="settings.magento" class="container-fluid">
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="base_url" @bind-Value="settings.magento.base_url" />
+										<label for="base_url" class="form-label">Base Url</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="password" class="form-control" DisplayName="token" @bind-Value="settings.magento.token" />
+										<label for="token" class="form-label">Api Token</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputNumber type="text" class="form-control" DisplayName="root_category_id" @bind-Value="settings.magento.root_category_id" />
+										<label for="root_category_id" class="form-label">Magento Root Category ID</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="order_processing_comment" @bind-Value="settings.magento.order_processing_comment" />
+										<label for="order_processing_comment" class="form-label">Order Processing Comment</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="barcode_attribute_code" @bind-Value="settings.magento.barcode_attribute_code" />
+										<label for="barcode_attribute_code" class="form-label">Barcode Attribute Code</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="brand_attribute_code" @bind-Value="settings.magento.brand_attribute_code" />
+										<label for="brand_attribute_code" class="form-label">Brand Attribute Code</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="is_xml_enabled_attribute_code" @bind-Value="settings.magento.is_xml_enabled_attribute_code" />
+										<label for="is_xml_enabled_attribute_code" class="form-label">XML Enabled Attribute Code</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="xml_sources_attribute_code" @bind-Value="settings.magento.xml_sources_attribute_code" />
+										<label for="xml_sources_attribute_code" class="form-label">XML Sources Attribute Code</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="customer_tc_no_attribute_code" @bind-Value="settings.magento.customer_tc_no_attribute_code" />
+										<label for="customer_tc_no_attribute_code" class="form-label">Identity Number Attribute Code</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="customer_firma_ismi_attribute_code" @bind-Value="settings.magento.customer_firma_ismi_attribute_code" />
+										<label for="customer_firma_ismi_attribute_code" class="form-label">Customer Corporate Name Attribute Code</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="customer_firma_vergidairesi_attribute_code" @bind-Value="settings.magento.customer_firma_vergidairesi_attribute_code" />
+										<label for="customer_firma_vergidairesi_attribute_code" class="form-label">Customer Corporate Tax Region Attribute Code</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="customer_firma_vergino_attribute_code" @bind-Value="settings.magento.customer_firma_vergino_attribute_code" />
+										<label for="customer_firma_vergino_attribute_code" class="form-label">Customer Corporate Tax Number Attribute Code</label>
+									</div>
+								</div>
+							</div>
+						</EditForm>
+					</div>
+				</div>
+			}
+			@if (settings.entegra != null && selected_settings == "entegra")
+			{
+				<div class="row mt-3">
+					<div class="col-md-12 pb-2 bg-light rounded-3">
+						<EditForm Model="settings.entegra" class="container-fluid">
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="api_url" @bind-Value="settings.entegra.api_url" />
+										<label for="api_url" class="form-label">Api Url</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="text" class="form-control" DisplayName="api_username" @bind-Value="settings.entegra.api_username" />
+										<label for="api_username" class="form-label">Api User Name</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mt-3">
+								<div class="col-12 ps-2 mb-3">
+									<div class="form-floating">
+										<InputText type="password" class="form-control" DisplayName="api_password" @bind-Value="settings.entegra.api_password" />
+										<label for="api_password" class="form-label">Api Url</label>
+									</div>
+								</div>
+							</div>
+						</EditForm>
+					</div>
+				</div>
+			}
+			@if (settings.shipment != null && selected_settings == "shipment")
+			{
+				<div class="row mt-3">
+					<div class="col-md-12 pb-2 bg-light rounded-3">
+						5
+					</div>
+				</div>
+			}
+		}
 	</div>
 }
 else
@@ -53,8 +497,12 @@ else
 @code {
 	[Parameter]
 	public string? CID { get; set; }
-	private string loading = "...RELOADING...";
+	[Parameter]
+	public string selected_settings { get; set; } = "general";
+	private bool is_refreshing = false;
+	private string loading = "Loading...";
 	private string page_message = "Settings Loading...";
+	private string message_status = "dark";
 	Customer? customer { get; set; }
 	SettingsMerchanter? settings { get; set; }
 
@@ -111,5 +559,46 @@ else
 				page_message = "Merchanter Server ServiceAPI data response empty.";
 			}
 		}
+	}
+
+	protected void SelectedSettingsChanged(ChangeEventArgs e)
+	{
+		if (e != null && !string.IsNullOrWhiteSpace(e.Value.ToString()))
+			selected_settings = e.Value.ToString();
+	}
+
+	public async Task SaveGeneralSettings(SettingsGeneral _settings)
+	{
+		if (settings != null && int.TryParse(CID, out int customer_id))
+		{
+			int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
+			if (admin_id > 0)
+			{
+				is_refreshing = true;
+				string json = JsonConvert.SerializeObject(_settings);
+				var response = await PostHelper.Request<SettingsGeneral>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+					Classes.PostHelper.PostMethod.Put,
+					"api/Settings/" + CID + "/SaveGeneralSettings",
+					new StringContent(json, Encoding.UTF8, "application/json"));
+
+				if (response != null && response.Success && response.Data != null)
+				{
+					settings.settings = response.Data;
+					page_message = "General Settings saved. [" + DateTime.Now.ToString() + "]";
+					message_status = "success";
+				}
+				else
+				{
+					page_message = "General Settings save failed. [" + DateTime.Now.ToString() + "]";
+					message_status = "danger";
+				}
+				is_refreshing = false;
+			}
+		}
+	}
+
+	private async void CloseButton()
+	{
+		page_message = string.Empty;
 	}
 }

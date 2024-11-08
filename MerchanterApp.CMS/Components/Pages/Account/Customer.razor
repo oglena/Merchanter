@@ -15,27 +15,28 @@
 {
 	<div class="row mt-3 pb-2">
 		<div class="col-md-6 pb-2 bg-light rounded-3">
-			<EditForm Model="customer" Context="formContext" class="container-fluid">
+			<div class="row mt-3">
+				<div class="col-12 ps-2">
+					<h1>
+						Customer:&nbsp; @company_name &nbsp;&nbsp;&nbsp;
+						<button type="button" class="btn btn-primary" @onclick="RefreshCustomer" disabled="@(is_refreshing)">Refresh&nbsp;&nbsp;<span class='spinner-border spinner-border-sm @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+					</h1>
+					<h1>
+						<button type="button" class="btn btn-outline-primary" @onclick="@(() => SetActiveTab("logs") )" disabled="@(logs_active)">Logs</button>
+						<button type="button" class="btn btn-outline-primary" @onclick="@(() => SetActiveTab("settings") )" disabled="@(settings_active)">Settings</button>
+					</h1>
+				</div>
+			</div>
+			<AlertComponent page_message="@page_message" message_status="@message_status" />
+
+			<EditForm Model="customer" class="container-fluid" OnValidSubmit="@(() => SaveCustomer(customer))">
 				<div class="row mt-3">
 					<div class="col-12 ps-2">
 						<h1>
-							Customer:&nbsp; @company_name &nbsp;&nbsp;&nbsp;
-							<button type="button" class="btn btn-outline-primary" @onclick="@(() => RefreshCustomer())" disabled="@(!can_refresh)">Refresh</button>
-						</h1>
-						<h1>
-							<button type="submit" class="btn btn-primary" @onclick="@(() => SetActiveTab("logs") )" disabled="@(logs_active)">Logs</button>
-							<button type="submit" class="btn btn-primary" @onclick="@(() => SetActiveTab("settings") )" disabled="@(settings_active)">Settings</button>
-							<button type="submit" class="btn btn-success" @onclick="@(() => SaveCustomer(customer))" disabled="@(!can_refresh)">Save Customer</button>
+							<button type="submit" class="btn btn-outline-success" disabled="@(is_refreshing)">Save Customer&nbsp;&nbsp;<span class='spinner-border spinner-border-sm @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
 						</h1>
 					</div>
 				</div>
-				@if (!string.IsNullOrWhiteSpace(@page_message))
-				{
-					<hr />
-					<div class="alert alert-@(message_status)">@page_message</div>
-				}
-				<hr />
-
 				<div class="row mt-3">
 					<div class="col-6 ps-2 mb-3">
 						<label for="user_name" class="form-label">User Name</label>
@@ -45,10 +46,6 @@
 						<label for="password" class="form-label">Password</label>
 						<InputText type="password" class="form-control" placeholder="Password cannot be empty!" @bind-Value="customer.password" />
 					</div>
-					@* <div class="col-3 ps-2 mb-3">
-						</div>
-						<div class="col-3 ps-2 mb-3">
-						</div> *@
 				</div>
 				<div class="row mt-3">
 					<div class="col-12 ps-2 mb-3">
@@ -187,7 +184,7 @@
 			}
 			else if (settings_active)
 			{
-				<CustomerSettingsComponent CID="@CID"></CustomerSettingsComponent>
+				<CustomerSettingsComponent CID="@CID" />
 			}
 		</div>
 	</div>
@@ -205,12 +202,11 @@ else
 	public int customer_id = 0;
 	public string company_name { get; set; } = "";
 	public bool logs_active = false;
-	private bool can_refresh = true;
-	private string loading = "...CUSTOMER LOADING...";
+	private bool is_refreshing = false;
+	private string loading = "Loading...";
 	private string page_message = string.Empty;
 	private string message_status = "dark";
 	public bool settings_active = true;
-	public int delay = 2500;
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
@@ -255,8 +251,7 @@ else
 	{
 		if (int.TryParse(CID, out customer_id))
 		{
-			can_refresh = false;
-			customer = null;
+			is_refreshing = true;
 			StateHasChanged();
 			int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
 			if (admin_id > 0)
@@ -264,12 +259,9 @@ else
 				await LoadCustomer(customer_id);
 				message_status = "dark";
 				page_message = "Customer refreshed. [" + DateTime.Now.ToString() + "]";
-				await Task.Delay(delay);
-				page_message = string.Empty;
-				can_refresh = true;
+				is_refreshing = false;
 			}
 		}
-		//StateHasChanged();
 	}
 
 	private async Task SaveCustomer(Merchanter.Classes.Customer _customer)
@@ -279,7 +271,7 @@ else
 			int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
 			if (admin_id > 0)
 			{
-				can_refresh = false;
+				is_refreshing = true;
 				string json = JsonConvert.SerializeObject(_customer);
 				var response = await PostHelper.Request<Merchanter.Classes.Customer>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
 				Classes.PostHelper.PostMethod.Put,
@@ -293,25 +285,19 @@ else
 						company_name = customer.user_name;
 						message_status = "success";
 						page_message = "Customer saved. [" + DateTime.Now.ToString() + "]";
-						await Task.Delay(delay);
-						page_message = string.Empty;
 					}
 					else
 					{
 						message_status = "danger";
 						page_message = "Customer update fail.";
-						await Task.Delay(delay);
-						page_message = string.Empty;
 					}
 				}
 				else
 				{
 					message_status = "danger";
 					page_message = "Merchanter Server ServiceAPI data response empty.";
-					await Task.Delay(delay);
-					page_message = string.Empty;
 				}
-				can_refresh = true;
+				is_refreshing = false;
 			}
 		}
 	}
@@ -328,5 +314,12 @@ else
 			logs_active = false;
 			settings_active = true;
 		}
+		await Task.CompletedTask;
+	}
+
+	private async void CloseButton()
+	{
+		page_message = string.Empty;
+		await Task.CompletedTask;
 	}
 }

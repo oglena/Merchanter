@@ -4,10 +4,14 @@
 @inject ProtectedLocalStorage ProtectedLocalStorage
 
 <PageTitle>Customer [@CID] Settings | Merchanter</PageTitle>
-@* 
-<NotificationsComponent CID="@CID" /> *@
+
+<div class="row mt-3 pb-3">
+	<div class="col-md-12 pb-2 bg-light rounded-3">
+		<CustomerSettingsComponent CID="@CID" />
+	</div>
+</div>
 
 @code {
-    [Parameter]
-    public string? CID { get; set; }
+	[Parameter]
+	public string? CID { get; set; }
 }
