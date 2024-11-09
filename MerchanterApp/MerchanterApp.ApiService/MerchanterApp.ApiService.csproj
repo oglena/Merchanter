@@ -15,16 +15,8 @@
 		<PackageReference Include="AspNetCore.SwaggerUI.Themes" Version="1.0.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.10" />
 		<PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="8.0.1" />
-		<PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="8.10.0" />
-		<PackageReference Include="RestSharp" Version="112.0.0" />
 		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.9.0" />
-		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.9.0" />
-		<PackageReference Include="System.Formats.Asn1" Version="8.0.1" />
 		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.2.0" />
-		<PackageReference Include="System.Security.Cryptography.Pkcs" Version="6.0.4" />
-		<PackageReference Include="System.ServiceModel.Duplex" Version="6.0.0" />
-		<PackageReference Include="System.ServiceModel.NetTcp" Version="8.0.0" />
-		<PackageReference Include="System.ServiceModel.Security" Version="6.0.0" />
 		<Content Update="appsettings*.json" CopyToPublishDirectory="Never" />
 	</ItemGroup>
 

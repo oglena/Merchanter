@@ -1,6 +1,5 @@
 // See https://aka.ms/new-console-template for more information
 using Merchanter;
-using Merchanter.Classes;
 using MerchanterServer;
 using System.Diagnostics;
 using System.Reflection;

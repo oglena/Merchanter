@@ -1,7 +1,6 @@
 ﻿using Merchanter.Classes;
 using Merchanter.Classes.Settings;
 using MySql.Data.MySqlClient;
-using System.Runtime.CompilerServices;
 
 namespace Merchanter {
     public class DbHelper {

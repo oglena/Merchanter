@@ -18,6 +18,5 @@
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.AppHost" Version="9.0.0-rc.1.24511.1" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.2.0" />
-    <PackageReference Include="System.Text.Json" Version="8.0.5" />
   </ItemGroup>
 </Project>
