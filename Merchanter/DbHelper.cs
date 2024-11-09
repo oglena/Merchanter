@@ -590,6 +590,12 @@ namespace Merchanter {
             }
         }
 
+        /// <summary>
+        /// Saves the shipment settings to the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_settings">Settings Shipment</param>
+        /// <returns>[No change] or [Error] returns 'false'</returns>
         public bool SaveShipmentSettings( int _customer_id, SettingsShipment _settings ) {
             try {
                 int val = 0;

@@ -30,7 +30,7 @@
 				<div class="col-12 ps-2">
 					<div class="form-floating">
 						<select class="form-select text-start" aria-label="servers-select" @onchange="CustomerSelected">
-							<option value="0" selected>Select to Show Customer Logs...</option>
+							<option value="0" selected>All Logs...</option>
 							@foreach (var item in customers)
 							{
 								<option value="@item.customer_id" selected="@(item.customer_id == int.Parse(!string.IsNullOrWhiteSpace(CID) ? CID : "0"))">@item.user_name</option>
