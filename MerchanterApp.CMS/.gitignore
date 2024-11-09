@@ -11,6 +11,11 @@
 *.sln.docstates
 
 ## Added by Can
+appsettings.json
+appsettings.Development.json
+##
+
+## Added by Can
 Variables.cs
 keys/*.xml
 ##
