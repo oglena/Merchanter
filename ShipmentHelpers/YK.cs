@@ -22,7 +22,7 @@ namespace ShipmentHelpers {
         /// <param name="_city_name">City Name</param>
         /// <param name="_town_name">Town Name</param>
         /// <returns>Shipment Barcode</returns>
-        public string? InsertShipment( string _order_source, string _order_label, string _customer_name, string _receiver_address, string _receiver_phone, string _city_name, string _town_name ) {
+        public string? InsertShipment( string _order_source, string _order_label, string _customer_name, string _receiver_address, string _receiver_phone, string _city_name, string? _town_name ) {
             try {
                 string barcode = (_order_source == "MAGENTO2" ? "7" : "5") + DateTime.Now.ToString( "yy" ) + DateTime.Now.ToString( "ddMM" ) + _order_label;
                 createShipment yk_shipment = new createShipment();
@@ -36,7 +36,7 @@ namespace ShipmentHelpers {
                     receiverAddress = _receiver_address,
                     receiverPhone1 = _receiver_phone,
                     cityName = _city_name,
-                    townName = _town_name,
+                    townName = !string.IsNullOrWhiteSpace(_town_name) ? _town_name : _city_name,
                     specialField1 = "1$" + _order_source + " Barkod:#2$" + barcode + "#"
                }
                 ];

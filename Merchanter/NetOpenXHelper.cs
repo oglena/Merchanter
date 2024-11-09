@@ -8,7 +8,6 @@ using NetOpenX.Rest.Client.BLL;
 using NetOpenX.Rest.Client.Model;
 using NetOpenX.Rest.Client.Model.Enums;
 using System.Diagnostics;
-using System.Reflection.Metadata.Ecma335;
 
 namespace Merchanter {
     public static class NetOpenXHelper {
@@ -358,6 +357,7 @@ namespace Merchanter {
                 return string.Empty;
             }
         }
+
         private static void WriteLogLine( string value, ConsoleColor _color ) {
             Console.ForegroundColor = _color;
             Console.WriteLine( value.PadRight( Console.WindowWidth - 1 ) );

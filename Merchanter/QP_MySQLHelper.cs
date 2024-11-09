@@ -1,15 +1,14 @@
-﻿using Merchanter.Classes;
-using Merchanter.Responses;
+﻿using Merchanter.Responses;
 using MySql.Data.MySqlClient;
 
 namespace Merchanter {
     public class QP_MySQLHelper {
         public static MySqlConnection connection { get; set; } = null;
-        private static string server { get; set; } = Constants.qpmysql_server;
-        private static string uid { get; set; } = Constants.qpmysql_uid;
-        private static string password { get; set; } = Constants.qpmysql_password;
-        private static string database { get; set; } = Constants.qpmysql_database;
-        private static string port { get; set; } = Constants.qpmysql_port;
+        private static string server { get; set; } = Constants.QP_MysqlServer;
+        private static string uid { get; set; } = Constants.QP_MysqlUID;
+        private static string password { get; set; } = Constants.QP_MysqlPassword;
+        private static string database { get; set; } = Constants.QP_MysqlDatabase;
+        private static string port { get; set; } = Constants.QP_MysqlPort;
         public static System.Data.ConnectionState state { get; set; }
 
         private static void Connection_StateChange( object sender, System.Data.StateChangeEventArgs e ) => state = e.CurrentState;
@@ -91,7 +90,6 @@ namespace Merchanter {
                     connection.Close();
             }
         }
-
 
         public static bool? QP_UpdateCustomBundlePC( string _product_id, decimal _custom_price ) {
             try {

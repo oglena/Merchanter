@@ -11,11 +11,20 @@ var now = DateTime.Now;
 const string newline = "\r\n";
 bool first_run = true;
 Console.WriteLine( "Press Ctrl+C to exit." );
-int customer_id;
+int customer_id = 0;
 
 #region Customer Params
-if( args != null && args.Length > 0 ) {
-    if( args[ 0 ] != null ) {
+if( args != null && args.Length > 0 && args[ 0 ] == "0" ) {
+START:
+    Console.WriteLine( "Please provide Customer ID:" );
+    string? CID = Console.ReadLine();
+    if( CID != null && CID != "0" ) {
+        _ = int.TryParse( CID, out customer_id );
+    }
+    else goto START;
+}
+else {
+    if( args != null && args[ 0 ] != null ) {
         _ = int.TryParse( args[ 0 ], out customer_id );
     }
     else {
@@ -24,12 +33,6 @@ if( args != null && args.Length > 0 ) {
         return -1;
     }
 }
-else {
-    Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Customer parameter error -1" );
-    Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Customer parameter error -1" );
-    return -1;
-}
-
 if( customer_id <= 0 ) {
     Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Customer parameter error -1" );
     Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Customer parameter error -1" );
@@ -38,6 +41,10 @@ if( customer_id <= 0 ) {
 #endregion
 
 #region Helper Instance
+if( Constants.Server == null || Constants.User == null || Constants.Password == null || Constants.Database == null || Constants.Port <= 0 ) {
+    Console.WriteLine( "Database connection parameters are not properly set from App.config file." );
+    return -1;
+}
 DbHelper db_helper = new( Constants.Server, Constants.User, Constants.Password, Constants.Database, Constants.Port );
 Console.WriteLine( "[" + now.ToString() + "] " + "Merchanter Sync | Ceres Software & Consultancy" + " Version: " + Assembly.GetExecutingAssembly().GetName().Version?.ToString() + " DB:[" + db_helper.Database + "]" );
 db_helper.ErrorOccured += ( sender, e ) => { Console.WriteLine( e ); db_helper.LogToServer( "WTF", "helper_error", e, customer_id, "helper_instance" ); };
@@ -68,7 +75,7 @@ AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
 
 while( true ) {
     #region Load Customer & Check License
-    Customer customer = db_helper.GetCustomer( customer_id );
+    Customer? customer = db_helper.GetCustomer( customer_id );
 
     if( customer == null ) {
         Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Customer not found. Exiting." );

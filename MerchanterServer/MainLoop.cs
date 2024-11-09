@@ -6,35 +6,35 @@ using System.Diagnostics;
 
 namespace MerchanterServer {
     internal class MainLoop {
-        #region Properties
-        public string thread_id { get; set; }
-        public Customer customer { get; set; }
-        public DbHelper db_helper { get; set; }
-        public string? product_main_source { get; set; } = null;
-        public string? order_main_target { get; set; } = null;
-        public string[] other_product_sources { get; set; } = [];
-        public string[] product_targets { get; set; } = [];
-        public string[] order_sources { get; set; } = [];
-        public string[] shipments { get; set; } = [];
-        #endregion
-
         #region Constant Variables
         public static string newline = "\r\n";
         #endregion
 
+        #region Properties
+        private string thread_id { get; set; }
+        private Customer customer { get; set; }
+        private DbHelper db_helper { get; set; }
+        private string? product_main_source { get; set; } = null;
+        private string? order_main_target { get; set; } = null;
+        private string[] other_product_sources { get; set; } = [];
+        private string[] product_targets { get; set; } = [];
+        private string[] order_sources { get; set; } = [];
+        private string[] shipments { get; set; } = [];
+        #endregion
+
         #region Variables
         private bool xml_has_error;
-        CurrencyRates rates = new();
-        List<Product> live_products = [];
-        List<Order> live_orders = [];
-        List<XProduct> xproducts = [];
-        List<Brand> brands = [];
-        List<Category> categories = [];
-        List<Product>? products = [];
-        List<ProductExtension>? products_ext = [];
-        List<Order>? orders = [];
-        List<Invoice>? invoices = [];
-        List<Notification>? notifications = [];
+        private CurrencyRates rates = new();
+        private List<Product> live_products = [];
+        private List<Order> live_orders = [];
+        private List<XProduct> xproducts = [];
+        private List<Brand> brands = [];
+        private List<Category> categories = [];
+        private List<Product>? products = [];
+        private List<ProductExtension>? products_ext = [];
+        private List<Order>? orders = [];
+        private List<Invoice>? invoices = [];
+        private List<Notification>? notifications = [];
         #endregion
 
         public MainLoop( string _thread_id, Customer _customer, DbHelper _db_helper ) {
@@ -252,7 +252,7 @@ namespace MerchanterServer {
                             xp.qty = item.Miktar != null ? ((item.Miktar != "Stoksuz") ? int.Parse( item.Miktar.Replace( "+", string.Empty ) ) : 999) : 0;
                             xp.price1 = item.Fiyat_SKullanici;
                             xp.price2 = item.Fiyat_Ozel;
-                            xp.currency = item.Doviz?.Trim();
+                            xp.currency = item.Doviz?.Trim() ?? string.Empty;
                             xp.is_active = false;
 
                             if( !string.IsNullOrWhiteSpace( xp.barcode ) ) {
@@ -660,13 +660,13 @@ namespace MerchanterServer {
                                                     (selected_product.special_price != 0 ? Math.Round(selected_product.special_price * (1 + (selected_product.tax / 100)),2,MidpointRounding.AwayFromZero) + selected_product.currency :
                                                     Math.Round(selected_product.price * (1m + (selected_product.tax / 100m)),2,MidpointRounding.AwayFromZero) + selected_product.currency) :
                                                     ((selected_xproducts != null && selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault() != null) ?
-                                                    "Price: " + Math.Round(selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault().price2,2,MidpointRounding.AwayFromZero) + selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault()?.currency + "<br>" +
-                                                    "MSRP: " + Math.Round(selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault().price1,2,MidpointRounding.AwayFromZero) + selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault()?.currency : string.Empty)) +
+                                                    "Price: " + Math.Round(selected_xproducts.FirstOrDefault( xp => xp.xml_source == x.name ).price2,2,MidpointRounding.AwayFromZero) + selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault()?.currency + "<br>" +
+                                                    "MSRP: " + Math.Round(selected_xproducts.FirstOrDefault( xp => xp.xml_source == x.name ).price1,2,MidpointRounding.AwayFromZero) + selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault()?.currency : string.Empty)) +
                                                "</td>" +
                                                "<td>" + (x.is_active ? "active" : "passive") + "</td>" +
                                                "</tr>"
                                            } ) ) );
-                                    if( GMail.Send( Constants.qp_mail_sender, Constants.qp_mail_password, Constants.qp_mail_sender_name, Constants.qp_mail_to,
+                                    if( GMail.Send( Constants.QP_MailSender, Constants.QP_MailPassword, Constants.QP_MailSenderName, Constants.QP_MailTo,
                                         mail_title,
                                         mail_body ) ) {
                                         item.is_notification_sent = true;
@@ -714,7 +714,7 @@ namespace MerchanterServer {
                                                "<td>" + (x.is_active ? "active" : "passive") + "</td>" +
                                                "</tr>"
                                            } ) ) );
-                                    if( GMail.Send( Constants.qp_mail_sender, Constants.qp_mail_password, Constants.qp_mail_sender_name, Constants.qp_mail_to,
+                                    if( GMail.Send( Constants.QP_MailSender, Constants.QP_MailPassword, Constants.QP_MailSenderName, Constants.QP_MailTo,
                                         mail_title,
                                         mail_body ) ) {
                                         item.is_notification_sent = true;
@@ -762,7 +762,7 @@ namespace MerchanterServer {
                                                "<td>" + (x.is_active ? "active" : "passive") + "</td>" +
                                                "</tr>"
                                            } ) ) );
-                                    if( GMail.Send( Constants.qp_mail_sender, Constants.qp_mail_password, Constants.qp_mail_sender_name, Constants.qp_mail_to,
+                                    if( GMail.Send( Constants.QP_MailSender, Constants.QP_MailPassword, Constants.QP_MailSenderName, Constants.QP_MailTo,
                                         mail_title,
                                         mail_body ) ) {
                                         item.is_notification_sent = true;
@@ -820,7 +820,7 @@ namespace MerchanterServer {
                                                selected_xproducts?.Where( x => x.xml_source == xsource ).FirstOrDefault()?.qty,
                                                Math.Round( old_price, 2, MidpointRounding.AwayFromZero ) + selected_xproducts?.Where( x => x.xml_source == xsource ).FirstOrDefault()?.currency,
                                                Math.Round( new_price, 2, MidpointRounding.AwayFromZero ) + selected_xproducts?.Where( x => x.xml_source == xsource ).FirstOrDefault()?.currency );
-                                        if( GMail.Send( Constants.qp_mail_sender, Constants.qp_mail_password, Constants.qp_mail_sender_name, Constants.qp_mail_to,
+                                        if( GMail.Send( Constants.QP_MailSender, Constants.QP_MailPassword, Constants.QP_MailSenderName, Constants.QP_MailTo,
                                            mail_title,
                                            mail_body ) ) {
                                             item.is_notification_sent = true;
@@ -1188,7 +1188,7 @@ namespace MerchanterServer {
                                         #region Notify Product - PRODUCT_IN_STOCK, PRODUCT_OUT_OF_STOCK
                                         if( selected_product.total_qty <= 0 && item.total_qty > 0 ) {
                                             notifications.Add( new Notification() {
-                                                customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_IN_STOCK, product_sku = item.sku, xproduct_barcode = item.sources.Count > 1 ? item.barcode : null, 
+                                                customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_IN_STOCK, product_sku = item.sku, xproduct_barcode = item.sources.Count > 1 ? item.barcode : null,
                                                 notification_content = Constants.MAGENTO2
                                             } );
                                         }
@@ -1535,11 +1535,13 @@ namespace MerchanterServer {
                                 else {  //query ship
                                     List<string> tracking_codes = [];
                                     if( Helper.global.shipment.yurtici_kargo && shipments.Contains( Constants.YURTICI ) ) {
-                                        YK yk = new YK( Helper.global.shipment?.yurtici_kargo_user_name, Helper.global.shipment?.yurtici_kargo_password );
-                                        List<string>? tk = yk.GetShipment( selected_order.order_shipping_barcode );
-                                        if( tk != null ) {
-                                            tracking_codes.AddRange( tk );
-                                            //Debug.WriteLine( order_item.order_shipping_barcode + ":TK:" + string.Join( "|", tk ) );
+                                        if( Helper.global.shipment.yurtici_kargo_user_name != null && Helper.global.shipment.yurtici_kargo_password != null ) {
+                                            YK yk = new YK( Helper.global.shipment.yurtici_kargo_user_name, Helper.global.shipment.yurtici_kargo_password );
+                                            List<string>? tk = yk.GetShipment( selected_order.order_shipping_barcode );
+                                            if( tk != null ) {
+                                                tracking_codes.AddRange( tk );
+                                                //Debug.WriteLine( order_item.order_shipping_barcode + ":TK:" + string.Join( "|", tk ) );
+                                            }
                                         }
                                     }
                                     if( Helper.global.shipment.mng_kargo && shipments.Contains( Constants.MNG ) ) { }
@@ -1585,13 +1587,16 @@ namespace MerchanterServer {
                             }
                             else {  //insert shipment barcodes
                                 if( Helper.global.shipment.yurtici_kargo && shipments.Contains( Constants.YURTICI ) ) {
-                                    YK yk = new YK( Helper.global.shipment.yurtici_kargo_user_name, Helper.global.shipment.yurtici_kargo_password );
-                                    order_item.order_shipping_barcode ??= yk.InsertShipment( order_item.order_source, order_item.order_label, order_item.shipping_address.firstname + " " + order_item.shipping_address.lastname, order_item.shipping_address.street, order_item.shipping_address.telephone, order_item.shipping_address.city, order_item.shipping_address.region );
+
+                                    if( Helper.global.shipment.yurtici_kargo_user_name != null && Helper.global.shipment.yurtici_kargo_password != null ) {
+                                        YK yk = new YK( Helper.global.shipment.yurtici_kargo_user_name, Helper.global.shipment.yurtici_kargo_password );
+                                        order_item.order_shipping_barcode ??= yk.InsertShipment( order_item.order_source, order_item.order_label, order_item.shipping_address.firstname + " " + order_item.shipping_address.lastname, order_item.shipping_address.street, order_item.shipping_address.telephone, order_item.shipping_address.city, order_item.shipping_address.region );
+                                    }
                                     if( order_item.order_shipping_barcode != null ) {
                                         Shipment shipment = new() {
                                             order_id = order_item.order_id,
                                             order_label = order_item.order_label,
-                                            order_source = Constants.SOURCE_WEB,
+                                            order_source = order_item.order_source,
                                             shipment_method = order_item.shipment_method,
                                             tracking_number = null,
                                             shipment_date = null,
