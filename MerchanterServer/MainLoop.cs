@@ -544,11 +544,18 @@ namespace MerchanterServer {
                                                         db_helper.invoice.LogToServer( thread_id, "qp_mysqlupdate", selected_invoice.order_label + " => " + invoice.gib_fatura_no, customer.customer_id, "invoice" );
                                                     }
                                                 }
-                                                if( selected_invoice.erp_customer_group == "N11" ) { }
-                                                if( selected_invoice.erp_customer_group == "HB" ) { }
-                                                if( selected_invoice.erp_customer_group == "TY" ) { }
                                             }
                                         }
+                                        if( order_sources.Contains( Constants.N11 ) ) {
+                                            if( selected_invoice.erp_customer_group == Constants.N11 ) { }
+                                        }
+                                        if( order_sources.Contains( Constants.HEPSIBURADA ) ) {
+                                            if( selected_invoice.erp_customer_group == Constants.HEPSIBURADA ) { }
+                                        }
+                                        if( order_sources.Contains( Constants.TRENDYOL ) ) {
+                                            if( selected_invoice.erp_customer_group == Constants.TRENDYOL ) { }
+                                        }
+
                                         if( db_helper.invoice.SetInvoiceCreated( customer.customer_id, invoice.invoice_no, fullpath ) ) { //TODO: belge_url <> local_path different condition
                                             #region Notify - NEW_INVOICE
                                             notifications.Add( new Notification() {

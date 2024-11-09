@@ -19,8 +19,8 @@
 			<div class="col-1 col-sm-2 col-md-4"></div>
 			<div class="col-10 col-sm-8 col-md-4">
 				<EditForm method="post" FormName="LoginForm" Model="admin" OnValidSubmit="LoginSubmit">
-					<img class="mb-4" src="https://www.ceresyazilim.com/wp-content/uploads/2024/01/ceres_logo_transparent_base.png" alt="" width="200">
-					<br />	<span class="fw-normal">Welcome to merchanter.net!</span><hr />
+					<img class="mb-4" src="ceres_logo_transparent_base.png" alt="logo" width="150" />
+					<h1 class="fw-normal">Merchanter Back Office</h1><hr />
 					<span class="text-danger">@login_message</span>
 					<DataAnnotationsValidator></DataAnnotationsValidator>
 					<ValidationSummary></ValidationSummary>
@@ -39,8 +39,7 @@
 							</label>
 						</div>
 					</div>
-					<button class="w-100 btn btn-lg btn-primary" type="submit">Login</button>
-					<p class="mt-2 mb-3 text-muted">© 2024 Ceres Software & Consultancy. All rights reserved.</p>
+					<button type="submit" class="w-100 btn btn-lg btn-primary">Login</button>
 				</EditForm>
 			</div>
 			<div class="col-1 col-sm-2 col-md-4"></div>
@@ -89,7 +88,7 @@
 											new Claim(ClaimTypes.Role, Variables.admin_role/* TODO: add admin role*/),
 											new Claim(Variables.remember_me, remember_me.ToString()),
 											new Claim(Variables.auth_token, login.AuthToken)
-															},
+																			},
 								Variables.auth_cookie)),
 								new AuthenticationProperties
 									{

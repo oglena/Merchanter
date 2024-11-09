@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Merchanter.ServerService.Controllers {
-
     [Route( "api/[controller]" )]
     [ApiController]
     public class AuthController :Controller {

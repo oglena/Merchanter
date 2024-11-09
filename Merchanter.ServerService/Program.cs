@@ -1,5 +1,4 @@
 using AspNetCore.Swagger.Themes;
-using Merchanter;
 using Merchanter.CustomerService.Repositories;
 using Merchanter.ServerService;
 using Merchanter.ServerService.Classes;
@@ -22,7 +21,6 @@ builder.AddServiceDefaults();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-//builder.Services.AddSwaggerGen();
 builder.Services.AddSwaggerGen( c => {
     c.AddSecurityDefinition( "bearerAuth", new OpenApiSecurityScheme {
         Name = "Authorization",

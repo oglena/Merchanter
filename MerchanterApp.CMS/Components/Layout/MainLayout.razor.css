@@ -9,13 +9,6 @@ main {
     flex: 1;
 }
 
-footer {
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    overflow: hidden;
-}
-
 @media (min-width: 641px) {
     .page {
         flex-direction: row;

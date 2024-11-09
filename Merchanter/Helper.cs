@@ -1,6 +1,6 @@
 ﻿using Merchanter.Classes.Settings;
 using System.Diagnostics;
-using System.Net;
+using System.Net.Http.Headers;
 
 namespace Merchanter {
     public static partial class Helper {
@@ -9,24 +9,15 @@ namespace Merchanter {
         #region Helper Functions
         public static void PostPageAll( object _url ) {
             try {
-                if( !string.IsNullOrWhiteSpace( _url.ToString() ) ) {
+                if( !string.IsNullOrWhiteSpace( _url?.ToString() ) ) {
                     Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Magento Indexer Started" );
                     Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Magento Indexer Started" );
-                    HttpWebRequest? webReq = WebRequest.Create( _url.ToString() ) as HttpWebRequest;
-                    if( webReq != null ) {
-                        try {
-                            webReq.CookieContainer = new CookieContainer();
-                            webReq.Method = "GET";
-                            using( WebResponse response = webReq.GetResponse() ) {
-                                using( Stream stream = response.GetResponseStream() ) {
-                                    StreamReader reader = new StreamReader( stream );
-                                    string res = reader.ReadToEnd();
-                                }
-                            }
-                        }
-                        catch( Exception ex ) {
-                            Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + ex.ToString() );
-                            Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + ex.ToString() );
+
+                    using( var client = new HttpClient() ) {
+                        var response = client.GetAsync( _url.ToString() ).Result;
+                        if( response.IsSuccessStatusCode ) {
+                            var res = response.Content.ReadAsStringAsync().Result;
+                            Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Re:index Done." + Environment.NewLine + res );
                         }
                     }
                 }
@@ -76,24 +67,24 @@ namespace Merchanter {
 
         public static void UploadFileToFtp( string url, string filePath, string username, string password ) {
             var fileName = Path.GetFileName( filePath );
-            var request = (FtpWebRequest)WebRequest.Create( url + fileName );
+            var uri = new Uri( url + fileName );
 
-            request.Method = WebRequestMethods.Ftp.UploadFile;
-            request.Credentials = new NetworkCredential( username, password );
-            request.UsePassive = true;
-            request.UseBinary = true;
-            request.KeepAlive = false;
+            using( var client = new HttpClient() ) {
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+                    "Basic", Convert.ToBase64String( System.Text.Encoding.ASCII.GetBytes( $"{username}:{password}" ) ) );
 
-            using( var fileStream = File.OpenRead( filePath ) ) {
-                using( var requestStream = request.GetRequestStream() ) {
-                    fileStream.CopyTo( requestStream );
-                    requestStream.Close();
+                using( var fileStream = File.OpenRead( filePath ) ) {
+                    var content = new StreamContent( fileStream );
+                    var response = client.PutAsync( uri, content ).Result;
+
+                    if( response.IsSuccessStatusCode ) {
+                        Console.WriteLine( "Upload done: {0}", response.ReasonPhrase );
+                    }
+                    else {
+                        Console.WriteLine( "Upload failed: {0}", response.ReasonPhrase );
+                    }
                 }
             }
-
-            var response = (FtpWebResponse)request.GetResponse();
-            Console.WriteLine( "Upload done: {0}", response.StatusDescription );
-            response.Close();
         }
         #endregion
     }

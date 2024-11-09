@@ -9,7 +9,6 @@ namespace Merchanter.ServerService.Controllers {
     [Route( "api/[controller]" )]
     [ApiController]
     public class CustomerController( ICustomerService customerService ) :ControllerBase {
-
         [HttpGet( "{CID}/GetCustomer" )]
         [Authorize]
         public async Task<ActionResult<BaseResponseModel<Customer>>> GetCustomer( string CID ) {
