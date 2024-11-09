@@ -361,3 +361,5 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/Merchanter/Classes/Settings/DBSetting.cs
+/Merchanter/Classes/Settings/DBSetting.cs
