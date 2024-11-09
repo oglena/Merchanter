@@ -17,10 +17,10 @@
 		<div class="col-md-6 pb-2 bg-light rounded-3">
 			<div class="row mt-3">
 				<div class="col-12 ps-2">
-					<h1>
-						Customer:&nbsp; @company_name &nbsp;&nbsp;&nbsp;
-						<button type="button" class="btn btn-primary" @onclick="RefreshCustomer" disabled="@(is_refreshing)">Refresh&nbsp;&nbsp;<span class='spinner-border spinner-border-sm @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
-					</h1>
+					<h2>
+						Customer:&nbsp;@company_name
+							<button type="button" class="btn btn-primary" @onclick="RefreshCustomer" disabled="@(is_refreshing)"><i class='bi bi-arrow-clockwise @(is_refreshing ? "d-none" : "")'></i><span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+					</h2>
 					<h1>
 						<button type="button" class="btn btn-outline-primary" @onclick="@(() => SetActiveTab("logs") )" disabled="@(logs_active)">Logs</button>
 						<button type="button" class="btn btn-outline-primary" @onclick="@(() => SetActiveTab("settings") )" disabled="@(settings_active)">Settings</button>
@@ -33,7 +33,7 @@
 				<div class="row mt-3">
 					<div class="col-12 ps-2">
 						<h1>
-							<button type="submit" class="btn btn-outline-success" disabled="@(is_refreshing)">Save Customer&nbsp;&nbsp;<span class='spinner-border spinner-border-sm @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+								<button type="submit" class="btn btn-outline-success" disabled="@(is_refreshing)">Save Customer&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
 						</h1>
 					</div>
 				</div>

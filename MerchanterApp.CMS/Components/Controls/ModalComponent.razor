@@ -2,11 +2,12 @@
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h3 class="modal-title">@(ModalTitle != null ? ModalTitle : "no title")</h3>
+				<h3 class="modal-title">@(ModalTitle != null ? ModalTitle : "no title")</h3><hr />
 			</div>
 			<div class="modal-body">
-				<h5>@((MarkupString)(ModalHeader != null ? ModalHeader : "no header"))</h5><hr />
-				<div>@((MarkupString)(ModalContent != null ? ModalContent + "<hr>" : "no content"))</div>
+				<h5>@((MarkupString)(ModalHeader != null ? ModalHeader : "no header"))</h5>
+				<span class="modal-title">@((MarkupString)(ModalDate != null ? "<strong>Date: </strong>" + ModalDate : "no date"))</span>
+				<div>@((MarkupString)(ModalContent != null ? ModalContent + "<br><br>" : "no content"))</div>
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="() => Close()">Close</button>
@@ -22,22 +23,23 @@
 
 
 @code {
-	public Guid Guid = Guid.NewGuid();
 	public string ModalDisplay = "none;";
-	public string ModalClass = "";
+	public string ModalClass = "modal";
 	public bool ShowBackdrop = false;
 	public string? ModalTitle { get; set; }
 	public string? ModalContent { get; set; }
 	public string? ModalHeader { get; set; }
+	public string? ModalDate { get; set; }
 
-	public async Task Open(string? modal_title, string? modal_header, string modal_content)
+	public async Task Open(string? modal_title, string? modal_header, string modal_content, string modal_date)
 	{
 		ModalTitle = modal_title;
 		ModalHeader = modal_header;
 		ModalContent = modal_content;
+		ModalDate = modal_date;
 		ModalDisplay = "block;";
 		await Task.Delay(20);
-		ModalClass = "Show";
+		ModalClass = "show";
 		ShowBackdrop = true;
 		StateHasChanged();
 	}
@@ -45,7 +47,7 @@
 	public async Task Close()
 	{
 		ModalDisplay = "none";
-		await Task.Delay(75);
+		await Task.Delay(100);
 		ModalClass = "";
 		ShowBackdrop = false;
 		StateHasChanged();

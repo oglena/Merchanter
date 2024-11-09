@@ -10,27 +10,27 @@
 
 @if (customers != null)
 {
-	@if (show_customer_select)
-	{
-		<div class="container-fluid sticky-top-lg bg-dark text-light rounded-2 p-3">
-			<div class="row mt-3">
-				<div class="col-12 ps-2">
-					<h1>
-						Logs: @(!string.IsNullOrWhiteSpace(CID) && int.Parse(CID) > 0 ? customers.Where(x => x.customer_id == int.Parse(CID)).FirstOrDefault()?.user_name : "N/A")
-						<button type="button" class="btn btn-primary" @onclick="RefreshLogs" disabled="@(is_refreshing)">Refresh&nbsp;&nbsp;<span class='spinner-border spinner-border-sm @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
-					</h1>
-				</div>
+	<div class="container-fluid sticky-top-lg bg-dark text-light rounded-2 p-3">
+		<div class="row mt-3">
+			<div class="col-12 ps-2">
+				<h2>
+					Logs: @(!string.IsNullOrWhiteSpace(CID) && int.Parse(CID) > 0 ? customers.Where(x => x.customer_id == int.Parse(CID)).FirstOrDefault()?.user_name : "N/A")
+						<button type="button" class="btn btn-primary" @onclick="RefreshLogs" disabled="@(is_refreshing)"><i class='bi bi-arrow-clockwise @(is_refreshing ? "d-none" : "")'></i><span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+				</h2>
 			</div>
-			@if (!string.IsNullOrWhiteSpace(@page_message))
-			{
-				<hr />
-				<span>@page_message</span>
-			}
+		</div>
+		@if (!string.IsNullOrWhiteSpace(@page_message))
+		{
+			<hr />
+			<span>@page_message</span>
+		}
+		@if (show_customer_select)
+		{
 			<div class="row mt-3">
 				<div class="col-12 ps-2">
 					<div class="form-floating">
 						<select class="form-select text-start" aria-label="servers-select" @onchange="CustomerSelected">
-							<option value="0" selected>All Logs...</option>
+							<option value="0" selected>Select a Customer to Show Logs...</option>
 							@foreach (var item in customers)
 							{
 								<option value="@item.customer_id" selected="@(item.customer_id == int.Parse(!string.IsNullOrWhiteSpace(CID) ? CID : "0"))">@item.user_name</option>
@@ -40,22 +40,9 @@
 					</div>
 				</div>
 			</div>
-		</div>
-		<hr />
-	}
-	else
-	{
-		<div class="container-fluid sticky-top-lg bg-dark text-light rounded-2 p-3">
-			<div class="row mt-3">
-				<div class="col-12 ps-2">
-					<h1>
-						Logs: @(!string.IsNullOrWhiteSpace(CID) && int.Parse(CID) > 0 ? customers.Where(x => x.customer_id == int.Parse(CID)).FirstOrDefault()?.user_name : "N/A")
-						<button type="button" class="btn btn-primary" @onclick="RefreshLogs" disabled="@(is_refreshing)">Refresh&nbsp;&nbsp;<span class='spinner-border spinner-border-sm @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
-					</h1>
-				</div>
-			</div>
-		</div>
-	}
+		}
+	</div>
+	<hr />
 	<div class="container-fluid">
 		<div class="row mt-3">
 			@if (!string.IsNullOrWhiteSpace(CID) && int.Parse(CID) > 0)
@@ -184,7 +171,7 @@
 									{
 										<td class="align-content-center">
 											@(item.message.Split("=>")[0])
-											<button type="button" class="btn btn-warning btn-sm" @onclick='() => Modal.Open(item.title,item.message.Split("=>")[0].Trim(),item.message.Split("=>")[1].Trim())'>Show</button>
+											<button type="button" class="btn btn-warning btn-sm" @onclick='() => Modal.Open(item.title,item.message.Split("=>")[0].Trim(),item.message.Split("=>")[1].Trim(),item.update_date.ToString())'>Show</button>
 											<ModalComponent @ref="Modal"></ModalComponent>
 										</td>
 									}

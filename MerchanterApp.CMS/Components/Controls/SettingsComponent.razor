@@ -10,7 +10,7 @@
 	<div class="container-fluid sticky-top-lg bg-dark text-light rounded-2 p-3">
 		<div class="row mt-3">
 			<div class="col-12 ps-2">
-				<h1>Settings: @(!string.IsNullOrWhiteSpace(CID) && int.Parse(CID) > 0 ? customer?.user_name : "N/A") </h1>
+				<h2>Settings: @(!string.IsNullOrWhiteSpace(CID) && int.Parse(CID) > 0 ? customer?.user_name : "N/A") </h2>
 			</div>
 		</div>
 	</div>
@@ -105,7 +105,7 @@
 										</div>
 										<div class="row mt-3">
 											<div class="col-12 ps-2 mb-3">
-												<button type="submit" class="btn btn-outline-success float-end" @onclick="@(() => SaveGeneralSettings(settings.settings))" disabled="@(is_refreshing)">Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+												<button type="submit" class="btn btn-outline-success float-end" @onclick="@(() => SaveGeneralSettings(settings.settings))" disabled="@(is_refreshing)">Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
 											</div>
 										</div>
 									</div>
@@ -352,7 +352,7 @@
 									</div>
 									<div class="row mt-3">
 										<div class="col-12 ps-2 mb-3">
-											<button type="submit" class="btn btn-outline-success float-end" @onclick="@(() => SaveNetsisSettings(settings.netsis))" disabled="@(is_refreshing)">Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+											<button type="submit" class="btn btn-outline-success float-end" @onclick="@(() => SaveNetsisSettings(settings.netsis))" disabled="@(is_refreshing)">Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
 										</div>
 									</div>
 								</EditForm>
@@ -466,7 +466,7 @@
 									</div>
 									<div class="row mt-3">
 										<div class="col-12 ps-2 mb-3">
-											<button type="submit" class="btn btn-outline-success float-end" @onclick="@(() => SaveMagentoSettings(settings.magento))" disabled="@(is_refreshing)">Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+											<button type="submit" class="btn btn-outline-success float-end" @onclick="@(() => SaveMagentoSettings(settings.magento))" disabled="@(is_refreshing)">Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
 										</div>
 									</div>
 								</EditForm>
@@ -508,7 +508,7 @@
 									</div>
 									<div class="row mt-3">
 										<div class="col-12 ps-2 mb-3">
-											<button type="submit" class="btn btn-outline-success float-end" @onclick="@(() => SaveEntegraSettings(settings.entegra))" disabled="@(is_refreshing)">Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+											<button type="submit" class="btn btn-outline-success float-end" @onclick="@(() => SaveEntegraSettings(settings.entegra))" disabled="@(is_refreshing)">Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
 										</div>
 									</div>
 								</EditForm>
@@ -579,7 +579,7 @@
 									</div>
 									<div class="row mt-3">
 										<div class="col-12 ps-2 mb-3">
-											<button type="submit" class="btn btn-outline-success float-end" @onclick="@(() => SaveShipmentSettings(settings.shipment))" disabled="@(is_refreshing)">Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+														<button type="submit" class="btn btn-outline-success float-end" @onclick="@(() => SaveShipmentSettings(settings.shipment))" disabled="@(is_refreshing)">Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
 										</div>
 									</div>
 								</EditForm>
