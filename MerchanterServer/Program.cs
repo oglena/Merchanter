@@ -14,9 +14,9 @@ Console.WriteLine( "Press Ctrl+C to exit." );
 int customer_id = 0;
 
 #region Customer Params
-if( args != null && args.Length > 0 && args[ 0 ] == "0" ) {
+if( args.Length == 0 ) {
 START:
-    Console.WriteLine( "Please provide Customer ID:" );
+    Console.WriteLine( "Please Provide Customer ID:" );
     string? CID = Console.ReadLine();
     if( CID != null && CID != "0" ) {
         _ = int.TryParse( CID, out customer_id );
@@ -24,7 +24,7 @@ START:
     else goto START;
 }
 else {
-    if( args != null && args[ 0 ] != null ) {
+    if( args[ 0 ] != null ) {
         _ = int.TryParse( args[ 0 ], out customer_id );
     }
     else {
@@ -33,6 +33,7 @@ else {
         return -1;
     }
 }
+
 if( customer_id <= 0 ) {
     Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Customer parameter error -1" );
     Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Customer parameter error -1" );

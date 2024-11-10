@@ -14,7 +14,7 @@ namespace Merchanter.Classes.Settings {
         public DateTime update_date { get; set; }
 
         public static string Decrypt( string _text ) {
-            string decryption_key = ConfigurationManager.AppSettings[ "Secret" ] ?? throw new InvalidOperationException( "Decryption key not found in configuration." );
+            string decryption_key = "420A8A65DA156D24EE2A093277530142"; //ConfigurationManager.AppSettings[ "Secret" ] ?? throw new InvalidOperationException( "Decryption key not found in configuration." );
             SHA256 mySHA256 = SHA256.Create();
             byte[] key = mySHA256.ComputeHash( Encoding.UTF8.GetBytes( decryption_key ) );
             byte[] iv = new byte[ 16 ] { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 };
@@ -73,7 +73,7 @@ namespace Merchanter.Classes.Settings {
         }
 
         public static string Encrypt( string plainText ) {
-            string encryption_key = ConfigurationManager.AppSettings[ "Secret" ] ?? throw new InvalidOperationException( "Decryption key not found in configuration." );
+            string encryption_key = "420A8A65DA156D24EE2A093277530142"; //ConfigurationManager.AppSettings[ "Secret" ] ?? throw new InvalidOperationException( "Decryption key not found in configuration." );
             SHA256 mySHA256 = SHA256.Create();
             byte[] key = mySHA256.ComputeHash( Encoding.UTF8.GetBytes( encryption_key ) );
             byte[] iv = new byte[ 16 ] { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 };
