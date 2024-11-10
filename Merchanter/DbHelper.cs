@@ -2838,7 +2838,7 @@ namespace Merchanter {
                         "WHERE customer_id=@customer_id";
                     List<string> cids = category_ids.Split( "," ).ToList();
                     foreach( var item in cids ) {
-                        _query += " AND (" + string.Join( "id=" + item + " OR" );
+                        _query += " AND (" + string.Join( " OR ", cids.Select( item => "id=" + item ) ) + ")";
                     }
                     _query = _query.Substring( 0, _query.Length - 2 );
                     MySqlCommand cmd = new MySqlCommand( _query, connection );

@@ -2,6 +2,7 @@
 @layout LoginLayout
 
 @using System.Text.Json.Serialization
+@using Microsoft.AspNetCore.Http.Extensions
 @using Newtonsoft.Json
 @using System.Text
 
@@ -88,13 +89,14 @@
 											new Claim(ClaimTypes.Role, Variables.admin_role/* TODO: add admin role*/),
 											new Claim(Variables.remember_me, remember_me.ToString()),
 											new Claim(Variables.auth_token, login.AuthToken)
-																			},
+										},
 								Variables.auth_cookie)),
 								new AuthenticationProperties
 									{
-										IsPersistent = remember_me
+										IsPersistent = remember_me,
+										RedirectUri = UriHelper.Encode(new Uri(navigationManager.BaseUri))
 									});
-						navigationManager.NavigateTo("/");
+						//navigationManager.NavigateTo("/");
 					}
 					else
 					{

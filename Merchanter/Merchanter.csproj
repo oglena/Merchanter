@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Copyright>Ceres Software &amp; Consultancy</Copyright>
@@ -23,35 +23,41 @@
 
   <ItemGroup>
     <Reference Include="NetOpenX.Rest.Client">
-      <HintPath>bin\Debug\net8.0\NetOpenX.Rest.Client.dll</HintPath>
+      <HintPath>bin\Debug\net9.0\NetOpenX.Rest.Client.dll</HintPath>
       <Private>True</Private>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
     <Reference Include="NetOpenX.Rest.Core">
-      <HintPath>bin\Debug\net8.0\NetOpenX.Rest.Core.dll</HintPath>
+      <HintPath>bin\Debug\net9.0\NetOpenX.Rest.Core.dll</HintPath>
       <Private>True</Private>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
     <Reference Include="NetOpenX.Rest.Model">
-      <HintPath>bin\Debug\net8.0\NetOpenX.Rest.Model.dll</HintPath>
+      <HintPath>bin\Debug\net9.0\NetOpenX.Rest.Model.dll</HintPath>
       <Private>True</Private>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
     <Reference Include="NetOpenX.Rest.Netsis">
-      <HintPath>bin\Debug\net8.0\NetOpenX.Rest.Netsis.dll</HintPath>
+      <HintPath>bin\Debug\net9.0\NetOpenX.Rest.Netsis.dll</HintPath>
       <Private>True</Private>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
     <Reference Include="NetOpenX.Rest.Service">
-      <HintPath>bin\Debug\net8.0\NetOpenX.Rest.Service.dll</HintPath>
+      <HintPath>bin\Debug\net9.0\NetOpenX.Rest.Service.dll</HintPath>
       <Private>True</Private>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
     <Reference Include="NetOpenX.Rest.Utils">
-      <HintPath>bin\Debug\net8.0\NetOpenX.Rest.Utils.dll</HintPath>
+      <HintPath>bin\Debug\net9.0\NetOpenX.Rest.Utils.dll</HintPath>
       <Private>True</Private>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
     <Reference Include="System.Net.Http.Formatting">
-      <HintPath>bin\Debug\net8.0\System.Net.Http.Formatting.dll</HintPath>
+      <HintPath>bin\Debug\net9.0\System.Net.Http.Formatting.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Web.Http">
-      <HintPath>bin\Debug\net8.0\System.Web.Http.dll</HintPath>
+      <HintPath>bin\Debug\net9.0\System.Web.Http.dll</HintPath>
       <Private>True</Private>
     </Reference>
   </ItemGroup>
