@@ -782,7 +782,7 @@ namespace Merchanter {
                 Helper.global.entegra.api_password = !string.IsNullOrWhiteSpace( Helper.global.entegra.api_password ) ? DBSetting.Decrypt( Helper.global.entegra.api_password ) : string.Empty;
                 Helper.global.netsis.netopenx_password = !string.IsNullOrWhiteSpace( Helper.global.netsis.netopenx_password ) ? DBSetting.Decrypt( Helper.global.netsis.netopenx_password ) : string.Empty;
                 Helper.global.netsis.dbpassword = !string.IsNullOrWhiteSpace( Helper.global.netsis.dbpassword ) ? DBSetting.Decrypt( Helper.global.netsis.dbpassword ) : string.Empty;
-                Helper.global.erp_invoice_ftp_password = !string.IsNullOrWhiteSpace( Helper.global.erp_invoice_ftp_password ) ? DBSetting.Decrypt( Helper.global.erp_invoice_ftp_password ) : string.Empty;
+                Helper.global.erp_invoice_ftp_password = !string.IsNullOrWhiteSpace( Helper.global.erp_invoice_ftp_password ) ? DBSetting.Decrypt( Helper.global.erp_invoice_ftp_password ) : string.Empty; //TODO: this is going to be removed
 
                 #endregion
 
