@@ -19,7 +19,7 @@ namespace MerchanterServer {
         private string[] other_product_sources { get; set; } = [];
         private string[] product_targets { get; set; } = [];
         private string[] order_sources { get; set; } = [];
-        private string[] shipments { get; set; } = [];
+        private string[] available_shipments { get; set; } = [];
         #endregion
 
         #region Variables
@@ -42,18 +42,51 @@ namespace MerchanterServer {
             customer = _customer;
             db_helper = _db_helper;
 
-            #region Work Sources
-            product_main_source = Helper.global.work_sources.Where( x => x.type == "PRODUCT" && (x.direction == "MAIN_SOURCE") && x.is_active ).FirstOrDefault()?.name;
-            other_product_sources = Helper.global.work_sources.Where( x => x.type == "PRODUCT" && (x.direction == "SOURCE") && x.is_active ).Select( x => x.name ).ToArray();
-            product_targets = Helper.global.work_sources.Where( x => x.type == "PRODUCT" && (x.direction == "TARGET") && x.is_active ).Select( x => x.name ).ToArray();
-            order_main_target = Helper.global.work_sources.Where( x => x.type == "ORDER" && (x.direction == "MAIN_TARGET") && x.is_active ).FirstOrDefault()?.name;
-            order_sources = Helper.global.work_sources.Where( x => x.type == "ORDER" && (x.direction == "SOURCE") && x.is_active ).Select( x => x.name ).ToArray();
-            shipments = Helper.global.work_sources.Where( x => x.type == "SHIPMENT" && x.direction == "BOTH" && x.is_active ).Select( x => x.name ).ToArray();
+            #region Integrations
+            product_main_source = Helper.global.integrations.Where( x =>
+                x.work?.type == Work.WorkType.PRODUCT &&
+                x.work?.direction == Work.WorkDirection.MAIN_SOURCE &&
+                x.work.status
+            ).FirstOrDefault()?.name;
+            order_main_target = Helper.global.integrations.Where( x =>
+                x.work?.type == Work.WorkType.ORDER &&
+                x.work?.direction == Work.WorkDirection.MAIN_TARGET &&
+                x.work.status
+            ).FirstOrDefault()?.name;
+            other_product_sources = Helper.global.integrations.Where( x =>
+                x.work?.type == Work.WorkType.PRODUCT &&
+                x.work?.direction == Work.WorkDirection.SOURCE &&
+                x.work.status
+            ).Select( x => x.name ).ToArray();
+            product_targets = Helper.global.integrations.Where( x =>
+                x.work?.type == Work.WorkType.PRODUCT &&
+                x.work?.direction == Work.WorkDirection.TARGET &&
+                x.work.status
+            ).Select( x => x.name ).ToArray();
+            order_sources = Helper.global.integrations.Where( x =>
+                x.work?.type == Work.WorkType.ORDER &&
+                x.work?.direction == Work.WorkDirection.SOURCE &&
+                x.work.status
+            ).Select( x => x.name ).ToArray();
+            available_shipments = Helper.global.integrations.Where( x =>
+                x.work?.type == Work.WorkType.SHIPMENT &&
+                x.work?.direction == Work.WorkDirection.BOTH &&
+                x.work.status
+            ).Select( x => x.name ).ToArray();
+            #endregion
+
+            #region OLD Work Sources
+            //product_main_source = Helper.global.work_sources.Where( x => x.type == "PRODUCT" && (x.direction == "MAIN_SOURCE") && x.is_active ).FirstOrDefault()?.name;
+            //other_product_sources = Helper.global.work_sources.Where( x => x.type == "PRODUCT" && (x.direction == "SOURCE") && x.is_active ).Select( x => x.name ).ToArray();
+            //product_targets = Helper.global.work_sources.Where( x => x.type == "PRODUCT" && (x.direction == "TARGET") && x.is_active ).Select( x => x.name ).ToArray();
+            //order_main_target = Helper.global.work_sources.Where( x => x.type == "ORDER" && (x.direction == "MAIN_TARGET") && x.is_active ).FirstOrDefault()?.name;
+            //order_sources = Helper.global.work_sources.Where( x => x.type == "ORDER" && (x.direction == "SOURCE") && x.is_active ).Select( x => x.name ).ToArray();
+            //available_shipments = Helper.global.work_sources.Where( x => x.type == "SHIPMENT" && x.direction == "BOTH" && x.is_active ).Select( x => x.name ).ToArray();
             #endregion
         }
 
         /// <summary>
-        /// Main Work Loop
+        /// Main Work Loop for Work Sources
         /// </summary>
         /// <returns>Main thread health status</returns>
         public bool DoWork() {
@@ -431,7 +464,9 @@ namespace MerchanterServer {
                                 if( item.price2 != tempx.price2 ) {
                                     db_helper.xml.LogToServer( thread_id, "xml_price_changed", item.xml_source + ":" + item.barcode + "=>" + item.price2 + "|" + tempx.price2, customer.customer_id, "xml" );
                                     notifications.Add( new Notification() {
-                                        customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_PRICE_CHANGED, xproduct_barcode = item.barcode,
+                                        customer_id = customer.customer_id,
+                                        type = Notification.NotificationTypes.XML_PRICE_CHANGED,
+                                        xproduct_barcode = item.barcode,
                                         notification_content = item.xml_source + "=" + item.price2 + "|" + tempx.price2
                                     } );
                                 }
@@ -443,7 +478,9 @@ namespace MerchanterServer {
                                 if( item.qty != tempx.qty ) {
                                     db_helper.xml.LogToServer( thread_id, "xml_qty_changed", item.xml_source + ":" + item.barcode + "=>" + item.qty + "|" + tempx.qty, customer.customer_id, "xml" );
                                     notifications.Add( new Notification() {
-                                        customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_QTY_CHANGED, xproduct_barcode = item.barcode,
+                                        customer_id = customer.customer_id,
+                                        type = Notification.NotificationTypes.XML_QTY_CHANGED,
+                                        xproduct_barcode = item.barcode,
                                         notification_content = item.xml_source + "=" + item.qty + "|" + tempx.qty
                                     } );
                                 }
@@ -558,8 +595,13 @@ namespace MerchanterServer {
                                         if( db_helper.invoice.SetInvoiceCreated( customer.customer_id, invoice.invoice_no, fullpath ) ) { //TODO: belge_url <> local_path different condition
                                             #region Notify - NEW_INVOICE
                                             notifications.Add( new Notification() {
-                                                customer_id = customer.customer_id, type = Notification.NotificationTypes.NEW_INVOICE, invoice_no = invoice.gib_fatura_no, order_label = selected_invoice.order_label, notification_content = Helper.global.erp_invoice_ftp_url + invoice.gib_fatura_no + ".pdf"
-                                                , is_notification_sent = true
+                                                customer_id = customer.customer_id,
+                                                type = Notification.NotificationTypes.NEW_INVOICE,
+                                                invoice_no = invoice.gib_fatura_no,
+                                                order_label = selected_invoice.order_label,
+                                                notification_content = Helper.global.erp_invoice_ftp_url + invoice.gib_fatura_no + ".pdf"
+                                                ,
+                                                is_notification_sent = true
                                             } ); //TODO: this gonna change
                                             #endregion
                                             Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + invoice.invoice_no + " created at [" + fullpath + "]" );
@@ -1011,7 +1053,9 @@ namespace MerchanterServer {
                                             item.Qty,
                                             true) ],
                                         extension = new ProductExtension() {
-                                            sku = item.Sku, barcode = item.Barcode, customer_id = customer.customer_id,
+                                            sku = item.Sku,
+                                            barcode = item.Barcode,
+                                            customer_id = customer.customer_id,
                                             brand_id = existed_brand != null ? existed_brand.id : (string.IsNullOrEmpty( item.BrandName ) ? 1 : 0),
                                             is_xml_enabled = existed_p_ext != null && existed_p_ext.is_xml_enabled,
                                             xml_sources = existed_p_ext != null ? existed_p_ext.xml_sources : [],
@@ -1020,7 +1064,10 @@ namespace MerchanterServer {
                                             [ new Category() { id = Helper.global.customer_root_category, category_name = customer.customer_id + "-root", is_active = true, parent_id = 1, customer_id = customer.customer_id
                                             } ],
                                             brand = existed_brand != null ? existed_brand : (string.IsNullOrEmpty( item.BrandName ) ? new Brand() {
-                                                id = 1/*TODO: customer default brand id gelmeli*/, brand_name = "DİĞER", status = true, customer_id = customer.customer_id
+                                                id = 1/*TODO: customer default brand id gelmeli*/,
+                                                brand_name = "DİĞER",
+                                                status = true,
+                                                customer_id = customer.customer_id
                                             } : new Brand() { customer_id = customer.customer_id, brand_name = item.BrandName, status = true, id = 0 })
                                         }
                                     };
@@ -1041,8 +1088,12 @@ namespace MerchanterServer {
                     }
                 }
 
-                if( product_main_source != null && product_main_source == Constants.NETSIS ) {
+                if( product_main_source != null && product_main_source == Constants.MERCHANTER ) {
+                    live_products = products ?? [];
+                }
 
+                if( product_main_source != null && product_main_source == Constants.NETSIS ) {
+                    //TODO: NETSIS product main source will be here
                 }
                 #endregion
             }
@@ -1188,13 +1239,19 @@ namespace MerchanterServer {
                                         #region Notify Product - PRODUCT_IN_STOCK, PRODUCT_OUT_OF_STOCK
                                         if( selected_product.total_qty <= 0 && item.total_qty > 0 ) {
                                             notifications.Add( new Notification() {
-                                                customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_IN_STOCK, product_sku = item.sku, xproduct_barcode = item.sources.Count > 1 ? item.barcode : null,
+                                                customer_id = customer.customer_id,
+                                                type = Notification.NotificationTypes.PRODUCT_IN_STOCK,
+                                                product_sku = item.sku,
+                                                xproduct_barcode = item.sources.Count > 1 ? item.barcode : null,
                                                 notification_content = Constants.MAGENTO2
                                             } );
                                         }
                                         if( selected_product.total_qty > 0 && item.total_qty <= 0 ) {
                                             notifications.Add( new Notification() {
-                                                customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_OUT_OF_STOCK, product_sku = item.sku, xproduct_barcode = item.sources.Count > 1 ? item.barcode : null,
+                                                customer_id = customer.customer_id,
+                                                type = Notification.NotificationTypes.PRODUCT_OUT_OF_STOCK,
+                                                product_sku = item.sku,
+                                                xproduct_barcode = item.sources.Count > 1 ? item.barcode : null,
                                                 notification_content = Constants.MAGENTO2
                                             } );
                                         }
@@ -1257,7 +1314,10 @@ namespace MerchanterServer {
                                 selected_product = new Product() {
                                     id = 0,
                                     customer_id = customer.customer_id,
-                                    type = item.type, sku = item.sku, barcode = item.barcode, name = item.name,
+                                    type = item.type,
+                                    sku = item.sku,
+                                    barcode = item.barcode,
+                                    name = item.name,
                                     source_product_id = item.source_product_id,
                                     price = item.price,
                                     special_price = item.special_price,
@@ -1313,7 +1373,6 @@ namespace MerchanterServer {
                             db_helper.InsertNotifications( customer.customer_id, notifications );
                         }
                     }
-                    //TODO: other sources gonna be here
                 }
             }
             catch( Exception _ex ) {
@@ -1486,8 +1545,11 @@ namespace MerchanterServer {
                                             db_helper.LogToServer( thread_id, "new_order", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + order_item.grand_total.ToString() + order_item.currency, customer.customer_id, "order" );
                                             #region Notify Order - NEW_ORDER
                                             notifications.Add( new Notification() {
-                                                customer_id = customer.customer_id, type = Notification.NotificationTypes.NEW_ORDER, order_label = order_item.order_label,
-                                                notification_content = Constants.NETSIS, is_notification_sent = true
+                                                customer_id = customer.customer_id,
+                                                type = Notification.NotificationTypes.NEW_ORDER,
+                                                order_label = order_item.order_label,
+                                                notification_content = Constants.NETSIS,
+                                                is_notification_sent = true
                                             } );
                                             #endregion
                                         }
@@ -1500,8 +1562,11 @@ namespace MerchanterServer {
                                                 db_helper.LogToServer( thread_id, "order_process", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + Helper.global.order_statuses.Where( x => x.status_code == "HAZIRLANIYOR" ).FirstOrDefault()?.magento2_status_code, customer.customer_id, "order" );
                                                 #region Notify Order - ORDER_PROCESS
                                                 notifications.Add( new Notification() {
-                                                    customer_id = customer.customer_id, type = Notification.NotificationTypes.ORDER_PROCESS, order_label = order_item.order_label,
-                                                    notification_content = inserted_musteri_siparis_no, is_notification_sent = true
+                                                    customer_id = customer.customer_id,
+                                                    type = Notification.NotificationTypes.ORDER_PROCESS,
+                                                    order_label = order_item.order_label,
+                                                    notification_content = inserted_musteri_siparis_no,
+                                                    is_notification_sent = true
                                                 } );
                                                 #endregion
                                             }
@@ -1534,7 +1599,7 @@ namespace MerchanterServer {
                                 }
                                 else {  //query ship
                                     List<string> tracking_codes = [];
-                                    if( Helper.global.shipment.yurtici_kargo && shipments.Contains( Constants.YURTICI ) ) {
+                                    if( Helper.global.shipment.yurtici_kargo && available_shipments.Contains( Constants.YURTICI ) ) {
                                         if( Helper.global.shipment.yurtici_kargo_user_name != null && Helper.global.shipment.yurtici_kargo_password != null ) {
                                             YK yk = new YK( Helper.global.shipment.yurtici_kargo_user_name, Helper.global.shipment.yurtici_kargo_password );
                                             List<string>? tk = yk.GetShipment( selected_order.order_shipping_barcode );
@@ -1544,8 +1609,8 @@ namespace MerchanterServer {
                                             }
                                         }
                                     }
-                                    if( Helper.global.shipment.mng_kargo && shipments.Contains( Constants.MNG ) ) { }
-                                    if( Helper.global.shipment.aras_kargo && shipments.Contains( Constants.ARAS ) ) { }
+                                    if( Helper.global.shipment.mng_kargo && available_shipments.Contains( Constants.MNG ) ) { }
+                                    if( Helper.global.shipment.aras_kargo && available_shipments.Contains( Constants.ARAS ) ) { }
 
                                     if( tracking_codes.Count > 0 ) { //insert tracking code | order status change => complete
                                         Shipment? shipment = db_helper.GetShipment( customer.customer_id, order_item.order_id );
@@ -1561,8 +1626,11 @@ namespace MerchanterServer {
                                                     db_helper.LogToServer( thread_id, "order_process", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + Helper.global.order_statuses.Where( x => x.status_code == "TAMAMLANDI" ).FirstOrDefault()?.magento2_status_code, customer.customer_id, "order" );
                                                     #region Notify Order - ORDER_COMPLETE
                                                     notifications.Add( new Notification() {
-                                                        customer_id = customer.customer_id, type = Notification.NotificationTypes.ORDER_COMPLETE, order_label = order_item.order_label,
-                                                        notification_content = order_item.order_label + " => " + string.Join( ",", tracking_codes ), is_notification_sent = true
+                                                        customer_id = customer.customer_id,
+                                                        type = Notification.NotificationTypes.ORDER_COMPLETE,
+                                                        order_label = order_item.order_label,
+                                                        notification_content = order_item.order_label + " => " + string.Join( ",", tracking_codes ),
+                                                        is_notification_sent = true
                                                     } );
                                                     #endregion
                                                 }
@@ -1571,8 +1639,11 @@ namespace MerchanterServer {
                                                     db_helper.LogToServer( thread_id, "order_shipped", order_item.order_source + ":" + order_item.order_label + ":" + shipment.barcode + " => " + string.Join( ",", tracking_codes ), customer.customer_id, "order" );
                                                     #region Notify Order - ORDER_SHIPPED
                                                     notifications.Add( new Notification() {
-                                                        customer_id = customer.customer_id, type = Notification.NotificationTypes.ORDER_SHIPPED, order_label = order_item.order_label,
-                                                        notification_content = shipment.barcode + " => " + string.Join( ",", tracking_codes ), is_notification_sent = true
+                                                        customer_id = customer.customer_id,
+                                                        type = Notification.NotificationTypes.ORDER_SHIPPED,
+                                                        order_label = order_item.order_label,
+                                                        notification_content = shipment.barcode + " => " + string.Join( ",", tracking_codes ),
+                                                        is_notification_sent = true
                                                     } );
                                                     #endregion
                                                 }
@@ -1586,8 +1657,7 @@ namespace MerchanterServer {
                                 }
                             }
                             else {  //insert shipment barcodes
-                                if( Helper.global.shipment.yurtici_kargo && shipments.Contains( Constants.YURTICI ) ) {
-
+                                if( Helper.global.shipment.yurtici_kargo && available_shipments.Contains( Constants.YURTICI ) ) {
                                     if( Helper.global.shipment.yurtici_kargo_user_name != null && Helper.global.shipment.yurtici_kargo_password != null ) {
                                         YK yk = new YK( Helper.global.shipment.yurtici_kargo_user_name, Helper.global.shipment.yurtici_kargo_password );
                                         order_item.order_shipping_barcode ??= yk.InsertShipment( order_item.order_source, order_item.order_label, order_item.shipping_address.firstname + " " + order_item.shipping_address.lastname, order_item.shipping_address.street, order_item.shipping_address.telephone, order_item.shipping_address.city, order_item.shipping_address.region );
@@ -1616,8 +1686,8 @@ namespace MerchanterServer {
                                         Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + "{1}-shipment_error {0}", order_item.order_id + ":" + order_item.order_label + ":" + order_item.order_source + " => " + order_item.shipment_method, customer.customer_id );
                                     }
                                 }
-                                else if( Helper.global.shipment.mng_kargo && shipments.Contains( Constants.MNG ) ) { }
-                                else if( Helper.global.shipment.aras_kargo && shipments.Contains( Constants.ARAS ) ) { }
+                                else if( Helper.global.shipment.mng_kargo && available_shipments.Contains( Constants.MNG ) ) { }
+                                else if( Helper.global.shipment.aras_kargo && available_shipments.Contains( Constants.ARAS ) ) { }
                             }
                         }
                         else {  //update

@@ -10,7 +10,7 @@ namespace MerchanterApp.CMS.Classes {
         public Task<BaseResponseModel<T>?> Request<T>( string? _token, PostMethod _method, string _url, StringContent? _body = null );
     }
 
-    public class PostHelper :IPostHelper {
+    public class PostHelper : IPostHelper {
         [Inject]
         private IConfiguration? configuration { get; set; }
         private readonly ILogger logger;
@@ -40,10 +40,10 @@ namespace MerchanterApp.CMS.Classes {
                                     ErrorMessage = "",
                                     Data = (T)(object)login_response
                                 };
-                                logger.LogInformation( "LOGIN[" + login_response.AdminInformation.name + "]: " + _url, DateTime.UtcNow.ToLongTimeString() );
+                                logger.LogInformation( "LOGIN[" + response.StatusCode.ToString() + " " + login_response.AdminInformation.name + "]: " + _url, DateTime.UtcNow.ToLongTimeString() );
                             }
                             else {
-                                logger.LogInformation( "LOGIN[FAIL]: " + _url, DateTime.UtcNow.ToLongTimeString() );
+                                logger.LogInformation( "LOGIN[FAIL]: " + response.StatusCode.ToString() + " " + _url, DateTime.UtcNow.ToLongTimeString() );
                             }
                         }
                     }
@@ -57,7 +57,7 @@ namespace MerchanterApp.CMS.Classes {
                             if( response.IsSuccessStatusCode ) {
                                 var response_json = response.Content.ReadAsStringAsync().Result;
                                 model = JsonConvert.DeserializeObject<BaseResponseModel<T>>( response_json );
-                                logger.LogInformation( "GET: " + _url, DateTime.UtcNow.ToLongTimeString() );
+                                logger.LogInformation( "GET: " + response.StatusCode.ToString() + " " + _url, DateTime.UtcNow.ToLongTimeString() );
                             }
                         }
                     }
@@ -70,7 +70,7 @@ namespace MerchanterApp.CMS.Classes {
                         using HttpResponseMessage response = await httpClient.PostAsync( _url, _body );
                         if( response.IsSuccessStatusCode ) {
                             model = JsonConvert.DeserializeObject<BaseResponseModel<T>>( response.Content.ReadAsStringAsync().Result );
-                            logger.LogInformation( "POST: " + _url, DateTime.UtcNow.ToLongTimeString() );
+                            logger.LogInformation( "POST: " + response.StatusCode.ToString() + " " + _url, DateTime.UtcNow.ToLongTimeString() );
                         }
 
                     }
@@ -83,7 +83,7 @@ namespace MerchanterApp.CMS.Classes {
                             using HttpResponseMessage response = await httpClient.PutAsync( _url, _body );
                             if( response.IsSuccessStatusCode ) {
                                 model = JsonConvert.DeserializeObject<BaseResponseModel<T>>( response.Content.ReadAsStringAsync().Result );
-                                logger.LogInformation( "PUT: " + _url, DateTime.UtcNow.ToLongTimeString() );
+                                logger.LogInformation( "PUT: " + response.StatusCode.ToString() + " " + _url, DateTime.UtcNow.ToLongTimeString() );
                             }
                         }
 

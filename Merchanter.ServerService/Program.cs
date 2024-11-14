@@ -50,12 +50,21 @@ builder.Services.AddSwaggerGen( c => {
 builder.Services.AddTransient<IAuthService, AuthService>();
 builder.Services.AddTransient<ITokenService, TokenService>();
 
+var secret = builder.Configuration[ "AppSettings:Secret" ];
+if( string.IsNullOrEmpty( secret ) ) {
+    throw new ArgumentNullException( nameof( secret ), "AppSettings:Secret configuration is missing or empty." );
+}
+
+var safelist = builder.Configuration[ "AdminSafeList" ];
+if( string.IsNullOrEmpty( safelist ) ) {
+    throw new ArgumentNullException( nameof( safelist ), "AdminSafeList configuration is missing or empty." );
+}
+
 builder.Services.AddScoped<ClientIpCheckActionFilter>( container => {
     var loggerFactory = container.GetRequiredService<ILoggerFactory>();
     var logger = loggerFactory.CreateLogger<ClientIpCheckActionFilter>();
 
-    return new ClientIpCheckActionFilter(
-        builder.Configuration[ "AdminSafeList" ], logger );
+    return new ClientIpCheckActionFilter( safelist, logger );
 } );
 
 builder.Services.AddScoped( x => new MerchanterService() );
@@ -77,10 +86,10 @@ builder.Services.AddAuthentication( options => {
     o.TokenValidationParameters = new TokenValidationParameters {
         ValidIssuer = builder.Configuration[ "AppSettings:ValidIssuer" ],
         ValidAudience = builder.Configuration[ "AppSettings:ValidAudience" ],
-        IssuerSigningKey = new SymmetricSecurityKey( Encoding.UTF8.GetBytes( builder.Configuration[ "AppSettings:Secret" ] ) ),
+        IssuerSigningKey = new SymmetricSecurityKey( Encoding.UTF8.GetBytes( secret ) ),
         ValidateIssuer = true,
         ValidateAudience = true,
-        ValidateLifetime = false,
+        ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
     };
     o.SaveToken = true;

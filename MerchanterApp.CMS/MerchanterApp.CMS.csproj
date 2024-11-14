@@ -15,7 +15,6 @@
 		<Content Update="appsettings*.json" CopyToPublishDirectory="Never" />
 		<Content Update="keys\**" CopyToPublishDirectory="Never" />
 		<Folder Include="Components\Pages\Catalog\" />
-		<Folder Include="Components\Pages\Customer\" />
 		<Folder Include="Components\Pages\Settings\" />
 		<Folder Include="Services\" />
 	</ItemGroup>

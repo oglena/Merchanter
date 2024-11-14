@@ -1,0 +1,17 @@
+﻿@attribute [Authorize]
+@page "/Customer/Customers"
+@rendermode InteractiveServer
+
+@using Newtonsoft.Json
+@using System.Text.Json.Serialization
+@inject NavigationManager navigationManager
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IConfiguration configuration
+@inject IPostHelper PostHelper
+
+<PageTitle>Customers | Merchanter</PageTitle>
+
+<CustomersComponent />
+
+@code {
+}

@@ -19,6 +19,7 @@ builder.Services.AddHttpClient();
 builder.WebHost.UseWebRoot( "wwwroot" ).UseStaticWebAssets();
 builder.Services.AddServerSideBlazor().AddCircuitOptions( x => {
     x.DetailedErrors = true;
+    x.DisconnectedCircuitMaxRetained = 10;
 } );
 
 builder.Services.AddTransient<IPostHelper, PostHelper>();

@@ -493,6 +493,62 @@ namespace Merchanter {
                 return null;
             }
         }
+
+        /// <summary>
+        /// Gets log count from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <returns>Error returns 'int:-1'</returns>
+        public int GetLogsCount( int _customer_id ) {
+            try {
+                if( state != System.Data.ConnectionState.Open ) connection.Open();
+                string _query = "SELECT COUNT(*) FROM log WHERE customer_id=@customer_id";
+                MySqlCommand cmd = new MySqlCommand( _query, connection );
+                cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+                int.TryParse( cmd.ExecuteScalar().ToString(), out int total_count );
+                if( state == System.Data.ConnectionState.Open ) connection.Close();
+                return total_count;
+            }
+            catch( Exception ex ) {
+                OnError( ex.ToString() );
+                return -1;
+            }
+        }
+
+        /// <summary>
+        /// Gets log count from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_filters">Filters</param>
+        /// <param name="_items_per_page">Items Per Page</param>
+        /// <param name="_current_page_index">Current Page Index</param>
+        /// <returns>Error returns 'int:-1'</returns>
+        public int GetLogsCount( int _customer_id, Dictionary<string, string?> _filters ) {
+            try {
+                if( state != System.Data.ConnectionState.Open ) connection.Open();
+                string _query = "SELECT COUNT(*) FROM log WHERE customer_id=@customer_id";
+                string? filtered_worker = _filters[ "worker" ];
+                string? filtered_title = _filters[ "title" ];
+                string? filtered_message = _filters[ "message" ];
+                string? filtered_date = _filters[ "date" ];
+                int total_count = 0;
+                if( filtered_worker != null || filtered_title != null || filtered_message != null || filtered_date != null ) {
+                    _query += !string.IsNullOrWhiteSpace( filtered_worker ) && filtered_worker != "0" ? " AND worker='" + filtered_worker + "'" : string.Empty;
+                    _query += !string.IsNullOrWhiteSpace( filtered_title ) && filtered_title != "0" ? " AND title='" + filtered_title + "'" : string.Empty;
+                    _query += !string.IsNullOrWhiteSpace( filtered_message ) && filtered_message != "0" ? " AND message LIKE '%" + filtered_message + "%'" : string.Empty;
+                    //_query += !string.IsNullOrWhiteSpace( filtered_date ) && filtered_worker != "0" ? " AND update_date='" + filtered_date + "'" : string.Empty; TODO: Date filter in GetLastLogs
+                    MySqlCommand cmd = new MySqlCommand( _query, connection );
+                    cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+                    int.TryParse( cmd.ExecuteScalar().ToString(), out total_count );
+                }
+                if( state == System.Data.ConnectionState.Open ) connection.Close();
+                return total_count;
+            }
+            catch( Exception ex ) {
+                OnError( ex.ToString() );
+                return -1;
+            }
+        }
         #endregion
 
         #region Settings
@@ -714,11 +770,11 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_settings">Work Sources</param>
         /// <returns>[No change] or [Error] returns 'false'</returns>
-        public bool SaveCustomerWorkSources( int _customer_id, List<WorkSource> _settings ) {
+        public bool SaveCustomerIntegrations( int _customer_id, List<Integration> _settings ) {
             try {
                 int val = 0;
-                foreach( WorkSource item in _settings ) {
-                    string _query = "UPDATE m_work_sources SET type=@type,name=@name,direction=@direction,is_active=@is_active WHERE id=@id AND customer_id=@customer_id";
+                foreach( Integration item in _settings ) {
+                    string _query = "UPDATE integrations SET type=@type,name=@name,direction=@direction,is_active=@is_active WHERE id=@id AND customer_id=@customer_id";
                     MySqlCommand cmd = new MySqlCommand( _query, connection );
                     cmd.Parameters.Add( new MySqlParameter( "id", item.id ) );
                     cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
@@ -760,7 +816,7 @@ namespace Merchanter {
                     order_statuses = LoadOrderStatuses( _customer_id ),
                     payment_methods = LoadPaymentMethods( _customer_id ),
                     shipment_methods = LoadShipmentMethods( _customer_id ),
-                    work_sources = LoadWorkSources( _customer_id ),
+                    integrations = LoadIntegrations( _customer_id ),
                     sync_mappings = GetCustomerSyncMappings( _customer_id ),
                     DefaultBrand = db_settings.Where( x => x.name == "DefaultBrand" ).First().value,
                     erp_invoice_ftp_username = db_settings.Where( x => x.name == "erp_invoice_ftp_username" ).First().value,
@@ -1168,17 +1224,17 @@ namespace Merchanter {
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public List<WorkSource> LoadWorkSources( int _customer_id ) {
+        public List<Integration> LoadIntegrations( int _customer_id ) {
             try {
                 if( this.state != System.Data.ConnectionState.Open )
                     if( this.OpenConnection() ) {
-                        string _query = "SELECT * FROM m_work_sources WHERE customer_id=@customer_id";
+                        string _query = "SELECT * FROM integrations WHERE customer_id=@customer_id";
                         MySqlCommand cmd = new MySqlCommand( _query, Connection );
                         cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id.ToString() ) );
                         MySqlDataReader dataReader = cmd.ExecuteReader();
-                        List<WorkSource> list = new List<WorkSource>();
+                        List<Integration> list = new List<Integration>();
                         while( dataReader.Read() ) {
-                            list.Add( new WorkSource(
+                            list.Add( new Integration(
                                 Convert.ToInt32( dataReader[ "id" ].ToString() ),
                                 Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
                                 dataReader[ "name" ].ToString(),
@@ -1656,83 +1712,6 @@ namespace Merchanter {
                 MySqlCommand cmd = new MySqlCommand( _query, connection );
                 cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
                 int.TryParse( cmd.ExecuteScalar().ToString(), out int total_count );
-                if( state == System.Data.ConnectionState.Open ) connection.Close();
-                return total_count;
-            }
-            catch( Exception ex ) {
-                OnError( ex.ToString() );
-                return -1;
-            }
-        }
-
-        /// <summary>
-        /// Gets category count from the database
-        /// </summary>
-        /// <param name="_customer_id">Customer ID</param>
-        /// <returns>Error returns 'int:-1'</returns>
-        public int GetCategoryCount( int _customer_id ) {
-            try {
-                if( state != System.Data.ConnectionState.Open ) connection.Open();
-                string _query = "SELECT COUNT(*) FROM categories WHERE customer_id=@customer_id";
-                MySqlCommand cmd = new MySqlCommand( _query, connection );
-                cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
-                int.TryParse( cmd.ExecuteScalar().ToString(), out int total_count );
-                if( state == System.Data.ConnectionState.Open ) connection.Close();
-                return total_count;
-            }
-            catch( Exception ex ) {
-                OnError( ex.ToString() );
-                return -1;
-            }
-        }
-
-        /// <summary>
-        /// Gets log count from the database
-        /// </summary>
-        /// <param name="_customer_id">Customer ID</param>
-        /// <returns>Error returns 'int:-1'</returns>
-        public int GetLogsCount( int _customer_id ) {
-            try {
-                if( state != System.Data.ConnectionState.Open ) connection.Open();
-                string _query = "SELECT COUNT(*) FROM log WHERE customer_id=@customer_id";
-                MySqlCommand cmd = new MySqlCommand( _query, connection );
-                cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
-                int.TryParse( cmd.ExecuteScalar().ToString(), out int total_count );
-                if( state == System.Data.ConnectionState.Open ) connection.Close();
-                return total_count;
-            }
-            catch( Exception ex ) {
-                OnError( ex.ToString() );
-                return -1;
-            }
-        }
-
-        /// <summary>
-        /// Gets log count from the database
-        /// </summary>
-        /// <param name="_customer_id">Customer ID</param>
-        /// <param name="_filters">Filters</param>
-        /// <param name="_items_per_page">Items Per Page</param>
-        /// <param name="_current_page_index">Current Page Index</param>
-        /// <returns>Error returns 'int:-1'</returns>
-        public int GetLogsCount( int _customer_id, Dictionary<string, string?> _filters ) {
-            try {
-                if( state != System.Data.ConnectionState.Open ) connection.Open();
-                string _query = "SELECT COUNT(*) FROM log WHERE customer_id=@customer_id";
-                string? filtered_worker = _filters[ "worker" ];
-                string? filtered_title = _filters[ "title" ];
-                string? filtered_message = _filters[ "message" ];
-                string? filtered_date = _filters[ "date" ];
-                int total_count = 0;
-                if( filtered_worker != null || filtered_title != null || filtered_message != null || filtered_date != null ) {
-                    _query += !string.IsNullOrWhiteSpace( filtered_worker ) && filtered_worker != "0" ? " AND worker='" + filtered_worker + "'" : string.Empty;
-                    _query += !string.IsNullOrWhiteSpace( filtered_title ) && filtered_title != "0" ? " AND title='" + filtered_title + "'" : string.Empty;
-                    _query += !string.IsNullOrWhiteSpace( filtered_message ) && filtered_message != "0" ? " AND message LIKE '%" + filtered_message + "%'" : string.Empty;
-                    //_query += !string.IsNullOrWhiteSpace( filtered_date ) && filtered_worker != "0" ? " AND update_date='" + filtered_date + "'" : string.Empty; TODO: Date filter in GetLastLogs
-                    MySqlCommand cmd = new MySqlCommand( _query, connection );
-                    cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
-                    int.TryParse( cmd.ExecuteScalar().ToString(), out total_count );
-                }
                 if( state == System.Data.ConnectionState.Open ) connection.Close();
                 return total_count;
             }
@@ -2937,6 +2916,27 @@ namespace Merchanter {
             catch( Exception ex ) {
                 OnError( ex.ToString() );
                 return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets category count from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <returns>Error returns 'int:-1'</returns>
+        public int GetCategoryCount( int _customer_id ) {
+            try {
+                if( state != System.Data.ConnectionState.Open ) connection.Open();
+                string _query = "SELECT COUNT(*) FROM categories WHERE customer_id=@customer_id";
+                MySqlCommand cmd = new MySqlCommand( _query, connection );
+                cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+                int.TryParse( cmd.ExecuteScalar().ToString(), out int total_count );
+                if( state == System.Data.ConnectionState.Open ) connection.Close();
+                return total_count;
+            }
+            catch( Exception ex ) {
+                OnError( ex.ToString() );
+                return -1;
             }
         }
         #endregion 

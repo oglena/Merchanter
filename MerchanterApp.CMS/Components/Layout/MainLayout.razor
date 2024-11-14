@@ -19,23 +19,32 @@
 						</div>
 						<div class="offcanvas-body">
 							<ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
-								<li class="nav-item">
-									<a class="nav-link active" aria-current="page" href="Server/Servers">Servers</a>
+								<li class="nav-item active">
+									<a class="nav-link" aria-current="page" href="/"><i class="bi bi-house-door"></i>&nbsp;Dashboard</a>
 								</li>
 								<li class="nav-item">
-									<a class="nav-link active" aria-current="page" href="Account/Customer/Customers">Customers</a>
+									<a class="nav-link" aria-current="page" href="Server/Servers"><i class="bi bi-cpu"></i>&nbsp;Servers</a>
 								</li>
-								<li class="nav-item">
-									<a class="nav-link active" aria-current="page" href="Account/Customer/Logs">System Logs</a>
+								<li class="nav-item dropdown">
+									<a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+										<i class="bi bi-person-bounding-box"></i>&nbsp;Customer
+									</a>
+									<ul class="dropdown-menu">
+										<li><a class="dropdown-item" href="Customer/Customers"><i class="bi bi-people"></i>&nbsp;Customers</a></li>
+										<li> <hr class="dropdown-divider"> </li>
+										<li><a class="dropdown-item" href="Customer/Integrations"><i class="bi bi-hdd-stack"></i>&nbsp;Integrations</a></li>
+										<li> <hr class="dropdown-divider"> </li>
+										<li><a class="dropdown-item" href="Customer/Logs"><i class="bi bi-journal-text"></i>&nbsp;Customer Logs</a></li>
+									</ul>
 								</li>
 								<li>
 									<hr class="dropdown-divider" />
 								</li>
 								<li class="nav-item">
-									<a class="nav-link active" aria-current="page" href="Account/Profile">Admin Profile</a>
+									<a class="nav-link" aria-current="page" href="Account/Profile"><i class="bi bi-person-square"></i>&nbsp;Admin Profile</a>
 								</li>
 								<li class="nav-item">
-									<a class="nav-link active" aria-current="page" href="Account/Logout">Logout</a>
+									<a class="nav-link" aria-current="page" href="Account/Logout"><i class="bi bi-box-arrow-in-left"></i>&nbsp;Logout</a>
 								</li>
 							</ul>
 						</div>

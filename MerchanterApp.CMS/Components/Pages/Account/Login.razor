@@ -15,101 +15,102 @@
 
 @if (admin != null)
 {
-	<div class="container text-center mt-5">
-		<div class="row">
-			<div class="col-1 col-sm-2 col-md-4"></div>
-			<div class="col-10 col-sm-8 col-md-4">
-				<EditForm method="post" FormName="LoginForm" Model="admin" OnValidSubmit="LoginSubmit">
-					<img class="mb-4" src="ceres_logo_transparent_base.png" alt="logo" width="150" />
-					<h1 class="fw-normal">Merchanter Back Office</h1><hr />
-					<span class="text-danger">@login_message</span>
-					<DataAnnotationsValidator></DataAnnotationsValidator>
-					<ValidationSummary></ValidationSummary>
-					<div class="form-floating mb-3">
-						<InputText @bind-Value="admin.UserName" class="form-control" placeholder="Enter your user name"></InputText>
-						<label for="floatingInput">User Name</label>
-					</div>
-					<div class="form-floating mb-3">
-						<InputText type="password" @bind-Value="admin.Password" class="form-control" placeholder="Enter your password"></InputText>
-						<label for="floatingPassword">Password</label>
-					</div>
-					<div class="form-floating mb-3">
-						<div class="checkbox">
-							<label>
-								<InputCheckbox @bind-Value="remember_me"></InputCheckbox>&nbsp;&nbsp;&nbsp;Remember me
-							</label>
-						</div>
-					</div>
-					<button type="submit" class="w-100 btn btn-lg btn-primary">Login</button>
-				</EditForm>
-			</div>
-			<div class="col-1 col-sm-2 col-md-4"></div>
-		</div>
-	</div>
+    <div class="container text-center mt-5">
+        <div class="row">
+            <div class="col-1 col-sm-2 col-md-4"></div>
+            <div class="col-10 col-sm-8 col-md-4">
+                <EditForm method="post" FormName="LoginForm" Model="admin" OnValidSubmit="LoginSubmit">
+                    <img class="mb-4" src="ceres_logo_transparent_base.png" alt="logo" width="150" />
+                    <h1 class="fw-normal">Merchanter Back Office</h1><hr />
+                    <span class="text-danger">@login_message</span>
+                    <DataAnnotationsValidator></DataAnnotationsValidator>
+                    <ValidationSummary></ValidationSummary>
+                    <div class="form-floating mb-3">
+                        <InputText @bind-Value="admin.UserName" class="form-control" placeholder="Enter your user name"></InputText>
+                        <label for="floatingInput">User Name</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <InputText type="password" @bind-Value="admin.Password" class="form-control" placeholder="Enter your password"></InputText>
+                        <label for="floatingPassword">Password</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <div class="checkbox">
+                            <label>
+                                <InputCheckbox @bind-Value="remember_me"></InputCheckbox>&nbsp;&nbsp;&nbsp;Remember me
+                            </label>
+                        </div>
+                    </div>
+                    <button type="submit" class="w-100 btn btn-lg btn-primary"><i class="bi bi-box-arrow-in-right"></i>&nbsp;Login</button>
+                </EditForm>
+            </div>
+            <div class="col-1 col-sm-2 col-md-4"></div>
+        </div>
+    </div>
 }
 
 @code {
-	[SupplyParameterFromForm(FormName = "LoginForm")]
-	private AdminLogin admin { get; set; } = new AdminLogin();
+    [SupplyParameterFromForm(FormName = "LoginForm")]
+    private AdminLogin admin { get; set; } = new AdminLogin();
 
-	public bool remember_me { get; set; }
+    public bool remember_me { get; set; }
 
-	private class AdminLogin
-	{
-		public string UserName { get; set; } = "";
-		public string Password { get; set; } = "";
-	}
+    private class AdminLogin
+    {
+        public string UserName { get; set; } = "";
+        public string Password { get; set; } = "";
+    }
 
-	private string login_message = string.Empty;
+    private string login_message = string.Empty;
 
-	private async Task LoginSubmit()
-	{
-		if (HttpContextAccessor != null && HttpContextAccessor.HttpContext != null)
-		{
-			if (admin != null && !string.IsNullOrWhiteSpace(admin.UserName) && !string.IsNullOrEmpty(admin.Password))
-			{
-				var response = await PostHelper.Request<UserLoginResponseModel>(null,
-						Classes.PostHelper.PostMethod.Login,
-						"api/Auth/Login",
-						new StringContent(JsonConvert.SerializeObject(admin), Encoding.UTF8, "application/json")
-					);
+    private async Task LoginSubmit()
+    {
+        if (HttpContextAccessor != null && HttpContextAccessor.HttpContext != null)
+        {
+            if (admin != null && !string.IsNullOrWhiteSpace(admin.UserName) && !string.IsNullOrEmpty(admin.Password))
+            {
+                var response = await PostHelper.Request<UserLoginResponseModel>(null,
+                        Classes.PostHelper.PostMethod.Login,
+                        "api/Auth/Login",
+                        new StringContent(JsonConvert.SerializeObject(admin), Encoding.UTF8, "application/json")
+                    );
 
-				if (response != null && response.Success && response.Data != null)
-				{
-					var login = response.Data;
-					if (login != null && login.AuthenticateResult)
-					{
-						login_message = "Authenticating";
-						await HttpContextAccessor.HttpContext.SignInAsync(Variables.auth_cookie,
-							new ClaimsPrincipal(
-								new ClaimsIdentity(
-									new List<Claim>() {
-											new Claim(Variables.admin_id, login.AdminInformation.id.ToString()),
-											new Claim(ClaimTypes.Name , login.AdminInformation.name),
-											new Claim(ClaimTypes.Role, Variables.admin_role/* TODO: add admin role*/),
-											new Claim(Variables.remember_me, remember_me.ToString()),
-											new Claim(Variables.auth_token, login.AuthToken)
-										},
-								Variables.auth_cookie)),
-								new AuthenticationProperties
-									{
-										IsPersistent = remember_me,
-										RedirectUri = UriHelper.Encode(new Uri(navigationManager.BaseUri))
-									});
-						//navigationManager.NavigateTo("/");
-					}
-					else
-					{
-						login_message = string.Empty;
-					}
+                if (response != null && response.Success && response.Data != null)
+                {
+                    var login = response.Data;
+                    if (login != null && login.AuthenticateResult)
+                    {
+                        login_message = "Authenticating";
+                        await HttpContextAccessor.HttpContext.SignInAsync(Variables.auth_cookie,
+                            new ClaimsPrincipal(
+                                new ClaimsIdentity(
+                                    new List<Claim>() {
+                                            new Claim(Variables.admin_id, login.AdminInformation.id.ToString()),
+                                            new Claim(ClaimTypes.Name , login.AdminInformation.name),
+                                            new Claim(ClaimTypes.Role, Variables.admin_role/* TODO: add admin role*/),
+                                            new Claim(Variables.remember_me, remember_me.ToString()),
+                                            new Claim(Variables.auth_token, login.AuthToken)
+                                            },
+                                Variables.auth_cookie)),
+                                new AuthenticationProperties
+                                    {
+                                        IsPersistent = remember_me,
+                                        RedirectUri = UriHelper.Encode(new Uri(navigationManager.BaseUri)),
+                                        ExpiresUtc = login.AccessTokenExpireDate.ToUniversalTime(),
+                                        AllowRefresh = true
+                                    });
+                    }
+                    else
+                    {
+                        login_message = string.Empty;
+                    }
 
-					StateHasChanged();
-				}
-				else
-				{
-					login_message = "Cannot authenticate with provided credentials.";
-				}
-			}
-		}
-	}
+                    StateHasChanged();
+                }
+                else
+                {
+                    login_message = "Cannot authenticate with provided credentials.";
+                }
+            }
+        }
+    }
 }

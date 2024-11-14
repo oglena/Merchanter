@@ -1,7 +1,4 @@
-﻿@attribute [Authorize]
-@page "/Account/Customer/Customers"
-@rendermode InteractiveServer
-
+﻿@rendermode InteractiveServer
 @using Newtonsoft.Json
 @using System.Text.Json.Serialization
 @inject NavigationManager navigationManager
@@ -9,19 +6,16 @@
 @inject IConfiguration configuration
 @inject IPostHelper PostHelper
 
-<PageTitle>Customers | Merchanter</PageTitle>
-
-<div class="row mt-3">
-	<div class="col-12 ps-2">
-		<h1>Customers</h1>
+<div class="container-fluid bg-dark text-light rounded-2 p-3">
+	<div class="row mt-3">
+		<div class="col-12 ps-2">
+			<h2>
+				Customers
+			</h2>
+		</div>
 	</div>
 </div>
-@if (!string.IsNullOrWhiteSpace(@page_message))
-{
-	<hr />
-	<span>@page_message</span>
-}
-<hr />
+<AlertComponent page_message="@page_message" />
 
 <div class="row mt-3">
 	<div class="col-12 ps-2 table-overflow">
@@ -33,11 +27,11 @@
 						<th scope="col">Customer ID</th>
 						<th scope="col">User Name</th>
 						<th scope="col">User Status</th>
-						<th scope="col">Product Sync Status</th>
-						<th scope="col">Order Sync Status</th>
-						<th scope="col">Notification Sync Status</th>
-						<th scope="col">XML Sync Status</th>
-						<th scope="col">Invoice Sync Status</th>
+						<th scope="col">Product Sync</th>
+						<th scope="col">Order Sync</th>
+						<th scope="col">Notification Sync</th>
+						<th scope="col">XML Sync</th>
+						<th scope="col">Invoice Sync</th>
 						<th scope="col">Actions</th>
 					</tr>
 				</thead>
@@ -46,35 +40,39 @@
 					{
 						<tr>
 							<td class="align-content-center">
-								@item.customer_id
+								<span class="badge rounded-pill text-bg-dark">@item.customer_id</span>
 							</td>
 							<td class="align-content-center">
-								@item.user_name
+								<a class="link-opacity-75-hover" href="@("Customer/" + item.customer_id.ToString())">@item.user_name</a>
 							</td>
 							<td class="align-content-center">
-								@(item.status ? "Enabled" : "Disabled")
+								@((MarkupString)(item.status ? "<i class='bi bi-check-circle-fill text-success'></i>" : "<i class='bi bi-dash-circle text-danger'></i>"))
+								@(item.status ? "Licensed" : "Unlicensed")
 							</td>
 							<td class="align-content-center">
 								@(item.product_sync_status ? "Enabled" : "Disabled")
+								@((MarkupString)(item.product_sync_status ? "<i class='bi bi-check-circle-fill text-success'></i>" : "<i class='bi bi-dash-circle text-danger'></i>"))
 							</td>
 							<td class="align-content-center">
 								@(item.order_sync_status ? "Enabled" : "Disabled")
+								@((MarkupString)(item.order_sync_status ? "<i class='bi bi-check-circle-fill text-success'></i>" : "<i class='bi bi-dash-circle text-danger'></i>"))
 							</td>
 							<td class="align-content-center">
 								@(item.notification_sync_status ? "Enabled" : "Disabled")
-								@* &nbsp;&nbsp;<a class="btn btn-outline-primary" href="@("Account/Customer/" + item.customer_id.ToString()+"/Notifications")">Show</a> *@
-
+								@((MarkupString)(item.notification_sync_status ? "<i class='bi bi-check-circle-fill text-success'></i>" : "<i class='bi bi-dash-circle text-danger'></i>"))
 							</td>
 							<td class="align-content-center">
 								@(item.xml_sync_status ? "Enabled" : "Disabled")
+								@((MarkupString)(item.xml_sync_status ? "<i class='bi bi-check-circle-fill text-success'></i>" : "<i class='bi bi-dash-circle text-danger'></i>"))
 							</td>
 							<td class="align-content-center">
 								@(item.invoice_sync_status ? "Enabled" : "Disabled")
+								@((MarkupString)(item.invoice_sync_status ? "<i class='bi bi-check-circle-fill text-success'></i>" : "<i class='bi bi-dash-circle text-danger'></i>"))
 							</td>
 							<td class="align-content-center">
-								<a class="btn btn-primary" href="@("Account/Customer/" + item.customer_id.ToString())">Edit</a>&nbsp;&nbsp;
-								<a class="btn btn-primary" href="@("Account/Customer/" + item.customer_id.ToString()+"/Logs")">Logs</a>&nbsp;&nbsp;
-								<a class="btn btn-primary" href="@("Account/Customer/" + item.customer_id.ToString()+"/Settings")">Settings</a>
+                                <a class="link-opacity-75-hover" href="@("Customer/" + item.customer_id.ToString())">Edit</a>@*&nbsp;&nbsp;
+								 <a class="btn btn-primary" href="@("Customer/" + item.customer_id.ToString()+"/Logs")">Logs</a>&nbsp;&nbsp;
+								<a class="btn btn-primary" href="@("Customer/" + item.customer_id.ToString()+"/Settings")">Settings</a> *@
 							</td>
 						</tr>
 					}
@@ -93,7 +91,7 @@
 @code {
 	private List<Merchanter.Classes.Customer>? customers { get; set; }
 	private string loading = "...LOADING...";
-	private string page_message = ""; 
+	private string page_message = "";
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{

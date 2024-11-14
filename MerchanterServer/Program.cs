@@ -88,16 +88,14 @@ while( true ) {
         //GMail.Send( Constants.mail_sender, Constants.mail_password, Constants.mail_sender_name, Constants.mail_to,
         //    Assembly.GetCallingAssembly().GetName().Name + "Error  //customer:" + customer_id.ToString(),
         //    "ERROR" + newline + "CustomerID: " + customer_id.ToString() + ". User Not Found." + newline + "exit -2" );
-        Console.WriteLine( "Thread will sleep 10m!" );
-        Thread.Sleep( 1000 * 60 * 10 ); //10m
+        Console.WriteLine( "Thread will sleep 1h!" ); Thread.Sleep( 1000 * 60 * 60 ); //1h
         return -2;
     }
 
     if( !customer.status ) {
         Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + customer_id + "-ID license error." );
         Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + customer_id + "-ID license error." );
-        Console.WriteLine( "Thread will sleep 1h!" );
-        Thread.Sleep( 1000 * 60 * 60 ); //1h
+        Console.WriteLine( "Thread will sleep 10m!" ); Thread.Sleep( 1000 * 60 * 10 ); //10m
         continue;
     }
     #endregion
@@ -110,8 +108,7 @@ while( true ) {
             db_helper.LogToServer( thread_id, "friendly_error", "Settings could not load.", customer_id, "helper_settings" );
             Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Settings could not load." );
             Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Settings could not load." );
-            Console.WriteLine( "Thread will sleep 10m!" );
-            Thread.Sleep( 1000 * 60 * 10 ); //10m
+            Console.WriteLine( "Thread will sleep 10m!" ); Thread.Sleep( 1000 * 60 * 10 ); //10m
             continue;
         }
     }
@@ -119,8 +116,7 @@ while( true ) {
         db_helper.LogToServer( thread_id, "friendly_error", "Settings could not load.", customer_id, "helper_settings" );
         Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Settings could not load." + newline + ex.ToString() );
         Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Settings could not load." + newline + ex.ToString() );
-        Console.WriteLine( "Thread will sleep 10m!" );
-        Thread.Sleep( 1000 * 60 * 10 ); //10m
+        Console.WriteLine( "Thread will sleep 10m!" ); Thread.Sleep( 1000 * 60 * 10 ); //10m
         continue;
     }
     #endregion
@@ -175,12 +171,10 @@ while( true ) {
 
     try {
         MainLoop main_loop = new( thread_id, customer, db_helper );
-        if( Helper.global != null ) {
-            if( main_loop.DoWork() ) {
-                if( !customer.is_productsync_working && !customer.is_ordersync_working && !customer.is_xmlsync_working && !customer.is_invoicesync_working && !customer.notification_sync_status ) {
-                    WriteLogLine( "[" + DateTime.Now.ToString() + "] " + customer_id.ToString() + "-" +
-                    Helper.global.settings.company_name + " SYNC COMPLETED", ConsoleColor.Blue );
-                }
+        if( Helper.global != null && main_loop.DoWork() ) {
+            if( !customer.is_productsync_working && !customer.is_ordersync_working && !customer.is_xmlsync_working && !customer.is_invoicesync_working && !customer.notification_sync_status ) {
+                WriteLogLine( "[" + DateTime.Now.ToString() + "] " + customer_id.ToString() + "-" +
+                Helper.global.settings.company_name + " SYNC COMPLETED", ConsoleColor.Blue );
             }
             else {
                 WriteLogLine( "[" + DateTime.Now.ToString() + "] " + customer_id.ToString() + "-" +
@@ -194,8 +188,7 @@ while( true ) {
         //    Assembly.GetCallingAssembly().GetName().Name + "-Error  //customer:" + customer_id.ToString(),
         //    "ERROR" + newline + "CustomerID: " + customer_id.ToString() + ". " + _ex.Message + newline + _ex.ToString() + newline + "exit -2" );
         Console.WriteLine( _ex.Message + newline + _ex.ToString() );
-        Console.WriteLine( "Thread will sleep 1m!" );
-        Thread.Sleep( 1000 * 60 * 1 ); //1m
+        Console.WriteLine( "Thread will sleep 1m!" ); Thread.Sleep( 1000 * 60 * 1 ); //1m
         continue;
     } finally {
 

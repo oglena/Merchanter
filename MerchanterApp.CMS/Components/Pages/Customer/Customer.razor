@@ -1,5 +1,5 @@
 ﻿@attribute [Authorize]
-@page "/Account/Customer/{CID?}"
+@page "/Customer/{CID?}"
 @rendermode InteractiveServer
 
 @using System.Text.Json.Serialization
@@ -14,7 +14,7 @@
 @if (customer != null && customer_id > 0)
 {
 	<div class="row mt-3 pb-2">
-		<div class="col-md-6 pb-2 bg-light rounded-3">
+		<div class="col-md-5 pb-2 bg-light rounded-3">
 			<div class="row mt-3">
 				<div class="col-12 ps-2">
 					<h2>
@@ -22,8 +22,10 @@
 						<button type="button" class="btn btn-primary" @onclick="RefreshCustomer" disabled="@(is_refreshing)"><i class='bi bi-arrow-clockwise @(is_refreshing ? "d-none" : "")'></i><span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
 					</h2>
 					<h1>
-						<button type="button" class="btn btn-outline-primary" @onclick="@(() => SetActiveTab("logs") )" disabled="@(logs_active)">Logs</button>
-						<button type="button" class="btn btn-outline-primary" @onclick="@(() => SetActiveTab("settings") )" disabled="@(settings_active)">Settings</button>
+						<button type="button" class="btn btn-outline-primary" @onclick="@(() => SetActiveTab("settings") )" disabled="@(settings_active)"><i class="bi bi-gear"></i>&nbsp;Settings</button>
+						<button type="button" class="btn btn-outline-primary" @onclick="@(() => SetActiveTab("platform_settings") )" disabled="@(platform_settings_active)"><i class="bi bi-gear"></i>&nbsp;Platforms</button>
+						<button type="button" class="btn btn-outline-primary" @onclick="@(() => SetActiveTab("integrations") )" disabled="@(integrations_active)"><i class="bi bi-hdd-stack"></i>&nbsp;Integrations</button>
+						<button type="button" class="btn btn-outline-primary" @onclick="@(() => SetActiveTab("logs") )" disabled="@(logs_active)"><i class="bi bi-journal-text"></i>&nbsp;Logs</button>
 					</h1>
 				</div>
 			</div>
@@ -33,14 +35,14 @@
 				<div class="row mt-3">
 					<div class="col-12 ps-2">
 						<h1>
-							<button type="submit" class="btn btn-outline-success" disabled="@(is_refreshing)">Save Customer&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+							<button type="submit" class="btn btn-outline-success" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save Customer&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
 						</h1>
 					</div>
 				</div>
 				<div class="row mt-3">
 					<div class="col-6 ps-2 mb-3">
 						<label for="user_name" class="form-label">User Name</label>
-							<InputText type="text" class="form-control" placeholder="User Name cannot be empty!" @bind-Value="customer.user_name" />
+						<InputText type="text" class="form-control" placeholder="User Name cannot be empty!" @bind-Value="customer.user_name" />
 					</div>
 					<div class="col-6 ps-2 mb-3">
 						<label for="password" class="form-label">Password</label>
@@ -50,8 +52,8 @@
 				<div class="row mt-3">
 					<div class="col-12 ps-2 mb-3">
 						<div class="form-check form-switch">
-							<label class="form-check-label">&nbsp;Customer Status</label>
 							<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.status"></InputCheckbox>
+							<label class="form-check-label">&nbsp;<abbr title="This choice does not stop Merchanter Server. But holds it atleast 10 minutes. If you activate this; integrations will begin." class="initialism">Customer License Status</abbr></label>
 						</div>
 					</div>
 				</div>
@@ -76,7 +78,7 @@
 							</thead>
 							<tbody class="table-group-divider">
 								<tr>
-									<td>
+									<td style="width:40%;">
 										<div class="form-check form-switch mt-2">
 											<label class="form-check-label">&nbsp;Product Sync Status</label>
 											<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.product_sync_status"></InputCheckbox>
@@ -177,7 +179,7 @@
 
 			</EditForm>
 		</div>
-		<div class="col-md-6 pb-2 rounded-3">
+		<div class="col-md-7 pb-2 rounded-3">
 			@if (logs_active)
 			{
 				<LogsComponent CID="@CID" show_customer_select="@false" />
@@ -186,6 +188,14 @@
 			{
 				<SettingsComponent CID="@CID" />
 			}
+			else if (integrations_active)
+			{
+				<IntegrationsComponent CID="@CID" />
+			}
+            else if (platform_settings_active)
+            {
+                <PlatformsComponent CID="@CID" />
+            }
 		</div>
 	</div>
 }
@@ -201,12 +211,15 @@ else
 	public Merchanter.Classes.Customer? customer { get; set; }
 	public int customer_id = 0;
 	public string company_name { get; set; } = "N/A";
-	public bool logs_active = false;
 	private bool is_refreshing = false;
 	private string loading = "Loading...";
 	private string page_message = string.Empty;
 	private string message_status = "dark";
+
 	public bool settings_active = true;
+	public bool logs_active = false;
+	public bool integrations_active = false;
+	public bool platform_settings_active = false;
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
@@ -306,11 +319,29 @@ else
 		{
 			logs_active = true;
 			settings_active = false;
+			integrations_active = false;
+			platform_settings_active = false;
 		}
 		else if (tab == "settings")
 		{
 			logs_active = false;
 			settings_active = true;
+			integrations_active = false;
+			platform_settings_active = false;
+		}
+		else if (tab == "integrations")
+		{
+			logs_active = false;
+			settings_active = false;
+			integrations_active = true;
+			platform_settings_active = false;
+		}
+		else if (tab == "platform_settings")
+		{
+			logs_active = false;
+			settings_active = false;
+			integrations_active = false;
+			platform_settings_active = true;
 		}
 		await Task.CompletedTask;
 	}

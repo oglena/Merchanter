@@ -12,7 +12,7 @@
         public List<OrderStatus> order_statuses { get; set; }
         public List<PaymentMethod> payment_methods { get; set; }
         public List<ShipmentMethod> shipment_methods { get; set; }
-        public List<WorkSource> work_sources { get; set; }
+        public List<Integration> integrations { get; set; }
         public List<SyncMapping> sync_mappings { get; set; }
         public string erp_invoice_ftp_username { get; set; } = string.Empty;
         public string erp_invoice_ftp_password { get; set; } = string.Empty;
