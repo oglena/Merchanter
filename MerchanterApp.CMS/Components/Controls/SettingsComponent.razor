@@ -69,7 +69,7 @@
                         </div>
                         <div class="row mt-3">
                             <div class="col-12 ps-2 mb-3">
-                                <button type="submit" class="btn btn-outline-success float-end" @onclick="@(() => SaveGeneralSettings(settings.settings))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+                                        <button type="submit" class="btn btn-outline-success float-end @(!is_refreshing ? "shadow" : "")" @onclick="@(() => SaveGeneralSettings(settings.settings))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
                             </div>
                         </div>
                     </div>

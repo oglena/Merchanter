@@ -21,7 +21,7 @@
                             <div class="card-body">
                                 <h3 class="card-title">@item.name</h3><hr />
                                 <p class="card-text p-2">
-                                    <button type="button" class="btn btn-outline-dark btn-sm" @onclick="() => OpenSettings(item)"><span><i class="bi bi-gear"></i>&nbsp;SETTINGS</span></button>
+                                                <button type="button" class="btn btn-outline-dark btn-sm shadow" @onclick="() => OpenSettings(item)"><span><i class="bi bi-gear"></i>&nbsp;SETTINGS</span></button>
                                 </p>
                             </div>
                             <div class="card-footer">
@@ -72,7 +72,7 @@
                             </div>
                             <div class="row mt-3">
                                 <div class="col-12 ps-2 mb-3">
-                                    <button type="submit" class="btn btn-outline-success float-end" @onclick="@(() => SaveEntegraSettings(settings.entegra))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+                                                    <button type="submit" class="btn btn-outline-success shadow float-end" @onclick="@(() => SaveEntegraSettings(settings.entegra))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
                                 </div>
                             </div>
                         </EditForm>
@@ -321,7 +321,7 @@
                             </div>
                             <div class="row mt-3">
                                 <div class="col-12 ps-2 mb-3">
-                                    <button type="submit" class="btn btn-outline-success float-end" @onclick="@(() => SaveNetsisSettings(settings.netsis))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+                                    <button type="submit" class="btn btn-outline-success shadow float-end" @onclick="@(() => SaveNetsisSettings(settings.netsis))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
                                 </div>
                             </div>
                         </EditForm>
@@ -438,7 +438,7 @@
                             </div>
                             <div class="row mt-3">
                                 <div class="col-12 ps-2 mb-3">
-                                    <button type="submit" class="btn btn-outline-success float-end" @onclick="@(() => SaveMagentoSettings(settings.magento))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+                                    <button type="submit" class="btn btn-outline-success shadow float-end" @onclick="@(() => SaveMagentoSettings(settings.magento))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
                                 </div>
                             </div>
                         </EditForm>
@@ -512,7 +512,7 @@
                             </div>
                             <div class="row mt-3">
                                 <div class="col-12 ps-2 mb-3">
-                                    <button type="submit" class="btn btn-outline-success float-end" @onclick="@(() => SaveShipmentSettings(settings.shipment))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+                                    <button type="submit" class="btn btn-outline-success shadow float-end" @onclick="@(() => SaveShipmentSettings(settings.shipment))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
                                 </div>
                             </div>
                         </EditForm>
@@ -586,7 +586,7 @@
                             </div>
                             <div class="row mt-3">
                                 <div class="col-12 ps-2 mb-3">
-                                    <button type="submit" class="btn btn-outline-success float-end" @onclick="@(() => SaveShipmentSettings(settings.shipment))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+                                    <button type="submit" class="btn btn-outline-success shadow float-end" @onclick="@(() => SaveShipmentSettings(settings.shipment))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
                                 </div>
                             </div>
                         </EditForm>
@@ -660,7 +660,7 @@
                             </div>
                             <div class="row mt-3">
                                 <div class="col-12 ps-2 mb-3">
-                                    <button type="submit" class="btn btn-outline-success float-end" @onclick="@(() => SaveShipmentSettings(settings.shipment))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+                                    <button type="submit" class="btn btn-outline-success shadow float-end" @onclick="@(() => SaveShipmentSettings(settings.shipment))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
                                 </div>
                             </div>
                         </EditForm>
@@ -669,7 +669,7 @@
             }
 
             <div class="row mt-3">
-                <a href="javascript:void(0);" @onclick="() => selected_platform_name = string.Empty" class="btn btn-outline-dark btn-sm"><span><i class="bi bi-arrow-left"></i>&nbsp;Back to Platforms</span></a>
+                        <a href="javascript:void(0);" @onclick="() => selected_platform_name = string.Empty" class="btn btn-outline-dark btn-sm shadow"><span><i class="bi bi-arrow-left"></i>&nbsp;Back to Platforms</span></a>
             </div>
         }
     }
