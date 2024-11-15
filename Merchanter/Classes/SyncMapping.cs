@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Merchanter.Classes {
+﻿namespace Merchanter.Classes {
     public class SyncMapping {
         public int id { get; set; }
         public int customer_id { get; set; }
@@ -17,5 +11,6 @@ namespace Merchanter.Classes {
         public string? regex { get; set; } = null;
         public bool is_active { get; set; }
         public DateTime update_date { get; set; }
+
     }
 }

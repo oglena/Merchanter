@@ -1,0 +1,65 @@
+﻿@attribute [Authorize]
+@rendermode InteractiveServer
+@inject IChatCompletionService ChatCompletionService
+
+
+<form class="d-lg-flex d-none" role="search" @onsubmit="GetFromAI">
+    <input type="search" @ref="neuro_searchbox" class="form-control shadow me-2" @bind="sometext" style="width:350px;height:32px;" placeholder="Ask to Neuro (AI Assistant)" aria-label="Ask to Neuro">
+    <button type="submit" class="btn btn-outline-success shadow" title="Send"><i class="bi bi-send"></i>&nbsp;</button>&nbsp;
+    <button type="button" class="btn btn-outline-secondary shadow" title="Close" @onclick="ResetChat">&nbsp;<i class="bi bi-x-circle"></i>&nbsp;</button>
+    @if (!string.IsNullOrWhiteSpace(result))
+    {
+        <div class="position-fixed bg-white p-3 rounded-2 border border-primary overflow-auto" style="width:600px;height:auto;max-height:500px;top:36px;margin-left:-20px;white-space:break-spaces;">
+            <div>@((MarkupString)result)</div>
+            <small class="float-end">Testing purposes only | Powered by Azure Open AI | Model gpt-4o.</small>
+        </div>
+    }
+</form>
+
+@code {
+    private ElementReference neuro_searchbox;
+
+    private string result = string.Empty;
+    private string sometext = string.Empty;
+    private ChatHistory ChatHistory = new ChatHistory();
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            ChatHistory.AddSystemMessage("Your name is Neuro. A.K.A Nöro");
+            ChatHistory.AddSystemMessage("I'm a merchant in Turkey and want to sell products on my website.");
+            Console.WriteLine("AI system message added");
+        }
+        return base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async void ResetChat()
+    {
+        result = string.Empty;
+        sometext = string.Empty;
+        ChatHistory = new ChatHistory();
+        ChatHistory.AddSystemMessage("Your name is Neuro. A.K.A Nöro");
+        ChatHistory.AddSystemMessage("I'm a merchant in Turkey and want to sell products on my website.");
+        await neuro_searchbox.FocusAsync();
+    }
+
+    private async Task GetFromAI()
+    {
+        if (!string.IsNullOrWhiteSpace(sometext))
+        {
+            ChatHistory.AddUserMessage(sometext);
+
+            result += "You: " + sometext + "<br /><br />";
+            result += "Neuro: ";
+            await foreach (var response in ChatCompletionService.GetStreamingChatMessageContentsAsync(ChatHistory))
+            {
+                result += response;
+                await Task.Delay(20);
+                StateHasChanged();
+            }
+            result += "<br /><hr />";
+            sometext = string.Empty;
+        }
+    }
+}

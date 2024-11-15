@@ -2,6 +2,7 @@ using MerchanterApp.CMS;
 using MerchanterApp.CMS.Classes;
 using MerchanterApp.CMS.Components;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.SemanticKernel;
 
 var builder = WebApplication.CreateBuilder( args );
 builder.Services.AddDataProtection()
@@ -36,6 +37,16 @@ builder.Services.AddAuthorization( x => {
     x.AddPolicy( Variables.admin_id, policy => policy.RequireClaim( Variables.admin_id ) );
 } );
 builder.Services.AddCascadingAuthenticationState();
+
+var deploymentName = builder.Configuration[ "AzureOpenAIChatCompletion:DeploymentName" ];
+var endpoint = builder.Configuration[ "AzureOpenAIChatCompletion:Endpoint" ];
+var apiKey = builder.Configuration[ "AzureOpenAIChatCompletion:Key" ];
+
+if( deploymentName is null || endpoint is null || apiKey is null ) {
+    throw new InvalidOperationException( "Azure OpenAI Chat Completion configuration is missing." );
+}
+
+builder.Services.AddAzureOpenAIChatCompletion( deploymentName, endpoint, apiKey );
 
 var app = builder.Build();
 // Configure the HTTP request pipeline.

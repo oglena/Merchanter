@@ -2,85 +2,84 @@
 @inject IConfiguration configuration
 
 <div class="page">
-	<main>
-		@if (HttpContext != null && HttpContext.User.Identity != null &&
-				HttpContext.User.Identity.IsAuthenticated)
-		{
-			<nav class="navbar navbar-expand-lg bg-body-tertiary fixed-top">
-				<div class="container-fluid">
-					<a class="navbar-brand" href="/">Merchanter</a>
-					<button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
-						<span class="navbar-toggler-icon"></span>
-					</button>
-					<div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
-						<div class="offcanvas-header">
-							<h5 class="offcanvas-title" id="offcanvasNavbarLabel">Merchanter</h5>
-							<button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-						</div>
-						<div class="offcanvas-body">
-							<ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
-								<li class="nav-item active">
-									<a class="nav-link" aria-current="page" href="/"><i class="bi bi-house-door"></i>&nbsp;Dashboard</a>
-								</li>
-								<li class="nav-item">
-									<a class="nav-link" aria-current="page" href="Server/Servers"><i class="bi bi-cpu"></i>&nbsp;Servers</a>
-								</li>
-								<li class="nav-item dropdown">
-									<a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-										<i class="bi bi-person-bounding-box"></i>&nbsp;Customer
-									</a>
-									<ul class="dropdown-menu">
-										<li><a class="dropdown-item" href="Customer/Customers"><i class="bi bi-people"></i>&nbsp;Customers</a></li>
-										<li> <hr class="dropdown-divider"> </li>
-										<li><a class="dropdown-item" href="Customer/Integrations"><i class="bi bi-hdd-stack"></i>&nbsp;Integrations</a></li>
-										<li> <hr class="dropdown-divider"> </li>
-										<li><a class="dropdown-item" href="Customer/Logs"><i class="bi bi-journal-text"></i>&nbsp;Customer Logs</a></li>
-									</ul>
-								</li>
-								<li>
-									<hr class="dropdown-divider" />
-								</li>
-								<li class="nav-item">
-									<a class="nav-link" aria-current="page" href="Account/Profile"><i class="bi bi-person-square"></i>&nbsp;Admin Profile</a>
-								</li>
-								<li class="nav-item">
-									<a class="nav-link" aria-current="page" href="Account/Logout"><i class="bi bi-box-arrow-in-left"></i>&nbsp;Logout</a>
-								</li>
-							</ul>
-						</div>
-					</div>
-				</div>
-			</nav>
+    <main>
+        @if (HttpContext != null && HttpContext.User.Identity != null && HttpContext.User.Identity.IsAuthenticated)
+        {
+            <nav class="navbar navbar-expand-lg bg-body-tertiary fixed-top">
+                <div class="container-fluid">
+                    <a class="navbar-brand" href="/">Merchanter</a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <AIComponent />
+                    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
+                        <div class="offcanvas-header">
+                            <h5 class="offcanvas-title" id="offcanvasNavbarLabel">Merchanter</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                        </div>
+                        <div class="offcanvas-body">
+                            <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
+                                <li class="nav-item active">
+                                    <a class="nav-link" aria-current="page" href="/"><i class="bi bi-house-door"></i>&nbsp;Dashboard</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" aria-current="page" href="Server/Servers"><i class="bi bi-cpu"></i>&nbsp;Servers</a>
+                                </li>
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-person-bounding-box"></i>&nbsp;Customer
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="Customer/Customers"><i class="bi bi-people"></i>&nbsp;Customers</a></li>
+                                        <li> <hr class="dropdown-divider"> </li>
+                                        <li><a class="dropdown-item" href="/"><i class="bi bi-hdd-stack"></i>&nbsp;Integrations</a></li>
+                                        <li> <hr class="dropdown-divider"> </li>
+                                        <li><a class="dropdown-item" href="Customer/Logs"><i class="bi bi-journal-text"></i>&nbsp;Customer Logs</a></li>
+                                    </ul>
+                                </li>
+                                <li>
+                                    <hr class="dropdown-divider" />
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" aria-current="page" href="Account/Profile"><i class="bi bi-person-square"></i>&nbsp;Admin Profile</a>
+                                </li>
+                                <li class="nav-item me-3">
+                                    <a class="nav-link" aria-current="page" href="Account/Logout"><i class="bi bi-box-arrow-in-left"></i>&nbsp;Logout</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </nav>
 
-			<article class="content px-4">
-
-				<ErrorBoundary @ref="errorBoundary">
-					<ChildContent>
-						@Body
-					</ChildContent>
-					<ErrorContent>
-						<div class="alert alert-danger" role="alert">
-							<p class="fs-3 fw-bold">😈 A rotten gremlin got us. Sorry!</p>
-							<p>@context.HelpLink</p>
-							<button class="btn btn-info" @onclick="_ => errorBoundary?.Recover()">
-								Clear
-							</button>
-						</div>
-					</ErrorContent>
-				</ErrorBoundary>
-			</article>
-		}
-	</main>
+            <article class="content px-4">
+                <ErrorBoundary @ref="errorBoundary">
+                    <ChildContent>
+                        @Body
+                    </ChildContent>
+                    <ErrorContent>
+                        <div class="alert alert-danger" role="alert">
+                            <p class="fs-3 fw-bold">😈 A rotten gremlin got us. Sorry!</p>
+                            <p>@context.HelpLink</p>
+                            <button class="btn btn-info" @onclick="_ => errorBoundary?.Recover()">
+                                Clear
+                            </button>
+                        </div>
+                    </ErrorContent>
+                </ErrorBoundary>
+            </article>
+        }
+    </main>
 </div>
 <footer class="fixed-bottom bg-primary text-light text-center p-1 border-top">
-	<span class="copyright">©2024 CERES Software & Consultancy, All Rights Reserved.</span>&nbsp;&nbsp;&nbsp;
-	<small>[Server Pulse: 5secs]</small>&nbsp;&nbsp;&nbsp;
-	<small>@((MarkupString)("[Merchanter Server Service Url: <a target='_blank' class='text-decoration-none text-light' href='" + configuration["AppSettings:MerchanterServerUrl"] + "'>" + configuration["AppSettings:MerchanterServerUrl"] + "</a>]"))</small>
+    <span class="copyright">©2024 CERES Software & Consultancy, All Rights Reserved.</span>&nbsp;&nbsp;&nbsp;
+    <small>[Server Pulse: 5secs]</small>&nbsp;&nbsp;&nbsp;
+    <small>@((MarkupString)("[Merchanter Server Service Url: <a target='_blank' class='text-decoration-none text-light' href='" + configuration["AppSettings:MerchanterServerUrl"] + "'>" + configuration["AppSettings:MerchanterServerUrl"] + "</a>]"))</small>
 </footer>
 
 
 @code {
-	[CascadingParameter]
-	protected HttpContext? HttpContext { get; set; }
-	private ErrorBoundary? errorBoundary;
+    [CascadingParameter]
+    protected HttpContext? HttpContext { get; set; }
+    private ErrorBoundary? errorBoundary;
 }

@@ -36,7 +36,7 @@
                         <div class="card shadow" style="width: 18rem;">
                             <div class="card-body">
                                 <h4 class="card-title text-success">Working Server</h4>
-                                <h3><span class="badge text-bg-success shadow">@item.customer.user_name&nbsp;&nbsp;<a class="btn btn btn-primary btn-sm shadow" href="@("Customer/" + item.customer_id.ToString())"><i class="bi bi-gear"></i></a></span></h3>
+                                <h3><span class="badge text-bg-success shadow">@item.customer.user_name&nbsp;&nbsp;<a class="btn btn btn-primary btn-sm shadow" href="@("Customer/" + item.customer_id.ToString())" title="Edit Customer"><i class="bi bi-gear"></i></a></span></h3>
                                 <hr />
                                 <p class="card-text">Customer ID:&nbsp; @item.customer_id</p>
                                 <p class="card-text">Process ID:&nbsp; @item.PID</p>
@@ -68,7 +68,7 @@
                             <div class="card shadow" style="width: 18rem;">
                                 <div class="card-body">
                                     <h3 class="card-title text-muted">Idle Server</h3>
-                                    <h2><span class="badge text-bg-danger shadow">@item.user_name&nbsp;&nbsp;<a class="btn btn btn-primary btn-sm shadow" href="@("Customer/" + item.customer_id.ToString())"><i class="bi bi-gear"></i></a></span></h2>
+                                    <h2><span class="badge text-bg-danger shadow">@item.user_name&nbsp;&nbsp;<a class="btn btn btn-primary btn-sm shadow" href="@("Customer/" + item.customer_id.ToString())" title="Edit Customer"><i class="bi bi-gear"></i></a></span></h2>
                                     <hr />
                                     <p class="card-text">Customer ID:&nbsp; @item.customer_id</p>
                                     <p class="card-text">Process ID:&nbsp; 0</p>

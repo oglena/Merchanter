@@ -70,9 +70,7 @@
 								@((MarkupString)(item.invoice_sync_status ? "<i class='bi bi-check-circle-fill text-success'></i>" : "<i class='bi bi-dash-circle text-danger'></i>"))
 							</td>
 							<td class="align-content-center">
-								<a class="btn btn-outline-primary btn-sm shadow" href="@("Customer/" + item.customer_id.ToString())">Edit</a>@*&nbsp;&nbsp;
-								 <a class="btn btn-primary" href="@("Customer/" + item.customer_id.ToString()+"/Logs")">Logs</a>&nbsp;&nbsp;
-								<a class="btn btn-primary" href="@("Customer/" + item.customer_id.ToString()+"/Settings")">Settings</a> *@
+								<a class="btn btn-outline-primary btn-sm shadow" href="@("Customer/" + item.customer_id.ToString())">Edit</a>
 							</td>
 						</tr>
 					}
