@@ -13,7 +13,7 @@
         <div class="col-12 ps-2">
             <h2>
                 Logs
-                <button type="button" class="btn btn-primary" @onclick="RefreshLogs" disabled="@(is_refreshing)"><i class='bi bi-arrow-clockwise @(is_refreshing ? "d-none" : "")'></i><span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+                <button type="button" class="btn btn-sm btn-primary" @onclick="RefreshLogs" disabled="@(is_refreshing)"><i class='bi bi-arrow-clockwise @(is_refreshing ? "d-none" : "")'></i><span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
             </h2>
         </div>
     </div>

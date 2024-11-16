@@ -112,6 +112,24 @@ namespace Merchanter.ServerService.Controllers {
                 }
             }
             return BadRequest( "Invalid customer ID." );
-        }
-    }
+		}
+
+		[HttpPut( "{CID}/SaveOrderSettings" )]
+		[Authorize]
+		public async Task<ActionResult<BaseResponseModel<SettingsOrder>>> SaveOrderSettings( string CID, [FromBody] SettingsOrder _settings ) {
+			int customer_id;
+			if( int.TryParse( CID, out customer_id ) && customer_id > 0 ) {
+				if( await settingsService.SaveOrderSettings( customer_id, _settings ) ) {
+					SettingsOrder? saved_settings = settingsService.GetCustomerSettings( customer_id ).Result.order;
+					if( saved_settings != null ) {
+						return Ok( new BaseResponseModel<SettingsOrder>() { Success = true, Data = saved_settings, ErrorMessage = "" } );
+					}
+				}
+				else {
+					return Ok( new BaseResponseModel<SettingsOrder>() { Success = false, Data = null, ErrorMessage = "Error saving order settings." } );
+				}
+			}
+			return BadRequest( "Invalid customer ID." );
+		}
+	}
 }

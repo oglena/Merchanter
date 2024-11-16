@@ -232,7 +232,7 @@ namespace Merchanter {
                     FATIRS_NO = GenerateFaturaNo( _order.order_id.ToString() ),
                     Sube_Kodu = Helper.global.netsis.siparis_subekodu,
                     TIPI = JTFaturaTipi.ft_YurtIci,
-                    KDV_DAHILMI = Helper.global.netsis.siparis_kdvdahilmi,
+                    KDV_DAHILMI = Helper.global.order.siparis_kdvdahilmi,
                     Tip = JTFaturaTip.ftSSip,
                     Tarih = DateTime.Now,
                     FiiliTarih = DateTime.Now,
@@ -270,7 +270,7 @@ namespace Merchanter {
 
             if( _order.installment_amount > 0 ) {
                 NetOpenX.Rest.Client.Model.NetOpenX.ItemSlipLines slipLine = new() {
-                    StokKodu = Helper.global.netsis.siparis_taksitkomisyon_sku,
+                    StokKodu = Helper.global.order.siparis_taksitkomisyon_sku,
                     DEPO_KODU = Helper.global.netsis.siparis_depokodu,
                     STra_GCMIK = (double)1,
                     STra_NF = Convert.ToDouble( _order.installment_amount / 1.20f ), //TODO:burasını bi düşünmek lazım

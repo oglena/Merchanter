@@ -1,27 +1,16 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Configuration;
-
-namespace Merchanter.Classes.Settings {
+﻿namespace Merchanter.Classes.Settings {
     public class SettingsGeneral {
-        [Required]
         public int id { get; set; }
-        [Required]
         public int customer_id { get; set; }
-        [Required]
         public string company_name { get; set; } = "DEMO FİRMA";
-        [Required]
         public decimal rate_TL { get; set; } = 1;
-        [Required]
         public decimal rate_USD { get; set; } = 0;
-        [Required]
         public decimal rate_EUR { get; set; } = 0;
-        [Required]
-        public int daysto_ordersync { get; set; } = 7;
-        [Required]
-        public int daysto_invoicesync { get; set; } = 7;
-        [Required]
+        public int daysto_ordersync { get; set; } = 7;  //TODO: this property needs to be moved to SettingsOrder
+		public int daysto_invoicesync { get; set; } = 7; //TODO: this property needs to be moved to SettingsInvoice
+		public string default_brand { get; set; } = "DİĞER";
+        public int customer_root_category_id { get; set; } = 1;
         public bool xml_qty_addictive_enable { get; set; } = true;
-        [Required]
         public bool is_barcode_required { get; set; } = true;
     }
 }

@@ -2,8 +2,13 @@
     public class SettingsMagento {
         public int id { get; set; }
         public int customer_id { get; set; }
+
+        #region Connection Properties
         public string base_url { get; set; } = @"https://";
         public string? token { get; set; }
+        #endregion
+
+        #region Magento2 Properties
         public int root_category_id { get; set; } = 1;
         public string brand_attribute_code { get; set; } = "brand";
         public string barcode_attribute_code { get; set; } = "barcode";
@@ -13,6 +18,7 @@
         public string customer_tc_no_attribute_code { get; set; } = "tc_no";
         public string customer_firma_ismi_attribute_code { get; set; } = "firma_ismi";
         public string customer_firma_vergidairesi_attribute_code { get; set; } = "firma_vergidairesi";
-        public string customer_firma_vergino_attribute_code { get; set; } = "firma_vergino";
+        public string customer_firma_vergino_attribute_code { get; set; } = "firma_vergino"; 
+        #endregion
     }
 }

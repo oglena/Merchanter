@@ -12,6 +12,7 @@ namespace Merchanter.ServerService.Services {
         Task<bool> SaveNetsisSettings( int _customer_id, SettingsNetsis _settings );
         Task<bool> SaveMagentoSettings( int _customer_id, SettingsMagento _settings );
         Task<bool> SaveShipmentSettings( int _customer_id, SettingsShipment _settings );
+        Task<bool> SaveOrderSettings( int _customer_id, SettingsOrder _settings );
     }
     public class SettingsService(ISettingsRepository settingsRepository): ISettingsService {
         public Task<SettingsMerchanter> GetCustomerSettings( int _customer_id ) {
@@ -36,6 +37,10 @@ namespace Merchanter.ServerService.Services {
 
         public Task<bool> SaveShipmentSettings( int _customer_id, SettingsShipment _settings ) {
             return settingsRepository.SaveShipmentSettings( _customer_id, _settings );
+        }
+
+        public Task<bool> SaveOrderSettings( int _customer_id, SettingsOrder _settings ) {
+            return settingsRepository.SaveOrderSettings( _customer_id, _settings );
         }
     }
 }

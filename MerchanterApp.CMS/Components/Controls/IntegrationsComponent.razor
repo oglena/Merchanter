@@ -5,9 +5,18 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IPostHelper PostHelper
 
-<AlertComponent page_message="@page_message" message_status="@message_status" />
+<div class="container-fluid bg-dark text-light rounded-2 p-3">
+    <div class="row mt-3">
+        <div class="col-12 ps-2">
+            <h2>
+                Integrations
+            </h2>
+        </div>
+    </div>
+</div>
 
-<div class="container-fluid">
+<div class="row mt-3 p-2">
+    <AlertComponent page_message="@page_message" message_status="@message_status" />
     @if (settings != null && settings.integrations != null && settings.integrations.Count > 0)
     {
         <div class="accordion">
@@ -19,7 +28,7 @@
                 </h2>
                 <div id="panelsStayOpen-collapseOne" class="accordion-collapse collapse show">
                     <div class="accordion-body">
-                        <div class="row row-cols-2 row-cols-sm-2 row-cols-md-2 row-cols-lg-3 row-cols-xl-5 g-4">
+                        <div class="row row-cols-2 row-cols-sm-2 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 row-cols-xxl-5 g-4">
                             @foreach (var item in settings.integrations.Where(x => x.work?.type == Work.WorkType.PRODUCT && x.work?.direction == Work.WorkDirection.MAIN_SOURCE).ToList())
                             {
                                 <div class="col">
@@ -62,7 +71,7 @@
                 </h2>
                 <div id="panelsStayOpen-collapseThree" class="accordion-collapse collapse">
                     <div class="accordion-body">
-                        <div class="row row-cols-2 row-cols-sm-2 row-cols-md-2 row-cols-lg-3 row-cols-xl-5 g-4">
+                        <div class="row row-cols-2 row-cols-sm-2 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 row-cols-xxl-5 g-4">
                             @foreach (var item in settings.integrations.Where(x => x.work?.type == Work.WorkType.PRODUCT && x.work?.direction == Work.WorkDirection.SOURCE).ToList())
                             {
                                 <div class="col">
@@ -105,7 +114,7 @@
                 </h2>
                 <div id="panelsStayOpen-collapseSix" class="accordion-collapse collapse">
                     <div class="accordion-body">
-                        <div class="row row-cols-2 row-cols-sm-2 row-cols-md-2 row-cols-lg-3 row-cols-xl-5 g-4">
+                        <div class="row row-cols-2 row-cols-sm-2 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 row-cols-xxl-5 g-4">
                             @foreach (var item in settings.integrations.Where(x => x.work?.type == Work.WorkType.PRODUCT && x.work?.direction == Work.WorkDirection.TARGET).ToList())
                             {
                                 <div class="col">
@@ -149,7 +158,7 @@
                 </h2>
                 <div id="panelsStayOpen-collapseTwo" class="accordion-collapse collapse">
                     <div class="accordion-body">
-                        <div class="row row-cols-2 row-cols-sm-2 row-cols-md-2 row-cols-lg-3 row-cols-xl-5 g-4">
+                        <div class="row row-cols-2 row-cols-sm-2 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 row-cols-xxl-5 g-4">
                             @foreach (var item in settings.integrations.Where(x => x.work?.type == Work.WorkType.ORDER && x.work?.direction == Work.WorkDirection.MAIN_TARGET).ToList())
                             {
                                 <div class="col">
@@ -192,7 +201,7 @@
                 </h2>
                 <div id="panelsStayOpen-collapseFour" class="accordion-collapse collapse">
                     <div class="accordion-body">
-                        <div class="row row-cols-2 row-cols-sm-2 row-cols-md-2 row-cols-lg-3 row-cols-xl-5 g-4">
+                        <div class="row row-cols-2 row-cols-sm-2 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 row-cols-xxl-5 g-4">
                             @foreach (var item in settings.integrations.Where(x => x.work?.type == Work.WorkType.ORDER && x.work?.direction == Work.WorkDirection.SOURCE).ToList())
                             {
                                 <div class="col">
@@ -236,7 +245,7 @@
                 </h2>
                 <div id="panelsStayOpen-collapseFive" class="accordion-collapse collapse">
                     <div class="accordion-body">
-                        <div class="row row-cols-2 row-cols-sm-2 row-cols-md-2 row-cols-lg-3 row-cols-xl-5 g-4">
+                        <div class="row row-cols-2 row-cols-sm-2 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 row-cols-xxl-5 g-4">
                             @foreach (var item in settings.integrations.Where(x => x.work?.type == Work.WorkType.SHIPMENT).ToList())
                             {
                                 <div class="col">

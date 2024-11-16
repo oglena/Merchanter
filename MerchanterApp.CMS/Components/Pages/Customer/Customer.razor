@@ -13,342 +13,355 @@
 <PageTitle>Customer [@CID] | Merchanter</PageTitle>
 @if (customer != null && customer_id > 0)
 {
-    <div class="row mt-3 pb-2">
-        <div class="col-md-5 pb-2 bg-light rounded-3">
-            <div class="row mt-3">
-                <div class="col-12 ps-2">
-                    <h2>
-                        Customer:&nbsp;@company_name
-                        <button type="button" class="btn btn-primary shadow" @onclick="RefreshCustomer" disabled="@(is_refreshing)"><i class='bi bi-arrow-clockwise @(is_refreshing ? "d-none" : "")'></i><span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
-                    </h2>
-                    <h1>
-                        <button type="button" class="btn btn-outline-primary @(!settings_active ? "shadow" : "")" @onclick="@(() => SetActiveTab("settings") )" disabled="@(settings_active)"><i class="bi bi-gear"></i>&nbsp;Settings</button>
-                        <button type="button" class="btn btn-outline-primary @(!platform_settings_active ? "shadow" : "")" @onclick="@(() => SetActiveTab("platform_settings") )" disabled="@(platform_settings_active)"><i class="bi bi-gear"></i>&nbsp;Platforms</button>
-                        <button type="button" class="btn btn-outline-primary @(!integrations_active ? "shadow" : "")" @onclick="@(() => SetActiveTab("integrations") )" disabled="@(integrations_active)"><i class="bi bi-hdd-stack"></i>&nbsp;Integrations</button>
-                        <button type="button" class="btn btn-outline-primary @(!logs_active ? "shadow" : "")" @onclick="@(() => SetActiveTab("logs") )" disabled="@(logs_active)"><i class="bi bi-journal-text"></i>&nbsp;Logs</button>
-                    </h1>
-                </div>
-            </div>
-            <AlertComponent page_message="@page_message" message_status="@message_status" />
+	<div class="row mt-3 pb-2">
+		<div class="col-md-5 pb-2 bg-light rounded-3 @(customer_panel_active ? "" : "d-none")">
+			<div class="row mt-3">
+				<div class="col-9">
+					<button type="button" class="btn btn-outline-primary @(!settings_active ? "shadow" : "")" @onclick="@(() => SetActiveTab("settings") )" disabled="@(settings_active)"><i class="bi bi-gear"></i>&nbsp;Settings</button>
+					<button type="button" class="btn btn-outline-primary @(!platform_settings_active ? "shadow" : "")" @onclick="@(() => SetActiveTab("platform_settings") )" disabled="@(platform_settings_active)"><i class="bi bi-gear"></i>&nbsp;Platforms</button>
+					<button type="button" class="btn btn-outline-primary @(!integrations_active ? "shadow" : "")" @onclick="@(() => SetActiveTab("integrations") )" disabled="@(integrations_active)"><i class="bi bi-hdd-stack"></i>&nbsp;Integrations</button>
+					<button type="button" class="btn btn-outline-primary @(!logs_active ? "shadow" : "")" @onclick="@(() => SetActiveTab("logs") )" disabled="@(logs_active)"><i class="bi bi-journal-text"></i>&nbsp;Logs</button>
+				</div>
+				<div class="col-3">
+					<button type="button" class="btn btn-sm btn-outline-secondary float-end" @onclick="() => customer_panel_active = !customer_panel_active" title="Hide Customer Panel"><i class="bi bi-x-circle-fill"></i></button>
+					<a class="btn btn-sm btn-outline-secondary float-end me-2" href="@("/Customer/Customers")" title="Back to Customers"><i class="bi bi-arrow-left"></i></a>
+				</div>
+			</div>
+			<div class="row mt-3">
+				<div class="col-12 ps-2">
+					<h2>
+						Customer:&nbsp;@company_name
+						<button type="button" class="btn btn-sm btn-primary" @onclick="RefreshCustomer" disabled="@(is_refreshing)"><i class='bi bi-arrow-clockwise @(is_refreshing ? "d-none" : "")'></i><span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+					</h2>
+				</div>
+			</div>
+			<AlertComponent page_message="@page_message" message_status="@message_status" />
 
-            <EditForm Model="customer" class="container-fluid" OnValidSubmit="@(() => SaveCustomer(customer))">
-                <div class="row mt-3">
-                    <div class="col-12 ps-2">
-                        <h1>
-                            <button type="submit" class="btn btn-outline-success @(!is_refreshing ? "shadow" : "")" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save Customer&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
-                        </h1>
-                    </div>
-                </div>
-                <div class="row mt-3">
-                    <div class="col-6 ps-2 mb-3">
-                        <label for="user_name" class="form-label">User Name</label>
-                        <InputText type="text" class="form-control" placeholder="User Name cannot be empty!" @bind-Value="customer.user_name" />
-                    </div>
-                    <div class="col-6 ps-2 mb-3">
-                        <label for="password" class="form-label">Password</label>
-                        <InputText autocomplete="new-password" type="password" class="form-control" placeholder="Password cannot be empty!" @bind-Value="customer.password" />
-                    </div>
-                </div>
-                <div class="row mt-3">
-                    <div class="col-12 ps-2 mb-3">
-                        <div class="form-check form-switch">
-                            <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.status"></InputCheckbox>
-                            <label class="form-check-label">&nbsp;<abbr title="This choice does not stop Merchanter Server. But holds it atleast 10 minutes. If you activate this; integrations will begin." class="initialism">Customer License Status</abbr></label>
-                        </div>
-                    </div>
-                </div>
-                <div class="row mt-3">
-                    <div class="col-12 mb-3 table-overflow">
-                        <table class="table table-responsive table-hover">
-                            <thead>
-                                <tr>
-                                    <th>
-                                        Sync Status
-                                    </th>
-                                    <th>
-                                        Period
-                                    </th>
-                                    <th>
-                                        Working Status
-                                    </th>
-                                    <th>
-                                        Last Worked
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody class="table-group-divider">
-                                <tr>
-                                    <td style="width:40%;">
-                                        <div class="form-check form-switch mt-2">
-                                            <label class="form-check-label">&nbsp;Product Sync Status</label>
-                                            <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.product_sync_status"></InputCheckbox>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <InputNumber type="text" class="form-control" placeholder="Password cannot be empty!" @bind-Value="customer.product_sync_timer" />
-                                    </td>
-                                    <td>
-                                        <div class="form-check form-switch mt-2">
-                                            <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.is_productsync_working" disabled></InputCheckbox>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <InputDate Type="InputDateType.DateTimeLocal" class="form-control form-control-sm col-4" @bind-Value="customer.last_product_sync_date" disabled></InputDate>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <div class="form-check form-switch mt-2">
-                                            <label class="form-check-label">&nbsp;Order Sync Status</label>
-                                            <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.order_sync_status"></InputCheckbox>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <InputNumber type="text" class="form-control" placeholder="Password cannot be empty!" @bind-Value="customer.order_sync_timer" />
-                                    </td>
-                                    <td>
-                                        <div class="form-check form-switch mt-2">
-                                            <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.is_ordersync_working" disabled></InputCheckbox>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <InputDate Type="InputDateType.DateTimeLocal" class="form-control form-control-sm col-4" @bind-Value="customer.last_order_sync_date" disabled></InputDate>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <div class="form-check form-switch mt-2">
-                                            <label class="form-check-label">&nbsp;Notification Sync Status</label>
-                                            <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.notification_sync_status"></InputCheckbox>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <InputNumber type="text" class="form-control" placeholder="Password cannot be empty!" @bind-Value="customer.notification_sync_timer" />
-                                    </td>
-                                    <td>
-                                        <div class="form-check form-switch mt-2">
-                                            <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.is_notificationsync_working" disabled></InputCheckbox>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <InputDate Type="InputDateType.DateTimeLocal" class="form-control form-control-sm col-4" @bind-Value="customer.last_notification_sync_date" disabled></InputDate>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <div class="form-check form-switch mt-2">
-                                            <label class="form-check-label">&nbsp;XML Sync Status</label>
-                                            <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.xml_sync_status"></InputCheckbox>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <InputNumber type="text" class="form-control" placeholder="Password cannot be empty!" @bind-Value="customer.xml_sync_timer" />
-                                    </td>
-                                    <td>
-                                        <div class="form-check form-switch mt-2">
-                                            <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.is_xmlsync_working" disabled></InputCheckbox>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <InputDate Type="InputDateType.DateTimeLocal" class="form-control form-control-sm col-4" @bind-Value="customer.last_xml_sync_date" disabled></InputDate>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <div class="form-check form-switch mt-2">
-                                            <label class="form-check-label">&nbsp;Invoice Sync Status</label>
-                                            <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.invoice_sync_status"></InputCheckbox>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <InputNumber type="text" class="form-control" placeholder="Password cannot be empty!" @bind-Value="customer.invoice_sync_timer" />
-                                    </td>
-                                    <td>
-                                        <div class="form-check form-switch mt-2">
-                                            <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.is_invoicesync_working" disabled></InputCheckbox>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <InputDate Type="InputDateType.DateTimeLocal" class="form-control form-control-sm col-4" @bind-Value="customer.last_invoice_sync_date" disabled></InputDate>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+			<EditForm Model="customer" class="container-fluid" OnValidSubmit="@(() => SaveCustomer(customer))">
+				<div class="row mt-3">
+					<div class="col-12 ps-2">
+						<h1>
+							<button type="submit" class="btn btn-outline-success @(!is_refreshing ? "shadow" : "")" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save Customer&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+						</h1>
+					</div>
+				</div>
+				<div class="row mt-3">
+					<div class="col-6 ps-2 mb-3">
+						<div class="form-floating">
+							<InputText type="text" class="form-control" DisplayName="user_name" placeholder="User Name cannot be empty!" @bind-Value="customer.user_name" style="font-size:1.3rem;" />
+							<label for="user_name" class="form-label">User Name</label>
+						</div>
+					</div>
+					<div class="col-6 ps-2 mb-3">
+						<div class="form-floating">
+							<InputText autocomplete="new-password" type="password" class="form-control" DisplayName="password" placeholder="Password cannot be empty!" @bind-Value="customer.password" style="font-size:1.3rem;" />
+							<label for="password" class="form-label">Password</label>
+						</div>
+					</div>
+				</div>
+				<div class="row mt-3">
+					<div class="col-12 ps-2 mb-3">
+						<div class="form-check form-switch">
+							<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.status"></InputCheckbox>
+							<label class="form-check-label">&nbsp;<abbr title="This choice does not stop Merchanter Server. But holds it atleast 10 minutes. If you activate this; integrations will begin." class="initialism">Customer License Status</abbr></label>
+						</div>
+					</div>
+				</div>
+				<div class="row mt-3">
+					<div class="col-12 mb-3 table-overflow">
+						<table class="table table-responsive table-hover">
+							<thead>
+								<tr>
+									<th>
+										Sync Status
+									</th>
+									<th>
+										Period
+									</th>
+									<th>
+										Working Status
+									</th>
+									<th>
+										Last Worked
+									</th>
+								</tr>
+							</thead>
+							<tbody class="table-group-divider">
+								<tr>
+									<td style="width:40%;">
+										<div class="form-check form-switch mt-2">
+											<label class="form-check-label">&nbsp;Product Sync Status</label>
+											<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.product_sync_status"></InputCheckbox>
+										</div>
+									</td>
+									<td>
+										<InputNumber type="text" class="form-control" placeholder="Password cannot be empty!" @bind-Value="customer.product_sync_timer" />
+									</td>
+									<td>
+										<div class="form-check form-switch mt-2">
+											<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.is_productsync_working" disabled></InputCheckbox>
+										</div>
+									</td>
+									<td>
+										<InputDate Type="InputDateType.DateTimeLocal" class="form-control form-control-sm col-4" @bind-Value="customer.last_product_sync_date" disabled></InputDate>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										<div class="form-check form-switch mt-2">
+											<label class="form-check-label">&nbsp;Order Sync Status</label>
+											<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.order_sync_status"></InputCheckbox>
+										</div>
+									</td>
+									<td>
+										<InputNumber type="text" class="form-control" placeholder="Password cannot be empty!" @bind-Value="customer.order_sync_timer" />
+									</td>
+									<td>
+										<div class="form-check form-switch mt-2">
+											<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.is_ordersync_working" disabled></InputCheckbox>
+										</div>
+									</td>
+									<td>
+										<InputDate Type="InputDateType.DateTimeLocal" class="form-control form-control-sm col-4" @bind-Value="customer.last_order_sync_date" disabled></InputDate>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										<div class="form-check form-switch mt-2">
+											<label class="form-check-label">&nbsp;Notification Sync Status</label>
+											<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.notification_sync_status"></InputCheckbox>
+										</div>
+									</td>
+									<td>
+										<InputNumber type="text" class="form-control" placeholder="Password cannot be empty!" @bind-Value="customer.notification_sync_timer" />
+									</td>
+									<td>
+										<div class="form-check form-switch mt-2">
+											<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.is_notificationsync_working" disabled></InputCheckbox>
+										</div>
+									</td>
+									<td>
+										<InputDate Type="InputDateType.DateTimeLocal" class="form-control form-control-sm col-4" @bind-Value="customer.last_notification_sync_date" disabled></InputDate>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										<div class="form-check form-switch mt-2">
+											<label class="form-check-label">&nbsp;XML Sync Status</label>
+											<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.xml_sync_status"></InputCheckbox>
+										</div>
+									</td>
+									<td>
+										<InputNumber type="text" class="form-control" placeholder="Password cannot be empty!" @bind-Value="customer.xml_sync_timer" />
+									</td>
+									<td>
+										<div class="form-check form-switch mt-2">
+											<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.is_xmlsync_working" disabled></InputCheckbox>
+										</div>
+									</td>
+									<td>
+										<InputDate Type="InputDateType.DateTimeLocal" class="form-control form-control-sm col-4" @bind-Value="customer.last_xml_sync_date" disabled></InputDate>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										<div class="form-check form-switch mt-2">
+											<label class="form-check-label">&nbsp;Invoice Sync Status</label>
+											<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.invoice_sync_status"></InputCheckbox>
+										</div>
+									</td>
+									<td>
+										<InputNumber type="text" class="form-control" placeholder="Password cannot be empty!" @bind-Value="customer.invoice_sync_timer" />
+									</td>
+									<td>
+										<div class="form-check form-switch mt-2">
+											<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="customer.is_invoicesync_working" disabled></InputCheckbox>
+										</div>
+									</td>
+									<td>
+										<InputDate Type="InputDateType.DateTimeLocal" class="form-control form-control-sm col-4" @bind-Value="customer.last_invoice_sync_date" disabled></InputDate>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
 
-            </EditForm>
-        </div>
-        <div class="col-md-7 pb-2 rounded-3">
-            @if (logs_active)
-            {
-                <LogsComponent CID="@CID" show_customer_select="@false" />
-            }
-            else if (settings_active)
-            {
-                <SettingsComponent CID="@CID" />
-            }
-            else if (integrations_active)
-            {
-                <IntegrationsComponent CID="@CID" />
-            }
-            else if (platform_settings_active)
-            {
-                <PlatformsComponent CID="@CID" />
-            }
-        </div>
-    </div>
+			</EditForm>
+		</div>
+
+		<div class="col-md-@(customer_panel_active ? "7" : "12") pb-2 rounded-3">
+			<button type="button" class="btn btn-sm btn-secondary @(customer_panel_active ? "d-none" : "")" style="position:absolute;margin-left:-10px;margin-top:-10px;" @onclick="() => customer_panel_active = !customer_panel_active" title="Show Customer Panel"><i class="bi bi-arrow-bar-right"></i></button>
+			@if (logs_active)
+			{
+				<LogsComponent CID="@CID" show_customer_select="@false" />
+			}
+			else if (settings_active)
+			{
+				<SettingsComponent CID="@CID" />
+			}
+			else if (integrations_active)
+			{
+				<IntegrationsComponent CID="@CID" />
+			}
+			else if (platform_settings_active)
+			{
+				<PlatformsComponent CID="@CID" />
+			}
+		</div>
+	</div>
 }
 else
 {
-    <div class="container-fluid mt-5">
-        <h3 class="text-center">@loading</h3>
-    </div>
+	<div class="container-fluid mt-5">
+		<h3 class="text-center">@loading</h3>
+	</div>
 }
 @code {
-    [Parameter]
-    public string? CID { get; set; }
-    public Merchanter.Classes.Customer? customer { get; set; }
-    public int customer_id = 0;
-    public string company_name { get; set; } = "N/A";
-    private bool is_refreshing = false;
-    private string loading = "Loading...";
-    private string page_message = string.Empty;
-    private string message_status = "dark";
+	[Parameter]
+	public string? CID { get; set; }
+	public Merchanter.Classes.Customer? customer { get; set; }
+	public int customer_id = 0;
+	public string company_name { get; set; } = "N/A";
+	private bool is_refreshing = false;
+	private string loading = "Loading...";
+	private string page_message = string.Empty;
+	private string message_status = "dark";
+	private bool customer_panel_active = true;
 
-    public bool settings_active = true;
-    public bool logs_active = false;
-    public bool integrations_active = false;
-    public bool platform_settings_active = false;
+	public bool settings_active = true;
+	public bool logs_active = false;
+	public bool integrations_active = false;
+	public bool platform_settings_active = false;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            if (int.TryParse(CID, out customer_id))
-            {
-                int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
-                if (admin_id > 0)
-                {
-                    await LoadCustomer(customer_id);
-                }
-            }
-        }
-        StateHasChanged();
-    }
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			if (int.TryParse(CID, out customer_id))
+			{
+				int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
+				if (admin_id > 0)
+				{
+					await LoadCustomer(customer_id);
+				}
+			}
+		}
+		StateHasChanged();
+	}
 
-    protected async Task LoadCustomer(int CID)
-    {
-        var response = await PostHelper.Request<Merchanter.Classes.Customer>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
-                    Classes.PostHelper.PostMethod.Get,
-                    "api/Customer/" + CID + "/GetCustomer");
+	protected async Task LoadCustomer(int CID)
+	{
+		var response = await PostHelper.Request<Merchanter.Classes.Customer>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+					Classes.PostHelper.PostMethod.Get,
+					"api/Customer/" + CID + "/GetCustomer");
 
-        if (response != null && response.Success && response.Data != null)
-        {
-            customer = response.Data;
-            if (customer != null)
-            {
-                company_name = customer.user_name;
-                page_message = string.Empty;
-            }
-            else
-                page_message = "Customer not found.";
-        }
-        else
-        {
-            page_message = "Merchanter Server ServiceAPI data response empty.";
-        }
-    }
+		if (response != null && response.Success && response.Data != null)
+		{
+			customer = response.Data;
+			if (customer != null)
+			{
+				company_name = customer.user_name;
+				page_message = string.Empty;
+			}
+			else
+				page_message = "Customer not found.";
+		}
+		else
+		{
+			page_message = "Merchanter Server ServiceAPI data response empty.";
+		}
+	}
 
-    private async Task RefreshCustomer()
-    {
-        if (int.TryParse(CID, out customer_id))
-        {
-            is_refreshing = true;
-            StateHasChanged();
-            int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
-            if (admin_id > 0)
-            {
-                await LoadCustomer(customer_id);
-                is_refreshing = false;
-            }
-        }
-    }
+	private async Task RefreshCustomer()
+	{
+		if (int.TryParse(CID, out customer_id))
+		{
+			is_refreshing = true;
+			StateHasChanged();
+			int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
+			if (admin_id > 0)
+			{
+				await LoadCustomer(customer_id);
+				is_refreshing = false;
+			}
+		}
+	}
 
-    private async Task SaveCustomer(Merchanter.Classes.Customer _customer)
-    {
-        if (int.TryParse(CID, out customer_id))
-        {
-            int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
-            if (admin_id > 0)
-            {
-                is_refreshing = true;
-                string json = JsonConvert.SerializeObject(_customer);
-                var response = await PostHelper.Request<Merchanter.Classes.Customer>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
-                Classes.PostHelper.PostMethod.Put,
-                "api/Customer/" + CID + "/SaveCustomer", new StringContent(json, Encoding.UTF8, "application/json"));
+	private async Task SaveCustomer(Merchanter.Classes.Customer _customer)
+	{
+		if (int.TryParse(CID, out customer_id))
+		{
+			int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
+			if (admin_id > 0)
+			{
+				is_refreshing = true;
+				string json = JsonConvert.SerializeObject(_customer);
+				var response = await PostHelper.Request<Merchanter.Classes.Customer>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+				Classes.PostHelper.PostMethod.Put,
+				"api/Customer/" + CID + "/SaveCustomer", new StringContent(json, Encoding.UTF8, "application/json"));
 
-                if (response != null && response.Success && response.Data != null)
-                {
-                    customer = response.Data;
-                    if (customer != null)
-                    {
-                        company_name = customer.user_name;
-                        message_status = "success";
-                        page_message = "Customer saved. [" + DateTime.Now.ToString() + "]";
-                    }
-                    else
-                    {
-                        message_status = "danger";
-                        page_message = "Customer update fail.";
-                    }
-                }
-                else
-                {
-                    message_status = "danger";
-                    page_message = "Merchanter Server ServiceAPI data response empty.";
-                }
-                is_refreshing = false;
-            }
-        }
-    }
+				if (response != null && response.Success && response.Data != null)
+				{
+					customer = response.Data;
+					if (customer != null)
+					{
+						company_name = customer.user_name;
+						message_status = "success";
+						page_message = "Customer saved. [" + DateTime.Now.ToString() + "]";
+					}
+					else
+					{
+						message_status = "danger";
+						page_message = "Customer update fail.";
+					}
+				}
+				else
+				{
+					message_status = "danger";
+					page_message = "Merchanter Server ServiceAPI data response empty.";
+				}
+				is_refreshing = false;
+			}
+		}
+	}
 
-    private async void SetActiveTab(string tab)
-    {
-        if (tab == "logs")
-        {
-            logs_active = true;
-            settings_active = false;
-            integrations_active = false;
-            platform_settings_active = false;
-        }
-        else if (tab == "settings")
-        {
-            logs_active = false;
-            settings_active = true;
-            integrations_active = false;
-            platform_settings_active = false;
-        }
-        else if (tab == "integrations")
-        {
-            logs_active = false;
-            settings_active = false;
-            integrations_active = true;
-            platform_settings_active = false;
-        }
-        else if (tab == "platform_settings")
-        {
-            logs_active = false;
-            settings_active = false;
-            integrations_active = false;
-            platform_settings_active = true;
-        }
-        await Task.CompletedTask;
-    }
+	private async void SetActiveTab(string tab)
+	{
+		if (tab == "logs")
+		{
+			logs_active = true;
+			settings_active = false;
+			integrations_active = false;
+			platform_settings_active = false;
+		}
+		else if (tab == "settings")
+		{
+			logs_active = false;
+			settings_active = true;
+			integrations_active = false;
+			platform_settings_active = false;
+		}
+		else if (tab == "integrations")
+		{
+			logs_active = false;
+			settings_active = false;
+			integrations_active = true;
+			platform_settings_active = false;
+		}
+		else if (tab == "platform_settings")
+		{
+			logs_active = false;
+			settings_active = false;
+			integrations_active = false;
+			platform_settings_active = true;
+		}
+		await Task.CompletedTask;
+	}
 
-    private async void CloseButton()
-    {
-        page_message = string.Empty;
-        await Task.CompletedTask;
-    }
+	private async void CloseButton()
+	{
+		page_message = string.Empty;
+		await Task.CompletedTask;
+	}
 }

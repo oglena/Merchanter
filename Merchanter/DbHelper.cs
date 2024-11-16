@@ -594,7 +594,7 @@ namespace Merchanter {
         public bool SaveCustomerSettings( int _customer_id, SettingsGeneral _settings ) {
             try {
                 int val = 0;
-                string _query = "UPDATE settings SET company_name=@company_name,rate_TL=@rate_TL,rate_USD=@rate_USD,rate_EUR=@rate_EUR,daysto_ordersync=@daysto_ordersync,daysto_invoicesync=@daysto_invoicesync,xml_qty_addictive_enable=@xml_qty_addictive_enable WHERE customer_id=@customer_id";
+                string _query = "UPDATE settings SET company_name=@company_name,rate_TL=@rate_TL,rate_USD=@rate_USD,rate_EUR=@rate_EUR,daysto_ordersync=@daysto_ordersync,daysto_invoicesync=@daysto_invoicesync,default_brand=@default_brand,customer_root_category_id=@customer_root_category_id,is_barcode_required=@is_barcode_required,xml_qty_addictive_enable=@xml_qty_addictive_enable WHERE customer_id=@customer_id";
                 MySqlCommand cmd = new MySqlCommand( _query, connection );
                 cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
                 cmd.Parameters.Add( new MySqlParameter( "company_name", _settings.company_name ) );
@@ -603,7 +603,10 @@ namespace Merchanter {
                 cmd.Parameters.Add( new MySqlParameter( "rate_EUR", _settings.rate_EUR ) );
                 cmd.Parameters.Add( new MySqlParameter( "daysto_ordersync", _settings.daysto_ordersync ) );
                 cmd.Parameters.Add( new MySqlParameter( "daysto_invoicesync", _settings.daysto_invoicesync ) );
-                cmd.Parameters.Add( new MySqlParameter( "xml_qty_addictive_enable", _settings.xml_qty_addictive_enable ) );
+                cmd.Parameters.Add( new MySqlParameter( "default_brand", _settings.default_brand ) );
+                cmd.Parameters.Add( new MySqlParameter( "customer_root_category_id", _settings.customer_root_category_id ) );
+				cmd.Parameters.Add( new MySqlParameter( "is_barcode_required", _settings.is_barcode_required ) );
+				cmd.Parameters.Add( new MySqlParameter( "xml_qty_addictive_enable", _settings.xml_qty_addictive_enable ) );
 
                 if( state != System.Data.ConnectionState.Open ) connection.Open();
                 val = cmd.ExecuteNonQuery();
@@ -708,18 +711,47 @@ namespace Merchanter {
                 OnError( ex.ToString() );
                 return false;
             }
-        }
+		}
 
-        /// <summary>
-        /// Saves the netsis settings to the database
-        /// </summary>
-        /// <param name="_customer_id">Customer ID</param>
-        /// <param name="_settings">Settings Netsis</param>
-        /// <returns>[No change] or [Error] returns 'false'</returns>
-        public bool SaveNetsisSettings( int _customer_id, SettingsNetsis _settings ) {
+		/// <summary>
+		/// Saves the order settings to the database
+		/// </summary>
+		/// <param name="_customer_id">Customer ID</param>
+		/// <param name="_settings">Settings Order</param>
+		/// <returns>[No change] or [Error] returns 'false'</returns>
+		public bool SaveOrderSettings( int _customer_id, SettingsOrder _settings ) {
+			try {
+				int val = 0;
+				string _query = "UPDATE settings_order SET siparis_kargo_sku=@siparis_kargo_sku,siparis_taksitkomisyon_sku=@siparis_taksitkomisyon_sku,is_rewrite_siparis=@is_rewrite_siparis,siparis_kdvdahilmi=@siparis_kdvdahilmi WHERE customer_id=@customer_id";
+				MySqlCommand cmd = new MySqlCommand( _query, connection );
+				cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+				cmd.Parameters.Add( new MySqlParameter( "siparis_kargo_sku", _settings.siparis_kargo_sku ) );
+				cmd.Parameters.Add( new MySqlParameter( "siparis_taksitkomisyon_sku", _settings.siparis_taksitkomisyon_sku ) );
+				cmd.Parameters.Add( new MySqlParameter( "is_rewrite_siparis", _settings.is_rewrite_siparis ) );
+				cmd.Parameters.Add( new MySqlParameter( "siparis_kdvdahilmi", _settings.siparis_kdvdahilmi ) );
+
+				if( state != System.Data.ConnectionState.Open ) connection.Open();
+				val = cmd.ExecuteNonQuery();
+				if( state == System.Data.ConnectionState.Open ) connection.Close();
+
+				return val > 0;
+			}
+			catch( Exception ex ) {
+				OnError( ex.ToString() );
+				return false;
+			}
+		}
+
+		/// <summary>
+		/// Saves the netsis settings to the database
+		/// </summary>
+		/// <param name="_customer_id">Customer ID</param>
+		/// <param name="_settings">Settings Netsis</param>
+		/// <returns>[No change] or [Error] returns 'false'</returns>
+		public bool SaveNetsisSettings( int _customer_id, SettingsNetsis _settings ) {
             try {
                 int val = 0;
-                string _query = "UPDATE settings_netsis SET rest_url=@rest_url,netopenx_user=@netopenx_user,netopenx_password=@netopenx_password,dbname=@dbname,dbuser=@dbuser,dbpassword=@dbpassword,belgeonek_musterisiparisi=@belgeonek_musterisiparisi,siparis_carionek=@siparis_carionek,cari_siparis_grupkodu=@cari_siparis_grupkodu,sipari_caritip=@sipari_caritip,siparis_muhasebekodu=@siparis_muhasebekodu,siparis_kdvdahilmi=@siparis_kdvdahilmi,siparis_subekodu=@siparis_subekodu,siparis_depokodu=@siparis_depokodu,siparis_kargo_sku=@siparis_kargo_sku,siparis_taksitkomisyon_sku=@siparis_taksitkomisyon_sku,is_rewrite_siparis=@is_rewrite_siparis,ebelge_dizayn_earsiv=@ebelge_dizayn_earsiv,ebelge_dizayn_efatura=@ebelge_dizayn_efatura,ebelge_klasorismi=@ebelge_klasorismi,efatura_belge_onek=@efatura_belge_onek,earsiv_belge_onek=@earsiv_belge_onek,fatura_cari_gruplari=@fatura_cari_gruplari,siparis_kod2=@siparis_kod2,siparis_cyedek1=@siparis_cyedek1,siparis_ekack15=@siparis_ekack15,siparis_ekack10=@siparis_ekack10,siparis_ekack11=@siparis_ekack11,siparis_ekack4=@siparis_ekack4 WHERE customer_id=@customer_id";
+                string _query = "UPDATE settings_netsis SET rest_url=@rest_url,netopenx_user=@netopenx_user,netopenx_password=@netopenx_password,dbname=@dbname,dbuser=@dbuser,dbpassword=@dbpassword,belgeonek_musterisiparisi=@belgeonek_musterisiparisi,siparis_carionek=@siparis_carionek,cari_siparis_grupkodu=@cari_siparis_grupkodu,sipari_caritip=@sipari_caritip,siparis_muhasebekodu=@siparis_muhasebekodu,siparis_subekodu=@siparis_subekodu,siparis_depokodu=@siparis_depokodu,ebelge_dizayn_earsiv=@ebelge_dizayn_earsiv,ebelge_dizayn_efatura=@ebelge_dizayn_efatura,ebelge_klasorismi=@ebelge_klasorismi,efatura_belge_onek=@efatura_belge_onek,earsiv_belge_onek=@earsiv_belge_onek,fatura_cari_gruplari=@fatura_cari_gruplari,siparis_kod2=@siparis_kod2,siparis_cyedek1=@siparis_cyedek1,siparis_ekack15=@siparis_ekack15,siparis_ekack10=@siparis_ekack10,siparis_ekack11=@siparis_ekack11,siparis_ekack4=@siparis_ekack4 WHERE customer_id=@customer_id";
                 MySqlCommand cmd = new MySqlCommand( _query, connection );
                 cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
                 cmd.Parameters.Add( new MySqlParameter( "rest_url", _settings.rest_url ) );
@@ -733,12 +765,8 @@ namespace Merchanter {
                 cmd.Parameters.Add( new MySqlParameter( "cari_siparis_grupkodu", _settings.cari_siparis_grupkodu ) );
                 cmd.Parameters.Add( new MySqlParameter( "sipari_caritip", _settings.sipari_caritip ) );
                 cmd.Parameters.Add( new MySqlParameter( "siparis_muhasebekodu", _settings.siparis_muhasebekodu ) );
-                cmd.Parameters.Add( new MySqlParameter( "siparis_kdvdahilmi", _settings.siparis_kdvdahilmi ) );
                 cmd.Parameters.Add( new MySqlParameter( "siparis_subekodu", _settings.siparis_subekodu ) );
                 cmd.Parameters.Add( new MySqlParameter( "siparis_depokodu", _settings.siparis_depokodu ) );
-                cmd.Parameters.Add( new MySqlParameter( "siparis_kargo_sku", _settings.siparis_kargo_sku ) );
-                cmd.Parameters.Add( new MySqlParameter( "siparis_taksitkomisyon_sku", _settings.siparis_taksitkomisyon_sku ) );
-                cmd.Parameters.Add( new MySqlParameter( "is_rewrite_siparis", _settings.is_rewrite_siparis ) );
                 cmd.Parameters.Add( new MySqlParameter( "ebelge_dizayn_earsiv", _settings.ebelge_dizayn_earsiv ) );
                 cmd.Parameters.Add( new MySqlParameter( "ebelge_dizayn_efatura", _settings.ebelge_dizayn_efatura ) );
                 cmd.Parameters.Add( new MySqlParameter( "ebelge_klasorismi", _settings.ebelge_klasorismi ) );
@@ -807,10 +835,10 @@ namespace Merchanter {
                 db_settings = this.GetSettings( _customer_id );
                 Helper.global = new SettingsMerchanter( _customer_id ) {
                     customer_id = _customer_id,
-                    customer_root_category = GetRootCategory( _customer_id )?.id ?? 1,
                     settings = GetCustomerSettings( _customer_id ),
                     magento = GetMagentoSettings( _customer_id ),
-                    netsis = GetNetsisSettings( _customer_id ),
+                    order = GetOrderSettings( _customer_id ),
+					netsis = GetNetsisSettings( _customer_id ),
                     entegra = GetEntegraSettings( _customer_id ),
                     shipment = GetShipmentSettings( _customer_id ),
                     order_statuses = LoadOrderStatuses( _customer_id ),
@@ -818,7 +846,6 @@ namespace Merchanter {
                     shipment_methods = LoadShipmentMethods( _customer_id ),
                     integrations = LoadIntegrations( _customer_id ),
                     sync_mappings = GetCustomerSyncMappings( _customer_id ),
-                    DefaultBrand = db_settings.Where( x => x.name == "DefaultBrand" ).First().value,
                     erp_invoice_ftp_username = db_settings.Where( x => x.name == "erp_invoice_ftp_username" ).First().value,
                     erp_invoice_ftp_password = db_settings.Where( x => x.name == "erp_invoice_ftp_password" ).First().value,
                     erp_invoice_ftp_url = db_settings.Where( x => x.name == "erp_invoice_ftp_url" ).First().value,
@@ -876,7 +903,9 @@ namespace Merchanter {
                         daysto_ordersync = Convert.ToInt32( dataReader[ "daysto_ordersync" ].ToString() ),
                         daysto_invoicesync = Convert.ToInt32( dataReader[ "daysto_invoicesync" ].ToString() ),
                         //is_barcode_required = Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_barcode_required" ].ToString() ) ),
-                        xml_qty_addictive_enable = Convert.ToBoolean( Convert.ToInt32( dataReader[ "xml_qty_addictive_enable" ].ToString() ) )
+                        default_brand = dataReader[ "default_brand" ].ToString(),
+						is_barcode_required = Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_barcode_required" ].ToString() ) ),
+						xml_qty_addictive_enable = Convert.ToBoolean( Convert.ToInt32( dataReader[ "xml_qty_addictive_enable" ].ToString() ) )
                     };
                 }
                 dataReader.Close();
@@ -968,11 +997,46 @@ namespace Merchanter {
         }
 
         /// <summary>
-        /// Gets the netsis settings from the database
+        /// Gets the order settings from the database
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public SettingsNetsis GetNetsisSettings( int _customer_id ) {
+        public SettingsOrder GetOrderSettings( int _customer_id ) {
+			try {
+				if( state != System.Data.ConnectionState.Open )
+					connection.Open();
+				string _query = "SELECT * FROM settings_order WHERE customer_id=@customer_id";
+				SettingsOrder? os = null;
+				MySqlCommand cmd = new MySqlCommand( _query, connection );
+				cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+				MySqlDataReader dataReader = cmd.ExecuteReader( System.Data.CommandBehavior.CloseConnection );
+				while( dataReader.Read() ) {
+					os = new SettingsOrder {
+						id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+						customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
+						siparis_kargo_sku = dataReader[ "siparis_kargo_sku" ].ToString(),
+						siparis_taksitkomisyon_sku = dataReader[ "siparis_taksitkomisyon_sku" ].ToString(),
+						is_rewrite_siparis = Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_rewrite_siparis" ].ToString() ) ),
+						siparis_kdvdahilmi = Convert.ToBoolean( Convert.ToInt32( dataReader[ "siparis_kdvdahilmi" ].ToString() ) ),
+					};
+				}
+				dataReader.Close();
+				if( state == System.Data.ConnectionState.Open )
+					connection.Close();
+				return os;
+			}
+			catch( Exception ex ) {
+				OnError( ex.ToString() );
+				return null;
+			}
+		}
+
+		/// <summary>
+		/// Gets the netsis settings from the database
+		/// </summary>
+		/// <param name="_customer_id">Customer ID</param>
+		/// <returns>[Error] returns 'null'</returns>
+		public SettingsNetsis GetNetsisSettings( int _customer_id ) {
             try {
                 if( state != System.Data.ConnectionState.Open )
                     connection.Open();
@@ -996,12 +1060,8 @@ namespace Merchanter {
                         cari_siparis_grupkodu = dataReader[ "cari_siparis_grupkodu" ].ToString(),
                         sipari_caritip = dataReader[ "sipari_caritip" ].ToString(),
                         siparis_muhasebekodu = dataReader[ "siparis_muhasebekodu" ].ToString(),
-                        siparis_kdvdahilmi = Convert.ToBoolean( Convert.ToInt32( dataReader[ "siparis_kdvdahilmi" ].ToString() ) ),
                         siparis_subekodu = Convert.ToInt32( dataReader[ "siparis_subekodu" ].ToString() ),
                         siparis_depokodu = Convert.ToInt32( dataReader[ "siparis_depokodu" ].ToString() ),
-                        siparis_kargo_sku = dataReader[ "siparis_kargo_sku" ].ToString(),
-                        siparis_taksitkomisyon_sku = dataReader[ "siparis_taksitkomisyon_sku" ].ToString(),
-                        is_rewrite_siparis = Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_rewrite_siparis" ].ToString() ) ),
                         ebelge_dizayn_earsiv = dataReader[ "ebelge_dizayn_earsiv" ].ToString(),
                         ebelge_dizayn_efatura = dataReader[ "ebelge_dizayn_efatura" ].ToString(),
                         ebelge_klasorismi = dataReader[ "ebelge_klasorismi" ].ToString(),
@@ -2516,28 +2576,21 @@ namespace Merchanter {
         /// Gets the default brand from the database
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
-        /// <returns>[No data] or [Error] returns 'null'</returns>
-        public Brand? GetDefaultBrand( int _customer_id ) {
+        /// <returns>[Error] returns 'null'</returns>
+        public Brand GetDefaultBrand( int _customer_id ) {
             try {
-                if( state != System.Data.ConnectionState.Open ) connection.Open();
-                string _query = "SELECT * FROM brands " +
-                    "WHERE id=@id AND customer_id=@customer_id";
-                MySqlCommand cmd = new MySqlCommand( _query, connection );
-                cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
-                cmd.Parameters.Add( new MySqlParameter( "id", GetBrandByName( _customer_id, Helper.global.DefaultBrand )?.id ) );
-                MySqlDataReader dataReader = cmd.ExecuteReader();
-                Brand? b = null;
-                if( dataReader.Read() ) {
-                    b = new Brand();
-                    b.id = Convert.ToInt32( dataReader[ "id" ].ToString() );
-                    b.customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() );
-                    b.brand_name = dataReader[ "brand_name" ].ToString();
-                    b.status = dataReader[ "status" ] != null ? dataReader[ "status" ].ToString() == "1" ? true : false : false;
+                var default_brand = GetBrandByName( _customer_id, Helper.global.settings.default_brand );
+                if( default_brand == null ) {
+                    var inserted_default_brand = InsertBrand( _customer_id, new Brand() { customer_id = _customer_id, brand_name = Helper.global.settings.default_brand, status = true } );
+                    if( inserted_default_brand != null ) {
+                        return inserted_default_brand;
+                    }
+                    else
+                        return new Brand() { customer_id = _customer_id, brand_name = Helper.global.settings.default_brand, status = true };
                 }
-                dataReader.Close();
-                if( state == System.Data.ConnectionState.Open ) connection.Close();
-
-                return b;
+                else { 
+                    return default_brand; 
+                }
             }
             catch( Exception ex ) {
                 OnError( ex.ToString() );
