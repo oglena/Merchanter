@@ -116,5 +116,17 @@ input[type=checkbox] {
 }
 
 .big-text {
-	font-size: 1.5rem;
+	font-size: 1.1rem;
+}
+
+.bg-purple {
+    background-color: purple !important;
+}
+
+.bg-rebeccapurple {
+    background-color: rebeccapurple !important;
+}
+
+.bg-sienna {
+    background-color: sienna !important;
 }

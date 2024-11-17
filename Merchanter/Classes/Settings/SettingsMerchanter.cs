@@ -4,7 +4,9 @@
     {
         public int customer_id { get; set; }
         public SettingsGeneral settings { get; set; }
-        public SettingsMagento magento { get; set; }
+		public SettingsInvoice invoice { get; set; }
+		public SettingsProduct product { get; set; }
+		public SettingsMagento magento { get; set; }
 		public SettingsOrder order { get; set; }
 		public SettingsNetsis netsis { get; set; }
         public SettingsEntegra entegra { get; set; }

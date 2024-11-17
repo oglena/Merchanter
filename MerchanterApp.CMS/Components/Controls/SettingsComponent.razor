@@ -5,7 +5,7 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IPostHelper PostHelper
 
-<div class="container-fluid bg-dark text-light rounded-2 p-3">
+<div class="container-fluid bg-rebeccapurple bg-gradient text-light rounded-2 p-3">
 	<div class="row mt-3">
 		<div class="col-12 ps-2">
 			<h2>
@@ -50,10 +50,11 @@
 											</div>
 										</div>
 									</div>
-									<hr />
-									<div class="row mt-3">
+									<div class="col-12 p-3 bg-light rounded-3 border">
+										<h5>
+											Currency Rates
+										</h5>
 										<div class="row mt-3">
-											<h4>Currency Rates</h4>
 											<div class="col-4 ps-2 mb-3">
 												<div class="input-group mb-3">
 													<span class="input-group-text">TL</span>
@@ -74,46 +75,6 @@
 											</div>
 										</div>
 									</div>
-									<div class="row mt-3">
-										<div class="row mt-3">
-											<h4>Other Settings</h4>
-											<div class="col-4 ps-2 mb-3">
-												<div class="form-floating">
-													<InputNumber type="text" class="form-control" DisplayName="customer_root_category_id" @bind-Value="settings.settings.customer_root_category_id" placeholder="Uneditable" disabled="true" />
-													<label for="customer_root_category_id" class="form-label">Root Category Id</label>
-												</div>
-											</div>
-											<div class="col-4 ps-2 mb-3">
-												<div class="form-floating">
-													<InputNumber type="text" class="form-control" DisplayName="daysto_ordersync" @bind-Value="settings.settings.daysto_ordersync" />
-													<label for="daysto_ordersync" class="form-label">Days to Order Sync</label>
-												</div>
-											</div>
-											<div class="col-4 ps-2 mb-3">
-												<div class="form-floating">
-													<InputNumber type="text" class="form-control" DisplayName="daysto_invoicesync" @bind-Value="settings.settings.daysto_invoicesync" />
-													<label for="daysto_invoicesync" class="form-label">Days to Invoice Sync</label>
-												</div>
-											</div>
-										</div>
-										<div class="row mt-3">
-											<div class="form-check form-switch mt-2 ms-3">
-												<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="settings.settings.xml_qty_addictive_enable"></InputCheckbox>
-												<label class="form-check-label">&nbsp;<abbr title="If main source have positive stock, this disables qty increment from other sources." class="initialism">Qty Additive Status</abbr></label>
-											</div>
-										</div>
-										<div class="row mt-3">
-											<div class="form-check form-switch mt-2 ms-3">
-												<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="settings.settings.is_barcode_required"></InputCheckbox>
-												<label class="form-check-label">&nbsp;Is Barcode Required</label>
-											</div>
-										</div>
-										<div class="row mt-3">
-											<div class="col-12 ps-2 mb-3">
-												<button type="submit" class="btn btn-outline-success float-end @(!is_refreshing ? "shadow" : "")" @onclick="@(() => SaveGeneralSettings(settings.settings))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
-											</div>
-										</div>
-									</div>
 								</EditForm>
 							</div>
 						</div>
@@ -122,7 +83,46 @@
 			</div>
 
 			<div class="tab-pane" id="tab-product-panel" role="tabpanel" aria-labelledby="tab-product">
-				<h2 class="text-danger">Under Construction</h2>
+				@if (settings != null && settings.product != null)
+				{
+					<div class="container-fluid">
+						<div class="row">
+							<div class="col-md-12 p-2">
+								<EditForm Model="settings.product" class="container-fluid">
+
+									<div class="row mt-3">
+										<div class="row mt-3">
+											<h4>Other Settings</h4>
+											<div class="col-4 ps-2 mb-3">
+												<div class="form-floating">
+													<InputNumber type="text" class="form-control" DisplayName="customer_root_category_id" @bind-Value="settings.product.customer_root_category_id" placeholder="Uneditable" disabled="true" />
+													<label for="customer_root_category_id" class="form-label">Root Category Id</label>
+												</div>
+											</div>
+										</div>
+										<div class="row mt-3">
+											<div class="form-check form-switch mt-2 ms-3">
+												<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="settings.product.xml_qty_addictive_enable"></InputCheckbox>
+												<label class="form-check-label">&nbsp;<abbr title="If main source have positive stock, this disables qty increment from other sources." class="initialism">Qty Additive Status</abbr></label>
+											</div>
+										</div>
+										<div class="row mt-3">
+											<div class="form-check form-switch mt-2 ms-3">
+												<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="settings.product.is_barcode_required"></InputCheckbox>
+												<label class="form-check-label">&nbsp;Is Barcode Required</label>
+											</div>
+										</div>
+										<div class="row mt-3">
+											<div class="col-12 ps-2 mb-3">
+												<button type="submit" class="btn btn-outline-success float-end @(!is_refreshing ? "shadow" : "")" @onclick="@(() => SaveProductSettings(settings.product))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+											</div>
+										</div>
+									</div>
+								</EditForm>
+							</div>
+						</div>
+					</div>
+				}
 			</div>
 
 			<div class="tab-pane" id="tab-order-panel" role="tabpanel" aria-labelledby="tab-order">
@@ -135,13 +135,19 @@
 									<div class="row mt-3">
 										<div class="col-12 ps-2 mb-3">
 											<div class="form-floating">
-												<InputText type="text" class="form-control" DisplayName="siparis_kargo_sku" @bind-Value="settings.order.siparis_kargo_sku" />
-												<label for="siparis_kargo_sku" class="form-label">Order Shipment SKU</label>
+												<InputNumber type="text" class="form-control" DisplayName="daysto_ordersync" @bind-Value="settings.order.daysto_ordersync" />
+												<label for="daysto_ordersync" class="form-label">Days to Order Sync</label>
 											</div>
 										</div>
 									</div>
 									<div class="row mt-3">
-										<div class="col-12 ps-2 mb-3">
+										<div class="col-6 ps-2 mb-3">
+											<div class="form-floating">
+												<InputText type="text" class="form-control" DisplayName="siparis_kargo_sku" @bind-Value="settings.order.siparis_kargo_sku" />
+												<label for="siparis_kargo_sku" class="form-label">Order Shipment SKU</label>
+											</div>
+										</div>
+										<div class="col-6 ps-2 mb-3">
 											<div class="form-floating">
 												<InputText type="text" class="form-control" DisplayName="siparis_taksitkomisyon_sku" @bind-Value="settings.order.siparis_taksitkomisyon_sku" />
 												<label for="siparis_taksitkomisyon_sku" class="form-label">Order Installation SKU</label>
@@ -173,7 +179,30 @@
 			</div>
 
 			<div class="tab-pane" id="tab-invoice-panel" role="tabpanel" aria-labelledby="tab-invoice">
-				<h2 class="text-danger">Under Construction</h2>
+				@if (settings != null && settings.invoice != null)
+				{
+					<div class="container-fluid">
+						<div class="row">
+							<div class="col-md-12 p-2">
+								<EditForm Model="settings.invoice" class="container-fluid">
+									<div class="row mt-3">
+										<div class="col-12 ps-2 mb-3">
+											<div class="form-floating">
+												<InputNumber type="text" class="form-control" DisplayName="daysto_invoicesync" @bind-Value="settings.invoice.daysto_invoicesync" />
+												<label for="daysto_invoicesync" class="form-label">Days to Invoice Sync</label>
+											</div>
+										</div>
+									</div>
+									<div class="row mt-3">
+										<div class="col-12 ps-2 mb-3">
+											<button type="submit" class="btn btn-outline-success float-end @(!is_refreshing ? "shadow" : "")" @onclick="@(() => SaveInvoiceSettings(settings.invoice))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+										</div>
+									</div>
+								</EditForm>
+							</div>
+						</div>
+					</div>
+				}
 			</div>
 		</div>
 	}
@@ -296,6 +325,64 @@
 				else
 				{
 					page_message = "Order settings save failed. [" + DateTime.Now.ToString() + "]";
+					message_status = "danger";
+				}
+				is_refreshing = false;
+			}
+		}
+	}
+
+	public async Task SaveProductSettings(SettingsProduct _settings)
+	{
+		if (settings != null && int.TryParse(CID, out int customer_id))
+		{
+			int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
+			if (admin_id > 0)
+			{
+				is_refreshing = true;
+				string json = JsonConvert.SerializeObject(_settings);
+				var response = await PostHelper.Request<SettingsProduct>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+					Classes.PostHelper.PostMethod.Put,
+					"api/Settings/" + CID + "/SaveProductSettings",
+					new StringContent(json, Encoding.UTF8, "application/json"));
+				if (response != null && response.Success && response.Data != null)
+				{
+					settings.product = response.Data;
+					page_message = "Product settings saved. [" + DateTime.Now.ToString() + "]";
+					message_status = "success";
+				}
+				else
+				{
+					page_message = "Product settings save failed. [" + DateTime.Now.ToString() + "]";
+					message_status = "danger";
+				}
+				is_refreshing = false;
+			}
+		}
+	}
+
+	public async Task SaveInvoiceSettings(SettingsInvoice _settings)
+	{
+		if (settings != null && int.TryParse(CID, out int customer_id))
+		{
+			int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
+			if (admin_id > 0)
+			{
+				is_refreshing = true;
+				string json = JsonConvert.SerializeObject(_settings);
+				var response = await PostHelper.Request<SettingsInvoice>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+					Classes.PostHelper.PostMethod.Put,
+					"api/Settings/" + CID + "/SaveInvoiceSettings",
+					new StringContent(json, Encoding.UTF8, "application/json"));
+				if (response != null && response.Success && response.Data != null)
+				{
+					settings.invoice = response.Data;
+					page_message = "Invoice settings saved. [" + DateTime.Now.ToString() + "]";
+					message_status = "success";
+				}
+				else
+				{
+					page_message = "Invoice settings save failed. [" + DateTime.Now.ToString() + "]";
 					message_status = "danger";
 				}
 				is_refreshing = false;

@@ -131,5 +131,41 @@ namespace Merchanter.ServerService.Controllers {
 			}
 			return BadRequest( "Invalid customer ID." );
 		}
+
+		[HttpPut( "{CID}/SaveProductSettings" )]
+		[Authorize]
+		public async Task<ActionResult<BaseResponseModel<SettingsProduct>>> SaveProductSettings( string CID, [FromBody] SettingsProduct _settings ) {
+			int customer_id;
+			if( int.TryParse( CID, out customer_id ) && customer_id > 0 ) {
+				if( await settingsService.SaveProductSettings( customer_id, _settings ) ) {
+					SettingsProduct? saved_settings = settingsService.GetCustomerSettings( customer_id ).Result.product;
+					if( saved_settings != null ) {
+						return Ok( new BaseResponseModel<SettingsProduct>() { Success = true, Data = saved_settings, ErrorMessage = "" } );
+					}
+				}
+				else {
+					return Ok( new BaseResponseModel<SettingsProduct>() { Success = false, Data = null, ErrorMessage = "Error saving product settings." } );
+				}
+			}
+			return BadRequest( "Invalid customer ID." );
+		}
+
+		[HttpPut( "{CID}/SaveInvoiceSettings" )]
+		[Authorize]
+		public async Task<ActionResult<BaseResponseModel<SettingsInvoice>>> SaveInvoiceSettings( string CID, [FromBody] SettingsInvoice _settings ) {
+			int customer_id;
+			if( int.TryParse( CID, out customer_id ) && customer_id > 0 ) {
+				if( await settingsService.SaveInvoiceSettings( customer_id, _settings ) ) {
+					SettingsInvoice? saved_settings = settingsService.GetCustomerSettings( customer_id ).Result.invoice;
+					if( saved_settings != null ) {
+						return Ok( new BaseResponseModel<SettingsInvoice>() { Success = true, Data = saved_settings, ErrorMessage = "" } );
+					}
+				}
+				else {
+					return Ok( new BaseResponseModel<SettingsInvoice>() { Success = false, Data = null, ErrorMessage = "Error saving invoice settings." } );
+				}
+			}
+			return BadRequest( "Invalid customer ID." );
+		}
 	}
 }

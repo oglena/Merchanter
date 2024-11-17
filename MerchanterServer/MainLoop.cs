@@ -537,7 +537,7 @@ namespace MerchanterServer {
 					//var fat = NetOpenXHelper.GetNetsisFatura( "QPB024000004847" );
 					//var sip = NetOpenXHelper.GetNetsisSiparis( "000000099108639", false );
 					invoices = db_helper.invoice.GetInvoices( customer.customer_id );
-					var live_faturas = NetOpenXHelper.GetNetsisFaturas( Helper.global.settings.daysto_invoicesync, invoices );
+					var live_faturas = NetOpenXHelper.GetNetsisFaturas( Helper.global.invoice.daysto_invoicesync, invoices );
 					if( invoices != null && live_faturas != null ) {
 						foreach( var item in live_faturas ) {
 							var selected_invoice = invoices.Where( x => x.invoice_no == item.FATURANO ).FirstOrDefault();
@@ -1022,7 +1022,7 @@ namespace MerchanterServer {
 					var ent_products = Helper.GetENTProducts();
 					if( ent_products != null && ent_products.Count > 0 ) {
 						foreach( var item in ent_products ) {
-							if( item.Barcode != string.Empty && Helper.global.settings.is_barcode_required ) {
+							if( item.Barcode != string.Empty && Helper.global.product.is_barcode_required ) {
 								if( item.Sku != string.Empty ) {
 									#region Checking Product Extension If exist
 									Brand? existed_brand = brands.Where( x => x.brand_name.Trim().Equals( item.BrandName?.Trim().ToLower(), StringComparison.CurrentCultureIgnoreCase ) ).FirstOrDefault();
@@ -1059,7 +1059,7 @@ namespace MerchanterServer {
 											brand_id = existed_brand != null ? existed_brand.id : (string.IsNullOrEmpty( item.BrandName ) ? db_helper.GetDefaultBrand( customer.customer_id ).id : 0),
 											is_xml_enabled = existed_p_ext != null && existed_p_ext.is_xml_enabled,
 											xml_sources = existed_p_ext != null ? existed_p_ext.xml_sources : [],
-											category_ids = existed_p_ext != null ? existed_p_ext.category_ids : Helper.global.settings.customer_root_category_id.ToString(),
+											category_ids = existed_p_ext != null ? existed_p_ext.category_ids : Helper.global.product.customer_root_category_id.ToString(),
 											categories = existed_p_cats ?? ([ db_helper.GetRootCategory( customer.customer_id ) ]),
 											brand = existed_brand ?? (string.IsNullOrEmpty( item.BrandName ) ?
 											db_helper.GetDefaultBrand( customer.customer_id )
@@ -1123,7 +1123,7 @@ namespace MerchanterServer {
 										item.sku,
 										item.barcode,
 										xitem.qty,
-										(Helper.global.settings.xml_qty_addictive_enable || item.sources[ 0 ].qty <= 0) ? (xitem.is_active ? (item.extension.is_xml_enabled && item.extension.xml_sources.Contains( xitem.xml_source )) : false) : false
+										(Helper.global.product.xml_qty_addictive_enable || item.sources[ 0 ].qty <= 0) ? (xitem.is_active ? (item.extension.is_xml_enabled && item.extension.xml_sources.Contains( xitem.xml_source )) : false) : false
 									) );
 								}
 							}
@@ -1387,7 +1387,7 @@ namespace MerchanterServer {
 			_health = true;
 			try {
 				if( order_sources.Contains( Constants.MAGENTO2 ) ) {
-					var m2_orders = Helper.GetOrders( Helper.global.settings.daysto_ordersync, OrderStatus.GetSyncEnabledCodes( Constants.MAGENTO2 ) );
+					var m2_orders = Helper.GetOrders( Helper.global.order.daysto_ordersync, OrderStatus.GetSyncEnabledCodes( Constants.MAGENTO2 ) );
 					if( m2_orders != null && m2_orders.items.Length > 0 ) {
 						foreach( var item in m2_orders.items ) {
 							var o = new Order() {

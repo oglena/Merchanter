@@ -13,20 +13,20 @@
 <PageTitle>Customer [@CID] | Merchanter</PageTitle>
 @if (customer != null && customer_id > 0)
 {
+	<div class="row p-2 mt-3 bg-light rounded-2 align-items-center">
+		<div class="col-9">
+			<button type="button" class="btn btn-outline-primary @(!settings_active ? "shadow" : "")" @onclick="@(() => SetActiveTab("settings") )" disabled="@(settings_active)"><i class="bi bi-gear"></i>&nbsp;Settings</button>
+			<button type="button" class="btn btn-outline-primary @(!platform_settings_active ? "shadow" : "")" @onclick="@(() => SetActiveTab("platform_settings") )" disabled="@(platform_settings_active)"><i class="bi bi-gear"></i>&nbsp;Platforms</button>
+			<button type="button" class="btn btn-outline-primary @(!integrations_active ? "shadow" : "")" @onclick="@(() => SetActiveTab("integrations") )" disabled="@(integrations_active)"><i class="bi bi-hdd-stack"></i>&nbsp;Integrations</button>
+			<button type="button" class="btn btn-outline-primary @(!logs_active ? "shadow" : "")" @onclick="@(() => SetActiveTab("logs") )" disabled="@(logs_active)"><i class="bi bi-journal-text"></i>&nbsp;Logs</button>
+		</div>
+		<div class="col-3">
+			<button type="button" class="btn btn-sm btn-outline-dark float-end" @onclick="() => customer_panel_active = !customer_panel_active" title="@(customer_panel_active ? "Hide Customer Panel" : "Show Customer Panel")">@((MarkupString)(customer_panel_active ? "<i class='bi bi-toggle2-on'></i>" : "<i class='bi bi-toggle2-off'></i>"))</button>
+			<a class="btn btn-sm btn-outline-dark float-end me-2" href="@("/Customer/Customers")" title="Back to Customers"><i class="bi bi-arrow-left"></i></a>
+		</div>
+	</div>
 	<div class="row mt-3 pb-2">
 		<div class="col-md-5 pb-2 bg-light rounded-3 @(customer_panel_active ? "" : "d-none")">
-			<div class="row mt-3">
-				<div class="col-9">
-					<button type="button" class="btn btn-outline-primary @(!settings_active ? "shadow" : "")" @onclick="@(() => SetActiveTab("settings") )" disabled="@(settings_active)"><i class="bi bi-gear"></i>&nbsp;Settings</button>
-					<button type="button" class="btn btn-outline-primary @(!platform_settings_active ? "shadow" : "")" @onclick="@(() => SetActiveTab("platform_settings") )" disabled="@(platform_settings_active)"><i class="bi bi-gear"></i>&nbsp;Platforms</button>
-					<button type="button" class="btn btn-outline-primary @(!integrations_active ? "shadow" : "")" @onclick="@(() => SetActiveTab("integrations") )" disabled="@(integrations_active)"><i class="bi bi-hdd-stack"></i>&nbsp;Integrations</button>
-					<button type="button" class="btn btn-outline-primary @(!logs_active ? "shadow" : "")" @onclick="@(() => SetActiveTab("logs") )" disabled="@(logs_active)"><i class="bi bi-journal-text"></i>&nbsp;Logs</button>
-				</div>
-				<div class="col-3">
-					<button type="button" class="btn btn-sm btn-outline-secondary float-end" @onclick="() => customer_panel_active = !customer_panel_active" title="Hide Customer Panel"><i class="bi bi-x-circle-fill"></i></button>
-					<a class="btn btn-sm btn-outline-secondary float-end me-2" href="@("/Customer/Customers")" title="Back to Customers"><i class="bi bi-arrow-left"></i></a>
-				</div>
-			</div>
 			<div class="row mt-3">
 				<div class="col-12 ps-2">
 					<h2>
@@ -191,7 +191,6 @@
 		</div>
 
 		<div class="col-md-@(customer_panel_active ? "7" : "12") pb-2 rounded-3">
-			<button type="button" class="btn btn-sm btn-secondary @(customer_panel_active ? "d-none" : "")" style="position:absolute;margin-left:-10px;margin-top:-10px;" @onclick="() => customer_panel_active = !customer_panel_active" title="Show Customer Panel"><i class="bi bi-arrow-bar-right"></i></button>
 			@if (logs_active)
 			{
 				<LogsComponent CID="@CID" show_customer_select="@false" />
