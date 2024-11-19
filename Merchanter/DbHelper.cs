@@ -623,10 +623,13 @@ namespace Merchanter {
 		public bool SaveInvoiceSettings( int _customer_id, SettingsInvoice _settings ) {
 			try {
 				int val = 0;
-				string _query = "UPDATE settings_invoice SET daysto_invoicesync=@daysto_invoicesync WHERE customer_id=@customer_id";
+				string _query = "UPDATE settings_invoice SET daysto_invoicesync=@daysto_invoicesync,erp_invoice_ftp_username=@erp_invoice_ftp_username,erp_invoice_ftp_password=@erp_invoice_ftp_password,erp_invoice_ftp_url=@erp_invoice_ftp_url WHERE customer_id=@customer_id";
 				MySqlCommand cmd = new MySqlCommand( _query, connection );
 				cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
 				cmd.Parameters.Add( new MySqlParameter( "daysto_invoicesync", _settings.daysto_invoicesync ) );
+				cmd.Parameters.Add( new MySqlParameter( "erp_invoice_ftp_username", _settings.erp_invoice_ftp_username ) );
+				cmd.Parameters.Add( new MySqlParameter( "erp_invoice_ftp_password", !string.IsNullOrWhiteSpace( _settings.erp_invoice_ftp_password ) ? DBSetting.Encrypt( _settings.erp_invoice_ftp_password ) : null ) );
+				cmd.Parameters.Add( new MySqlParameter( "erp_invoice_ftp_url", _settings.erp_invoice_ftp_url ) );
 
 				if( state != System.Data.ConnectionState.Open ) connection.Open();
 				val = cmd.ExecuteNonQuery();
@@ -683,7 +686,7 @@ namespace Merchanter {
 				cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
 				cmd.Parameters.Add( new MySqlParameter( "api_url", _settings.api_url ) );
 				cmd.Parameters.Add( new MySqlParameter( "api_username", _settings.api_username ) );
-				cmd.Parameters.Add( new MySqlParameter( "api_password", !string.IsNullOrWhiteSpace( _settings.api_password ) ? DBSetting.Encrypt( _settings.api_password ) : string.Empty ) );
+				cmd.Parameters.Add( new MySqlParameter( "api_password", !string.IsNullOrWhiteSpace( _settings.api_password ) ? DBSetting.Encrypt( _settings.api_password ) : null ) );
 
 				if( state != System.Data.ConnectionState.Open ) connection.Open();
 				val = cmd.ExecuteNonQuery();
@@ -713,7 +716,7 @@ namespace Merchanter {
 				cmd.Parameters.Add( new MySqlParameter( "mng_kargo", _settings.mng_kargo ) );
 				cmd.Parameters.Add( new MySqlParameter( "aras_kargo", _settings.aras_kargo ) );
 				cmd.Parameters.Add( new MySqlParameter( "yurtici_kargo_user_name", _settings.yurtici_kargo_user_name ) );
-				cmd.Parameters.Add( new MySqlParameter( "yurtici_kargo_password", !string.IsNullOrWhiteSpace( _settings.yurtici_kargo_password ) ? DBSetting.Encrypt( _settings.yurtici_kargo_password ) : string.Empty ) );
+				cmd.Parameters.Add( new MySqlParameter( "yurtici_kargo_password", !string.IsNullOrWhiteSpace( _settings.yurtici_kargo_password ) ? DBSetting.Encrypt( _settings.yurtici_kargo_password ) : null ) );
 				if( state != System.Data.ConnectionState.Open ) connection.Open();
 				val = cmd.ExecuteNonQuery();
 				if( state == System.Data.ConnectionState.Open ) connection.Close();
@@ -738,7 +741,7 @@ namespace Merchanter {
 				MySqlCommand cmd = new MySqlCommand( _query, connection );
 				cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
 				cmd.Parameters.Add( new MySqlParameter( "base_url", _settings.base_url ) );
-				cmd.Parameters.Add( new MySqlParameter( "token", !string.IsNullOrWhiteSpace( _settings.token ) ? DBSetting.Encrypt( _settings.token ) : string.Empty ) );
+				cmd.Parameters.Add( new MySqlParameter( "token", !string.IsNullOrWhiteSpace( _settings.token ) ? DBSetting.Encrypt( _settings.token ) : null ) );
 				cmd.Parameters.Add( new MySqlParameter( "root_category_id", _settings.root_category_id ) );
 				cmd.Parameters.Add( new MySqlParameter( "order_processing_comment", _settings.order_processing_comment ) );
 				cmd.Parameters.Add( new MySqlParameter( "barcode_attribute_code", _settings.barcode_attribute_code ) );
@@ -806,10 +809,10 @@ namespace Merchanter {
 				cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
 				cmd.Parameters.Add( new MySqlParameter( "rest_url", _settings.rest_url ) );
 				cmd.Parameters.Add( new MySqlParameter( "netopenx_user", _settings.netopenx_user ) );
-				cmd.Parameters.Add( new MySqlParameter( "netopenx_password", !string.IsNullOrWhiteSpace( _settings.netopenx_password ) ? DBSetting.Encrypt( _settings.netopenx_password ) : string.Empty ) );
+				cmd.Parameters.Add( new MySqlParameter( "netopenx_password", !string.IsNullOrWhiteSpace( _settings.netopenx_password ) ? DBSetting.Encrypt( _settings.netopenx_password ) : null ) );
 				cmd.Parameters.Add( new MySqlParameter( "dbname", _settings.dbname ) );
 				cmd.Parameters.Add( new MySqlParameter( "dbuser", _settings.dbuser ) ); //TODO: Add encrypt
-				cmd.Parameters.Add( new MySqlParameter( "dbpassword", !string.IsNullOrWhiteSpace( _settings.dbpassword ) ? DBSetting.Encrypt( _settings.dbpassword ) : string.Empty ) );
+				cmd.Parameters.Add( new MySqlParameter( "dbpassword", !string.IsNullOrWhiteSpace( _settings.dbpassword ) ? DBSetting.Encrypt( _settings.dbpassword ) : null ) );
 				cmd.Parameters.Add( new MySqlParameter( "belgeonek_musterisiparisi", _settings.belgeonek_musterisiparisi ) );
 				cmd.Parameters.Add( new MySqlParameter( "siparis_carionek", _settings.siparis_carionek ) );
 				cmd.Parameters.Add( new MySqlParameter( "cari_siparis_grupkodu", _settings.cari_siparis_grupkodu ) );
@@ -852,13 +855,11 @@ namespace Merchanter {
 			try {
 				int val = 0;
 				foreach( Integration item in _settings ) {
-					string _query = "UPDATE integrations SET type=@type,name=@name,direction=@direction,is_active=@is_active WHERE id=@id AND customer_id=@customer_id";
+					string _query = "UPDATE integrations SET work_id=@work_id,is_active=@is_active WHERE id=@id AND customer_id=@customer_id";
 					MySqlCommand cmd = new MySqlCommand( _query, connection );
 					cmd.Parameters.Add( new MySqlParameter( "id", item.id ) );
 					cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
-					cmd.Parameters.Add( new MySqlParameter( "type", item.type ) );
-					cmd.Parameters.Add( new MySqlParameter( "name", item.name ) );
-					cmd.Parameters.Add( new MySqlParameter( "direction", item.direction ) );
+					cmd.Parameters.Add( new MySqlParameter( "work_id", item.work.id ) );
 					cmd.Parameters.Add( new MySqlParameter( "is_active", item.is_active ) );
 					if( state != System.Data.ConnectionState.Open ) connection.Open();
 					val += cmd.ExecuteNonQuery();
@@ -883,42 +884,55 @@ namespace Merchanter {
 		public SettingsMerchanter LoadSettings( int _customer_id ) {
 			try {
 				db_settings = this.GetSettings( _customer_id );
-				Helper.global = new SettingsMerchanter( _customer_id ) {
-					customer_id = _customer_id,
-					settings = GetCustomerSettings( _customer_id ),
-					product = GetProductSettings( _customer_id ),
-					invoice = GetInvoiceSettings( _customer_id ),
-					magento = GetMagentoSettings( _customer_id ),
-					order = GetOrderSettings( _customer_id ),
-					netsis = GetNetsisSettings( _customer_id ),
-					entegra = GetEntegraSettings( _customer_id ),
-					shipment = GetShipmentSettings( _customer_id ),
-					order_statuses = LoadOrderStatuses( _customer_id ),
-					payment_methods = LoadPaymentMethods( _customer_id ),
-					shipment_methods = LoadShipmentMethods( _customer_id ),
-					integrations = LoadIntegrations( _customer_id ),
-					sync_mappings = GetCustomerSyncMappings( _customer_id ),
-					erp_invoice_ftp_username = db_settings.Where( x => x.name == "erp_invoice_ftp_username" ).First().value,
-					erp_invoice_ftp_password = db_settings.Where( x => x.name == "erp_invoice_ftp_password" ).First().value,
-					erp_invoice_ftp_url = db_settings.Where( x => x.name == "erp_invoice_ftp_url" ).First().value,
-					xml_bogazici_bayikodu = db_settings.Where( x => x.name == "xml_bogazici_bayikodu" ).First().value,
-					xml_bogazici_email = db_settings.Where( x => x.name == "xml_bogazici_email" ).First().value,
-					xml_bogazici_sifre = db_settings.Where( x => x.name == "xml_bogazici_sifre" ).First().value,
-					xml_fsp_url = db_settings.Where( x => x.name == "xml_fsp_url" ).First().value,
-					xml_koyuncu_url = db_settings.Where( x => x.name == "xml_koyuncu_url" ).First().value,
-					xml_oksid_url = db_settings.Where( x => x.name == "xml_oksid_url" ).First().value,
-					xml_penta_base_url = db_settings.Where( x => x.name == "xml_penta_base_url" ).First().value,
-					xml_penta_customerid = db_settings.Where( x => x.name == "xml_penta_customerid" ).First().value,
-				};
+				Helper.global = new SettingsMerchanter( _customer_id );
+				Helper.global.customer_id = _customer_id;
+
+				#region Core Settings
+				Helper.global.platforms = LoadPlatforms();
+				Helper.global.works = LoadWorks();
+				Helper.global.integrations = LoadIntegrations( _customer_id );
+				#endregion
+
+				#region Customer Settings
+				Helper.global.settings = GetCustomerSettings( _customer_id );
+				Helper.global.product = GetProductSettings( _customer_id );
+				Helper.global.invoice = GetInvoiceSettings( _customer_id );
+				Helper.global.order = GetOrderSettings( _customer_id );
+				Helper.global.entegra = GetEntegraSettings( _customer_id );
+				Helper.global.netsis = GetNetsisSettings( _customer_id );
+				Helper.global.magento = GetMagentoSettings( _customer_id );
+				Helper.global.shipment = GetShipmentSettings( _customer_id );
+				Helper.global.order_statuses = LoadOrderStatuses( _customer_id );
+				Helper.global.payment_methods = LoadPaymentMethods( _customer_id );
+				Helper.global.shipment_methods = LoadShipmentMethods( _customer_id );
+				Helper.global.sync_mappings = GetCustomerSyncMappings( _customer_id );
+				#endregion
+				Helper.global.erp_invoice_ftp_username = db_settings.Where( x => x.name == "erp_invoice_ftp_username" ).FirstOrDefault()?.value ?? string.Empty;
+				Helper.global.erp_invoice_ftp_password = db_settings.Where( x => x.name == "erp_invoice_ftp_password" ).FirstOrDefault()?.value ?? string.Empty;
+				Helper.global.erp_invoice_ftp_url = db_settings.Where( x => x.name == "erp_invoice_ftp_url" ).FirstOrDefault()?.value ?? string.Empty;
+				Helper.global.xml_bogazici_bayikodu = db_settings.Where( x => x.name == "xml_bogazici_bayikodu" ).FirstOrDefault()?.value ?? string.Empty;
+				Helper.global.xml_bogazici_email = db_settings.Where( x => x.name == "xml_bogazici_email" ).FirstOrDefault()?.value ?? string.Empty;
+				Helper.global.xml_bogazici_sifre = db_settings.Where( x => x.name == "xml_bogazici_sifre" ).FirstOrDefault()?.value ?? string.Empty;
+				Helper.global.xml_fsp_url = db_settings.Where( x => x.name == "xml_fsp_url" ).FirstOrDefault()?.value ?? string.Empty;
+				Helper.global.xml_koyuncu_url = db_settings.Where( x => x.name == "xml_koyuncu_url" ).FirstOrDefault()?.value ?? string.Empty;
+				Helper.global.xml_oksid_url = db_settings.Where( x => x.name == "xml_oksid_url" ).FirstOrDefault()?.value ?? string.Empty;
+				Helper.global.xml_penta_base_url = db_settings.Where( x => x.name == "xml_penta_base_url" ).FirstOrDefault()?.value ?? string.Empty;
+				Helper.global.xml_penta_customerid = db_settings.Where( x => x.name == "xml_penta_customerid" ).FirstOrDefault()?.value ?? string.Empty;
+
 
 				#region Decyrption
-				Helper.global.shipment.yurtici_kargo_password = !string.IsNullOrWhiteSpace( Helper.global.shipment.yurtici_kargo_password ) ? DBSetting.Decrypt( Helper.global.shipment.yurtici_kargo_password ) : string.Empty;
-				Helper.global.magento.token = !string.IsNullOrWhiteSpace( Helper.global.magento.token ) ? DBSetting.Decrypt( Helper.global.magento.token ) : string.Empty;
-				Helper.global.entegra.api_password = !string.IsNullOrWhiteSpace( Helper.global.entegra.api_password ) ? DBSetting.Decrypt( Helper.global.entegra.api_password ) : string.Empty;
-				Helper.global.netsis.netopenx_password = !string.IsNullOrWhiteSpace( Helper.global.netsis.netopenx_password ) ? DBSetting.Decrypt( Helper.global.netsis.netopenx_password ) : string.Empty;
-				Helper.global.netsis.dbpassword = !string.IsNullOrWhiteSpace( Helper.global.netsis.dbpassword ) ? DBSetting.Decrypt( Helper.global.netsis.dbpassword ) : string.Empty;
-				Helper.global.erp_invoice_ftp_password = !string.IsNullOrWhiteSpace( Helper.global.erp_invoice_ftp_password ) ? DBSetting.Decrypt( Helper.global.erp_invoice_ftp_password ) : string.Empty; //TODO: this is going to be removed
-
+				if( Helper.global.shipment != null && !string.IsNullOrWhiteSpace( Helper.global.shipment.yurtici_kargo_password ) ) 
+					Helper.global.shipment.yurtici_kargo_password = DBSetting.Decrypt( Helper.global.shipment.yurtici_kargo_password );
+				if( Helper.global.magento != null && !string.IsNullOrWhiteSpace( Helper.global.magento.token ) ) 
+					Helper.global.magento.token = DBSetting.Decrypt( Helper.global.magento.token );
+				if( Helper.global.entegra != null && !string.IsNullOrWhiteSpace( Helper.global.entegra.api_password ) ) 
+					Helper.global.entegra.api_password = DBSetting.Decrypt( Helper.global.entegra.api_password );
+				if( Helper.global.netsis != null && !string.IsNullOrWhiteSpace( Helper.global.netsis.netopenx_password ) ) 
+					Helper.global.netsis.netopenx_password = DBSetting.Decrypt( Helper.global.netsis.netopenx_password );
+				if( Helper.global.netsis != null && !string.IsNullOrWhiteSpace( Helper.global.netsis.dbpassword ) ) 
+					Helper.global.netsis.dbpassword = DBSetting.Decrypt( Helper.global.netsis.dbpassword );
+				if( Helper.global.invoice != null && !string.IsNullOrWhiteSpace( Helper.global.invoice.erp_invoice_ftp_password ) ) 
+					Helper.global.invoice.erp_invoice_ftp_password = DBSetting.Decrypt( Helper.global.invoice.erp_invoice_ftp_password );
 				#endregion
 
 				return Helper.global;
@@ -974,7 +988,7 @@ namespace Merchanter {
 			try {
 				if( state != System.Data.ConnectionState.Open )
 					connection.Open();
-				string _query = "SELECT * FROM settings WHERE customer_id=@customer_id";
+				string _query = "SELECT * FROM settings_invoice WHERE customer_id=@customer_id";
 				SettingsInvoice? inv_s = null;
 				MySqlCommand cmd = new MySqlCommand( _query, connection );
 				cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
@@ -983,7 +997,10 @@ namespace Merchanter {
 					inv_s = new SettingsInvoice {
 						id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
 						customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
-						daysto_invoicesync = Convert.ToInt32( dataReader[ "daysto_invoicesync" ].ToString() )
+						daysto_invoicesync = Convert.ToInt32( dataReader[ "daysto_invoicesync" ].ToString() ),
+						erp_invoice_ftp_password = dataReader[ "erp_invoice_ftp_password" ].ToString(),
+						erp_invoice_ftp_url = dataReader[ "erp_invoice_ftp_url" ].ToString(),
+						erp_invoice_ftp_username = dataReader[ "erp_invoice_ftp_username" ].ToString()
 					};
 				}
 				dataReader.Close();
@@ -1393,7 +1410,7 @@ namespace Merchanter {
 		}
 
 		/// <summary>
-		/// Gets work sources from the database
+		/// Gets customer integrations from the database
 		/// </summary>
 		/// <param name="_customer_id">Customer ID</param>
 		/// <returns>[Error] returns 'null'</returns>
@@ -1410,10 +1427,84 @@ namespace Merchanter {
 							list.Add( new Integration(
 								Convert.ToInt32( dataReader[ "id" ].ToString() ),
 								Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
+								Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_active" ].ToString() ) ),
+								Helper.global.works.FirstOrDefault( x => x.id == Convert.ToInt32( dataReader[ "work_id" ].ToString() ) )
+							) );
+						}
+						dataReader.Close();
+						if( state == System.Data.ConnectionState.Open )
+							this.CloseConnection();
+
+						return list;
+					}
+
+				return null;
+			}
+			catch( Exception ex ) {
+				OnError( ex.ToString() );
+				return null;
+			}
+		}
+
+		/// <summary>
+		/// Gets platforms from the database
+		/// </summary>
+		/// <returns>[Error] returns 'null'</returns>
+		public List<Platform> LoadPlatforms() {
+			try {
+				if( this.state != System.Data.ConnectionState.Open )
+					if( this.OpenConnection() ) {
+						string _query = "SELECT * FROM platforms";
+						MySqlCommand cmd = new MySqlCommand( _query, Connection );
+						MySqlDataReader dataReader = cmd.ExecuteReader();
+						List<Platform> list = [];
+						while( dataReader.Read() ) {
+							list.Add( new Platform(
+								Convert.ToInt32( dataReader[ "id" ].ToString() ),
 								dataReader[ "name" ].ToString(),
-								dataReader[ "type" ].ToString(),
-								dataReader[ "direction" ].ToString(),
-								Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_active" ].ToString() ) )
+								dataReader[ "work_type" ] is string workTypeStr && Enum.TryParse( workTypeStr, out Merchanter.Classes.Work.WorkType workType ) ? workType : default,
+								dataReader[ "available_types" ] is string availableTypesStr ? availableTypesStr.Split( ',' ).Select( type => Enum.TryParse( type, out Merchanter.Classes.Platform.PlatformType platformType ) ? platformType : default ).ToList() : [],
+								Convert.ToBoolean( Convert.ToInt32( dataReader[ "status" ].ToString() ) ),
+								Convert.ToDateTime( dataReader[ "update_date" ].ToString() ),
+								dataReader[ "image" ].ToString()
+							) );
+						}
+						dataReader.Close();
+						if( state == System.Data.ConnectionState.Open )
+							this.CloseConnection();
+
+						return list;
+					}
+
+				return null;
+			}
+			catch( Exception ex ) {
+				OnError( ex.ToString() );
+				return null;
+			}
+		}
+
+		/// <summary>
+		/// Gets works from the database
+		/// </summary>
+		/// <returns>[Error] returns 'null'</returns>
+		public List<Work> LoadWorks() {
+			try {
+				if( this.state != System.Data.ConnectionState.Open )
+					if( this.OpenConnection() ) {
+						string _query = "SELECT * FROM works";
+						MySqlCommand cmd = new MySqlCommand( _query, Connection );
+						MySqlDataReader dataReader = cmd.ExecuteReader();
+						List<Work> list = [];
+						while( dataReader.Read() ) {
+							list.Add( new Work(
+								Convert.ToInt32( dataReader[ "id" ].ToString() ),
+								Helper.global.platforms.FirstOrDefault( x => x.id == Convert.ToInt32( dataReader[ "platform_id" ].ToString() ) ),
+								dataReader[ "name" ].ToString(),
+								dataReader[ "type" ] is string workTypeStr && Enum.TryParse( workTypeStr, out Merchanter.Classes.Work.WorkType workType ) ? workType : default,
+								dataReader[ "direction" ] is string workDirectionStr && Enum.TryParse( workDirectionStr, out Merchanter.Classes.Work.WorkDirection workDirection ) ? workDirection : default,
+								Convert.ToBoolean( Convert.ToInt32( dataReader[ "status" ].ToString() ) ),
+								dataReader[ "version" ].ToString()
 							) );
 						}
 						dataReader.Close();

@@ -16,7 +16,7 @@
 	<div class="row p-2 mt-3 bg-light rounded-2 align-items-center">
 		<div class="col-9">
 			<button type="button" class="btn btn-outline-primary @(!settings_active ? "shadow" : "")" @onclick="@(() => SetActiveTab("settings") )" disabled="@(settings_active)"><i class="bi bi-gear"></i>&nbsp;Settings</button>
-			<button type="button" class="btn btn-outline-primary @(!platform_settings_active ? "shadow" : "")" @onclick="@(() => SetActiveTab("platform_settings") )" disabled="@(platform_settings_active)"><i class="bi bi-gear"></i>&nbsp;Platforms</button>
+			<button type="button" class="btn btn-outline-primary @(!platforms_active ? "shadow" : "")" @onclick="@(() => SetActiveTab("platforms") )" disabled="@(platforms_active)"><i class="bi bi-boxes"></i>&nbsp;Platforms</button>
 			<button type="button" class="btn btn-outline-primary @(!integrations_active ? "shadow" : "")" @onclick="@(() => SetActiveTab("integrations") )" disabled="@(integrations_active)"><i class="bi bi-hdd-stack"></i>&nbsp;Integrations</button>
 			<button type="button" class="btn btn-outline-primary @(!logs_active ? "shadow" : "")" @onclick="@(() => SetActiveTab("logs") )" disabled="@(logs_active)"><i class="bi bi-journal-text"></i>&nbsp;Logs</button>
 		</div>
@@ -41,7 +41,7 @@
 				<div class="row mt-3">
 					<div class="col-12 ps-2">
 						<h1>
-							<button type="submit" class="btn btn-outline-success @(!is_refreshing ? "shadow" : "")" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save Customer&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+							<button type="submit" class="btn btn-success @(!is_refreshing ? "shadow" : "")" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save Customer&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
 						</h1>
 					</div>
 				</div>
@@ -203,7 +203,7 @@
 			{
 				<IntegrationsComponent CID="@CID" />
 			}
-			else if (platform_settings_active)
+			else if (platforms_active)
 			{
 				<PlatformsComponent CID="@CID" />
 			}
@@ -219,6 +219,8 @@ else
 @code {
 	[Parameter]
 	public string? CID { get; set; }
+	[SupplyParameterFromQuery(Name = "ActiveTab")]
+	public string? ActiveTab { get; set; } = "settings";
 	public Merchanter.Classes.Customer? customer { get; set; }
 	public int customer_id = 0;
 	public string company_name { get; set; } = "N/A";
@@ -231,7 +233,7 @@ else
 	public bool settings_active = true;
 	public bool logs_active = false;
 	public bool integrations_active = false;
-	public bool platform_settings_active = false;
+	public bool platforms_active = false;
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
@@ -247,6 +249,14 @@ else
 			}
 		}
 		StateHasChanged();
+	}
+
+	protected override async void OnParametersSet()
+	{
+		if (ActiveTab != null)
+			await SetActiveTab(ActiveTab);
+
+		base.OnParametersSet();
 	}
 
 	protected async Task LoadCustomer(int CID)
@@ -325,35 +335,43 @@ else
 		}
 	}
 
-	private async void SetActiveTab(string tab)
+	private async Task SetActiveTab(string tab)
 	{
 		if (tab == "logs")
 		{
 			logs_active = true;
 			settings_active = false;
 			integrations_active = false;
-			platform_settings_active = false;
+			platforms_active = false;
+			ActiveTab = "logs";
+			navigationManager.NavigateTo("/Customer/" + CID + "?ActiveTab=logs");
 		}
 		else if (tab == "settings")
 		{
 			logs_active = false;
 			settings_active = true;
 			integrations_active = false;
-			platform_settings_active = false;
+			platforms_active = false;
+			ActiveTab = "settings";
+			navigationManager.NavigateTo("/Customer/" + CID + "?ActiveTab=settings");
 		}
 		else if (tab == "integrations")
 		{
 			logs_active = false;
 			settings_active = false;
 			integrations_active = true;
-			platform_settings_active = false;
+			platforms_active = false;
+			ActiveTab = "integrations";
+			navigationManager.NavigateTo("/Customer/" + CID + "?ActiveTab=integrations");
 		}
-		else if (tab == "platform_settings")
+		else if (tab == "platforms")
 		{
 			logs_active = false;
 			settings_active = false;
 			integrations_active = false;
-			platform_settings_active = true;
+			platforms_active = true;
+			ActiveTab = "platforms";
+			navigationManager.NavigateTo("/Customer/" + CID + "?ActiveTab=platforms");
 		}
 		await Task.CompletedTask;
 	}

@@ -46,33 +46,41 @@ namespace MerchanterServer {
 			product_main_source = Helper.global.integrations.Where( x =>
 				x.work?.type == Work.WorkType.PRODUCT &&
 				x.work?.direction == Work.WorkDirection.MAIN_SOURCE &&
-				x.work.status
-			).FirstOrDefault()?.name;
+				x.work.status && x.is_active
+			).FirstOrDefault()?.work.name;
 			order_main_target = Helper.global.integrations.Where( x =>
 				x.work?.type == Work.WorkType.ORDER &&
 				x.work?.direction == Work.WorkDirection.MAIN_TARGET &&
-				x.work.status
-			).FirstOrDefault()?.name;
+				x.work.status && x.is_active
+			).FirstOrDefault()?.work.name;
 			other_product_sources = Helper.global.integrations.Where( x =>
 				x.work?.type == Work.WorkType.PRODUCT &&
 				x.work?.direction == Work.WorkDirection.SOURCE &&
-				x.work.status
-			).Select( x => x.name ).ToArray();
+				x.work.status && x.is_active
+			).Select( x => x.work.name ).ToArray();
 			product_targets = Helper.global.integrations.Where( x =>
 				x.work?.type == Work.WorkType.PRODUCT &&
 				x.work?.direction == Work.WorkDirection.TARGET &&
-				x.work.status
-			).Select( x => x.name ).ToArray();
+				x.work.status && x.is_active
+			).Select( x => x.work.name ).ToArray();
 			order_sources = Helper.global.integrations.Where( x =>
 				x.work?.type == Work.WorkType.ORDER &&
 				x.work?.direction == Work.WorkDirection.SOURCE &&
-				x.work.status
-			).Select( x => x.name ).ToArray();
+				x.work.status && x.is_active
+			).Select( x => x.work.name ).ToArray();
 			available_shipments = Helper.global.integrations.Where( x =>
 				x.work?.type == Work.WorkType.SHIPMENT &&
 				x.work?.direction == Work.WorkDirection.BOTH &&
-				x.work.status
-			).Select( x => x.name ).ToArray();
+				x.work.status && x.is_active
+			).Select( x => x.work.name ).ToArray();
+			Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " integrations loaded." + Environment.NewLine +
+				"product_main_source:" + product_main_source + Environment.NewLine +
+				"order_main_target:" + order_main_target + Environment.NewLine +
+				"other_product_sources:" + string.Join(",",other_product_sources) + Environment.NewLine +
+				"product_targets:" + string.Join( ",", product_targets ) + Environment.NewLine +
+				"order_sources:" + string.Join( ",", order_sources ) + Environment.NewLine +
+				"available_shipments:" + string.Join( ",", available_shipments )  
+				);
 			#endregion
 
 			#region OLD Work Sources
@@ -992,7 +1000,7 @@ namespace MerchanterServer {
 					db_helper.notification.SetNotificationSyncDate( customer.customer_id );
 					db_helper.notification.SetNotificationSyncWorking( customer.customer_id, false );
 				}
-				Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " notification sync ended" );
+				//Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " notification sync ended" );
 			}
 		}
 		#endregion
@@ -1022,64 +1030,66 @@ namespace MerchanterServer {
 					var ent_products = Helper.GetENTProducts();
 					if( ent_products != null && ent_products.Count > 0 ) {
 						foreach( var item in ent_products ) {
-							if( item.Barcode != string.Empty && Helper.global.product.is_barcode_required ) {
-								if( item.Sku != string.Empty ) {
-									#region Checking Product Extension If exist
-									Brand? existed_brand = brands.Where( x => x.brand_name.Trim().Equals( item.BrandName?.Trim().ToLower(), StringComparison.CurrentCultureIgnoreCase ) ).FirstOrDefault();
-									ProductExtension? existed_p_ext = products_ext?.Where( x => x.sku == item.Sku ).FirstOrDefault();
-									if( existed_p_ext != null ) existed_p_ext.brand = existed_brand;
-									List<Category>? existed_p_cats = existed_p_ext != null ? categories?.Where( x => existed_p_ext.category_ids.Split( "," ).Contains( x.id.ToString() ) ).ToList() : null;
-									if( existed_p_ext != null ) existed_p_ext.categories = existed_p_cats;
-									#endregion
+							if( Helper.global.product.is_barcode_required ) {
+								if( string.IsNullOrWhiteSpace( item.Barcode ) ) {
+									Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ENTEGRA + " " + item.Sku + " barcode missing, not sync." );
+									continue;
+								}
+							}
 
-									//TODO: Product attribute source mapping condition will be here
-									var p = new Product() {
-										customer_id = customer.customer_id,
-										source_product_id = item.ProductId,
-										barcode = item.Barcode,
-										currency = item.Currency,
-										name = item.Name,
-										sku = item.Sku,
-										price = item.Price,
-										special_price = item.Special_Price,
-										custom_price = item.Custom_Price,
-										tax = item.Tax,
+							if( item.Sku != string.Empty ) {
+								#region Checking Product Extension If exist
+								Brand? existed_brand = brands.Where( x => x.brand_name.Trim().Equals( item.BrandName?.Trim().ToLower(), StringComparison.CurrentCultureIgnoreCase ) ).FirstOrDefault();
+								ProductExtension? existed_p_ext = products_ext?.Where( x => x.sku == item.Sku ).FirstOrDefault();
+								if( existed_p_ext != null ) existed_p_ext.brand = existed_brand;
+								List<Category>? existed_p_cats = existed_p_ext != null ? categories?.Where( x => existed_p_ext.category_ids.Split( "," ).Contains( x.id.ToString() ) ).ToList() : null;
+								if( existed_p_ext != null ) existed_p_ext.categories = existed_p_cats;
+								#endregion
 
-										tax_included = item.TaxIncluded,
-										sources = [ new ProductSource( customer.customer_id, 0,
+								//TODO: Product attribute source mapping condition will be here
+								var p = new Product() {
+									customer_id = customer.customer_id,
+									source_product_id = item.ProductId,
+									barcode = item.Barcode,
+									currency = item.Currency,
+									name = item.Name,
+									sku = item.Sku,
+									price = item.Price,
+									special_price = item.Special_Price,
+									custom_price = item.Custom_Price,
+									tax = item.Tax,
+
+									tax_included = item.TaxIncluded,
+									sources = [ new ProductSource( customer.customer_id, 0,
 											Constants.ENTEGRA,
 											item.Sku,
 											item.Barcode,
 											item.Qty,
 											true) ],
-										extension = new ProductExtension() {
-											sku = item.Sku,
-											barcode = item.Barcode,
+									extension = new ProductExtension() {
+										sku = item.Sku,
+										barcode = item.Barcode,
+										customer_id = customer.customer_id,
+										brand_id = existed_brand != null ? existed_brand.id : (string.IsNullOrEmpty( item.BrandName ) ? db_helper.GetDefaultBrand( customer.customer_id ).id : 0),
+										is_xml_enabled = existed_p_ext != null && existed_p_ext.is_xml_enabled,
+										xml_sources = existed_p_ext != null ? existed_p_ext.xml_sources : [],
+										category_ids = existed_p_ext != null ? existed_p_ext.category_ids : Helper.global.product.customer_root_category_id.ToString(),
+										categories = existed_p_cats ?? ([ db_helper.GetRootCategory( customer.customer_id ) ]),
+										brand = existed_brand ?? (string.IsNullOrEmpty( item.BrandName ) ?
+										db_helper.GetDefaultBrand( customer.customer_id )
+										: new Brand() {
 											customer_id = customer.customer_id,
-											brand_id = existed_brand != null ? existed_brand.id : (string.IsNullOrEmpty( item.BrandName ) ? db_helper.GetDefaultBrand( customer.customer_id ).id : 0),
-											is_xml_enabled = existed_p_ext != null && existed_p_ext.is_xml_enabled,
-											xml_sources = existed_p_ext != null ? existed_p_ext.xml_sources : [],
-											category_ids = existed_p_ext != null ? existed_p_ext.category_ids : Helper.global.product.customer_root_category_id.ToString(),
-											categories = existed_p_cats ?? ([ db_helper.GetRootCategory( customer.customer_id ) ]),
-											brand = existed_brand ?? (string.IsNullOrEmpty( item.BrandName ) ?
-											db_helper.GetDefaultBrand( customer.customer_id )
-											: new Brand() {
-												customer_id = customer.customer_id,
-												brand_name = item.BrandName,
-												status = true,
-												id = 0
-											})
-										}
-									};
+											brand_name = item.BrandName,
+											status = true,
+											id = 0
+										})
+									}
+								};
 
-									live_products.Add( p );
-								}
-								else {
-									Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ENTEGRA + " " + item.Barcode + " sku missing, not sync." );
-								}
+								live_products.Add( p );
 							}
 							else {
-								Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ENTEGRA + " " + item.Sku + " barcode missing, not sync." );
+								Debug.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ENTEGRA + " " + item.Barcode + " sku missing, not sync." );
 							}
 						}
 					}

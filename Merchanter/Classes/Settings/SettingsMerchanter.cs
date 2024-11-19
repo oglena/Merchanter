@@ -15,7 +15,9 @@
         public List<PaymentMethod> payment_methods { get; set; }
         public List<ShipmentMethod> shipment_methods { get; set; }
         public List<Integration> integrations { get; set; }
-        public List<SyncMapping> sync_mappings { get; set; }
+		public List<Platform> platforms { get; set; }
+		public List<Work> works { get; set; }
+		public List<SyncMapping> sync_mappings { get; set; }
 
 		//TODO: These properties should be moved to a separate class
 		public string erp_invoice_ftp_username { get; set; } = string.Empty;

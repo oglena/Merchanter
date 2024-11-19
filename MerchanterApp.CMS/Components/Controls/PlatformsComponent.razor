@@ -9,7 +9,7 @@
 	<div class="row mt-3">
 		<div class="col-12 ps-2">
 			<h2>
-				Platforms
+				<i class="bi bi-boxes bi-lg"></i>&nbsp;Platforms
 			</h2>
 		</div>
 	</div>
@@ -92,17 +92,21 @@
 											</div>
 										</div>
 									</div>
-									<div class="row mt-3">
-										<div class="col-12 ps-2 mb-3">
-											<button type="submit" class="btn btn-outline-success shadow float-end" @onclick="@(() => SaveEntegraSettings(settings.entegra))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
-											<button type="button" class="btn btn-outline-primary shadow float-start" disabled="@(is_refreshing)"><i class="bi bi-arrows-angle-contract"></i>&nbsp;Test These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button><br /><br />
-											<small class="text-muted float-start">Warning: This action will test the connection to the Entegra Api.</small>
+									<div class="row mt-3 bg-dark text-light rounded-2">
+										<div class="col-12 pt-3 ps-2 mb-3">
+											<button type="submit" class="btn btn-success shadow float-end" @onclick="@(() => SaveEntegraSettings(settings.entegra))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+											<button type="button" class="btn btn-primary shadow float-start" disabled="@(is_refreshing)"><i class="bi bi-arrows-angle-contract"></i>&nbsp;Test These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button><br /><br />
+											<small class="float-start">Warning: This action will test the connection to the Entegra Api.</small>
 										</div>
 									</div>
 								</div>
 							</EditForm>
 						</div>
 					</div>
+				}
+				else
+				{
+					<h2>Settings Not Registered</h2>
 				}
 			}
 
@@ -172,10 +176,10 @@
 											</div>
 										</div>
 									</div>
-									<div class="row mt-3">
-										<div class="col-12 ps-2 mb-3 ">
-											<button type="button" class="btn btn-outline-primary shadow float-start" disabled="@(is_refreshing)"><i class="bi bi-arrows-angle-contract"></i>&nbsp;Test These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button><br /><br />
-											<small class="text-muted">Warning: This action will test the connection to the Netsis Api.</small>
+									<div class="row mt-3 bg-dark text-light rounded-2">
+										<div class="col-12 pt-3 ps-2 mb-3">
+											<button type="button" class="btn btn-primary shadow float-start" disabled="@(is_refreshing)"><i class="bi bi-arrows-angle-contract"></i>&nbsp;Test These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button><br /><br />
+											<small class="float-start">Warning: This action will test the connection to the Netsis Api.</small>
 										</div>
 									</div>
 								</div>
@@ -331,20 +335,24 @@
 										</div>
 									</div>
 								</div>
-								<div class="row mt-3">
-									<div class="col-12 ps-2 mb-3">
-										<button type="submit" class="btn btn-outline-success shadow float-end" @onclick="@(() => SaveNetsisSettings(settings.netsis))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+								<div class="row mt-3 bg-light rounded-2">
+									<div class="col-12 pt-3 ps-2 mb-3">
+										<button type="submit" class="btn btn-success shadow float-end" @onclick="@(() => SaveNetsisSettings(settings.netsis))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
 									</div>
 								</div>
 							</EditForm>
 						</div>
 					</div>
 				}
+				else
+				{
+					<h2>Settings Not Registered</h2>
+				}
 			}
 
 			@if (selected_platform_name == Constants.MAGENTO2)
 			{
-				@if (settings != null && settings.netsis != null)
+				@if (settings != null && settings.magento != null)
 				{
 					<div class="container-fluid">
 						<div class="row">
@@ -376,10 +384,10 @@
 											</div>
 										</div>
 									</div>
-									<div class="row mt-3">
-										<div class="col-12 ps-2 mb-3">
-											<button type="button" class="btn btn-outline-primary shadow float-start" disabled="@(is_refreshing)"><i class="bi bi-arrows-angle-contract"></i>&nbsp;Test These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button><br /><br />
-											<small class="text-muted float-start">Warning: This action will test the connection to the Magento2 Api.</small>
+									<div class="row mt-3 bg-dark text-light rounded-2">
+										<div class="col-12 pt-3 ps-2 mb-3">
+											<button type="button" class="btn btn-primary shadow float-start" disabled="@(is_refreshing)"><i class="bi bi-arrows-angle-contract"></i>&nbsp;Test These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button><br /><br />
+											<small class="float-start">Warning: This action will test the connection to the Magento2 Api.</small>
 										</div>
 									</div>
 								</div>
@@ -463,19 +471,22 @@
 										</div>
 									</div>
 								</div>
-								<div class="row mt-3">
-									<div class="col-12 ps-2 mb-3">
-										<button type="submit" class="btn btn-outline-success shadow float-end" @onclick="@(() => SaveMagentoSettings(settings.magento))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+								<div class="row mt-3 bg-light rounded-2">
+									<div class="col-12 pt-3 ps-2 mb-3">
+										<button type="submit" class="btn btn-success shadow float-end" @onclick="@(() => SaveMagentoSettings(settings.magento))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
 									</div>
 								</div>
 							</EditForm>
 						</div>
 					</div>
 				}
+				else
+				{
+					<h2>Settings Not Registered</h2>
+				}
 			}
 
 			@* //TODO: These settings will split into different settings *@
-
 			@if (selected_platform_name == Constants.YURTICI || selected_platform_name == Constants.MNG || selected_platform_name == Constants.ARAS)
 			{
 				@if (settings != null && settings.shipment != null)
@@ -489,7 +500,7 @@
 							</div>
 						</div>
 						<div class="row">
-							<EditForm Model="settings.entegra" class="container-fluid">
+							<EditForm Model="settings.shipment" class="container-fluid">
 								<ul class="nav nav-tabs" role="tablist">
 									<li class="nav-item" role="presentation">
 										<a class="nav-link @(selected_platform_name == Constants.YURTICI ? "active" : "")" id="tab-yurtici" data-bs-toggle="tab" href="#tab-yurtici-panel" role="tab" aria-controls="tab-yurtici-panel" aria-selected="true">Yurtiçi Kargo</a>
@@ -546,16 +557,20 @@
 										</div>
 									</div>
 								</div>
-								<div class="row mt-3">
-									<div class="col-12 ps-2 mb-3">
-										<button type="submit" class="btn btn-outline-success shadow float-end" @onclick="@(() => SaveShipmentSettings(settings.shipment))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
-										<button type="button" class="btn btn-outline-primary shadow float-start" disabled="@(is_refreshing)"><i class="bi bi-arrows-angle-contract"></i>&nbsp;Test These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button><br /><br />
-										<small class="text-muted float-start">Warning: This action will test the connection to the Shipping Api's.</small>
+								<div class="row mt-3 bg-dark text-light rounded-2">
+									<div class="col-12 pt-3 ps-2 mb-3">
+										<button type="submit" class="btn btn-success shadow float-end" @onclick="@(() => SaveShipmentSettings(settings.shipment))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+										<button type="button" class="btn btn-primary shadow float-start" disabled="@(is_refreshing)"><i class="bi bi-arrows-angle-contract"></i>&nbsp;Test These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button><br /><br />
+										<small class="float-start">Warning: This action will test the connection to the Shipping Api's.</small>
 									</div>
 								</div>
 							</EditForm>
 						</div>
 					</div>
+				}
+				else
+				{
+					<h2>Settings Not Registered</h2>
 				}
 			}
 
