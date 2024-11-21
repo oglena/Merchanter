@@ -18,6 +18,10 @@ namespace Merchanter.Classes.Settings {
 
 		#region MNG Kargo
 		public bool mng_kargo { get; set; } = false;
+		public string? mng_kargo_customer_number { get; set; } = null;
+		public string? mng_kargo_password { get; set; } = null;
+		public string? mng_kargo_client_id { get; set; } = null;
+		public string? mng_kargo_client_secret { get; set; } = null;
 		#endregion
 
 		#region Aras Kargo

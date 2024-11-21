@@ -13,6 +13,9 @@ namespace Merchanter.ServerService.Repositories {
         Task<bool> SaveOrderSettings( int _customer_id, SettingsOrder _settings );
         Task<bool> SaveProductSettings( int _customer_id, SettingsProduct _settings );
         Task<bool> SaveInvoiceSettings( int _customer_id, SettingsInvoice _settings );
+        Task<bool> SaveN11Settings( int _customer_id, SettingsN11 _settings );
+        Task<bool> SaveHBSettings( int _customer_id, SettingsHB _settings );
+        Task<bool> SaveTYSettings( int _customer_id, SettingsTY _settings );
         MerchanterService merchanterService { get; set; }
     }
 
@@ -54,6 +57,18 @@ namespace Merchanter.ServerService.Repositories {
 
         public async Task<bool> SaveInvoiceSettings( int _customer_id, SettingsInvoice _settings ) {
             return await Task.Run( () => merchanterService.helper.SaveInvoiceSettings( _customer_id, _settings ) );
+        }
+
+        public async Task<bool> SaveN11Settings( int _customer_id, SettingsN11 _settings ) {
+            return await Task.Run( () => merchanterService.helper.SaveN11Settings( _customer_id, _settings ) );
+        }
+
+        public async Task<bool> SaveHBSettings( int _customer_id, SettingsHB _settings ) {
+            return await Task.Run( () => merchanterService.helper.SaveHBSettings( _customer_id, _settings ) );
+        }
+
+        public async Task<bool> SaveTYSettings( int _customer_id, SettingsTY _settings ) {
+            return await Task.Run( () => merchanterService.helper.SaveTYSettings( _customer_id, _settings ) );
         }
     }
 }

@@ -167,5 +167,59 @@ namespace Merchanter.ServerService.Controllers {
 			}
 			return BadRequest( "Invalid customer ID." );
 		}
+
+		[HttpPut( "{CID}/SaveN11Settings" )]
+		[Authorize]
+		public async Task<ActionResult<BaseResponseModel<SettingsN11>>> SaveN11Settings( string CID, [FromBody] SettingsN11 _settings ) {
+			int customer_id;
+			if( int.TryParse( CID, out customer_id ) && customer_id > 0 ) {
+				if( await settingsService.SaveN11Settings( customer_id, _settings ) ) {
+					SettingsN11? saved_settings = settingsService.GetCustomerSettings( customer_id ).Result.n11;
+					if( saved_settings != null ) {
+						return Ok( new BaseResponseModel<SettingsN11>() { Success = true, Data = saved_settings, ErrorMessage = "" } );
+					}
+				}
+				else {
+					return Ok( new BaseResponseModel<SettingsN11>() { Success = false, Data = null, ErrorMessage = "Error saving N11 settings." } );
+				}
+			}
+			return BadRequest( "Invalid customer ID." );
+		}
+
+		[HttpPut( "{CID}/SaveHBSettings" )]
+		[Authorize]
+		public async Task<ActionResult<BaseResponseModel<SettingsHB>>> SaveHBSettings( string CID, [FromBody] SettingsHB _settings ) {
+			int customer_id;
+			if( int.TryParse( CID, out customer_id ) && customer_id > 0 ) {
+				if( await settingsService.SaveHBSettings( customer_id, _settings ) ) {
+					SettingsHB? saved_settings = settingsService.GetCustomerSettings( customer_id ).Result.hb;
+					if( saved_settings != null ) {
+						return Ok( new BaseResponseModel<SettingsHB>() { Success = true, Data = saved_settings, ErrorMessage = "" } );
+					}
+				}
+				else {
+					return Ok( new BaseResponseModel<SettingsHB>() { Success = false, Data = null, ErrorMessage = "Error saving HB settings." } );
+				}
+			}
+			return BadRequest( "Invalid customer ID." );
+		}
+
+		[HttpPut( "{CID}/SaveTYSettings" )]
+		[Authorize]
+		public async Task<ActionResult<BaseResponseModel<SettingsTY>>> SaveTYSettings( string CID, [FromBody] SettingsTY _settings ) {
+			int customer_id;
+			if( int.TryParse( CID, out customer_id ) && customer_id > 0 ) {
+				if( await settingsService.SaveTYSettings( customer_id, _settings ) ) {
+					SettingsTY? saved_settings = settingsService.GetCustomerSettings( customer_id ).Result.ty;
+					if( saved_settings != null ) {
+						return Ok( new BaseResponseModel<SettingsTY>() { Success = true, Data = saved_settings, ErrorMessage = "" } );
+					}
+				}
+				else {
+					return Ok( new BaseResponseModel<SettingsTY>() { Success = false, Data = null, ErrorMessage = "Error saving TY settings." } );
+				}
+			}
+			return BadRequest( "Invalid customer ID." );
+		}
 	}
 }

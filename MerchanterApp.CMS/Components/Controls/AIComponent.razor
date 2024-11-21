@@ -23,18 +23,16 @@
     private string sometext = string.Empty;
     private ChatHistory ChatHistory = new ChatHistory();
 
-    protected override Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            ChatHistory.AddSystemMessage("Your name is Neuro. A.K.A Nöro");
-            ChatHistory.AddSystemMessage("I'm a merchant in Turkey and want to sell products on my website.");
+            await ResetChat();
             Console.WriteLine("AI system message added");
         }
-        return base.OnAfterRenderAsync(firstRender);
     }
 
-    private async void ResetChat()
+    private async Task ResetChat()
     {
         result = string.Empty;
         sometext = string.Empty;

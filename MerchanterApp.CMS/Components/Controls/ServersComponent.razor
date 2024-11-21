@@ -30,7 +30,7 @@
 			@if (servers != null)
 			{
 				<div class="container-fluid">
-					<div class="row row-cols-2 row-cols-sm-2 row-cols-md-@(is_fullscreen ? "3" : "2") row-cols-lg-@(is_fullscreen ? "4" : "2") row-cols-xl-@(is_fullscreen ? "4" : "2") row-cols-xxl-@(is_fullscreen ? "5" : "2")">
+					<div class="row row-cols-1 row-cols-sm-1 row-cols-md-@(is_fullscreen ? "3" : "2") row-cols-lg-@(is_fullscreen ? "4" : "2") row-cols-xl-@(is_fullscreen ? "4" : "2") row-cols-xxl-@(is_fullscreen ? "5" : "2")">
 						@foreach (var item in servers)
 						{
 							@if (item.customer != null)

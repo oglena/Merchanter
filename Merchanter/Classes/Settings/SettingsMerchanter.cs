@@ -11,7 +11,10 @@
 		public SettingsNetsis netsis { get; set; }
         public SettingsEntegra entegra { get; set; }
         public SettingsShipment shipment { get; set; }
-        public List<OrderStatus> order_statuses { get; set; }
+		public SettingsN11 n11 { get; set; }
+		public SettingsHB hb { get; set; }
+		public SettingsTY ty { get; set; }
+		public List<OrderStatus> order_statuses { get; set; }
         public List<PaymentMethod> payment_methods { get; set; }
         public List<ShipmentMethod> shipment_methods { get; set; }
         public List<Integration> integrations { get; set; }

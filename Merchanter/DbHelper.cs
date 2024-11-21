@@ -709,7 +709,7 @@ namespace Merchanter {
 		public bool SaveShipmentSettings( int _customer_id, SettingsShipment _settings ) {
 			try {
 				int val = 0;
-				string _query = "UPDATE settings_shipment SET yurtici_kargo=@yurtici_kargo,mng_kargo=@mng_kargo,aras_kargo=@aras_kargo,yurtici_kargo_user_name=@yurtici_kargo_user_name,yurtici_kargo_password=@yurtici_kargo_password WHERE customer_id=@customer_id";
+				string _query = "UPDATE settings_shipment SET yurtici_kargo=@yurtici_kargo,mng_kargo=@mng_kargo,aras_kargo=@aras_kargo,yurtici_kargo_user_name=@yurtici_kargo_user_name,yurtici_kargo_password=@yurtici_kargo_password,mng_kargo_customer_number=@mng_kargo_customer_number,mng_kargo_password=@mng_kargo_password,mng_kargo_client_id=@mng_kargo_client_id,mng_kargo_client_secret=@mng_kargo_client_secret WHERE customer_id=@customer_id";
 				MySqlCommand cmd = new MySqlCommand( _query, connection );
 				cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
 				cmd.Parameters.Add( new MySqlParameter( "yurtici_kargo", _settings.yurtici_kargo ) );
@@ -717,6 +717,92 @@ namespace Merchanter {
 				cmd.Parameters.Add( new MySqlParameter( "aras_kargo", _settings.aras_kargo ) );
 				cmd.Parameters.Add( new MySqlParameter( "yurtici_kargo_user_name", _settings.yurtici_kargo_user_name ) );
 				cmd.Parameters.Add( new MySqlParameter( "yurtici_kargo_password", !string.IsNullOrWhiteSpace( _settings.yurtici_kargo_password ) ? DBSetting.Encrypt( _settings.yurtici_kargo_password ) : null ) );
+				cmd.Parameters.Add( new MySqlParameter( "mng_kargo_customer_number", _settings.mng_kargo_customer_number ) );
+				cmd.Parameters.Add( new MySqlParameter( "mng_kargo_password", !string.IsNullOrWhiteSpace( _settings.mng_kargo_password ) ? DBSetting.Encrypt( _settings.mng_kargo_password ) : null ) );
+				cmd.Parameters.Add( new MySqlParameter( "mng_kargo_client_id", _settings.mng_kargo_client_id ) );
+				cmd.Parameters.Add( new MySqlParameter( "mng_kargo_client_secret", !string.IsNullOrWhiteSpace( _settings.mng_kargo_client_secret ) ? DBSetting.Encrypt( _settings.mng_kargo_client_secret ) : null ) );
+
+				if( state != System.Data.ConnectionState.Open ) connection.Open();
+				val = cmd.ExecuteNonQuery();
+				if( state == System.Data.ConnectionState.Open ) connection.Close();
+				return val > 0;
+			}
+			catch( Exception ex ) {
+				OnError( ex.ToString() );
+				return false;
+			}
+		}
+
+		/// <summary>
+		/// Saves the N11 settings to the database
+		/// </summary>
+		/// <param name="_customer_id">Customer ID</param>
+		/// <param name="_settings">Settings N11</param>
+		/// <returns>[No change] or [Error] returns 'false'</returns>
+		public bool SaveN11Settings( int _customer_id, SettingsN11 _settings ) {
+			try {
+				int val = 0;
+				string _query = "UPDATE settings_n11 SET appkey=@appkey,appsecret=@appsecret WHERE customer_id=@customer_id";
+				MySqlCommand cmd = new MySqlCommand( _query, connection );
+				cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+				cmd.Parameters.Add( new MySqlParameter( "appkey", _settings.appkey ) );
+				cmd.Parameters.Add( new MySqlParameter( "appsecret", !string.IsNullOrWhiteSpace( _settings.appsecret ) ? DBSetting.Encrypt( _settings.appsecret ) : null ) );
+
+				if( state != System.Data.ConnectionState.Open ) connection.Open();
+				val = cmd.ExecuteNonQuery();
+				if( state == System.Data.ConnectionState.Open ) connection.Close();
+				return val > 0;
+			}
+			catch( Exception ex ) {
+				OnError( ex.ToString() );
+				return false;
+			}
+		}
+
+		/// <summary>
+		/// Saves the HB settings to the database
+		/// </summary>
+		/// <param name="_customer_id">Customer ID</param>
+		/// <param name="_settings">Settings HB</param>
+		/// <returns>[No change] or [Error] returns 'false'</returns>
+		public bool SaveHBSettings( int _customer_id, SettingsHB _settings ) {
+			try {
+				int val = 0;
+				string _query = "UPDATE settings_hb SET merchant_id=@merchant_id,token=@token,user_name=@user_name,password=@password WHERE customer_id=@customer_id";
+				MySqlCommand cmd = new MySqlCommand( _query, connection );
+				cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+				cmd.Parameters.Add( new MySqlParameter( "merchant_id", _settings.merchant_id ) );
+				cmd.Parameters.Add( new MySqlParameter( "token", !string.IsNullOrWhiteSpace( _settings.token ) ? DBSetting.Encrypt( _settings.token ) : null ) );
+				cmd.Parameters.Add( new MySqlParameter( "user_name", _settings.user_name ) );
+				cmd.Parameters.Add( new MySqlParameter( "password", !string.IsNullOrWhiteSpace( _settings.password ) ? DBSetting.Encrypt( _settings.password ) : null ) );
+
+				if( state != System.Data.ConnectionState.Open ) connection.Open();
+				val = cmd.ExecuteNonQuery();
+				if( state == System.Data.ConnectionState.Open ) connection.Close();
+				return val > 0;
+			}
+			catch( Exception ex ) {
+				OnError( ex.ToString() );
+				return false;
+			}
+		}
+
+		/// <summary>
+		/// Saves the TY settings to the database
+		/// </summary>
+		/// <param name="_customer_id">Customer ID</param>
+		/// <param name="_settings">Settings TY</param>
+		/// <returns>[No change] or [Error] returns 'false'</returns>
+		public bool SaveTYSettings( int _customer_id, SettingsTY _settings ) {
+			try {
+				int val = 0;
+				string _query = "UPDATE settings_ty SET seller_id=@seller_id,api_key=@api_key,api_secret=@api_secret WHERE customer_id=@customer_id";
+				MySqlCommand cmd = new MySqlCommand( _query, connection );
+				cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+				cmd.Parameters.Add( new MySqlParameter( "seller_id", _settings.seller_id ) );
+				cmd.Parameters.Add( new MySqlParameter( "api_key", _settings.api_key ) );
+				cmd.Parameters.Add( new MySqlParameter( "api_secret", !string.IsNullOrWhiteSpace( _settings.api_secret ) ? DBSetting.Encrypt( _settings.api_secret ) : null ) );
+
 				if( state != System.Data.ConnectionState.Open ) connection.Open();
 				val = cmd.ExecuteNonQuery();
 				if( state == System.Data.ConnectionState.Open ) connection.Close();
@@ -898,15 +984,23 @@ namespace Merchanter {
 				Helper.global.product = GetProductSettings( _customer_id );
 				Helper.global.invoice = GetInvoiceSettings( _customer_id );
 				Helper.global.order = GetOrderSettings( _customer_id );
-				Helper.global.entegra = GetEntegraSettings( _customer_id );
-				Helper.global.netsis = GetNetsisSettings( _customer_id );
-				Helper.global.magento = GetMagentoSettings( _customer_id );
 				Helper.global.shipment = GetShipmentSettings( _customer_id );
 				Helper.global.order_statuses = LoadOrderStatuses( _customer_id );
 				Helper.global.payment_methods = LoadPaymentMethods( _customer_id );
 				Helper.global.shipment_methods = LoadShipmentMethods( _customer_id );
 				Helper.global.sync_mappings = GetCustomerSyncMappings( _customer_id );
 				#endregion
+
+				#region Integration Settings
+				//TODO: Could check if integration exists
+				Helper.global.entegra = GetEntegraSettings( _customer_id );
+				Helper.global.netsis = GetNetsisSettings( _customer_id );
+				Helper.global.magento = GetMagentoSettings( _customer_id );
+				Helper.global.n11 = GetN11Settings( _customer_id );
+				Helper.global.hb = GetHBSettings( _customer_id );
+				Helper.global.ty = GetTYSettings( _customer_id );
+				#endregion
+
 				Helper.global.erp_invoice_ftp_username = db_settings.Where( x => x.name == "erp_invoice_ftp_username" ).FirstOrDefault()?.value ?? string.Empty;
 				Helper.global.erp_invoice_ftp_password = db_settings.Where( x => x.name == "erp_invoice_ftp_password" ).FirstOrDefault()?.value ?? string.Empty;
 				Helper.global.erp_invoice_ftp_url = db_settings.Where( x => x.name == "erp_invoice_ftp_url" ).FirstOrDefault()?.value ?? string.Empty;
@@ -921,18 +1015,30 @@ namespace Merchanter {
 
 
 				#region Decyrption
-				if( Helper.global.shipment != null && !string.IsNullOrWhiteSpace( Helper.global.shipment.yurtici_kargo_password ) ) 
+				if( Helper.global.shipment != null && !string.IsNullOrWhiteSpace( Helper.global.shipment.yurtici_kargo_password ) )
 					Helper.global.shipment.yurtici_kargo_password = DBSetting.Decrypt( Helper.global.shipment.yurtici_kargo_password );
-				if( Helper.global.magento != null && !string.IsNullOrWhiteSpace( Helper.global.magento.token ) ) 
+				if( Helper.global.shipment != null && !string.IsNullOrWhiteSpace( Helper.global.shipment.mng_kargo_password ) )
+					Helper.global.shipment.mng_kargo_password = DBSetting.Decrypt( Helper.global.shipment.mng_kargo_password );
+				if( Helper.global.shipment != null && !string.IsNullOrWhiteSpace( Helper.global.shipment.mng_kargo_client_secret ) )
+					Helper.global.shipment.mng_kargo_client_secret = DBSetting.Decrypt( Helper.global.shipment.mng_kargo_client_secret );
+				if( Helper.global.magento != null && !string.IsNullOrWhiteSpace( Helper.global.magento.token ) )
 					Helper.global.magento.token = DBSetting.Decrypt( Helper.global.magento.token );
-				if( Helper.global.entegra != null && !string.IsNullOrWhiteSpace( Helper.global.entegra.api_password ) ) 
+				if( Helper.global.entegra != null && !string.IsNullOrWhiteSpace( Helper.global.entegra.api_password ) )
 					Helper.global.entegra.api_password = DBSetting.Decrypt( Helper.global.entegra.api_password );
-				if( Helper.global.netsis != null && !string.IsNullOrWhiteSpace( Helper.global.netsis.netopenx_password ) ) 
+				if( Helper.global.netsis != null && !string.IsNullOrWhiteSpace( Helper.global.netsis.netopenx_password ) )
 					Helper.global.netsis.netopenx_password = DBSetting.Decrypt( Helper.global.netsis.netopenx_password );
-				if( Helper.global.netsis != null && !string.IsNullOrWhiteSpace( Helper.global.netsis.dbpassword ) ) 
+				if( Helper.global.netsis != null && !string.IsNullOrWhiteSpace( Helper.global.netsis.dbpassword ) )
 					Helper.global.netsis.dbpassword = DBSetting.Decrypt( Helper.global.netsis.dbpassword );
-				if( Helper.global.invoice != null && !string.IsNullOrWhiteSpace( Helper.global.invoice.erp_invoice_ftp_password ) ) 
+				if( Helper.global.invoice != null && !string.IsNullOrWhiteSpace( Helper.global.invoice.erp_invoice_ftp_password ) )
 					Helper.global.invoice.erp_invoice_ftp_password = DBSetting.Decrypt( Helper.global.invoice.erp_invoice_ftp_password );
+				if( Helper.global.n11 != null && !string.IsNullOrWhiteSpace( Helper.global.n11.appsecret ) )
+					Helper.global.n11.appsecret = DBSetting.Decrypt( Helper.global.n11.appsecret );
+				if( Helper.global.hb != null && !string.IsNullOrWhiteSpace( Helper.global.hb.token ) )
+					Helper.global.hb.token = DBSetting.Decrypt( Helper.global.hb.token );
+				if( Helper.global.hb != null && !string.IsNullOrWhiteSpace( Helper.global.hb.password ) )
+					Helper.global.hb.password = DBSetting.Decrypt( Helper.global.hb.password );
+				if( Helper.global.ty != null && !string.IsNullOrWhiteSpace( Helper.global.ty.api_secret ) )
+					Helper.global.ty.api_secret = DBSetting.Decrypt( Helper.global.ty.api_secret );
 				#endregion
 
 				return Helper.global;
@@ -1240,12 +1346,118 @@ namespace Merchanter {
 						aras_kargo = Convert.ToBoolean( Convert.ToInt32( dataReader[ "aras_kargo" ].ToString() ) ),
 						yurtici_kargo_user_name = dataReader[ "yurtici_kargo_user_name" ].ToString(),
 						yurtici_kargo_password = dataReader[ "yurtici_kargo_password" ].ToString(),
+						mng_kargo_customer_number = dataReader[ "mng_kargo_customer_number" ].ToString(),
+						mng_kargo_password = dataReader[ "mng_kargo_password" ].ToString(),
+						mng_kargo_client_id = dataReader[ "mng_kargo_client_id" ].ToString(),
+						mng_kargo_client_secret = dataReader[ "mng_kargo_client_secret" ].ToString(),
 					};
 				}
 				dataReader.Close();
 				if( state == System.Data.ConnectionState.Open )
 					connection.Close();
 				return ss;
+			}
+			catch( Exception ex ) {
+				OnError( ex.ToString() );
+				return null;
+			}
+		}
+
+		/// <summary>
+		/// Gets the N11 settings from the database
+		/// </summary>
+		/// <param name="_customer_id">Customer ID</param>
+		/// <returns>[Error] returns 'null'</returns>
+		public SettingsN11 GetN11Settings( int _customer_id ) {
+			try {
+				if( state != System.Data.ConnectionState.Open )
+					connection.Open();
+				string _query = "SELECT * FROM settings_n11 WHERE customer_id=@customer_id";
+				SettingsN11? sn11 = null;
+				MySqlCommand cmd = new MySqlCommand( _query, connection );
+				cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+				MySqlDataReader dataReader = cmd.ExecuteReader( System.Data.CommandBehavior.CloseConnection );
+				while( dataReader.Read() ) {
+					sn11 = new SettingsN11 {
+						id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+						customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
+						appkey = dataReader[ "appkey" ].ToString(),
+						appsecret = dataReader[ "appsecret" ].ToString(),
+					};
+				}
+				dataReader.Close();
+				if( state == System.Data.ConnectionState.Open )
+					connection.Close();
+				return sn11;
+			}
+			catch( Exception ex ) {
+				OnError( ex.ToString() );
+				return null;
+			}
+		}
+
+		/// <summary>
+		/// Gets the HB settings from the database
+		/// </summary>
+		/// <param name="_customer_id">Customer ID</param>
+		/// <returns>[Error] returns 'null'</returns>
+		public SettingsHB GetHBSettings( int _customer_id ) {
+			try {
+				if( state != System.Data.ConnectionState.Open )
+					connection.Open();
+				string _query = "SELECT * FROM settings_hb WHERE customer_id=@customer_id";
+				SettingsHB? shb = null;
+				MySqlCommand cmd = new MySqlCommand( _query, connection );
+				cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+				MySqlDataReader dataReader = cmd.ExecuteReader( System.Data.CommandBehavior.CloseConnection );
+				while( dataReader.Read() ) {
+					shb = new SettingsHB {
+						id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+						customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
+						merchant_id = dataReader[ "merchant_id" ].ToString(),
+						token = dataReader[ "token" ].ToString(),
+						user_name = dataReader[ "user_name" ].ToString(),
+						password = dataReader[ "password" ].ToString(),
+					};
+				}
+				dataReader.Close();
+				if( state == System.Data.ConnectionState.Open )
+					connection.Close();
+				return shb;
+			}
+			catch( Exception ex ) {
+				OnError( ex.ToString() );
+				return null;
+			}
+		}
+
+		/// <summary>
+		/// Gets the TY settings from the database
+		/// </summary>
+		/// <param name="_customer_id">Customer ID</param>
+		/// <returns>[Error] returns 'null'</returns>
+		public SettingsTY GetTYSettings( int _customer_id ) {
+			try {
+				if( state != System.Data.ConnectionState.Open )
+					connection.Open();
+				string _query = "SELECT * FROM settings_ty WHERE customer_id=@customer_id";
+				SettingsTY? sty = null;
+				MySqlCommand cmd = new MySqlCommand( _query, connection );
+				cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+				MySqlDataReader dataReader = cmd.ExecuteReader( System.Data.CommandBehavior.CloseConnection );
+				while( dataReader.Read() ) {
+					sty = new SettingsTY {
+						id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+						customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
+						seller_id = dataReader[ "seller_id" ].ToString(),
+						api_key = dataReader[ "api_key" ].ToString(),
+						api_secret = dataReader[ "api_secret" ].ToString(),
+					};
+				}
+				dataReader.Close();
+				if( state == System.Data.ConnectionState.Open )
+					connection.Close();
+				return sty;
 			}
 			catch( Exception ex ) {
 				OnError( ex.ToString() );
