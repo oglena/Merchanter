@@ -1,8 +1,11 @@
 // See https://aka.ms/new-console-template for more information
 using Merchanter;
+using Merchanter.Classes;
 using MerchanterServer;
+using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Reflection;
+using System.Text.Json.Serialization;
 using Customer = Merchanter.Classes.Customer;
 using DbHelper = Merchanter.DbHelper;
 using Helper = Merchanter.Helper;
