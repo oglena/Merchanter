@@ -75,14 +75,7 @@ namespace MerchanterServer {
 				x.work?.direction == Work.WorkDirection.BOTH &&
 				x.work.status && x.is_active
 			).Select( x => x.work.name ).ToArray();
-			Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " integrations loaded." + Environment.NewLine +
-				"product_main_source:" + product_main_source + Environment.NewLine +
-				"order_main_target:" + order_main_target + Environment.NewLine +
-				"other_product_sources:" + string.Join( ",", other_product_sources ) + Environment.NewLine +
-				"product_targets:" + string.Join( ",", product_targets ) + Environment.NewLine +
-				"order_sources:" + string.Join( ",", order_sources ) + Environment.NewLine +
-				"available_shipments:" + string.Join( ",", available_shipments )
-			);
+			Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " integrations loaded." );
 			#endregion
 		}
 

@@ -1969,7 +1969,6 @@ namespace Merchanter {
 
 		#region Catalog
 		#region Products
-
 		/// <summary>
 		/// Gets the products from the database
 		/// </summary>
@@ -3612,13 +3611,8 @@ namespace Merchanter {
 				}
 
 				if( category_ids != null ) {
-					string _query = "SELECT * FROM categories " +
-						"WHERE customer_id=@customer_id";
-					List<string> cids = category_ids.Split( "," ).ToList();
-					foreach( var item in cids ) {
-						_query += " AND (" + string.Join( " OR ", cids.Select( item => "id=" + item ) ) + ")";
-					}
-					_query = _query.Substring( 0, _query.Length - 2 );
+					string _query = string.Format( "SELECT * FROM categories " +
+						"WHERE customer_id=@customer_id AND id IN ({0})", category_ids );
 					MySqlCommand cmd = new MySqlCommand( _query, connection );
 					cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
 					MySqlDataReader dataReader = cmd.ExecuteReader();
