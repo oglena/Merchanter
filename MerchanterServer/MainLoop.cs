@@ -29,7 +29,9 @@ namespace MerchanterServer {
 		private List<Order> live_orders = [];
 		private List<XProduct> xproducts = [];
 		private List<Brand> brands = [];
+		private Brand default_brand = new();
 		private List<Category> categories = [];
+		private Category? root_category = new();
 		private List<Product>? products = [];
 		private List<ProductExtension>? products_ext = [];
 		private List<Order>? orders = [];
@@ -76,20 +78,11 @@ namespace MerchanterServer {
 			Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " integrations loaded." + Environment.NewLine +
 				"product_main_source:" + product_main_source + Environment.NewLine +
 				"order_main_target:" + order_main_target + Environment.NewLine +
-				"other_product_sources:" + string.Join(",",other_product_sources) + Environment.NewLine +
+				"other_product_sources:" + string.Join( ",", other_product_sources ) + Environment.NewLine +
 				"product_targets:" + string.Join( ",", product_targets ) + Environment.NewLine +
 				"order_sources:" + string.Join( ",", order_sources ) + Environment.NewLine +
-				"available_shipments:" + string.Join( ",", available_shipments )  
-				);
-			#endregion
-
-			#region OLD Work Sources
-			//product_main_source = Helper.global.work_sources.Where( x => x.type == "PRODUCT" && (x.direction == "MAIN_SOURCE") && x.is_active ).FirstOrDefault()?.name;
-			//other_product_sources = Helper.global.work_sources.Where( x => x.type == "PRODUCT" && (x.direction == "SOURCE") && x.is_active ).Select( x => x.name ).ToArray();
-			//product_targets = Helper.global.work_sources.Where( x => x.type == "PRODUCT" && (x.direction == "TARGET") && x.is_active ).Select( x => x.name ).ToArray();
-			//order_main_target = Helper.global.work_sources.Where( x => x.type == "ORDER" && (x.direction == "MAIN_TARGET") && x.is_active ).FirstOrDefault()?.name;
-			//order_sources = Helper.global.work_sources.Where( x => x.type == "ORDER" && (x.direction == "SOURCE") && x.is_active ).Select( x => x.name ).ToArray();
-			//available_shipments = Helper.global.work_sources.Where( x => x.type == "SHIPMENT" && x.direction == "BOTH" && x.is_active ).Select( x => x.name ).ToArray();
+				"available_shipments:" + string.Join( ",", available_shipments )
+			);
 			#endregion
 		}
 
@@ -119,8 +112,10 @@ namespace MerchanterServer {
 			if( customer.product_sync_status && !customer.is_productsync_working ) {
 				db_helper.SetProductSyncWorking( customer.customer_id, true );
 
+				default_brand = db_helper.GetDefaultBrand( customer.customer_id );
+				root_category = db_helper.GetRootCategory( customer.customer_id );
 				brands = db_helper.GetBrands( customer.customer_id );
-				products = db_helper.GetProducts( customer.customer_id );
+				products = db_helper.GetProducts( customer.customer_id, true );
 				products_ext = db_helper.GetProductExts( customer.customer_id );
 				categories = db_helper.GetCategories( customer.customer_id );
 
@@ -136,7 +131,7 @@ namespace MerchanterServer {
 				}
 			}
 			else {
-				products = db_helper.GetProducts( customer.customer_id );
+				products = db_helper.GetProducts( customer.customer_id, true );
 			}
 			#endregion
 
@@ -1070,13 +1065,13 @@ namespace MerchanterServer {
 										sku = item.Sku,
 										barcode = item.Barcode,
 										customer_id = customer.customer_id,
-										brand_id = existed_brand != null ? existed_brand.id : (string.IsNullOrEmpty( item.BrandName ) ? db_helper.GetDefaultBrand( customer.customer_id ).id : 0),
+										brand_id = existed_brand != null ? existed_brand.id : (string.IsNullOrEmpty( item.BrandName ) ? default_brand.id : 0),
 										is_xml_enabled = existed_p_ext != null && existed_p_ext.is_xml_enabled,
 										xml_sources = existed_p_ext != null ? existed_p_ext.xml_sources : [],
 										category_ids = existed_p_ext != null ? existed_p_ext.category_ids : Helper.global.product.customer_root_category_id.ToString(),
-										categories = existed_p_cats ?? ([ db_helper.GetRootCategory( customer.customer_id ) ]),
+										categories = existed_p_cats ?? ([ root_category ]),
 										brand = existed_brand ?? (string.IsNullOrEmpty( item.BrandName ) ?
-										db_helper.GetDefaultBrand( customer.customer_id )
+										default_brand
 										: new Brand() {
 											customer_id = customer.customer_id,
 											brand_name = item.BrandName,

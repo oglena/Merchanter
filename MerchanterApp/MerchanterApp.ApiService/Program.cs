@@ -10,6 +10,11 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder( args );
 
+builder.WebHost.ConfigureKestrel( options => {
+	options.Limits.RequestHeadersTimeout = TimeSpan.FromMinutes( 60 );
+    options.Limits.KeepAliveTimeout = TimeSpan.FromMinutes( 60 );
+} );
+
 builder.Host.UseWindowsService();
 builder.Services.AddWindowsService();
 

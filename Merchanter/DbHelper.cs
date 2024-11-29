@@ -1,6 +1,7 @@
 ﻿using Merchanter.Classes;
 using Merchanter.Classes.Settings;
 using MySql.Data.MySqlClient;
+using Attribute = Merchanter.Classes.Attribute;
 
 namespace Merchanter {
 	public class DbHelper {
@@ -553,6 +554,95 @@ namespace Merchanter {
 
 		#region Settings
 		/// <summary>
+		/// Loads the settings from the database
+		/// </summary>
+		/// <param name="_customer_id">Customer ID</param>
+		/// <returns>[Error] returns 'null'</returns>
+		public SettingsMerchanter LoadSettings( int _customer_id ) {
+			try {
+				db_settings = this.GetSettings( _customer_id );
+				Helper.global = new SettingsMerchanter( _customer_id );
+				Helper.global.customer_id = _customer_id;
+
+				#region Core Settings
+				Helper.global.platforms = LoadPlatforms();
+				Helper.global.works = LoadWorks();
+				Helper.global.integrations = LoadIntegrations( _customer_id );
+				#endregion
+
+				#region Customer Settings
+				Helper.global.settings = GetCustomerSettings( _customer_id );
+				Helper.global.product = GetProductSettings( _customer_id );
+				Helper.global.invoice = GetInvoiceSettings( _customer_id );
+				Helper.global.order = GetOrderSettings( _customer_id );
+				Helper.global.shipment = GetShipmentSettings( _customer_id );
+				Helper.global.order_statuses = LoadOrderStatuses( _customer_id );
+				Helper.global.payment_methods = LoadPaymentMethods( _customer_id );
+				Helper.global.shipment_methods = LoadShipmentMethods( _customer_id );
+				Helper.global.sync_mappings = GetCustomerSyncMappings( _customer_id );
+				#endregion
+
+				#region Integration Settings
+				//TODO: Could check if integration exists
+				Helper.global.entegra = GetEntegraSettings( _customer_id );
+				Helper.global.netsis = GetNetsisSettings( _customer_id );
+				Helper.global.magento = GetMagentoSettings( _customer_id );
+				Helper.global.n11 = GetN11Settings( _customer_id );
+				Helper.global.hb = GetHBSettings( _customer_id );
+				Helper.global.ty = GetTYSettings( _customer_id );
+				#endregion
+
+				Helper.global.erp_invoice_ftp_username = db_settings.Where( x => x.name == "erp_invoice_ftp_username" ).FirstOrDefault()?.value ?? string.Empty;
+				Helper.global.erp_invoice_ftp_password = db_settings.Where( x => x.name == "erp_invoice_ftp_password" ).FirstOrDefault()?.value ?? string.Empty;
+				Helper.global.erp_invoice_ftp_url = db_settings.Where( x => x.name == "erp_invoice_ftp_url" ).FirstOrDefault()?.value ?? string.Empty;
+				Helper.global.xml_bogazici_bayikodu = db_settings.Where( x => x.name == "xml_bogazici_bayikodu" ).FirstOrDefault()?.value ?? string.Empty;
+				Helper.global.xml_bogazici_email = db_settings.Where( x => x.name == "xml_bogazici_email" ).FirstOrDefault()?.value ?? string.Empty;
+				Helper.global.xml_bogazici_sifre = db_settings.Where( x => x.name == "xml_bogazici_sifre" ).FirstOrDefault()?.value ?? string.Empty;
+				Helper.global.xml_fsp_url = db_settings.Where( x => x.name == "xml_fsp_url" ).FirstOrDefault()?.value ?? string.Empty;
+				Helper.global.xml_koyuncu_url = db_settings.Where( x => x.name == "xml_koyuncu_url" ).FirstOrDefault()?.value ?? string.Empty;
+				Helper.global.xml_oksid_url = db_settings.Where( x => x.name == "xml_oksid_url" ).FirstOrDefault()?.value ?? string.Empty;
+				Helper.global.xml_penta_base_url = db_settings.Where( x => x.name == "xml_penta_base_url" ).FirstOrDefault()?.value ?? string.Empty;
+				Helper.global.xml_penta_customerid = db_settings.Where( x => x.name == "xml_penta_customerid" ).FirstOrDefault()?.value ?? string.Empty;
+
+
+				#region Decyrption
+				if( Helper.global.shipment != null && !string.IsNullOrWhiteSpace( Helper.global.shipment.yurtici_kargo_password ) )
+					Helper.global.shipment.yurtici_kargo_password = DBSetting.Decrypt( Helper.global.shipment.yurtici_kargo_password );
+				if( Helper.global.shipment != null && !string.IsNullOrWhiteSpace( Helper.global.shipment.mng_kargo_password ) )
+					Helper.global.shipment.mng_kargo_password = DBSetting.Decrypt( Helper.global.shipment.mng_kargo_password );
+				if( Helper.global.shipment != null && !string.IsNullOrWhiteSpace( Helper.global.shipment.mng_kargo_client_secret ) )
+					Helper.global.shipment.mng_kargo_client_secret = DBSetting.Decrypt( Helper.global.shipment.mng_kargo_client_secret );
+				if( Helper.global.magento != null && !string.IsNullOrWhiteSpace( Helper.global.magento.token ) )
+					Helper.global.magento.token = DBSetting.Decrypt( Helper.global.magento.token );
+				if( Helper.global.entegra != null && !string.IsNullOrWhiteSpace( Helper.global.entegra.api_password ) )
+					Helper.global.entegra.api_password = DBSetting.Decrypt( Helper.global.entegra.api_password );
+				if( Helper.global.netsis != null && !string.IsNullOrWhiteSpace( Helper.global.netsis.netopenx_password ) )
+					Helper.global.netsis.netopenx_password = DBSetting.Decrypt( Helper.global.netsis.netopenx_password );
+				if( Helper.global.netsis != null && !string.IsNullOrWhiteSpace( Helper.global.netsis.dbpassword ) )
+					Helper.global.netsis.dbpassword = DBSetting.Decrypt( Helper.global.netsis.dbpassword );
+				if( Helper.global.invoice != null && !string.IsNullOrWhiteSpace( Helper.global.invoice.erp_invoice_ftp_password ) )
+					Helper.global.invoice.erp_invoice_ftp_password = DBSetting.Decrypt( Helper.global.invoice.erp_invoice_ftp_password );
+				if( Helper.global.n11 != null && !string.IsNullOrWhiteSpace( Helper.global.n11.appsecret ) )
+					Helper.global.n11.appsecret = DBSetting.Decrypt( Helper.global.n11.appsecret );
+				if( Helper.global.hb != null && !string.IsNullOrWhiteSpace( Helper.global.hb.token ) )
+					Helper.global.hb.token = DBSetting.Decrypt( Helper.global.hb.token );
+				if( Helper.global.hb != null && !string.IsNullOrWhiteSpace( Helper.global.hb.password ) )
+					Helper.global.hb.password = DBSetting.Decrypt( Helper.global.hb.password );
+				if( Helper.global.ty != null && !string.IsNullOrWhiteSpace( Helper.global.ty.api_secret ) )
+					Helper.global.ty.api_secret = DBSetting.Decrypt( Helper.global.ty.api_secret );
+				#endregion
+
+				return Helper.global;
+			}
+			catch( Exception ex ) {
+				OnError( ex.ToString() );
+				Helper.global = null;
+				return null;
+			}
+		}
+
+		#region Save Functions
+		/// <summary>
 		/// Saves the setting to the database
 		/// </summary>
 		/// <param name="_customer_id">Customer ID</param>
@@ -961,95 +1051,9 @@ namespace Merchanter {
 				return false;
 			}
 		}
+		#endregion
 
-		/// <summary>
-		/// Loads the settings from the database
-		/// </summary>
-		/// <param name="_customer_id">Customer ID</param>
-		/// <returns>[Error] returns 'null'</returns>
-		public SettingsMerchanter LoadSettings( int _customer_id ) {
-			try {
-				db_settings = this.GetSettings( _customer_id );
-				Helper.global = new SettingsMerchanter( _customer_id );
-				Helper.global.customer_id = _customer_id;
-
-				#region Core Settings
-				Helper.global.platforms = LoadPlatforms();
-				Helper.global.works = LoadWorks();
-				Helper.global.integrations = LoadIntegrations( _customer_id );
-				#endregion
-
-				#region Customer Settings
-				Helper.global.settings = GetCustomerSettings( _customer_id );
-				Helper.global.product = GetProductSettings( _customer_id );
-				Helper.global.invoice = GetInvoiceSettings( _customer_id );
-				Helper.global.order = GetOrderSettings( _customer_id );
-				Helper.global.shipment = GetShipmentSettings( _customer_id );
-				Helper.global.order_statuses = LoadOrderStatuses( _customer_id );
-				Helper.global.payment_methods = LoadPaymentMethods( _customer_id );
-				Helper.global.shipment_methods = LoadShipmentMethods( _customer_id );
-				Helper.global.sync_mappings = GetCustomerSyncMappings( _customer_id );
-				#endregion
-
-				#region Integration Settings
-				//TODO: Could check if integration exists
-				Helper.global.entegra = GetEntegraSettings( _customer_id );
-				Helper.global.netsis = GetNetsisSettings( _customer_id );
-				Helper.global.magento = GetMagentoSettings( _customer_id );
-				Helper.global.n11 = GetN11Settings( _customer_id );
-				Helper.global.hb = GetHBSettings( _customer_id );
-				Helper.global.ty = GetTYSettings( _customer_id );
-				#endregion
-
-				Helper.global.erp_invoice_ftp_username = db_settings.Where( x => x.name == "erp_invoice_ftp_username" ).FirstOrDefault()?.value ?? string.Empty;
-				Helper.global.erp_invoice_ftp_password = db_settings.Where( x => x.name == "erp_invoice_ftp_password" ).FirstOrDefault()?.value ?? string.Empty;
-				Helper.global.erp_invoice_ftp_url = db_settings.Where( x => x.name == "erp_invoice_ftp_url" ).FirstOrDefault()?.value ?? string.Empty;
-				Helper.global.xml_bogazici_bayikodu = db_settings.Where( x => x.name == "xml_bogazici_bayikodu" ).FirstOrDefault()?.value ?? string.Empty;
-				Helper.global.xml_bogazici_email = db_settings.Where( x => x.name == "xml_bogazici_email" ).FirstOrDefault()?.value ?? string.Empty;
-				Helper.global.xml_bogazici_sifre = db_settings.Where( x => x.name == "xml_bogazici_sifre" ).FirstOrDefault()?.value ?? string.Empty;
-				Helper.global.xml_fsp_url = db_settings.Where( x => x.name == "xml_fsp_url" ).FirstOrDefault()?.value ?? string.Empty;
-				Helper.global.xml_koyuncu_url = db_settings.Where( x => x.name == "xml_koyuncu_url" ).FirstOrDefault()?.value ?? string.Empty;
-				Helper.global.xml_oksid_url = db_settings.Where( x => x.name == "xml_oksid_url" ).FirstOrDefault()?.value ?? string.Empty;
-				Helper.global.xml_penta_base_url = db_settings.Where( x => x.name == "xml_penta_base_url" ).FirstOrDefault()?.value ?? string.Empty;
-				Helper.global.xml_penta_customerid = db_settings.Where( x => x.name == "xml_penta_customerid" ).FirstOrDefault()?.value ?? string.Empty;
-
-
-				#region Decyrption
-				if( Helper.global.shipment != null && !string.IsNullOrWhiteSpace( Helper.global.shipment.yurtici_kargo_password ) )
-					Helper.global.shipment.yurtici_kargo_password = DBSetting.Decrypt( Helper.global.shipment.yurtici_kargo_password );
-				if( Helper.global.shipment != null && !string.IsNullOrWhiteSpace( Helper.global.shipment.mng_kargo_password ) )
-					Helper.global.shipment.mng_kargo_password = DBSetting.Decrypt( Helper.global.shipment.mng_kargo_password );
-				if( Helper.global.shipment != null && !string.IsNullOrWhiteSpace( Helper.global.shipment.mng_kargo_client_secret ) )
-					Helper.global.shipment.mng_kargo_client_secret = DBSetting.Decrypt( Helper.global.shipment.mng_kargo_client_secret );
-				if( Helper.global.magento != null && !string.IsNullOrWhiteSpace( Helper.global.magento.token ) )
-					Helper.global.magento.token = DBSetting.Decrypt( Helper.global.magento.token );
-				if( Helper.global.entegra != null && !string.IsNullOrWhiteSpace( Helper.global.entegra.api_password ) )
-					Helper.global.entegra.api_password = DBSetting.Decrypt( Helper.global.entegra.api_password );
-				if( Helper.global.netsis != null && !string.IsNullOrWhiteSpace( Helper.global.netsis.netopenx_password ) )
-					Helper.global.netsis.netopenx_password = DBSetting.Decrypt( Helper.global.netsis.netopenx_password );
-				if( Helper.global.netsis != null && !string.IsNullOrWhiteSpace( Helper.global.netsis.dbpassword ) )
-					Helper.global.netsis.dbpassword = DBSetting.Decrypt( Helper.global.netsis.dbpassword );
-				if( Helper.global.invoice != null && !string.IsNullOrWhiteSpace( Helper.global.invoice.erp_invoice_ftp_password ) )
-					Helper.global.invoice.erp_invoice_ftp_password = DBSetting.Decrypt( Helper.global.invoice.erp_invoice_ftp_password );
-				if( Helper.global.n11 != null && !string.IsNullOrWhiteSpace( Helper.global.n11.appsecret ) )
-					Helper.global.n11.appsecret = DBSetting.Decrypt( Helper.global.n11.appsecret );
-				if( Helper.global.hb != null && !string.IsNullOrWhiteSpace( Helper.global.hb.token ) )
-					Helper.global.hb.token = DBSetting.Decrypt( Helper.global.hb.token );
-				if( Helper.global.hb != null && !string.IsNullOrWhiteSpace( Helper.global.hb.password ) )
-					Helper.global.hb.password = DBSetting.Decrypt( Helper.global.hb.password );
-				if( Helper.global.ty != null && !string.IsNullOrWhiteSpace( Helper.global.ty.api_secret ) )
-					Helper.global.ty.api_secret = DBSetting.Decrypt( Helper.global.ty.api_secret );
-				#endregion
-
-				return Helper.global;
-			}
-			catch( Exception ex ) {
-				OnError( ex.ToString() );
-				Helper.global = null;
-				return null;
-			}
-		}
-
+		#region Get Functions
 		/// <summary>
 		/// Gets the settings from the database
 		/// </summary>
@@ -1464,47 +1468,9 @@ namespace Merchanter {
 				return null;
 			}
 		}
+		#endregion
 
-		/// <summary>
-		/// Gets DB settings from the database
-		/// </summary>
-		/// <param name="_customer_id">Customer ID</param>
-		/// <returns>[Error] returns 'null'</returns>
-		public List<DBSetting> GetSettings( int _customer_id ) {
-			try {
-				if( this.state != System.Data.ConnectionState.Open )
-					if( this.OpenConnection() ) {
-						string _query = "SELECT * FROM db_settings WHERE customer_id=@customer_id";
-						MySqlCommand cmd = new MySqlCommand( _query, Connection );
-						cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id.ToString() ) );
-						MySqlDataReader dataReader = cmd.ExecuteReader();
-						List<DBSetting> list = new List<DBSetting>();
-						while( dataReader.Read() ) {
-							list.Add( new DBSetting() {
-								id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
-								customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
-								name = dataReader[ "name" ].ToString(),
-								value = dataReader[ "value" ].ToString(),
-								group_name = dataReader[ "group_name" ].ToString(),
-								description = dataReader[ "description" ].ToString(),
-								update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() )
-							} );
-						}
-						dataReader.Close();
-						if( state == System.Data.ConnectionState.Open )
-							this.CloseConnection();
-
-						return list;
-					}
-
-				return null;
-			}
-			catch( Exception ex ) {
-				OnError( ex.ToString() );
-				return null;
-			}
-		}
-
+		#region Load Functions
 		/// <summary>
 		/// Gets order statuses from the database
 		/// </summary>
@@ -1718,6 +1684,47 @@ namespace Merchanter {
 								Convert.ToBoolean( Convert.ToInt32( dataReader[ "status" ].ToString() ) ),
 								dataReader[ "version" ].ToString()
 							) );
+						}
+						dataReader.Close();
+						if( state == System.Data.ConnectionState.Open )
+							this.CloseConnection();
+
+						return list;
+					}
+
+				return null;
+			}
+			catch( Exception ex ) {
+				OnError( ex.ToString() );
+				return null;
+			}
+		}
+		#endregion
+
+		/// <summary>
+		/// Gets DB settings from the database
+		/// </summary>
+		/// <param name="_customer_id">Customer ID</param>
+		/// <returns>[Error] returns 'null'</returns>
+		public List<DBSetting> GetSettings( int _customer_id ) {
+			try {
+				if( this.state != System.Data.ConnectionState.Open )
+					if( this.OpenConnection() ) {
+						string _query = "SELECT * FROM db_settings WHERE customer_id=@customer_id";
+						MySqlCommand cmd = new MySqlCommand( _query, Connection );
+						cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id.ToString() ) );
+						MySqlDataReader dataReader = cmd.ExecuteReader();
+						List<DBSetting> list = new List<DBSetting>();
+						while( dataReader.Read() ) {
+							list.Add( new DBSetting() {
+								id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+								customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
+								name = dataReader[ "name" ].ToString(),
+								value = dataReader[ "value" ].ToString(),
+								group_name = dataReader[ "group_name" ].ToString(),
+								description = dataReader[ "description" ].ToString(),
+								update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() )
+							} );
 						}
 						dataReader.Close();
 						if( state == System.Data.ConnectionState.Open )
@@ -1969,7 +1976,7 @@ namespace Merchanter {
 		/// <param name="_customer_id">Customer ID</param>
 		/// <param name="_with_ext">Get with extension</param>
 		/// <returns>[Error] returns 'null'</returns>
-		public List<Product> GetProducts( int _customer_id, bool _with_ext = true ) {
+		public List<Product> GetProducts( int _customer_id, bool _with_attr = false, bool _with_ext = true ) {
 			try {
 				if( state != System.Data.ConnectionState.Open ) connection.Open();
 				string _query = "SELECT * FROM products WHERE customer_id=@customer_id";
@@ -1999,6 +2006,7 @@ namespace Merchanter {
 				}
 				dataReader.Close();
 				if( state == System.Data.ConnectionState.Open ) connection.Close();
+
 				if( _with_ext ) {
 					var exts = GetProductExts( _customer_id );
 					foreach( var item in list ) {
@@ -2012,6 +2020,19 @@ namespace Merchanter {
 					}
 				}
 
+				if( _with_attr ) {
+					var attrs = GetProductAttributes( _customer_id );
+					if( attrs != null ) {
+						foreach( var item in list ) {
+							item.attributes = attrs.Where( x => x.product_id == item.id ).ToList();
+						}
+					}
+					else {
+						OnError( "GetProducts: Product Attributes Not Found" );
+						return null;
+					}
+				}
+
 				var product_sources = GetProductSources( _customer_id );
 				foreach( var item in list ) {
 					var selected_product_source = product_sources?.Where( x => x.sku == item.sku ).ToList();
@@ -2022,7 +2043,6 @@ namespace Merchanter {
 						return null;
 					}
 				}
-
 
 				return list;
 			}
@@ -2040,7 +2060,7 @@ namespace Merchanter {
 		/// <param name="_current_page_index">Current Page Index</param>
 		/// <param name="_with_ext">Get with extension</param>
 		/// <returns>[Error] returns 'null'</returns>
-		public List<Product> GetProducts( int _customer_id, int _items_per_page, int _current_page_index, bool _with_ext = true ) {
+		public List<Product> GetProducts( int _customer_id, int _items_per_page, int _current_page_index, bool _with_attr = false, bool _with_ext = true ) {
 			try {
 				if( state != System.Data.ConnectionState.Open ) connection.Open();
 				string _query = "SELECT * FROM products WHERE customer_id=@customer_id ORDER BY id DESC LIMIT @start,@end";
@@ -2082,6 +2102,19 @@ namespace Merchanter {
 							OnError( "GetProducts: " + item.sku + " - Product Extension Not Found" );
 							return null;
 						}
+					}
+				}
+
+				if( _with_attr ) {
+					var attrs = GetProductAttributes( _customer_id );
+					if( attrs != null ) {
+						foreach( var item in list ) {
+							item.attributes = attrs.Where( x => x.product_id == item.id ).ToList();
+						}
+					}
+					else {
+						OnError( "GetProducts: Product Attributes Not Found" );
+						return null;
 					}
 				}
 
@@ -2204,7 +2237,7 @@ namespace Merchanter {
 		/// <param name="_keyword">Keyword</param>
 		/// <param name="_with_ext">Get with extension</param>
 		/// <returns>[Error] returns 'null'</returns>
-		public List<Product> SearchProducts( int _customer_id, string _keyword, bool _with_ext = true ) {
+		public List<Product> SearchProducts( int _customer_id, string _keyword, bool _with_attr = false, bool _with_ext = true ) {
 			try {
 				if( state != System.Data.ConnectionState.Open ) connection.Open();
 				string _query = "SELECT * FROM products WHERE (sku LIKE @keyword OR name LIKE @keyword OR barcode LIKE @keyword) AND customer_id=@customer_id ORDER BY id DESC";
@@ -2245,6 +2278,19 @@ namespace Merchanter {
 							OnError( "SearchProducts: " + item.sku + " - Product Extension Not Found" );
 							return null;
 						}
+					}
+				}
+
+				if( _with_attr ) {
+					var attrs = GetProductAttributes( _customer_id );
+					if( attrs != null ) {
+						foreach( var item in list ) {
+							item.attributes = attrs.Where( x => x.product_id == item.id ).ToList();
+						}
+					}
+					else {
+						OnError( "GetProducts: Product Attributes Not Found" );
+						return null;
 					}
 				}
 
@@ -2314,6 +2360,15 @@ namespace Merchanter {
 						return null;
 					}
 
+					var pas = GetProductAttributes( _customer_id, p.id );
+					if( pas != null ) {
+						p.attributes = [ .. pas ];
+					}
+					else {
+						OnError( "GetProduct: " + p.sku + " - Product Attributes Not Found" );
+						return null;
+					}
+
 					var ss = GetProductSources( _customer_id, p.sku );
 					if( ss != null && ss.Count > 0 ) {
 						p.sources = [ .. ss ];
@@ -2376,6 +2431,15 @@ namespace Merchanter {
 					}
 					else {
 						OnError( "GetProductBySku: " + p.sku + " - Product Extension Not Found" );
+						return null;
+					}
+
+					var pas = GetProductAttributes( _customer_id, p.id );
+					if( pas != null ) {
+						p.attributes = [ .. pas ];
+					}
+					else {
+						OnError( "GetProduct: " + p.sku + " - Product Attributes Not Found" );
 						return null;
 					}
 
@@ -2949,6 +3013,272 @@ namespace Merchanter {
 			catch( Exception ex ) {
 				OnError( ex.ToString() );
 				return false;
+			}
+		}
+		#endregion
+
+		#region Attribute
+		/// <summary>
+		/// Gets the attribute from the database
+		/// </summary>
+		/// <param name="_customer_id">Customer ID</param>
+		/// <param name="_name">Attribute Name</param>
+		/// <returns>[No data] or [Error] returns 'null'</returns>
+		public Attribute? GetAttribute( int _customer_id, string _name ) {
+			try {
+				if( state != System.Data.ConnectionState.Open ) connection.Open();
+				string _query = "SELECT * FROM attributes WHERE attribute_name=@attribute_name AND customer_id=@customer_id";
+				MySqlCommand cmd = new MySqlCommand( _query, connection );
+				cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+				cmd.Parameters.Add( new MySqlParameter( "attribute_name", _name ) );
+				MySqlDataReader dataReader = cmd.ExecuteReader();
+				Attribute? a = null;
+				if( dataReader.Read() ) {
+					a = new Attribute();
+					a.id = Convert.ToInt32( dataReader[ "id" ].ToString() );
+					a.customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() );
+					a.attribute_name = dataReader[ "attribute_name" ].ToString();
+					a.attribute_title = dataReader[ "attribute_title" ].ToString();
+					a.type = Enum.Parse<AttributeTypes>( dataReader[ "type" ].ToString() );
+					a.update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() );
+				}
+				dataReader.Close();
+				if( state == System.Data.ConnectionState.Open ) connection.Close();
+				return a;
+			}
+			catch( Exception ex ) {
+				OnError( ex.ToString() );
+				return null;
+			}
+		}
+
+		/// <summary>
+		/// Gets the attribute from the database
+		/// </summary>
+		/// <param name="_customer_id">Customer ID</param>
+		/// <param name="_attribute_id">Attribute ID</param>
+		/// <returns>[No data] or [Error] returns 'null'</returns>
+		public Attribute? GetAttribute( int _customer_id, int _attribute_id ) {
+			try {
+				if( state != System.Data.ConnectionState.Open ) connection.Open();
+				string _query = "SELECT * FROM attributes WHERE id=@id AND customer_id=@customer_id";
+				MySqlCommand cmd = new MySqlCommand( _query, connection );
+				cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+				cmd.Parameters.Add( new MySqlParameter( "id", _attribute_id ) );
+				MySqlDataReader dataReader = cmd.ExecuteReader();
+				Attribute? a = null;
+				if( dataReader.Read() ) {
+					a = new Attribute();
+					a.id = Convert.ToInt32( dataReader[ "id" ].ToString() );
+					a.customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() );
+					a.attribute_name = dataReader[ "attribute_name" ].ToString();
+					a.attribute_title = dataReader[ "attribute_title" ].ToString();
+					a.type = Enum.Parse<AttributeTypes>( dataReader[ "type" ].ToString() );
+					a.update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() );
+				}
+				dataReader.Close();
+				if( state == System.Data.ConnectionState.Open ) connection.Close();
+				return a;
+			}
+			catch( Exception ex ) {
+				OnError( ex.ToString() );
+				return null;
+			}
+		}
+
+		/// <summary>
+		/// Gets the attribute options from the database
+		/// </summary>
+		/// <param name="_customer_id">Customer ID</param>
+		/// <param name="_attribute_id">Attribute ID</param>
+		/// <returns>[Error] returns 'null'</returns>
+		public List<AttributeOption> GetAttributeOptions( int _customer_id, int _attribute_id ) {
+			try {
+				if( state != System.Data.ConnectionState.Open ) connection.Open();
+				string _query = "SELECT * FROM attribute_options WHERE attribute_id=@attribute_id AND customer_id=@customer_id";
+				List<AttributeOption> list = new List<AttributeOption>();
+				MySqlCommand cmd = new MySqlCommand( _query, connection );
+				cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+				cmd.Parameters.Add( new MySqlParameter( "attribute_id", _attribute_id ) );
+				MySqlDataReader dataReader = cmd.ExecuteReader();
+				while( dataReader.Read() ) {
+					AttributeOption ao = new AttributeOption {
+						id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+						customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
+						attribute_id = Convert.ToInt32( dataReader[ "attribute_id" ].ToString() ),
+						option_name = dataReader[ "option_name" ].ToString(),
+						option_value = dataReader[ "option_value" ].ToString(),
+					};
+					list.Add( ao );
+				}
+				dataReader.Close();
+				if( state == System.Data.ConnectionState.Open ) connection.Close();
+				return list;
+			}
+			catch( Exception ex ) {
+				OnError( ex.ToString() );
+				return null;
+			}
+		}
+
+		/// <summary>
+		/// Gets the attribute options from the database
+		/// </summary>
+		/// <param name="_customer_id">Customer ID</param>
+		/// <param name="_option_ids">Option ID's</param>
+		/// <returns>[Error] returns 'null'</returns>
+		public List<AttributeOption> GetAttributeOptions( int _customer_id, string _option_ids ) {
+			try {
+				if( state != System.Data.ConnectionState.Open ) connection.Open();
+				string _query = string.Format( "SELECT * FROM attribute_options WHERE id IN ({0}) AND customer_id=@customer_id", _option_ids );
+				List<AttributeOption> list = new List<AttributeOption>();
+				MySqlCommand cmd = new MySqlCommand( _query, connection );
+				cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+				//cmd.Parameters.Add( new MySqlParameter( "option_ids", _option_ids ) );
+				MySqlDataReader dataReader = cmd.ExecuteReader();
+				while( dataReader.Read() ) {
+					AttributeOption ao = new AttributeOption {
+						id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+						customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
+						attribute_id = Convert.ToInt32( dataReader[ "attribute_id" ].ToString() ),
+						option_name = dataReader[ "option_name" ].ToString(),
+						option_value = dataReader[ "option_value" ].ToString(),
+					};
+					list.Add( ao );
+				}
+				dataReader.Close();
+				if( state == System.Data.ConnectionState.Open ) connection.Close();
+				return list;
+			}
+			catch( Exception ex ) {
+				OnError( ex.ToString() );
+				return null;
+			}
+		}
+
+		/// <summary>
+		/// Gets the product attributes from the database
+		/// </summary>
+		/// <param name="_customer_id">Customer ID</param>
+		/// <param name="_with_ext">Get with Extension</param>
+		/// <returns>[Error] returns 'null'</returns>
+		public List<ProductAttribute> GetProductAttributes( int _customer_id, bool _with_ext = true ) {
+			try {
+				if( state != System.Data.ConnectionState.Open ) connection.Open();
+				string _query = "SELECT * FROM product_attributes WHERE customer_id=@customer_id";
+				List<ProductAttribute> list = new List<ProductAttribute>();
+				MySqlCommand cmd = new MySqlCommand( _query, connection );
+				cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+				MySqlDataReader dataReader = cmd.ExecuteReader();
+				while( dataReader.Read() ) {
+					ProductAttribute pa = new ProductAttribute {
+						id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+						customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
+						product_id = Convert.ToInt32( dataReader[ "product_id" ].ToString() ),
+						attribute_id = Convert.ToInt32( dataReader[ "attribute_id" ].ToString() ),
+						type = Enum.Parse<AttributeTypes>( dataReader[ "type" ].ToString() ),
+						value = dataReader[ "value" ].ToString(),
+						option_ids = dataReader[ "option_ids" ].ToString(),
+						update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() ),
+					};
+					list.Add( pa );
+				}
+				dataReader.Close();
+				if( state == System.Data.ConnectionState.Open ) connection.Close();
+
+				if( _with_ext ) {
+					foreach( var item in list ) {
+						var attr = GetAttribute( _customer_id, item.attribute_id );
+						if( attr != null ) {
+							item.attribute = attr;
+						}
+						else {
+							OnError( "GetProductAttributes: " + item.product_id + " - Product Attribute Not Found" );
+							return null;
+						}
+
+						if( item.option_ids != null && item.option_ids.Length > 0 ) {
+							var options = GetAttributeOptions( _customer_id, item.option_ids );
+							if( options != null && options.Count > 0 ) {
+								item.options = [ .. options ];
+							}
+							else {
+								OnError( "GetProductAttributes: " + item.product_id + " - Product Attribute Options Not Found" );
+								return null;
+							}
+						}
+					}
+				}
+
+				return list;
+			}
+			catch( Exception ex ) {
+				OnError( ex.ToString() );
+				return null;
+			}
+		}
+
+		/// <summary>
+		/// Gets the product attributes from the database
+		/// </summary>
+		/// <param name="_customer_id">Customer ID</param>
+		/// <param name="_product_id">Product ID</param>
+		/// <param name="_with_ext">Get with Extension</param>
+		/// <returns>[Error] returns 'null'</returns>
+		public List<ProductAttribute> GetProductAttributes( int _customer_id, int _product_id, bool _with_ext = true ) {
+			try {
+				if( state != System.Data.ConnectionState.Open ) connection.Open();
+				string _query = "SELECT * FROM product_attributes WHERE product_id=@product_id AND customer_id=@customer_id";
+				List<ProductAttribute> list = new List<ProductAttribute>();
+				MySqlCommand cmd = new MySqlCommand( _query, connection );
+				cmd.Parameters.Add( new MySqlParameter( "customer_id", _customer_id ) );
+				cmd.Parameters.Add( new MySqlParameter( "product_id", _product_id ) );
+				MySqlDataReader dataReader = cmd.ExecuteReader();
+				while( dataReader.Read() ) {
+					ProductAttribute pa = new ProductAttribute {
+						id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
+						customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
+						product_id = Convert.ToInt32( dataReader[ "product_id" ].ToString() ),
+						attribute_id = Convert.ToInt32( dataReader[ "attribute_id" ].ToString() ),
+						type = Enum.Parse<AttributeTypes>( dataReader[ "type" ].ToString() ),
+						value = dataReader[ "value" ].ToString(),
+						option_ids = dataReader[ "option_ids" ].ToString(),
+						update_date = Convert.ToDateTime( dataReader[ "update_date" ].ToString() ),
+					};
+					list.Add( pa );
+				}
+				dataReader.Close();
+				if( state == System.Data.ConnectionState.Open ) connection.Close();
+
+				if( _with_ext ) {
+					foreach( var item in list ) {
+						var attr = GetAttribute( _customer_id, item.attribute_id );
+						if( attr != null ) {
+							item.attribute = attr;
+						}
+						else {
+							OnError( "GetProductAttributes: " + item.product_id + " - Product Attribute Not Found" );
+							return null;
+						}
+
+						if( item.option_ids != null && item.option_ids.Length > 0 ) {
+							var options = GetAttributeOptions( _customer_id, item.option_ids );
+							if( options != null && options.Count > 0 ) {
+								item.options = [ .. options ];
+							}
+							else {
+								OnError( "GetProductAttributes: " + item.product_id + " - Product Attribute Options Not Found" );
+								return null;
+							}
+						}
+					}
+				}
+
+				return list;
+			}
+			catch( Exception ex ) {
+				OnError( ex.ToString() );
+				return null;
 			}
 		}
 		#endregion

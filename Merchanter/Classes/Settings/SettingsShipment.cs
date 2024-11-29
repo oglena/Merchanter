@@ -1,12 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Merchanter.Classes.Settings {
-    public class SettingsShipment {
+﻿namespace Merchanter.Classes.Settings {
+	public class SettingsShipment {
         public int id { get; set; }
         public int customer_id { get; set; }
 
