@@ -1,5 +1,6 @@
 ﻿using Merchanter;
 using Merchanter.Classes;
+using Merchanter.Classes.Settings;
 using MerchanterHelpers;
 using ShipmentHelpers;
 using System.Diagnostics;
@@ -90,7 +91,8 @@ namespace MerchanterServer {
 			xproducts = db_helper.GetXProducts( customer.customer_id );
 			if( customer.xml_sync_status && !customer.is_xmlsync_working ) {
 				db_helper.xml.SetXmlSyncWorking( customer.customer_id, true );
-				Task task = Task.Run( this.XmlLoop );
+				if( health ) { this.XmlLoop( Helper.global ); }
+				//Task task = Task.Run( () => this.XmlLoop( Helper.global ) );
 			}
 			#endregion
 
@@ -154,7 +156,8 @@ namespace MerchanterServer {
 			notifications = db_helper.GetNotifications( customer.customer_id, false );
 			if( customer.notification_sync_status && !customer.is_notificationsync_working ) {
 				db_helper.notification.SetNotificationSyncWorking( customer.customer_id, true );
-				Task task = Task.Run( this.NotificationLoop );
+				//Task task = Task.Run( this.NotificationLoop );
+				if( health ) { this.NotificationLoop(); }
 			}
 			#endregion
 
@@ -162,7 +165,7 @@ namespace MerchanterServer {
 		}
 
 		#region Individual Threads - XML, Invoice, Notification
-		private void XmlLoop() {
+		private void XmlLoop( SettingsMerchanter _global ) {
 			List<Notification> notifications = [];
 			List<XProduct> live_xproducts = [];
 			List<Product>? xml_enabled_products = db_helper.xml.GetXMLEnabledProducts( customer.customer_id );
@@ -175,15 +178,15 @@ namespace MerchanterServer {
 				if( customer.customer_id == 1 && xml_enabled_products != null ) {
 					try {
 						Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + "Injecting XML Sources for " + customer.user_name );
-						var xml_sources_1 = Helper.GetProductAttribute( Helper.global.magento.xml_sources_attribute_code );
-						var xml_enabled_products_1 = Helper.SearchProductByAttribute( Helper.global.magento.is_xml_enabled_attribute_code, "1" );
+						var xml_sources_1 = Helper.GetProductAttribute( _global.magento.xml_sources_attribute_code );
+						var xml_enabled_products_1 = Helper.SearchProductByAttribute( _global.magento.is_xml_enabled_attribute_code, "1" );
 						if( xml_enabled_products_1 != null ) {
 							foreach( var item in xml_enabled_products_1 ) {
-								string? raw_sources_1 = item.custom_attributes.Where( x => x.attribute_code == Helper.global.magento.xml_sources_attribute_code )?.First().value?.ToString();
+								string? raw_sources_1 = item.custom_attributes.Where( x => x.attribute_code == _global.magento.xml_sources_attribute_code )?.First().value?.ToString();
 								if( raw_sources_1 != null && raw_sources_1.Length > 0 ) {
 									var live_sources = xml_sources_1?.options.Where( x => raw_sources_1.Contains( x.value ) ).Where( x => !string.IsNullOrWhiteSpace( x.value ) ).ToList();
 									if( live_sources?.Count > 0 ) {
-										var selected_xml_source_barcode = item.custom_attributes.Where( x => x.attribute_code == Helper.global.magento.barcode_attribute_code ).FirstOrDefault();
+										var selected_xml_source_barcode = item.custom_attributes.Where( x => x.attribute_code == _global.magento.barcode_attribute_code ).FirstOrDefault();
 										if( selected_xml_source_barcode != null ) {
 											if( selected_xml_source_barcode.value != null ) {
 												var x_enabled_product = xml_enabled_products.Where( x => x.barcode == selected_xml_source_barcode.value.ToString() ).FirstOrDefault();
@@ -225,7 +228,7 @@ namespace MerchanterServer {
 				#endregion
 
 				if( other_product_sources.Contains( Constants.FSP ) ) {
-					FSP fsp = new FSP( Helper.global.xml_fsp_url );
+					FSP fsp = new FSP( _global.xml_fsp_url );
 					var fsp_products = fsp.GetProducts( out info );
 					Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + info + " " + Constants.FSP );
 					if( fsp_products != null && fsp_products.Product.Length > 0 ) {
@@ -259,14 +262,14 @@ namespace MerchanterServer {
 						#endregion
 
 						db_helper.xml.LogToServer( thread_id, "source_error", Constants.FSP, customer.customer_id, "xml" );
-						Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.FSP + " xproducts load failed" );
+						Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + _global.settings.company_name + " " + Constants.FSP + " xproducts load failed" );
 						xml_has_error = true;
 						return;
 					}
 				}
 
 				if( other_product_sources.Contains( Constants.PENTA ) ) {
-					PENTA penta = new PENTA( Helper.global.xml_penta_base_url, Helper.global.xml_penta_customerid );
+					PENTA penta = new PENTA( _global.xml_penta_base_url, _global.xml_penta_customerid );
 					var penta_products = penta.GetProducts( out info );
 					Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + info + " " + Constants.PENTA );
 					if( penta_products != null && penta_products.Stok != null && penta_products.Stok.Length > 0 ) {
@@ -300,14 +303,14 @@ namespace MerchanterServer {
 						#endregion
 
 						db_helper.xml.LogToServer( thread_id, "source_error", Constants.PENTA, customer.customer_id, "xml" );
-						Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.PENTA + " xproducts load failed" );
+						Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + _global.settings.company_name + " " + Constants.PENTA + " xproducts load failed" );
 						xml_has_error = true;
 						return;
 					}
 				}
 
 				if( other_product_sources.Contains( Constants.KOYUNCU ) ) {
-					KOYUNCU koyuncu = new KOYUNCU( Helper.global.xml_koyuncu_url );
+					KOYUNCU koyuncu = new KOYUNCU( _global.xml_koyuncu_url );
 					var koyuncu_products = koyuncu.GetProducts( out info );
 					Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + info + " " + Constants.KOYUNCU );
 					if( koyuncu_products != null && koyuncu_products.ProductDto.Length > 0 ) {
@@ -341,14 +344,14 @@ namespace MerchanterServer {
 						#endregion
 
 						db_helper.xml.LogToServer( thread_id, "source_error", Constants.KOYUNCU, customer.customer_id, "xml" );
-						Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.KOYUNCU + " xproducts load failed" );
+						Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + _global.settings.company_name + " " + Constants.KOYUNCU + " xproducts load failed" );
 						xml_has_error = true;
 						return;
 					}
 				}
 
 				if( other_product_sources.Contains( Constants.OKSID ) ) {
-					OKSID oksid = new OKSID( Helper.global.xml_oksid_url );
+					OKSID oksid = new OKSID( _global.xml_oksid_url );
 					var oksid_products = oksid.GetProducts( out info );
 					Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + info + " " + Constants.OKSID );
 					if( oksid_products != null && oksid_products.Stok.Length > 0 ) {
@@ -382,14 +385,14 @@ namespace MerchanterServer {
 						#endregion
 
 						db_helper.xml.LogToServer( thread_id, "source_error", Constants.OKSID, customer.customer_id, "xml" );
-						Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.OKSID + " xproducts load failed" );
+						Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + _global.settings.company_name + " " + Constants.OKSID + " xproducts load failed" );
 						xml_has_error = true;
 						return;
 					}
 				}
 
 				if( other_product_sources.Contains( Constants.BOGAZICI ) ) {
-					BOGAZICI bogazici = new BOGAZICI( Helper.global.xml_bogazici_bayikodu, Helper.global.xml_bogazici_email, Helper.global.xml_bogazici_sifre );
+					BOGAZICI bogazici = new BOGAZICI( _global.xml_bogazici_bayikodu, _global.xml_bogazici_email, _global.xml_bogazici_sifre );
 					var bogazici_products = bogazici.getBogaziciProducts();
 					if( bogazici_products != null && bogazici_products.Count > 0 ) {
 						foreach( var item in bogazici_products ) {
@@ -424,7 +427,7 @@ namespace MerchanterServer {
 						#endregion
 
 						db_helper.xml.LogToServer( thread_id, "source_error", Constants.BOGAZICI, customer.customer_id, "xml" );
-						Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.BOGAZICI + " xproducts load failed" );
+						Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + _global.settings.company_name + " " + Constants.BOGAZICI + " xproducts load failed" );
 						xml_has_error = true;
 						return;
 					}
@@ -437,7 +440,7 @@ namespace MerchanterServer {
 						var need_to_delete_xp = live_xproducts.Where( x => x.xml_source == item.xml_source ).Where( x => x.barcode == item.barcode ).FirstOrDefault();
 						if( need_to_delete_xp == null ) {
 							db_helper.xml.DeleteXProduct( customer.customer_id, item.id );
-							Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + item.barcode + " source=" + item.xml_source + " " + " xproduct removed." );
+							Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + _global.settings.company_name + " " + item.barcode + " source=" + item.xml_source + " " + " xproduct removed." );
 
 							#region Notify - XML_PRODUCT_REMOVED
 							db_helper.xml.LogToServer( thread_id, "xml_product_removed", item.xml_source + ":" + item.barcode + ": " + item.qty, customer.customer_id, "xml" );
@@ -510,18 +513,18 @@ namespace MerchanterServer {
 			catch( Exception _ex ) {
 				db_helper.xml.LogToServer( thread_id, "error", _ex.ToString(), customer.customer_id, "xml" );
 				db_helper.xml.InsertNotifications( customer.customer_id, [ new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_SYNC_ERROR, is_notification_sent = true, notification_content = _ex.ToString() } ] );
-				Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + xproducts.Count + " xproducts loaded from old cache" );
+				Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + _global.settings.company_name + " " + xproducts.Count + " xproducts loaded from old cache" );
 			} finally {
 				xproducts = db_helper.xml.GetXProducts( customer.customer_id );
 				if( customer.xml_sync_status ) {
 					db_helper.xml.SetXmlSyncDate( customer.customer_id );
 					db_helper.xml.SetXmlSyncWorking( customer.customer_id, false );
 				}
-				//db_helper.xml.LogToServer( thread_id, "info", Helper.global.settings.company_name + xproducts.Count + " xproducts loaded from new cache", customer.customer_id, "xml" );
+				//db_helper.xml.LogToServer( thread_id, "info", _global.settings.company_name + xproducts.Count + " xproducts loaded from new cache", customer.customer_id, "xml" );
 				if( !xml_has_error )
-					Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + xproducts.Count + " xproducts loaded from new cache" );
+					Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + _global.settings.company_name + " " + xproducts.Count + " xproducts loaded from new cache" );
 				else
-					Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + xproducts.Count + " xproducts loaded from old cache" );
+					Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + _global.settings.company_name + " " + xproducts.Count + " xproducts loaded from old cache" );
 			}
 		}
 

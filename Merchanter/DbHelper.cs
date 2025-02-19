@@ -632,6 +632,18 @@ namespace Merchanter {
 					Helper.global.ty.api_secret = DBSetting.Decrypt( Helper.global.ty.api_secret );
 				#endregion
 
+
+				if( File.Exists( Path.Combine( AppDomain.CurrentDomain.BaseDirectory, "local" ) ) ) {
+					WriteLogLine( Helper.global.settings.company_name + " local enabled!!!", ConsoleColor.Yellow );
+					Console.Beep();
+					if( _customer_id == 1 ) {
+						if( Helper.global?.netsis != null && Helper.global?.entegra != null ) {
+							Helper.global.netsis.rest_url = "http://85.106.8.239:7070/";
+							Helper.global.entegra.api_url = "http://85.106.8.239:5421/";
+						}
+					}
+				}
+
 				return Helper.global;
 			}
 			catch( Exception ex ) {

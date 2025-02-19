@@ -130,14 +130,6 @@ while( true ) {
 		if( db_helper.SetProductSyncWorking( customer_id, false ) && db_helper.SetOrderSyncWorking( customer_id, false ) && db_helper.SetNotificationSyncWorking( customer_id, false ) && db_helper.SetXmlSyncWorking( customer_id, false ) && db_helper.SetInvoiceSyncWorking( customer_id, false ) )
 			Console.WriteLine( "[" + DateTime.Now.ToString() + "] " + customer_id + "-ID sync statuses reset for first run." );
 
-		if( File.Exists( Path.Combine( AppDomain.CurrentDomain.BaseDirectory, "local" ) ) ) {
-			WriteLogLine( thread_id + " local enabled!!!", ConsoleColor.Yellow );
-			Console.Beep();
-			if( customer.customer_id == 1 ) {
-				Helper.global.netsis.rest_url = "http://88.247.120.127:7070/";
-				Helper.global.entegra.api_url = "http://88.247.120.127:5421/";
-			}
-		}
 	}
 	#endregion
 
