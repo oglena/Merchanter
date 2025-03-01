@@ -7,7 +7,7 @@
         public int brand_id { get; set; }
         public string category_ids { get; set; }
         public bool is_xml_enabled { get; set; } = false;
-        public string[]? xml_sources { get; set; } = null;
+        public string[]? xml_sources { get; set; } = [];
         public DateTime update_date { get; set; }
 
 
