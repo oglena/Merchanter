@@ -1101,7 +1101,7 @@ namespace MerchanterServer {
                 }
 
                 if (product_main_source != null && product_main_source == Constants.ANK_ERP) {
-
+                    //TODO: ANK_ERP product main source will be here
                 }
                 #endregion
             }
@@ -1384,7 +1384,7 @@ namespace MerchanterServer {
                     }
 
                     if (product_targets.Contains(Constants.IDEASOFT)) {
-
+                        //TODO: IDEASOFT product sync will be here
                     }
                 }
             }

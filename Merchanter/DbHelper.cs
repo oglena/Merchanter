@@ -590,9 +590,11 @@ namespace Merchanter {
 				Helper.global.n11 = GetN11Settings( _customer_id );
 				Helper.global.hb = GetHBSettings( _customer_id );
 				Helper.global.ty = GetTYSettings( _customer_id );
-				#endregion
+				Helper.global.ank_erp = GetAnkERPSettings(_customer_id);
+				Helper.global.ideasoft = GetIdeasoftSettings(_customer_id);
+                #endregion
 
-				Helper.global.erp_invoice_ftp_username = db_settings.Where( x => x.name == "erp_invoice_ftp_username" ).FirstOrDefault()?.value ?? string.Empty;
+                Helper.global.erp_invoice_ftp_username = db_settings.Where( x => x.name == "erp_invoice_ftp_username" ).FirstOrDefault()?.value ?? string.Empty;
 				Helper.global.erp_invoice_ftp_password = db_settings.Where( x => x.name == "erp_invoice_ftp_password" ).FirstOrDefault()?.value ?? string.Empty;
 				Helper.global.erp_invoice_ftp_url = db_settings.Where( x => x.name == "erp_invoice_ftp_url" ).FirstOrDefault()?.value ?? string.Empty;
 				Helper.global.xml_bogazici_bayikodu = db_settings.Where( x => x.name == "xml_bogazici_bayikodu" ).FirstOrDefault()?.value ?? string.Empty;
@@ -630,10 +632,17 @@ namespace Merchanter {
 					Helper.global.hb.password = DBSetting.Decrypt( Helper.global.hb.password );
 				if( Helper.global.ty != null && !string.IsNullOrWhiteSpace( Helper.global.ty.api_secret ) )
 					Helper.global.ty.api_secret = DBSetting.Decrypt( Helper.global.ty.api_secret );
-				#endregion
+                if (Helper.global.ank_erp != null && !string.IsNullOrWhiteSpace(Helper.global.ank_erp.password))
+                    Helper.global.ank_erp.password = DBSetting.Decrypt(Helper.global.ank_erp.password);
+                if (Helper.global.ideasoft != null && !string.IsNullOrWhiteSpace(Helper.global.ideasoft.client_secret))
+                    Helper.global.ideasoft.client_secret = DBSetting.Decrypt(Helper.global.ideasoft.client_secret);
+                if (Helper.global.ideasoft != null && !string.IsNullOrWhiteSpace(Helper.global.ideasoft.refresh_token))
+                    Helper.global.ideasoft.refresh_token = DBSetting.Decrypt(Helper.global.ideasoft.refresh_token);
+                if (Helper.global.ideasoft != null && !string.IsNullOrWhiteSpace(Helper.global.ideasoft.access_token))
+                    Helper.global.ideasoft.access_token = DBSetting.Decrypt(Helper.global.ideasoft.access_token);
+                #endregion
 
-
-				if( File.Exists( Path.Combine( AppDomain.CurrentDomain.BaseDirectory, "local" ) ) ) {
+                if ( File.Exists( Path.Combine( AppDomain.CurrentDomain.BaseDirectory, "local" ) ) ) {
 					WriteLogLine( Helper.global.settings.company_name + " local enabled!!!", ConsoleColor.Yellow );
 					Console.Beep();
 					if( _customer_id == 1 ) {
@@ -914,15 +923,72 @@ namespace Merchanter {
 				OnError( ex.ToString() );
 				return false;
 			}
-		}
+        }
 
-		/// <summary>
-		/// Saves the magento settings to the database
-		/// </summary>
-		/// <param name="_customer_id">Customer ID</param>
-		/// <param name="_settings">Settings Magento</param>
-		/// <returns>[No change] or [Error] returns 'false'</returns>
-		public bool SaveMagentoSettings( int _customer_id, SettingsMagento _settings ) {
+        /// <summary>
+        /// Saves the Ankara ERP settings to the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_settings">Settings ANK_ERP</param>
+        /// <returns>[No change] or [Error] returns 'false'</returns>
+        public bool SaveAnkERPSettings(int _customer_id, SettingsAnkaraErp _settings) {
+            try {
+                int val = 0;
+                string _query = "UPDATE settings_ank_erp SET company_code=@company_code,user_name=@user_name,password=@password,work_year=@work_year,url=@url WHERE customer_id=@customer_id";
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                cmd.Parameters.Add(new MySqlParameter("company_code", _settings.company_code));
+                cmd.Parameters.Add(new MySqlParameter("user_name", _settings.user_name));
+                cmd.Parameters.Add(new MySqlParameter("work_year", _settings.work_year));
+                cmd.Parameters.Add(new MySqlParameter("url", _settings.url));
+                cmd.Parameters.Add(new MySqlParameter("password", !string.IsNullOrWhiteSpace(_settings.password) ? DBSetting.Encrypt(_settings.password) : null));
+
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                val = cmd.ExecuteNonQuery();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
+                return val > 0;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Saves the IDEASOFT settings to the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_settings">Settings IDEASOFT</param>
+        /// <returns>[No change] or [Error] returns 'false'</returns>
+        public bool SaveIdeasoftSettings(int _customer_id, SettingsIdeasoft _settings) {
+            try {
+                int val = 0;
+                string _query = "UPDATE settings_ideasoft SET store_url=@store_url,client_id=@client_id,client_secret=@client_secret,refresh_token=@refresh_token WHERE customer_id=@customer_id";
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                cmd.Parameters.Add(new MySqlParameter("store_url", _settings.store_url));
+                cmd.Parameters.Add(new MySqlParameter("client_id", _settings.client_id));
+                cmd.Parameters.Add(new MySqlParameter("client_secret", !string.IsNullOrWhiteSpace(_settings.client_secret) ? DBSetting.Encrypt(_settings.client_secret) : null));
+                cmd.Parameters.Add(new MySqlParameter("refresh_token", !string.IsNullOrWhiteSpace(_settings.refresh_token) ? DBSetting.Encrypt(_settings.refresh_token) : null));
+
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                val = cmd.ExecuteNonQuery();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
+                return val > 0;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Saves the magento settings to the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_settings">Settings Magento</param>
+        /// <returns>[No change] or [Error] returns 'false'</returns>
+        public bool SaveMagentoSettings( int _customer_id, SettingsMagento _settings ) {
 			try {
 				int val = 0;
 				string _query = "UPDATE settings_magento SET base_url=@base_url,token=@token,root_category_id=@root_category_id,order_processing_comment=@order_processing_comment,barcode_attribute_code=@barcode_attribute_code,brand_attribute_code=@brand_attribute_code,is_xml_enabled_attribute_code=@is_xml_enabled_attribute_code,xml_sources_attribute_code=@xml_sources_attribute_code,customer_tc_no_attribute_code=@customer_tc_no_attribute_code,customer_firma_ismi_attribute_code=@customer_firma_ismi_attribute_code,customer_firma_vergidairesi_attribute_code=@customer_firma_vergidairesi_attribute_code,customer_firma_vergino_attribute_code=@customer_firma_vergino_attribute_code WHERE customer_id=@customer_id";
@@ -1479,16 +1545,89 @@ namespace Merchanter {
 				OnError( ex.ToString() );
 				return null;
 			}
-		}
-		#endregion
+        }
 
-		#region Load Functions
-		/// <summary>
-		/// Gets order statuses from the database
-		/// </summary>
-		/// <param name="_customer_id">Customer ID</param>
-		/// <returns>[Error] returns 'null'</returns>
-		public List<OrderStatus> LoadOrderStatuses( int _customer_id ) {
+        /// <summary>
+        /// Gets the ANKARA ERP settings from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <returns>[Error] returns 'null'</returns>
+        public SettingsAnkaraErp GetAnkERPSettings(int _customer_id) {
+            try {
+                if (state != System.Data.ConnectionState.Open)
+                    connection.Open();
+                string _query = "SELECT * FROM settings_ank_erp WHERE customer_id=@customer_id";
+                SettingsAnkaraErp? ank = null;
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                MySqlDataReader dataReader = cmd.ExecuteReader(System.Data.CommandBehavior.CloseConnection);
+                while (dataReader.Read()) {
+                    ank = new SettingsAnkaraErp {
+                        id = Convert.ToInt32(dataReader["id"].ToString()),
+                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                        company_code = dataReader["company_code"].ToString(),
+                        user_name = dataReader["user_name"].ToString(),
+                        password = dataReader["password"].ToString(),
+                        work_year = dataReader["work_year"].ToString(),
+                        url = dataReader["url"].ToString(),
+                    };
+                }
+                dataReader.Close();
+                if (state == System.Data.ConnectionState.Open)
+                    connection.Close();
+                return ank;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets the IDEASOFT settings from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <returns>[Error] returns 'null'</returns>
+        public SettingsIdeasoft GetIdeasoftSettings(int _customer_id) {
+            try {
+                if (state != System.Data.ConnectionState.Open)
+                    connection.Open();
+                string _query = "SELECT * FROM settings_ideasoft WHERE customer_id=@customer_id";
+                SettingsIdeasoft? idea = null;
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                MySqlDataReader dataReader = cmd.ExecuteReader(System.Data.CommandBehavior.CloseConnection);
+                while (dataReader.Read()) {
+                    idea = new SettingsIdeasoft {
+                        id = Convert.ToInt32(dataReader["id"].ToString()),
+                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                        store_url = dataReader["store_url"].ToString(),
+                        client_id = dataReader["client_id"].ToString(),
+                        client_secret = dataReader["client_secret"].ToString(),
+                        refresh_token = dataReader["refresh_token"].ToString(),
+                        access_token = dataReader["access_token"].ToString(),
+                        update_date = !string.IsNullOrWhiteSpace(dataReader["update_date"].ToString()) ? Convert.ToDateTime(dataReader["update_date"].ToString()) : null
+                    };
+                }
+                dataReader.Close();
+                if (state == System.Data.ConnectionState.Open)
+                    connection.Close();
+                return idea;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return null;
+            }
+        }
+        #endregion
+
+        #region Load Functions
+        /// <summary>
+        /// Gets order statuses from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <returns>[Error] returns 'null'</returns>
+        public List<OrderStatus> LoadOrderStatuses( int _customer_id ) {
 			try {
 				if( this.state != System.Data.ConnectionState.Open )
 					if( this.OpenConnection() ) {

@@ -14,7 +14,10 @@
 		public SettingsN11 n11 { get; set; }
 		public SettingsHB hb { get; set; }
 		public SettingsTY ty { get; set; }
-		public List<OrderStatus> order_statuses { get; set; }
+        public SettingsAnkaraErp ank_erp { get; set; }
+        public SettingsIdeasoft ideasoft { get; set; }
+
+        public List<OrderStatus> order_statuses { get; set; }
         public List<PaymentMethod> payment_methods { get; set; }
         public List<ShipmentMethod> shipment_methods { get; set; }
         public List<Integration> integrations { get; set; }

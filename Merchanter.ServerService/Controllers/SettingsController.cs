@@ -220,6 +220,42 @@ namespace Merchanter.ServerService.Controllers {
 				}
 			}
 			return BadRequest( "Invalid customer ID." );
-		}
-	}
+        }
+
+        [HttpPut("{CID}/SaveAnkERPSettings")]
+        [Authorize]
+        public async Task<ActionResult<BaseResponseModel<SettingsAnkaraErp>>> SaveAnkERPSettings(string CID, [FromBody] SettingsAnkaraErp _settings) {
+            int customer_id;
+            if (int.TryParse(CID, out customer_id) && customer_id > 0) {
+                if (await settingsService.SaveAnkErpSettings(customer_id, _settings)) {
+                    SettingsAnkaraErp? saved_settings = settingsService.GetCustomerSettings(customer_id).Result.ank_erp;
+                    if (saved_settings != null) {
+                        return Ok(new BaseResponseModel<SettingsAnkaraErp>() { Success = true, Data = saved_settings, ErrorMessage = "" });
+                    }
+                }
+                else {
+                    return Ok(new BaseResponseModel<SettingsAnkaraErp>() { Success = false, Data = null, ErrorMessage = "Error saving ANK_ERP settings." });
+                }
+            }
+            return BadRequest("Invalid customer ID.");
+        }
+
+        [HttpPut("{CID}/SaveIdeasoftSettings")]
+        [Authorize]
+        public async Task<ActionResult<BaseResponseModel<SettingsAnkaraErp>>> SaveIdeasoftSettings(string CID, [FromBody] SettingsIdeasoft _settings) {
+            int customer_id;
+            if (int.TryParse(CID, out customer_id) && customer_id > 0) {
+                if (await settingsService.SaveIdeasoftSettings(customer_id, _settings)) {
+                    SettingsIdeasoft? saved_settings = settingsService.GetCustomerSettings(customer_id).Result.ideasoft;
+                    if (saved_settings != null) {
+                        return Ok(new BaseResponseModel<SettingsIdeasoft>() { Success = true, Data = saved_settings, ErrorMessage = "" });
+                    }
+                }
+                else {
+                    return Ok(new BaseResponseModel<SettingsIdeasoft>() { Success = false, Data = null, ErrorMessage = "Error saving IDEASOFT settings." });
+                }
+            }
+            return BadRequest("Invalid customer ID.");
+        }
+    }
 }

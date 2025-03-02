@@ -1,0 +1,22 @@
+﻿@page "/ideaconnect"
+@attribute [Authorize]
+
+<h3>IdeaConnect</h3>
+<p>Connect your idea to the world</p>
+@if (!string.IsNullOrWhiteSpace(state) && !string.IsNullOrWhiteSpace(code)) {
+
+}
+else {
+
+}
+
+@code {
+    [Parameter]
+    public string? state { get; set; } = null;
+    [Parameter]
+    public string? code { get; set; } = null;
+    [Parameter]
+    public string? error { get; set; } = null;
+    [Parameter]
+    public string? error_description { get; set; } = null;
+}
