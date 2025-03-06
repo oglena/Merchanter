@@ -1221,7 +1221,8 @@ namespace Merchanter {
 						id = Convert.ToInt32( dataReader[ "id" ].ToString() ),
 						customer_id = Convert.ToInt32( dataReader[ "customer_id" ].ToString() ),
 						default_brand = dataReader[ "default_brand" ].ToString(),
-						is_barcode_required = Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_barcode_required" ].ToString() ) ),
+                        customer_root_category_id = Convert.ToInt32(dataReader["customer_root_category_id"].ToString()),
+                        is_barcode_required = Convert.ToBoolean( Convert.ToInt32( dataReader[ "is_barcode_required" ].ToString() ) ),
 						xml_qty_addictive_enable = Convert.ToBoolean( Convert.ToInt32( dataReader[ "xml_qty_addictive_enable" ].ToString() ) )
 					};
 				}
