@@ -91,6 +91,30 @@ namespace MerchanterHelpers {
             return dokumans;
         }
 
+        public List<TicariDokuman>? GetProductsFromFolder(string _folder_url) {
+            string[] files = Directory.GetFiles(_folder_url, "*.xml");
+            if(files.Length == 0) return null;
+
+            List<TicariDokuman> dokumans = new List<TicariDokuman>();
+            foreach (var item in files) {
+                try {
+                    string xmlFilePath = item;
+                    if (File.Exists(item)) {
+                        XmlSerializer serializer = new XmlSerializer(typeof(TicariDokuman));
+                        using FileStream fs = new FileStream(item, FileMode.Open);
+                        TicariDokuman? dokuman = (TicariDokuman?)serializer.Deserialize(fs);
+                        if (dokuman != null) {
+                            dokumans.Add(dokuman);
+                        }
+                    }
+                }
+                catch (Exception ex) {
+                    return null;
+                }
+            }
+            return dokumans;
+        }
+
         public async Task<CAT_TicariDokuman?> GetCategories() {
             CAT_TicariDokuman? dokuman = null;
 

@@ -35,7 +35,7 @@
 						{
 							@if (item.customer != null)
 							{
-								<div class="col">
+								<div class="col mb-3">
 									<div class="card shadow">
 										<div class="card-body text-center">
 											<h4 class="card-title text-success">Working Server</h4>
@@ -69,7 +69,7 @@
 							{
 								@if (servers.Where(x => x.customer_id == item.customer_id).FirstOrDefault() == null)
 								{
-									<div class="col">
+									<div class="col mb-3">
 										<div class="card shadow">
 											<div class="card-body text-center">
 												<h4 class="card-title text-muted">Idle Server</h4>

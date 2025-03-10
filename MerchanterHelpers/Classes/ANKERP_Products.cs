@@ -264,23 +264,23 @@ public partial class UrunSicilUrunTanim {
 
     private string kamBitTarField;
 
-    private byte kdvOraniField;
+    private int kdvOraniField;
 
-    private byte indOranField;
+    private int indOranField;
 
     private string olcuBirimiField;
 
     private string barkodKoduField;
 
-    private byte paketMiktariField;
+    private int paketMiktariField;
 
-    private byte agirligiKgField;
+    private int agirligiKgField;
 
-    private byte hacmiM3Field;
+    private int hacmiM3Field;
 
     private int stokMevcuduField;
 
-    private byte teminSuresiField;
+    private int teminSuresiField;
 
     private string kayitTarihiField;
 
@@ -521,7 +521,7 @@ public partial class UrunSicilUrunTanim {
     }
 
     /// <remarks/>
-    public byte KdvOrani {
+    public int KdvOrani {
         get {
             return this.kdvOraniField;
         }
@@ -531,7 +531,7 @@ public partial class UrunSicilUrunTanim {
     }
 
     /// <remarks/>
-    public byte IndOran {
+    public int IndOran {
         get {
             return this.indOranField;
         }
@@ -561,7 +561,7 @@ public partial class UrunSicilUrunTanim {
     }
 
     /// <remarks/>
-    public byte PaketMiktari {
+    public int PaketMiktari {
         get {
             return this.paketMiktariField;
         }
@@ -571,7 +571,7 @@ public partial class UrunSicilUrunTanim {
     }
 
     /// <remarks/>
-    public byte AgirligiKg {
+    public int AgirligiKg {
         get {
             return this.agirligiKgField;
         }
@@ -581,7 +581,7 @@ public partial class UrunSicilUrunTanim {
     }
 
     /// <remarks/>
-    public byte HacmiM3 {
+    public int HacmiM3 {
         get {
             return this.hacmiM3Field;
         }
@@ -601,7 +601,7 @@ public partial class UrunSicilUrunTanim {
     }
 
     /// <remarks/>
-    public byte TeminSuresi {
+    public int TeminSuresi {
         get {
             return this.teminSuresiField;
         }

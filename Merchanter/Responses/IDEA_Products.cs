@@ -47,7 +47,7 @@ public class IDEA_Product {
     public object parent { get; set; }
     public IDEA_Brand brand { get; set; }
     public IDEA_Detail detail { get; set; }
-    public IDEA_Category[] categories { get; set; }
+    public IDEA_PCategory[] categories { get; set; }
     public object[] prices { get; set; }
     public IDEA_Image[] images { get; set; }
     public object[] optionGroups { get; set; }
@@ -77,7 +77,7 @@ public class IDEA_Detail {
     public object extraDetails { get; set; }
 }
 
-public class IDEA_Category {
+public class IDEA_PCategory {
     public int id { get; set; }
     public string name { get; set; }
     public int sortOrder { get; set; }

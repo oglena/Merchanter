@@ -2,6 +2,7 @@
 using Merchanter.Classes;
 using Merchanter.Classes.Settings;
 using MerchanterHelpers;
+using Org.BouncyCastle.Utilities.Encoders;
 using ShipmentHelpers;
 using System.Diagnostics;
 using Executioner = Merchanter.Executioner;
@@ -36,6 +37,7 @@ namespace MerchanterServer {
         private Category? root_category = new();
         private List<Product>? products = [];
         private List<ProductExtension>? products_ext = [];
+        private List<ProductSource>? product_sources = [];
         private List<Order>? orders = [];
         private List<Invoice>? invoices = [];
         private List<Notification>? notifications = [];
@@ -110,10 +112,10 @@ namespace MerchanterServer {
 
                 default_brand = db_helper.GetDefaultBrand(customer.customer_id);
                 root_category = db_helper.GetRootCategory(customer.customer_id);
-                brands = db_helper.GetBrands(customer.customer_id);
-                products = db_helper.GetProducts(customer.customer_id, true);
-                products_ext = db_helper.GetProductExts(customer.customer_id);
-                categories = db_helper.GetCategories(customer.customer_id);
+                //brands = db_helper.GetBrands(customer.customer_id);
+                products = db_helper.GetProducts(customer.customer_id, out products_ext, out brands, out categories, out product_sources, true);
+                //products_ext = db_helper.GetProductExts(customer.customer_id);
+                //categories = db_helper.GetCategories(customer.customer_id);
 
                 if (health) { this.ProductLoop(out health); }
 
@@ -125,9 +127,6 @@ namespace MerchanterServer {
                     db_helper.SetProductSyncDate(customer.customer_id);
                     db_helper.SetProductSyncWorking(customer.customer_id, false);
                 }
-            }
-            else {
-                products = db_helper.GetProducts(customer.customer_id, true);
             }
             #endregion
 
@@ -147,9 +146,6 @@ namespace MerchanterServer {
                     db_helper.SetOrderSyncWorking(customer.customer_id, false);
                 }
             }
-            else {
-                orders = db_helper.GetOrders(customer.customer_id);
-            }
             #endregion
 
             //INFO: Need to be last executed
@@ -158,7 +154,7 @@ namespace MerchanterServer {
             if (customer.notification_sync_status && !customer.is_notificationsync_working) {
                 db_helper.notification.SetNotificationSyncWorking(customer.customer_id, true);
                 //Task task = Task.Run( this.NotificationLoop );
-                if (health) { this.NotificationLoop(); }
+                if (health) { if (products != null && orders != null && xproducts != null && notifications != null) this.NotificationLoop(); }
             }
             #endregion
 
@@ -648,54 +644,54 @@ namespace MerchanterServer {
 
         private void NotificationLoop() {
             try {
-                if (notifications != null) {
-                    foreach (var item in notifications) {
-                        Product? selected_product = null;
-                        List<XProduct>? selected_xproducts = null;
-                        Order? selected_order = null;
-                        switch (item.type) {
-                            case Notification.NotificationTypes.GENERAL:
-                                break;
+                if (notifications == null) return;
+                foreach (var item in notifications) {
+                    Product? selected_product = null;
+                    List<XProduct>? selected_xproducts = null;
+                    Order? selected_order = null;
+                    switch (item.type) {
+                        case Notification.NotificationTypes.GENERAL:
+                            break;
 
-                            case Notification.NotificationTypes.NEW_ORDER:
-                                selected_order = orders?.Where(x => x.order_label == item.order_label).FirstOrDefault();
+                        case Notification.NotificationTypes.NEW_ORDER:
+                            selected_order = orders?.Where(x => x.order_label == item.order_label).FirstOrDefault();
 
-                                if (selected_order != null) {
-                                    string mail_title = string.Format("NEW ORDER {0}", item.order_label);
-                                    string mail_body = string.Empty;
+                            if (selected_order != null) {
+                                string mail_title = string.Format("NEW ORDER {0}", item.order_label);
+                                string mail_body = string.Empty;
 
-                                    item.is_notification_sent = true;
-                                    item.notification_content = mail_title;
-                                    if (db_helper.notification.UpdateNotifications(customer.customer_id, [item])) {
-                                        Console.WriteLine("[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title + "]");
-                                        db_helper.notification.LogToServer(thread_id, "new_order", mail_title + " => " + mail_body, customer.customer_id, "notification");
-                                    }
+                                item.is_notification_sent = true;
+                                item.notification_content = mail_title;
+                                if (db_helper.notification.UpdateNotifications(customer.customer_id, [item])) {
+                                    Console.WriteLine("[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title + "]");
+                                    db_helper.notification.LogToServer(thread_id, "new_order", mail_title + " => " + mail_body, customer.customer_id, "notification");
                                 }
-                                break;
+                            }
+                            break;
 
-                            case Notification.NotificationTypes.OUT_OF_STOCK_PRODUCT_SOLD:
-                                selected_product = products?.Where(x => x.sku == item.product_sku).FirstOrDefault();
-                                selected_xproducts = xproducts?.Where(x => x.barcode == item.xproduct_barcode).ToList();
-                                selected_order = orders?.Where(x => x.order_label == item.order_label).FirstOrDefault();
+                        case Notification.NotificationTypes.OUT_OF_STOCK_PRODUCT_SOLD:
+                            selected_product = products?.Where(x => x.sku == item.product_sku).FirstOrDefault();
+                            selected_xproducts = xproducts?.Where(x => x.barcode == item.xproduct_barcode).ToList();
+                            selected_order = orders?.Where(x => x.order_label == item.order_label).FirstOrDefault();
 
-                                if (selected_product != null && selected_order != null) {
-                                    string mail_title = string.Format("{0} - OUT OF STOCK PRODUCT SOLD", item.product_sku);
-                                    string mail_body = string.Format("<strong>Product:</strong> {0}<br>" +
-                                           "<strong>Sku:</strong> {1}<br>" +
-                                           "<strong>Barcode:</strong> {2}<br>" +
-                                           "<strong>Brand:</strong> {3}<br>" +
-                                           "<strong>Order Label:</strong> {4}<br>" +
-                                           "<strong>Order Qty:</strong> {5}<br>" +
-                                           "<strong>Order Price:</strong> {6}<br><br>" +
-                                           "<table cellpadding='2' border='1'><thead style='font-weight:bold;'><td>Source</td><td>Qty</td><td>Price</td><td>Status</td></thead> {7} </table> <br>",
-                                           selected_product.name,
-                                           selected_product.sku,
-                                           selected_product.barcode,
-                                           selected_product.extension.brand.brand_name,
-                                           selected_order.order_label,
-                                           selected_order.order_items.Where(x => x.sku == item.product_sku).FirstOrDefault()?.qty_ordered,
-                                           selected_order.order_items.Where(x => x.sku == item.product_sku).FirstOrDefault()?.price + " " + selected_order.currency,
-                                           string.Join("", selected_product.sources.SelectMany(x => new List<string>() {
+                            if (selected_product != null && selected_order != null) {
+                                string mail_title = string.Format("{0} - OUT OF STOCK PRODUCT SOLD", item.product_sku);
+                                string mail_body = string.Format("<strong>Product:</strong> {0}<br>" +
+                                       "<strong>Sku:</strong> {1}<br>" +
+                                       "<strong>Barcode:</strong> {2}<br>" +
+                                       "<strong>Brand:</strong> {3}<br>" +
+                                       "<strong>Order Label:</strong> {4}<br>" +
+                                       "<strong>Order Qty:</strong> {5}<br>" +
+                                       "<strong>Order Price:</strong> {6}<br><br>" +
+                                       "<table cellpadding='2' border='1'><thead style='font-weight:bold;'><td>Source</td><td>Qty</td><td>Price</td><td>Status</td></thead> {7} </table> <br>",
+                                       selected_product.name,
+                                       selected_product.sku,
+                                       selected_product.barcode,
+                                       selected_product.extension.brand.brand_name,
+                                       selected_order.order_label,
+                                       selected_order.order_items.Where(x => x.sku == item.product_sku).FirstOrDefault()?.qty_ordered,
+                                       selected_order.order_items.Where(x => x.sku == item.product_sku).FirstOrDefault()?.price + " " + selected_order.currency,
+                                       string.Join("", selected_product.sources.SelectMany(x => new List<string>() {
                                                "<tr>" +
                                                "<td>" + x.name + "</td>" +
                                                "<td>" + x.qty + "</td>" +
@@ -709,41 +705,41 @@ namespace MerchanterServer {
                                                "</td>" +
                                                "<td>" + (x.is_active ? "active" : "passive") + "</td>" +
                                                "</tr>"
-                                           })));
-                                    if (GMail.Send(Constants.QP_MailSender, Constants.QP_MailPassword, Constants.QP_MailSenderName, Constants.QP_MailTo,
-                                        mail_title,
-                                        mail_body)) {
-                                        item.is_notification_sent = true;
-                                        item.notification_content = mail_body;
-                                        if (db_helper.notification.UpdateNotifications(customer.customer_id, [item])) {
-                                            Console.WriteLine("[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title + "]");
-                                            db_helper.notification.LogToServer(thread_id, "out_of_stock_product_sold", mail_title + " => " + mail_body, customer.customer_id, "notification");
-                                        }
+                                       })));
+                                if (GMail.Send(Constants.QP_MailSender, Constants.QP_MailPassword, Constants.QP_MailSenderName, Constants.QP_MailTo,
+                                    mail_title,
+                                    mail_body)) {
+                                    item.is_notification_sent = true;
+                                    item.notification_content = mail_body;
+                                    if (db_helper.notification.UpdateNotifications(customer.customer_id, [item])) {
+                                        Console.WriteLine("[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title + "]");
+                                        db_helper.notification.LogToServer(thread_id, "out_of_stock_product_sold", mail_title + " => " + mail_body, customer.customer_id, "notification");
                                     }
-                                    selected_product = null;
                                 }
-                                break;
+                                selected_product = null;
+                            }
+                            break;
 
-                            case Notification.NotificationTypes.PRODUCT_IN_STOCK:
-                                selected_product = products?.Where(x => x.sku == item.product_sku).FirstOrDefault();
-                                selected_xproducts = xproducts?.Where(x => x.barcode == item.xproduct_barcode).ToList();
+                        case Notification.NotificationTypes.PRODUCT_IN_STOCK:
+                            selected_product = products?.Where(x => x.sku == item.product_sku).FirstOrDefault();
+                            selected_xproducts = xproducts?.Where(x => x.barcode == item.xproduct_barcode).ToList();
 
-                                if (selected_product != null) {
-                                    string mail_title = string.Format("{0} - PRODUCT IN STOCK", item.product_sku);
-                                    string mail_body = string.Format("<strong>Product:</strong> {0}<br>" +
-                                           (product_targets.Contains(Constants.MAGENTO2) && Helper.GetProductBySKU(selected_product.sku)?.status == 1 ? "<strong>Status:</strong> Enabled<br>" : "<strong>Status:</strong> Disabled<br>") +
-                                           "<strong>Sku:</strong> {1}<br>" +
-                                           "<strong>Barcode:</strong> {2}<br>" +
-                                           "<strong>Brand:</strong> {3}<br>" +
-                                           "<strong>Selling Price:</strong> {4}<br><br>" +
-                                           "<table cellpadding='2' border='1'><thead style='font-weight:bold;'><td>Source</td><td>Qty</td><td>Prices</td><td>Status</td></thead>{5}</table><br>",
-                                           selected_product.name,
-                                           selected_product.sku,
-                                           selected_product.barcode,
-                                           selected_product.extension.brand.brand_name,
-                                           (selected_product.special_price != 0 ? (selected_product.special_price * (1 + (selected_product.tax / 100)) * (selected_product.currency == "USD" ? Helper.global.settings.rate_USD : (selected_product.currency == "EUR" ? Helper.global.settings.rate_EUR : 1))) + "TL" :
-                                                    Math.Round(selected_product.price * (1m + (selected_product.tax / 100m)) * (selected_product.currency == "USD" ? Helper.global.settings.rate_USD : (selected_product.currency == "EUR" ? Helper.global.settings.rate_EUR : 1)), 2, MidpointRounding.AwayFromZero) + "TL"),
-                                           string.Join("", selected_product.sources.SelectMany(x => new List<string>() {
+                            if (selected_product != null) {
+                                string mail_title = string.Format("{0} - PRODUCT IN STOCK", item.product_sku);
+                                string mail_body = string.Format("<strong>Product:</strong> {0}<br>" +
+                                       (product_targets.Contains(Constants.MAGENTO2) && Helper.GetProductBySKU(selected_product.sku)?.status == 1 ? "<strong>Status:</strong> Enabled<br>" : "<strong>Status:</strong> Disabled<br>") +
+                                       "<strong>Sku:</strong> {1}<br>" +
+                                       "<strong>Barcode:</strong> {2}<br>" +
+                                       "<strong>Brand:</strong> {3}<br>" +
+                                       "<strong>Selling Price:</strong> {4}<br><br>" +
+                                       "<table cellpadding='2' border='1'><thead style='font-weight:bold;'><td>Source</td><td>Qty</td><td>Prices</td><td>Status</td></thead>{5}</table><br>",
+                                       selected_product.name,
+                                       selected_product.sku,
+                                       selected_product.barcode,
+                                       selected_product.extension.brand.brand_name,
+                                       (selected_product.special_price != 0 ? (selected_product.special_price * (1 + (selected_product.tax / 100)) * (selected_product.currency == "USD" ? Helper.global.settings.rate_USD : (selected_product.currency == "EUR" ? Helper.global.settings.rate_EUR : 1))) + "TL" :
+                                                Math.Round(selected_product.price * (1m + (selected_product.tax / 100m)) * (selected_product.currency == "USD" ? Helper.global.settings.rate_USD : (selected_product.currency == "EUR" ? Helper.global.settings.rate_EUR : 1)), 2, MidpointRounding.AwayFromZero) + "TL"),
+                                       string.Join("", selected_product.sources.SelectMany(x => new List<string>() {
                                                "<tr>" +
                                                "<td>" + x.name + "</td>" +
                                                "<td>" + x.qty + "</td>" +
@@ -757,41 +753,41 @@ namespace MerchanterServer {
                                                "</td>" +
                                                "<td>" + (x.is_active ? "active" : "passive") + "</td>" +
                                                "</tr>"
-                                           })));
-                                    if (GMail.Send(Constants.QP_MailSender, Constants.QP_MailPassword, Constants.QP_MailSenderName, Constants.QP_MailTo,
-                                        mail_title,
-                                        mail_body)) {
-                                        item.is_notification_sent = true;
-                                        item.notification_content = mail_body;
-                                        if (db_helper.notification.UpdateNotifications(customer.customer_id, [item])) {
-                                            Console.WriteLine("[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title + "]");
-                                            db_helper.notification.LogToServer(thread_id, "product_in_stock", mail_title + " => " + mail_body, customer.customer_id, "notification");
-                                        }
+                                       })));
+                                if (GMail.Send(Constants.QP_MailSender, Constants.QP_MailPassword, Constants.QP_MailSenderName, Constants.QP_MailTo,
+                                    mail_title,
+                                    mail_body)) {
+                                    item.is_notification_sent = true;
+                                    item.notification_content = mail_body;
+                                    if (db_helper.notification.UpdateNotifications(customer.customer_id, [item])) {
+                                        Console.WriteLine("[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title + "]");
+                                        db_helper.notification.LogToServer(thread_id, "product_in_stock", mail_title + " => " + mail_body, customer.customer_id, "notification");
                                     }
-                                    selected_product = null;
                                 }
-                                break;
+                                selected_product = null;
+                            }
+                            break;
 
-                            case Notification.NotificationTypes.PRODUCT_OUT_OF_STOCK:
-                                selected_product = products?.Where(x => x.sku == item.product_sku).FirstOrDefault();
-                                selected_xproducts = xproducts?.Where(x => x.barcode == item.xproduct_barcode).ToList();
+                        case Notification.NotificationTypes.PRODUCT_OUT_OF_STOCK:
+                            selected_product = products?.Where(x => x.sku == item.product_sku).FirstOrDefault();
+                            selected_xproducts = xproducts?.Where(x => x.barcode == item.xproduct_barcode).ToList();
 
-                                if (selected_product != null) {
-                                    string mail_title = string.Format("{0} - PRODUCT OUT OF STOCK", item.product_sku);
-                                    string mail_body = string.Format("<strong>Product:</strong> {0}<br>" +
-                                           (product_targets.Contains(Constants.MAGENTO2) && Helper.GetProductBySKU(selected_product.sku)?.status == 1 ? "<strong>Status:</strong> Enabled<br>" : "<strong>Status:</strong> Disabled<br>") +
-                                           "<strong>Sku:</strong> {1}<br>" +
-                                           "<strong>Barcode:</strong> {2}<br>" +
-                                           "<strong>Brand:</strong> {3}<br>" +
-                                           "<strong>Selling Price:</strong> {4}<br><br>" +
-                                           "<table cellpadding='2' border='1'><thead style='font-weight:bold;'><td>Source</td><td>Qty</td><td>Prices</td><td>Status</td></thead>{5}</table><br>",
-                                           selected_product.name,
-                                           selected_product.sku,
-                                           selected_product.barcode,
-                                           selected_product.extension.brand.brand_name,
-                                           (selected_product.special_price != 0 ? (selected_product.special_price * (1 + (selected_product.tax / 100)) * (selected_product.currency == "USD" ? Helper.global.settings.rate_USD : (selected_product.currency == "EUR" ? Helper.global.settings.rate_EUR : 1))) + "TL" :
-                                                    Math.Round(selected_product.price * (1m + (selected_product.tax / 100m)) * (selected_product.currency == "USD" ? Helper.global.settings.rate_USD : (selected_product.currency == "EUR" ? Helper.global.settings.rate_EUR : 1)), 2, MidpointRounding.AwayFromZero) + "TL"),
-                                           string.Join("", selected_product.sources.SelectMany(x => new List<string>() {
+                            if (selected_product != null) {
+                                string mail_title = string.Format("{0} - PRODUCT OUT OF STOCK", item.product_sku);
+                                string mail_body = string.Format("<strong>Product:</strong> {0}<br>" +
+                                       (product_targets.Contains(Constants.MAGENTO2) && Helper.GetProductBySKU(selected_product.sku)?.status == 1 ? "<strong>Status:</strong> Enabled<br>" : "<strong>Status:</strong> Disabled<br>") +
+                                       "<strong>Sku:</strong> {1}<br>" +
+                                       "<strong>Barcode:</strong> {2}<br>" +
+                                       "<strong>Brand:</strong> {3}<br>" +
+                                       "<strong>Selling Price:</strong> {4}<br><br>" +
+                                       "<table cellpadding='2' border='1'><thead style='font-weight:bold;'><td>Source</td><td>Qty</td><td>Prices</td><td>Status</td></thead>{5}</table><br>",
+                                       selected_product.name,
+                                       selected_product.sku,
+                                       selected_product.barcode,
+                                       selected_product.extension.brand.brand_name,
+                                       (selected_product.special_price != 0 ? (selected_product.special_price * (1 + (selected_product.tax / 100)) * (selected_product.currency == "USD" ? Helper.global.settings.rate_USD : (selected_product.currency == "EUR" ? Helper.global.settings.rate_EUR : 1))) + "TL" :
+                                                Math.Round(selected_product.price * (1m + (selected_product.tax / 100m)) * (selected_product.currency == "USD" ? Helper.global.settings.rate_USD : (selected_product.currency == "EUR" ? Helper.global.settings.rate_EUR : 1)), 2, MidpointRounding.AwayFromZero) + "TL"),
+                                       string.Join("", selected_product.sources.SelectMany(x => new List<string>() {
                                                "<tr>" +
                                                "<td>" + x.name + "</td>" +
                                                "<td>" + x.qty + "</td>" +
@@ -805,188 +801,187 @@ namespace MerchanterServer {
                                                "</td>" +
                                                "<td>" + (x.is_active ? "active" : "passive") + "</td>" +
                                                "</tr>"
-                                           })));
+                                       })));
+                                if (GMail.Send(Constants.QP_MailSender, Constants.QP_MailPassword, Constants.QP_MailSenderName, Constants.QP_MailTo,
+                                    mail_title,
+                                    mail_body)) {
+                                    item.is_notification_sent = true;
+                                    item.notification_content = mail_body;
+                                    if (db_helper.notification.UpdateNotifications(customer.customer_id, [item])) {
+                                        Console.WriteLine("[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title + "]");
+                                        db_helper.notification.LogToServer(thread_id, "product_out_of_stock", mail_title + " => " + mail_body, customer.customer_id, "notification");
+                                    }
+                                }
+                                selected_product = null;
+                            }
+                            break;
+
+                        case Notification.NotificationTypes.XML_PRODUCT_ADDED:
+                            break;
+
+                        case Notification.NotificationTypes.XML_PRODUCT_REMOVED:
+                            string mail_title1 = string.Format("XML PRODUCT REMOVED {0}", item.xproduct_barcode);
+                            string mail_body1 = string.Empty;
+
+                            item.is_notification_sent = true;
+                            item.notification_content = mail_title1;
+                            if (db_helper.notification.UpdateNotifications(customer.customer_id, [item])) {
+                                Console.WriteLine("[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title1 + "]");
+                                db_helper.notification.LogToServer(thread_id, "xml_product_removed", mail_title1 + " => " + mail_title1, customer.customer_id, "notification");
+                            }
+                            break;
+
+                        case Notification.NotificationTypes.XML_PRICE_CHANGED:
+                            selected_product = products?.Where(x => x.barcode == item.xproduct_barcode).FirstOrDefault();
+                            selected_xproducts = xproducts?.Where(x => x.barcode == item.xproduct_barcode).ToList();
+                            string? xsource = item.notification_content?.Split("=")[0];
+                            string? xprices = item.notification_content?.Split("=")[1];
+
+                            if (selected_product != null && xsource != null && xprices != null) {
+                                string mail_title = string.Format("{0} - XML PRICE CHANGED", selected_product.sku);
+                                decimal.TryParse(xprices.Split("|")[0], out decimal new_price);
+                                decimal.TryParse(xprices.Split("|")[1], out decimal old_price);
+                                if (old_price != 0 && new_price != 0) {
+                                    string mail_body = string.Format("<strong>Product:</strong> {0}<br>" +
+                                           (product_targets.Contains(Constants.MAGENTO2) && Helper.GetProductBySKU(selected_product.sku)?.status == 1 ? "<strong>Status:</strong> Enabled<br>" : "<strong>Status:</strong> Disabled<br>") +
+                                           "<strong>Sku:</strong> {1}<br>" +
+                                           "<strong>Barcode:</strong> {2}<br>" +
+                                           "<strong>Brand:</strong> {3}<br>" +
+                                           "<strong>Source:</strong> {4}<br>" +
+                                           "<strong>Status:</strong> {5}<br>" +
+                                           "<strong>Qty:</strong> {6}<br>" +
+                                           "<strong>Old Price:</strong> {7}<br>" +
+                                           "<strong>New Price:</strong> {8}<br>",
+                                           selected_product.name,
+                                           selected_product.sku,
+                                           selected_product.barcode,
+                                           selected_product.extension.brand.brand_name,
+                                           xsource, ((selected_xproducts?.Where(x => x.xml_source == xsource).FirstOrDefault()?.is_active == true) ? "active" : "passive"),
+                                           selected_xproducts?.Where(x => x.xml_source == xsource).FirstOrDefault()?.qty,
+                                           Math.Round(old_price, 2, MidpointRounding.AwayFromZero) + selected_xproducts?.Where(x => x.xml_source == xsource).FirstOrDefault()?.currency,
+                                           Math.Round(new_price, 2, MidpointRounding.AwayFromZero) + selected_xproducts?.Where(x => x.xml_source == xsource).FirstOrDefault()?.currency);
                                     if (GMail.Send(Constants.QP_MailSender, Constants.QP_MailPassword, Constants.QP_MailSenderName, Constants.QP_MailTo,
-                                        mail_title,
-                                        mail_body)) {
+                                       mail_title,
+                                       mail_body)) {
                                         item.is_notification_sent = true;
                                         item.notification_content = mail_body;
                                         if (db_helper.notification.UpdateNotifications(customer.customer_id, [item])) {
                                             Console.WriteLine("[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title + "]");
-                                            db_helper.notification.LogToServer(thread_id, "product_out_of_stock", mail_title + " => " + mail_body, customer.customer_id, "notification");
+                                            db_helper.notification.LogToServer(thread_id, "xml_price_changed", mail_title + " => " + mail_body, customer.customer_id, "notification");
                                         }
                                     }
                                     selected_product = null;
                                 }
-                                break;
+                            }
+                            break;
 
-                            case Notification.NotificationTypes.XML_PRODUCT_ADDED:
-                                break;
+                        case Notification.NotificationTypes.PRODUCT_PRICE_UPDATE_ERROR:
+                            break;
 
-                            case Notification.NotificationTypes.XML_PRODUCT_REMOVED:
-                                string mail_title1 = string.Format("XML PRODUCT REMOVED {0}", item.xproduct_barcode);
-                                string mail_body1 = string.Empty;
+                        case Notification.NotificationTypes.PRODUCT_SPECIAL_PRICE_UPDATE_ERROR:
+                            break;
+
+                        case Notification.NotificationTypes.PRODUCT_CUSTOM_PRICE_UPDATE_ERROR:
+                            break;
+
+                        case Notification.NotificationTypes.PRODUCT_QTY_UPDATE_ERROR:
+                            break;
+
+                        case Notification.NotificationTypes.PRODUCT_UPDATE_ERROR:
+                            break;
+
+                        case Notification.NotificationTypes.XML_SYNC_ERROR:
+                            item.is_notification_sent = true;
+                            item.notification_content = string.Format("XML SYNC ERROR {0}", item.xproduct_barcode);
+                            if (db_helper.notification.UpdateNotifications(customer.customer_id, [item])) {
+                                Console.WriteLine("[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + item.xproduct_barcode + "]");
+                                db_helper.notification.LogToServer(thread_id, "xml_sync_error", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification");
+                            }
+                            break;
+
+                        case Notification.NotificationTypes.XML_QTY_CHANGED:
+                            item.is_notification_sent = true;
+                            item.notification_content = string.Format("XML QTY CHANGED {0}", item.xproduct_barcode);
+                            if (db_helper.notification.UpdateNotifications(customer.customer_id, [item])) {
+                                Console.WriteLine("[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + item.xproduct_barcode + "]");
+                                db_helper.notification.LogToServer(thread_id, "xml_qty_changed", item.notification_content, customer.customer_id, "notification");
+                            }
+                            break;
+
+                        case Notification.NotificationTypes.XML_PRODUCT_REMOVED_BY_USER:
+                            item.is_notification_sent = true;
+                            item.notification_content = string.Format("XML PRODUCT REMOVED BY USER {0}", item.xproduct_barcode);
+                            if (db_helper.notification.UpdateNotifications(customer.customer_id, [item])) {
+                                Console.WriteLine("[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + item.xproduct_barcode + "]");
+                                db_helper.notification.LogToServer(thread_id, "xml_product_removed_by_user", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification");
+                            }
+                            break;
+
+                        case Notification.NotificationTypes.XML_SOURCE_FAILED:
+                            item.is_notification_sent = true;
+                            item.notification_content = string.Format("XML PRODUCT REMOVED {0}", item.xproduct_barcode);
+                            if (db_helper.notification.UpdateNotifications(customer.customer_id, [item])) {
+                                Console.WriteLine("[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + item.xproduct_barcode + "]");
+                                db_helper.notification.LogToServer(thread_id, "xml_product_removed", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification");
+                            }
+                            break;
+
+                        case Notification.NotificationTypes.NEW_INVOICE:
+                            item.is_notification_sent = true;
+                            item.notification_content = string.Format("NEW INVOICE {0}", item.invoice_no);
+                            if (db_helper.notification.UpdateNotifications(customer.customer_id, [item])) {
+                                Console.WriteLine("[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + item.xproduct_barcode + "]");
+                                db_helper.notification.LogToServer(thread_id, "new_invoice", item.notification_content + " => " + item.invoice_no, customer.customer_id, "notification");
+                            }
+                            break;
+
+                        case Notification.NotificationTypes.ORDER_COMPLETE:
+                            selected_order = orders?.Where(x => x.order_label == item.order_label).FirstOrDefault();
+
+                            if (selected_order != null) {
+                                string mail_title = string.Format("ORDER COMPLETE {0}", item.order_label);
+                                string mail_body = string.Empty;
 
                                 item.is_notification_sent = true;
-                                item.notification_content = mail_title1;
+                                item.notification_content = mail_title;
                                 if (db_helper.notification.UpdateNotifications(customer.customer_id, [item])) {
-                                    Console.WriteLine("[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title1 + "]");
-                                    db_helper.notification.LogToServer(thread_id, "xml_product_removed", mail_title1 + " => " + mail_title1, customer.customer_id, "notification");
+                                    Console.WriteLine("[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title + "]");
+                                    db_helper.notification.LogToServer(thread_id, "order_complete", mail_title + " => " + mail_body, customer.customer_id, "notification");
                                 }
-                                break;
+                            }
+                            break;
 
-                            case Notification.NotificationTypes.XML_PRICE_CHANGED:
-                                selected_product = products?.Where(x => x.barcode == item.xproduct_barcode).FirstOrDefault();
-                                selected_xproducts = xproducts?.Where(x => x.barcode == item.xproduct_barcode).ToList();
-                                string? xsource = item.notification_content?.Split("=")[0];
-                                string? xprices = item.notification_content?.Split("=")[1];
+                        case Notification.NotificationTypes.ORDER_PROCESS:
+                            selected_order = orders?.Where(x => x.order_label == item.order_label).FirstOrDefault();
 
-                                if (selected_product != null && xsource != null && xprices != null) {
-                                    string mail_title = string.Format("{0} - XML PRICE CHANGED", selected_product.sku);
-                                    decimal.TryParse(xprices.Split("|")[0], out decimal new_price);
-                                    decimal.TryParse(xprices.Split("|")[1], out decimal old_price);
-                                    if (old_price != 0 && new_price != 0) {
-                                        string mail_body = string.Format("<strong>Product:</strong> {0}<br>" +
-                                               (product_targets.Contains(Constants.MAGENTO2) && Helper.GetProductBySKU(selected_product.sku)?.status == 1 ? "<strong>Status:</strong> Enabled<br>" : "<strong>Status:</strong> Disabled<br>") +
-                                               "<strong>Sku:</strong> {1}<br>" +
-                                               "<strong>Barcode:</strong> {2}<br>" +
-                                               "<strong>Brand:</strong> {3}<br>" +
-                                               "<strong>Source:</strong> {4}<br>" +
-                                               "<strong>Status:</strong> {5}<br>" +
-                                               "<strong>Qty:</strong> {6}<br>" +
-                                               "<strong>Old Price:</strong> {7}<br>" +
-                                               "<strong>New Price:</strong> {8}<br>",
-                                               selected_product.name,
-                                               selected_product.sku,
-                                               selected_product.barcode,
-                                               selected_product.extension.brand.brand_name,
-                                               xsource, ((selected_xproducts?.Where(x => x.xml_source == xsource).FirstOrDefault()?.is_active == true) ? "active" : "passive"),
-                                               selected_xproducts?.Where(x => x.xml_source == xsource).FirstOrDefault()?.qty,
-                                               Math.Round(old_price, 2, MidpointRounding.AwayFromZero) + selected_xproducts?.Where(x => x.xml_source == xsource).FirstOrDefault()?.currency,
-                                               Math.Round(new_price, 2, MidpointRounding.AwayFromZero) + selected_xproducts?.Where(x => x.xml_source == xsource).FirstOrDefault()?.currency);
-                                        if (GMail.Send(Constants.QP_MailSender, Constants.QP_MailPassword, Constants.QP_MailSenderName, Constants.QP_MailTo,
-                                           mail_title,
-                                           mail_body)) {
-                                            item.is_notification_sent = true;
-                                            item.notification_content = mail_body;
-                                            if (db_helper.notification.UpdateNotifications(customer.customer_id, [item])) {
-                                                Console.WriteLine("[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title + "]");
-                                                db_helper.notification.LogToServer(thread_id, "xml_price_changed", mail_title + " => " + mail_body, customer.customer_id, "notification");
-                                            }
-                                        }
-                                        selected_product = null;
-                                    }
-                                }
-                                break;
+                            if (selected_order != null) {
+                                string mail_title = string.Format("ORDER PROCESS {0}", item.order_label);
+                                string mail_body = string.Empty;
 
-                            case Notification.NotificationTypes.PRODUCT_PRICE_UPDATE_ERROR:
-                                break;
-
-                            case Notification.NotificationTypes.PRODUCT_SPECIAL_PRICE_UPDATE_ERROR:
-                                break;
-
-                            case Notification.NotificationTypes.PRODUCT_CUSTOM_PRICE_UPDATE_ERROR:
-                                break;
-
-                            case Notification.NotificationTypes.PRODUCT_QTY_UPDATE_ERROR:
-                                break;
-
-                            case Notification.NotificationTypes.PRODUCT_UPDATE_ERROR:
-                                break;
-
-                            case Notification.NotificationTypes.XML_SYNC_ERROR:
                                 item.is_notification_sent = true;
-                                item.notification_content = string.Format("XML SYNC ERROR {0}", item.xproduct_barcode);
+                                item.notification_content = mail_title;
                                 if (db_helper.notification.UpdateNotifications(customer.customer_id, [item])) {
-                                    Console.WriteLine("[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + item.xproduct_barcode + "]");
-                                    db_helper.notification.LogToServer(thread_id, "xml_sync_error", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification");
+                                    Console.WriteLine("[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title + "]");
+                                    db_helper.notification.LogToServer(thread_id, "order_process", mail_title + " => " + mail_body, customer.customer_id, "notification");
                                 }
-                                break;
+                            }
+                            break;
 
-                            case Notification.NotificationTypes.XML_QTY_CHANGED:
+                        case Notification.NotificationTypes.ORDER_SHIPPED:
+                            selected_order = orders?.Where(x => x.order_label == item.order_label).FirstOrDefault();
+
+                            if (selected_order != null) {
+                                string mail_title = string.Format("ORDER SHIPPED {0}", item.order_label);
+                                string mail_body = string.Empty;
+
                                 item.is_notification_sent = true;
-                                item.notification_content = string.Format("XML QTY CHANGED {0}", item.xproduct_barcode);
+                                item.notification_content = mail_title;
                                 if (db_helper.notification.UpdateNotifications(customer.customer_id, [item])) {
-                                    Console.WriteLine("[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + item.xproduct_barcode + "]");
-                                    db_helper.notification.LogToServer(thread_id, "xml_qty_changed", item.notification_content, customer.customer_id, "notification");
+                                    Console.WriteLine("[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title + "]");
+                                    db_helper.notification.LogToServer(thread_id, "order_shipped", mail_title + " => " + mail_body, customer.customer_id, "notification");
                                 }
-                                break;
-
-                            case Notification.NotificationTypes.XML_PRODUCT_REMOVED_BY_USER:
-                                item.is_notification_sent = true;
-                                item.notification_content = string.Format("XML PRODUCT REMOVED BY USER {0}", item.xproduct_barcode);
-                                if (db_helper.notification.UpdateNotifications(customer.customer_id, [item])) {
-                                    Console.WriteLine("[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + item.xproduct_barcode + "]");
-                                    db_helper.notification.LogToServer(thread_id, "xml_product_removed_by_user", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification");
-                                }
-                                break;
-
-                            case Notification.NotificationTypes.XML_SOURCE_FAILED:
-                                item.is_notification_sent = true;
-                                item.notification_content = string.Format("XML PRODUCT REMOVED {0}", item.xproduct_barcode);
-                                if (db_helper.notification.UpdateNotifications(customer.customer_id, [item])) {
-                                    Console.WriteLine("[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + item.xproduct_barcode + "]");
-                                    db_helper.notification.LogToServer(thread_id, "xml_product_removed", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification");
-                                }
-                                break;
-
-                            case Notification.NotificationTypes.NEW_INVOICE:
-                                item.is_notification_sent = true;
-                                item.notification_content = string.Format("NEW INVOICE {0}", item.invoice_no);
-                                if (db_helper.notification.UpdateNotifications(customer.customer_id, [item])) {
-                                    Console.WriteLine("[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + item.xproduct_barcode + "]");
-                                    db_helper.notification.LogToServer(thread_id, "new_invoice", item.notification_content + " => " + item.invoice_no, customer.customer_id, "notification");
-                                }
-                                break;
-
-                            case Notification.NotificationTypes.ORDER_COMPLETE:
-                                selected_order = orders?.Where(x => x.order_label == item.order_label).FirstOrDefault();
-
-                                if (selected_order != null) {
-                                    string mail_title = string.Format("ORDER COMPLETE {0}", item.order_label);
-                                    string mail_body = string.Empty;
-
-                                    item.is_notification_sent = true;
-                                    item.notification_content = mail_title;
-                                    if (db_helper.notification.UpdateNotifications(customer.customer_id, [item])) {
-                                        Console.WriteLine("[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title + "]");
-                                        db_helper.notification.LogToServer(thread_id, "order_complete", mail_title + " => " + mail_body, customer.customer_id, "notification");
-                                    }
-                                }
-                                break;
-
-                            case Notification.NotificationTypes.ORDER_PROCESS:
-                                selected_order = orders?.Where(x => x.order_label == item.order_label).FirstOrDefault();
-
-                                if (selected_order != null) {
-                                    string mail_title = string.Format("ORDER PROCESS {0}", item.order_label);
-                                    string mail_body = string.Empty;
-
-                                    item.is_notification_sent = true;
-                                    item.notification_content = mail_title;
-                                    if (db_helper.notification.UpdateNotifications(customer.customer_id, [item])) {
-                                        Console.WriteLine("[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title + "]");
-                                        db_helper.notification.LogToServer(thread_id, "order_process", mail_title + " => " + mail_body, customer.customer_id, "notification");
-                                    }
-                                }
-                                break;
-
-                            case Notification.NotificationTypes.ORDER_SHIPPED:
-                                selected_order = orders?.Where(x => x.order_label == item.order_label).FirstOrDefault();
-
-                                if (selected_order != null) {
-                                    string mail_title = string.Format("ORDER SHIPPED {0}", item.order_label);
-                                    string mail_body = string.Empty;
-
-                                    item.is_notification_sent = true;
-                                    item.notification_content = mail_title;
-                                    if (db_helper.notification.UpdateNotifications(customer.customer_id, [item])) {
-                                        Console.WriteLine("[" + DateTime.Now.ToString() + "] ID:" + item.id.ToString() + " notification sent [" + mail_title + "]");
-                                        db_helper.notification.LogToServer(thread_id, "order_shipped", mail_title + " => " + mail_body, customer.customer_id, "notification");
-                                    }
-                                }
-                                break;
-                        }
+                            }
+                            break;
                     }
                 }
             }
@@ -1107,76 +1102,200 @@ namespace MerchanterServer {
                 if (product_main_source != null && product_main_source == Constants.ANK_ERP) {
                     if (Helper.global.ank_erp != null && Helper.global.ank_erp.company_code != null && Helper.global.ank_erp.user_name != null && Helper.global.ank_erp.password != null && Helper.global.ank_erp.work_year != null && Helper.global.ank_erp.url != null) {
                         ANKERP ank_erp = new(Helper.global.ank_erp.company_code, Helper.global.ank_erp.user_name, Helper.global.ank_erp.password, Helper.global.ank_erp.work_year, Helper.global.ank_erp.url,
-                            """C:\ankaraerp""");
+                            """C:\MerchanterServer\ankaraerp""");
 
-                        //var ank_categories = ank_erp.GetCategories().Result;
-                        var ank_products = ank_erp.GetProducts().Result;
-
-                        if (ank_products != null && ank_products.Count > 0) {
-                            foreach (var zip_item in ank_products) {
-                                foreach (var item in (UrunSicil[])zip_item.DokumanPaket.Eleman.ElemanListe) {
-                                    if (Helper.global.product.is_barcode_required) {
-                                        if (string.IsNullOrWhiteSpace(item.UrunTanim.BarkodKodu?.ToString())) {
-                                            Debug.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ANK_ERP + " " + item.UrunTanim.SicilKodu + " barcode missing, not sync.");
-                                            continue;
-                                        }
+                        #region Category Pre-Sync
+                        var ank_categories = ank_erp.GetCategories().Result?.DokumanPaket.Eleman.ElemanListe.ToList();
+                        if (ank_categories != null && ank_categories.Count > 0) {
+                            foreach (var item in ank_categories) {
+                                if (item.Kodu == "0")
+                                    continue;
+                                var existed_category = categories?.FirstOrDefault(x => x.category_name.Split('-')[0] == item.Kodu);
+                                if (existed_category != null) {
+                                    bool need_update = false;
+                                    if (existed_category.category_name != item.Kodu + "-" + item.Adi) {
+                                        existed_category.category_name = item.Kodu + "-" + item.Adi;
+                                        need_update = true;
+                                    }
+                                    if (existed_category.is_active != (item.Pasif == "H")) {
+                                        existed_category.is_active = item.Pasif == "H";
+                                        need_update = true;
                                     }
 
-                                    if (!string.IsNullOrWhiteSpace(item.UrunTanim.SicilKodu)) {
-                                        #region Checking Product Extension If exist
-                                        Brand? existed_brand = brands.Where(x => x.brand_name.Trim().Equals(item.Skys.Sky.SkyMarkaAdi?.Trim().ToLower(), StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
-                                        ProductExtension? existed_p_ext = products_ext?.Where(x => x.sku == item.UrunTanim.SicilKodu).FirstOrDefault();
-                                        if (existed_p_ext != null) existed_p_ext.brand = existed_brand;
-                                        List<Category>? existed_p_cats = existed_p_ext != null ? categories?.Where(x => existed_p_ext.category_ids.Split(",").Contains(x.id.ToString())).ToList() : null;
-                                        if (existed_p_ext != null) existed_p_ext.categories = existed_p_cats;
-                                        #endregion
+                                    if (item.UstBaslik == "0") {
+                                        existed_category.parent_id = Helper.global.product.customer_root_category_id;
+                                    }
+                                    else {
+                                        var existed_parent_category = categories?.FirstOrDefault(x => x.category_name.Split('-')[0] == item.UstBaslik);
+                                        if (existed_parent_category != null) {
+                                            if (existed_category.parent_id != existed_parent_category.id) {
+                                                existed_category.parent_id = existed_parent_category.id;
+                                                need_update = true;
+                                            }
+                                        }
+                                        else {
+                                            existed_category.parent_id = Helper.global.product.customer_root_category_id;
+                                        }
+                                    }
+                                    if (need_update) {
+                                        if (db_helper.UpdateCategory(customer.customer_id, existed_category)) {
+                                            db_helper.LogToServer(thread_id, "product_category_updated", existed_category.category_name, customer.customer_id, "product");
+                                            Debug.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ANK_ERP + " " + existed_category.category_name + " category updated.");
+                                        }
+                                        else {
+                                            Debug.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ANK_ERP + " " + item.Kodu + "-" + item.Adi + " category update error.");
+                                        }
+                                    }
+                                }
+                                else {
+                                    Category c = new() {
+                                        customer_id = customer.customer_id,
+                                        category_name = item.Kodu + "-" + item.Adi,
+                                        is_active = item.Pasif == "H",
+                                        parent_id = Helper.global.product.customer_root_category_id
+                                    };
+                                    var inserted_category = db_helper.InsertCategory(customer.customer_id, c);
+                                    if (inserted_category != null) {
+                                        categories?.Add(inserted_category);
+                                        db_helper.LogToServer(thread_id, "product_category_inserted", inserted_category.category_name, customer.customer_id, "product");
+                                        Debug.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ANK_ERP + " " + inserted_category.category_name + " category inserted.");
+                                    }
+                                    else {
+                                        Debug.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ANK_ERP + " " + item.Kodu + "-" + item.Adi + " category insert error.");
+                                    }
+                                }
+                            }
+                        }
+                        #endregion
 
-                                        var p = new Product() {
-                                            customer_id = customer.customer_id,
-                                            sku = item.UrunTanim.SicilKodu,
-                                            barcode = item.UrunTanim.BarkodKodu ?? string.Empty,
-                                            name = item.UrunTanim.SicilAdiy,
-                                            type = Product.ProductTypes.SIMPLE,
-                                            tax = item.UrunTanim.KdvOrani,
-                                            currency = item.UrunTanim.ParaCinsi,
-                                            price = item.UrunTanim.PerSatFiyat,
-                                            tax_included = true,
-                                            extension = new ProductExtension() {
-                                                customer_id = customer.customer_id,
-                                                barcode = item.UrunTanim.BarkodKodu ?? string.Empty,
-                                                is_xml_enabled = false,
-                                                xml_sources = [],
-                                                sku = item.UrunTanim.SicilKodu,
-                                                brand_id = existed_brand != null ? existed_brand.id : (string.IsNullOrEmpty(item.Skys.Sky.SkyMarkaAdi) ? default_brand.id : 0),
-                                                brand = existed_brand ?? (string.IsNullOrEmpty(item.Skys.Sky.SkyMarkaAdi) ?
-                                                default_brand
-                                                : new Brand() {
-                                                    customer_id = customer.customer_id,
-                                                    brand_name = item.Skys.Sky.SkyMarkaAdi,
-                                                    status = true,
-                                                    id = 0
-                                                }),
-                                                category_ids = existed_p_ext != null ? existed_p_ext.category_ids : Helper.global.product.customer_root_category_id.ToString(),
-                                                categories = existed_p_cats ?? ([root_category])
-                                            },
-                                            sources = [ new ProductSource( customer.customer_id, 0,
+                        #region Product Memory Take
+                        var ank_products_zip = ank_erp.GetProducts().Result;
+                        //var ank_products_zip = ank_erp.GetProductsFromFolder("""C:\Users\caqn_\OneDrive\Masaüstü\otoahmet_produts""");
+                        List<UrunSicil> ank_products = [];
+                        if (ank_products_zip != null && ank_products_zip.Count > 0) {
+                            foreach (var zip_item in ank_products_zip) {
+                                ank_products.AddRange([.. zip_item.DokumanPaket.Eleman.ElemanListe]);
+                            }
+                        }
+                        else {
+                            Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " MAIN_SOURCE:" + Constants.ANK_ERP + " connection:products failed");
+                        }
+                        #endregion
+
+                        foreach (var item in ank_products) {
+                            if (Helper.global.product.is_barcode_required) {
+                                if (string.IsNullOrWhiteSpace(item.UrunTanim.BarkodKodu?.ToString())) {
+                                    Debug.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ANK_ERP + " " + item.UrunTanim.SicilKodu + " barcode missing, not sync.");
+                                    continue;
+                                }
+                            }
+
+                            if (!string.IsNullOrWhiteSpace(item.UrunTanim.SicilKodu)) {
+                                #region Checking existing Product Brand, Extension and Categories
+                                Brand? existed_brand = brands.Where(x => x.brand_name.Trim().Equals(item.Skys.Sky.SkyMarkaAdi?.Trim().ToLower(), StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
+                                ProductExtension? existed_p_ext = products_ext?.Where(x => x.sku == item.UrunTanim.SicilKodu).FirstOrDefault();
+                                if (existed_p_ext != null) existed_p_ext.brand = existed_brand;
+                                List<Category>? existed_p_cats = existed_p_ext != null ? categories?.Where(x => existed_p_ext.category_ids.Split(",").Contains(x.id.ToString())).ToList() : null;
+                                if (existed_p_ext != null) existed_p_ext.categories = existed_p_cats;
+                                #endregion
+
+                                #region Product Core
+                                var p = new Product() {
+                                    customer_id = customer.customer_id,
+                                    sku = item.UrunTanim.SicilKodu,
+                                    barcode = item.UrunTanim.BarkodKodu ?? string.Empty,
+                                    name = !string.IsNullOrWhiteSpace(item.UrunTanim.SicilAdiy) ? item.UrunTanim.SicilAdiy : item.UrunTanim.SicilAdi,
+                                    type = Product.ProductTypes.SIMPLE,
+                                    tax = item.UrunTanim.KdvOrani,
+                                    currency = item.UrunTanim.ParaCinsi,
+                                    price = item.UrunTanim.PerSatFiyat,
+                                    tax_included = true,
+                                    extension = new ProductExtension() {
+                                        customer_id = customer.customer_id,
+                                        barcode = item.UrunTanim.BarkodKodu ?? string.Empty,
+                                        is_xml_enabled = false,
+                                        xml_sources = [],
+                                        sku = item.UrunTanim.SicilKodu,
+                                        brand_id = existed_brand != null ? existed_brand.id : (string.IsNullOrEmpty(item.Skys.Sky.SkyMarkaAdi) ? default_brand.id : 0),
+                                        brand = existed_brand ?? (string.IsNullOrEmpty(item.Skys.Sky.SkyMarkaAdi) ?
+                                                                default_brand
+                                                                : new Brand() {
+                                                                    customer_id = customer.customer_id,
+                                                                    brand_name = item.Skys.Sky.SkyMarkaAdi,
+                                                                    status = true,
+                                                                    id = 0
+                                                                }),
+                                        category_ids = existed_p_ext != null ? existed_p_ext.category_ids : Helper.global.product.customer_root_category_id.ToString(),
+                                        categories = existed_p_cats ?? ([root_category])
+                                    },
+                                    sources = [ new ProductSource( customer.customer_id, 0,
                                             Constants.ANK_ERP,
                                             item.UrunTanim.SicilKodu,
                                             item.UrunTanim.BarkodKodu ?? string.Empty,
                                             item.UrunTanim.StokMevcudu > 0 ? item.UrunTanim.StokMevcudu : 0,
                                             true) ],
-                                        };
+                                    attributes = []
+                                };
+                                #endregion
 
-                                        live_products.Add(p);
+                                #region Product Category
+                                foreach (var category_code in item.UrunTanim.KategoriKodu.Split(",")) {
+                                    var temp_c = categories?.FirstOrDefault(x => x.category_name.Split("-")[0] == category_code);
+                                    if (temp_c != null) {
+                                        p.extension.categories.Add(temp_c);
+                                        p.extension.category_ids += "," + temp_c.id;
                                     }
                                     else {
-                                        Debug.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ANK_ERP + " " + " sku missing, not sync.");
+                                        var live_c = ank_categories?.FirstOrDefault(x => x.Kodu == category_code);
+                                        if (live_c != null && live_c.Kodu != "0") {
+                                            var live_parent_cat = ank_categories?.FirstOrDefault(x => x.Kodu == live_c.UstBaslik);
+                                            var existed_parent_cat = live_c.UstBaslik == "0" ? null : db_helper.GetCategoryByName(customer.customer_id, live_c.UstBaslik + "-" + live_parent_cat?.Adi);
+
+                                            var inserted_category = db_helper.InsertCategory(customer.customer_id, new Category() {
+                                                id = 0,
+                                                parent_id = existed_parent_cat != null ? existed_parent_cat.id : Helper.global.product.customer_root_category_id,
+                                                category_name = category_code + "-" + live_c.Adi,
+                                                is_active = live_c.Pasif == "H"
+                                            });
+                                            if (inserted_category != null) {
+                                                p.extension.categories.Add(inserted_category);
+                                                p.extension.category_ids += "," + inserted_category.id.ToString();
+                                            }
+                                            else {
+                                                Debug.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ANK_ERP + " " + category_code + " category insert error.");
+                                            }
+                                        }
                                     }
                                 }
+                                #endregion
+
+                                #region Product Attribute
+                                foreach (var image_item in item.Gsozelliks) {
+                                    if (!string.IsNullOrWhiteSpace(image_item.IBase64Value)) {
+                                        p.attributes.Add(new ProductAttribute() {
+                                            customer_id = customer.customer_id,
+                                            product_id = p.id,
+                                            sku = p.sku,
+                                            attribute_id = 3,
+                                            type = AttributeTypes.Image,
+                                            options = null,
+                                            option_ids = null,
+                                            value = image_item.IBase64Value
+                                        });
+                                    }
+                                }
+                                #endregion
+
+                                if (live_products.Any(x => x.sku == p.sku)) {
+                                    Debug.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ANK_ERP + " " + p.sku + " already exist, not sync.");
+                                }
+                                else {
+                                    live_products.Add(p);
+                                }
                             }
-                        }
-                        else {
-                            Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " MAIN_SOURCE:" + Constants.ANK_ERP + " connection:products failed");
+                            else {
+                                Debug.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ANK_ERP + " " + " sku missing, not sync.");
+                            }
                         }
                     }
                 }
@@ -1428,7 +1547,7 @@ namespace MerchanterServer {
                             if (is_update) {
                                 if (selected_product.id > 0) {
                                     item.id = selected_product.id;
-                                    if (db_helper.UpdateProducts(customer.customer_id, new List<Product> { item }, true)) {
+                                    if (db_helper.UpdateProducts(customer.customer_id, [item], true, false)) {
                                         Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Sku:" + item.sku + " " + "updated.");
                                         Debug.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Sku:" + item.sku + " " + "updated.");
                                     }
@@ -1460,68 +1579,55 @@ namespace MerchanterServer {
                     }
 
                     if (product_targets.Contains(Constants.IDEASOFT)) {
+                        //var live_idea_products = Helper.GetIdeaProducts();
+                        //var live_idea_categories = Helper.GetIdeaCategories();
+
                         foreach (var item in live_products) {
-                            bool is_update = false; bool is_insert = false;
+                            bool is_update = false; bool is_insert = false; bool is_update_attr = false;
                             var selected_product = products.Where(x => x.sku == item.sku).FirstOrDefault();
-
-                            #region Select Ideasoft Product
-                            IDEA_Product? selected_live_idea_product = null;
-                            using (Executioner executioner = new()) {
-                                if (!string.IsNullOrWhiteSpace(Helper.global.ideasoft.store_url) && !string.IsNullOrWhiteSpace(Helper.global.ideasoft.access_token)) {
-                                    string value = executioner.Execute(Helper.global.ideasoft.store_url + "/admin-api/products?s=" + item.sku + "&limit=100&page=1", RestSharp.Method.Get, null, Helper.global.ideasoft.access_token);
-                                    if (value != null) {
-                                        var filtered_live_idea_products = Newtonsoft.Json.JsonConvert.DeserializeObject<List<IDEA_Product>>(value);
-                                        selected_live_idea_product = filtered_live_idea_products?.Where(x => x.sku == item.sku).FirstOrDefault();
-                                    }
-                                }
-                            }
-                            #endregion
-
-                            if (selected_live_idea_product != null && selected_product != null) { //existing product
-                                #region Product Name
-                                //if (selected_product.name?.ToString().Trim().ToLower() != item.name?.ToString().Trim().ToLower()) {
-                                //    if (!string.IsNullOrWhiteSpace(item.name)) {
-                                //        selected_live_idea_product.name = item.name;
-                                //        selected_live_idea_product.fullName = item.name;
-                                //    }
-                                //}
-                                #endregion
-
-                                #region Tax
-                                //if (selected_product.tax_included != item.tax_included) {
-                                //    selected_live_idea_product.taxIncluded = item.tax_included ? 1 : 0;
-                                //}
-                                //if (selected_product.tax != item.tax) {
-                                //    selected_live_idea_product.tax = item.tax;
-                                //} 
-                                #endregion
-
-                                #region Barcode
-                                //if (selected_product.barcode != item.barcode) {
-                                //    is_update = true;
-                                //    selected_live_idea_product.barcode = item.barcode;
-                                //}
-                                #endregion
-
-                                #region Brand
-                                //if (selected_product.extension.brand.brand_name != item.extension.brand.brand_name) {
-                                //    is_update = true;
-
-                                //} 
-                                #endregion
-
+                            //var selected_live_idea_product = live_idea_products?.Where(x => x.sku == item.sku).FirstOrDefault();
+                            is_update = false;
+                            if (selected_product != null) { //existing product
                                 #region Qty
                                 if (selected_product.total_qty != item.total_qty) {
                                     is_update = true;
-                                    selected_live_idea_product.stockAmount = item.total_qty;
                                 }
                                 #endregion
 
                                 #region Price
                                 if (selected_product.price != item.price) {
                                     is_update = true;
-                                    selected_live_idea_product.price1 = item.price;
-                                    selected_live_idea_product.marketPriceDetail = item.price.ToString().Replace(".", string.Empty).Replace(",", ".");
+                                }
+                                #endregion
+
+                                #region Brand
+                                if (!selected_product.extension.brand.brand_name.Trim().Equals(item.extension.brand.brand_name.Trim(), StringComparison.CurrentCultureIgnoreCase)) {
+                                    is_update = true;
+                                }
+                                #endregion
+
+                                #region Category
+                                if (selected_product.extension.category_ids != item.extension.category_ids) {
+                                    is_update = true;
+                                }
+                                #endregion
+
+                                #region Attributes
+                                if (item.attributes != null) {
+                                    foreach (var pa in item.attributes) {
+                                        var pa_exist = selected_product.attributes?.Where(x => x.attribute_id == pa.attribute_id);
+                                        if (pa_exist != null) {
+                                            foreach (var pa_item_exist in pa_exist) {
+                                                if (pa_item_exist.value != pa.value) {
+                                                    pa_item_exist.value = pa.value;
+                                                    is_update_attr = true;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                else {
+                                    selected_product.attributes = [];
                                 }
                                 #endregion
                             }
@@ -1552,67 +1658,66 @@ namespace MerchanterServer {
                                         brand = item.extension.brand
                                     },
                                     total_qty = item.total_qty,
-                                    sources = item.sources
+                                    sources = item.sources,
+                                    attributes = item.attributes
                                 };
                                 is_insert = true;
                             }
 
                             if (is_update) {
-                                if (selected_live_idea_product != null && Helper.UpdateIdeaProduct(selected_live_idea_product)) {
-                                    Console.WriteLine("[" + DateTime.Now.ToString() + "] Sku:" + item.sku + " updated.");
-                                    db_helper.LogToServer(thread_id, "product_updated", Helper.global.settings.company_name + " Sku:" + item.sku, customer.customer_id, "product");
+                                //if (selected_live_idea_product != null && Helper.UpdateIdeaProduct(selected_live_idea_product.id, selected_live_idea_product.price1, selected_live_idea_product.stockAmount)) {
+                                //    Console.WriteLine("[" + DateTime.Now.ToString() + "] Sku:" + item.sku + " updated.");
+                                //    db_helper.LogToServer(thread_id, "product_updated", Helper.global.settings.company_name + " Sku:" + item.sku, customer.customer_id, "product");
 
-                                    if (selected_product.id > 0) {
-                                        item.id = selected_product.id;
-                                        if (db_helper.UpdateProducts(customer.customer_id, new List<Product> { item }, true)) {
-                                            Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Sku:" + item.sku + " " + "updated.");
-                                            Debug.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Sku:" + item.sku + " " + "updated.");
-                                        }
+                                if (selected_product.id > 0) {
+                                    item.id = selected_product.id;
+                                    if (db_helper.UpdateProducts(customer.customer_id, [item], true, is_update_attr)) {
+                                        Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Sku:" + item.sku + " " + "updated.");
+                                        Debug.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Sku:" + item.sku + " " + "updated.");
                                     }
                                 }
-                                else {
-                                    notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_UPDATE_ERROR, product_sku = item.sku, notification_content = Constants.IDEASOFT });
-                                    db_helper.LogToServer(thread_id, "product_update_error", Helper.global.settings.company_name + " Sku:" + item.sku, customer.customer_id, "product");
-                                }
+                                //}
+                                //else {
+                                //    notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_UPDATE_ERROR, product_sku = item.sku, notification_content = Constants.IDEASOFT });
+                                //    db_helper.LogToServer(thread_id, "product_update_error", Helper.global.settings.company_name + " Sku:" + item.sku, customer.customer_id, "product");
+                                //}
                             }
                             if (is_insert) {
-                                if (selected_live_idea_product != null) { //update idea product
-                                    bool need_to_update = (selected_live_idea_product.stockAmount != item.total_qty) || (selected_live_idea_product.price1 != item.price);
-
-                                    if (need_to_update) {
-                                        selected_live_idea_product.stockAmount = item.total_qty;
-                                        selected_live_idea_product.price1 = item.price;
-                                        selected_live_idea_product.marketPriceDetail = item.price.ToString().Replace(".", string.Empty).Replace(",", ".");
-                                        selected_live_idea_product.prices = [];
-
-                                        if (Helper.UpdateIdeaProduct(selected_live_idea_product)) {
-                                            Console.WriteLine("[" + DateTime.Now.ToString() + "] Sku:" + item.sku + " updated.");
-                                            db_helper.LogToServer(thread_id, "product_updated", Helper.global.settings.company_name + " Sku:" + item.sku, customer.customer_id, "product");
-                                        }
-                                        else {
-                                            notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_UPDATE_ERROR, product_sku = item.sku, notification_content = Constants.IDEASOFT });
-                                            db_helper.LogToServer(thread_id, "product_update_error", Helper.global.settings.company_name + " Sku:" + item.sku, customer.customer_id, "product");
-                                        }
-                                    }
-
-                                    if (selected_product.id == 0) {
-                                        if (selected_product.extension.brand_id == 0 && selected_product.extension.brand != null) { //insert brand
-                                            int inserted_brand_id = db_helper.InsertBrand(customer.customer_id, selected_product.extension.brand, true);
-                                            if (inserted_brand_id > 0) {
-                                                selected_product.extension.brand_id = inserted_brand_id;
-                                                selected_product.extension.brand.id = inserted_brand_id;
-                                            }
-                                        }
-                                        if (db_helper.InsertProducts(customer.customer_id, [selected_product], true)) {
-                                            Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Sku:" + item.sku + " " + "inserted.");
-                                            Debug.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Sku:" + item.sku + " " + "inserted.");
-                                            db_helper.LogToServer(thread_id, "new_product", Helper.global.settings.company_name + " Sku:" + item.sku, customer.customer_id, "product");
-                                        }
+                                if (selected_product.extension.brand_id == 0 && selected_product.extension.brand != null) { //insert brand
+                                    int inserted_brand_id = db_helper.InsertBrand(customer.customer_id, selected_product.extension.brand, true);
+                                    if (inserted_brand_id > 0) {
+                                        selected_product.extension.brand_id = inserted_brand_id;
+                                        selected_product.extension.brand.id = inserted_brand_id;
                                     }
                                 }
-                                else { //insert idea product
-
+                                if (db_helper.InsertProducts(customer.customer_id, [selected_product], true)) {
+                                    Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Sku:" + item.sku + " " + "inserted.");
+                                    Debug.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Sku:" + item.sku + " " + "inserted.");
+                                    db_helper.LogToServer(thread_id, "new_product", Helper.global.settings.company_name + " Sku:" + item.sku, customer.customer_id, "product");
                                 }
+
+                                //if (selected_live_idea_product != null) { //update idea product
+                                //    bool need_to_update = (selected_live_idea_product.stockAmount != item.total_qty) || (Math.Round(selected_live_idea_product.price1, 2) != item.price);
+
+                                //    if (false && need_to_update) {
+                                //        selected_live_idea_product.stockAmount = item.total_qty;
+                                //        selected_live_idea_product.price1 = item.price;
+                                //        selected_live_idea_product.marketPriceDetail = item.price.ToString().Replace(".", string.Empty).Replace(",", ".");
+                                //        selected_live_idea_product.prices = [];
+
+                                //        if (Helper.UpdateIdeaProduct(selected_live_idea_product)) {
+                                //            Console.WriteLine("[" + DateTime.Now.ToString() + "] Sku:" + item.sku + " updated.");
+                                //            db_helper.LogToServer(thread_id, "product_updated", Helper.global.settings.company_name + " Sku:" + item.sku, customer.customer_id, "product");
+                                //        }
+                                //        else {
+                                //            notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_UPDATE_ERROR, product_sku = item.sku, notification_content = Constants.IDEASOFT });
+                                //            db_helper.LogToServer(thread_id, "product_update_error", Helper.global.settings.company_name + " Sku:" + item.sku, customer.customer_id, "product");
+                                //        }
+                                //    }
+                                //}
+                                //else { //insert idea product
+
+                                //}
                             }
                         }
 

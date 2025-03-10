@@ -3,7 +3,8 @@
 		public int id { get; set; }
 		public int customer_id { get; set; }
 		public int product_id { get; set; }
-		public int attribute_id { get; set; }
+		public string? sku { get; set; } = null;
+        public int attribute_id { get; set; }
 		public Attribute attribute { get; set; }
 		public AttributeTypes type { get; set; }
 		public string? value { get; set; } = null;
