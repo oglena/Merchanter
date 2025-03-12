@@ -1,6 +1,7 @@
 ﻿using Merchanter.Classes;
 using Merchanter.Classes.Settings;
 using MySql.Data.MySqlClient;
+using static Org.BouncyCastle.Asn1.Cmp.Challenge;
 using Attribute = Merchanter.Classes.Attribute;
 
 namespace Merchanter {
@@ -763,11 +764,12 @@ namespace Merchanter {
         public bool SaveProductSettings(int _customer_id, SettingsProduct _settings) {
             try {
                 int val = 0;
-                string _query = "UPDATE settings_product SET default_brand=@default_brand,customer_root_category_id=@customer_root_category_id,is_barcode_required=@is_barcode_required,xml_qty_addictive_enable=@xml_qty_addictive_enable WHERE customer_id=@customer_id";
+                string _query = "UPDATE settings_product SET default_brand=@default_brand,customer_root_category_id=@customer_root_category_id,product_list_filter_source_products=@product_list_filter_source_products,is_barcode_required=@is_barcode_required,xml_qty_addictive_enable=@xml_qty_addictive_enable WHERE customer_id=@customer_id";
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("default_brand", _settings.default_brand));
                 cmd.Parameters.Add(new MySqlParameter("customer_root_category_id", _settings.customer_root_category_id));
+                cmd.Parameters.Add(new MySqlParameter("product_list_filter_source_products", _settings.product_list_filter_source_products));
                 cmd.Parameters.Add(new MySqlParameter("is_barcode_required", _settings.is_barcode_required));
                 cmd.Parameters.Add(new MySqlParameter("xml_qty_addictive_enable", _settings.xml_qty_addictive_enable));
 
@@ -1222,6 +1224,7 @@ namespace Merchanter {
                         customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
                         default_brand = dataReader["default_brand"].ToString(),
                         customer_root_category_id = Convert.ToInt32(dataReader["customer_root_category_id"].ToString()),
+                        product_list_filter_source_products = Convert.ToBoolean(Convert.ToInt32(dataReader["product_list_filter_source_products"].ToString())),
                         is_barcode_required = Convert.ToBoolean(Convert.ToInt32(dataReader["is_barcode_required"].ToString())),
                         xml_qty_addictive_enable = Convert.ToBoolean(Convert.ToInt32(dataReader["xml_qty_addictive_enable"].ToString()))
                     };
@@ -2127,47 +2130,65 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_with_ext">Get with extension</param>
         /// <returns>[Error] returns 'null'</returns>
-        public List<Product> GetProducts(int _customer_id, out List<ProductExtension>? _exts, out List<Brand> _brands, out List<Category> _categories, out List<ProductSource>? _product_sources, bool _with_attr = false) {
+        public List<Product> GetProducts(int _customer_id, out List<ProductExtension> _exts, out List<Brand> _brands, out List<Category> _categories, out List<ProductSource>? _product_sources,
+            bool _with_attr = false) {
             _exts = []; _brands = []; _categories = []; _product_sources = [];
             try {
+                _brands = GetBrands(_customer_id);
+                _categories = GetCategories(_customer_id);
+
                 if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM products WHERE customer_id=@customer_id";
+                string _query = "SELECT p.id AS p_id, p.customer_id AS p_customer_id, p.source_product_id AS p_source_product_id, p.update_date AS p_update_date, p.sku AS p_sku, p.type AS p_type, p.total_qty AS p_total_qty, p.name AS p_name, p.barcode AS p_barcode, p.price AS p_price, p.special_price AS p_special_price, p.custom_price AS p_custom_price, p.currency AS p_currency, p.tax AS p_tax, p.tax_included AS p_tax_included, pe.id AS pe_id, pe.brand_id AS pe_brand_id, pe.category_ids AS pe_category_ids, pe.is_xml_enabled AS pe_is_xml_enabled, pe.xml_sources AS pe_xml_sources, pe.update_date AS pe_update_date FROM products AS p INNER JOIN products_ext AS pe ON p.sku = pe.sku WHERE p.customer_id=@customer_id;";
                 List<Product> list = [];
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.CommandTimeout = 3600;
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                MySqlDataReader dataReader = cmd.ExecuteReader();
+                MySqlDataReader dataReader = cmd.ExecuteReader(System.Data.CommandBehavior.KeyInfo);
                 while (dataReader.Read()) {
                     Product p = new Product {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        source_product_id = Convert.ToInt32(dataReader["source_product_id"].ToString()),
-                        update_date = Convert.ToDateTime(dataReader["update_date"].ToString()),
-                        sku = dataReader["sku"].ToString(),
-                        type = (Product.ProductTypes)Convert.ToInt32(dataReader["type"].ToString()),
-                        total_qty = Convert.ToInt32(dataReader["total_qty"].ToString()),
-                        name = dataReader["name"].ToString(),
-                        barcode = dataReader["barcode"].ToString(),
-                        price = decimal.Parse(dataReader["price"].ToString()),
-                        special_price = decimal.Parse(dataReader["special_price"].ToString()),
-                        custom_price = decimal.Parse(dataReader["custom_price"].ToString()),
-                        currency = dataReader["currency"].ToString(),
-                        tax = Convert.ToInt32(dataReader["tax"].ToString()),
-                        tax_included = Convert.ToBoolean(Convert.ToInt32(dataReader["tax_included"].ToString())),
+                        id = Convert.ToInt32(dataReader["p_id"].ToString()),
+                        customer_id = Convert.ToInt32(dataReader["p_customer_id"].ToString()),
+                        source_product_id = Convert.ToInt32(dataReader["p_source_product_id"].ToString()),
+                        update_date = Convert.ToDateTime(dataReader["p_update_date"].ToString()),
+                        sku = dataReader["p_sku"].ToString(),
+                        type = (Product.ProductTypes)Convert.ToInt32(dataReader["p_type"].ToString()),
+                        total_qty = Convert.ToInt32(dataReader["p_total_qty"].ToString()),
+                        name = dataReader["p_name"].ToString(),
+                        barcode = dataReader["p_barcode"].ToString(),
+                        price = decimal.Parse(dataReader["p_price"].ToString()),
+                        special_price = decimal.Parse(dataReader["p_special_price"].ToString()),
+                        custom_price = decimal.Parse(dataReader["p_custom_price"].ToString()),
+                        currency = dataReader["p_currency"].ToString(),
+                        tax = Convert.ToInt32(dataReader["p_tax"].ToString()),
+                        tax_included = Convert.ToBoolean(Convert.ToInt32(dataReader["p_tax_included"].ToString()))
+                    };
+                    p.extension = new ProductExtension() {
+                        id = Convert.ToInt32(dataReader["pe_id"].ToString()),
+                        customer_id = p.customer_id,
+                        sku = p.sku,
+                        barcode = p.barcode,
+                        brand_id = Convert.ToInt32(dataReader["pe_brand_id"].ToString()),
+                        category_ids = dataReader["pe_category_ids"].ToString(),
+                        is_xml_enabled = dataReader["pe_is_xml_enabled"].ToString() == "1",
+                        xml_sources = dataReader["pe_xml_sources"]?.ToString()?.Split(','),
+                        update_date = Convert.ToDateTime(dataReader["pe_update_date"].ToString())
                     };
                     list.Add(p);
                 }
                 dataReader.Close();
                 if (state == System.Data.ConnectionState.Open) connection.Close();
 
-                _brands = GetBrands(_customer_id);
-                _categories = GetCategories(_customer_id);
-                _exts = GetProductExts(_customer_id, ref _brands, ref _categories);
+                for (int i = 0; i < list.Count; i++) {
+                    if (list[i].extension.brand_id > 0)
+                        list[i].extension.brand = _brands.FirstOrDefault(x => x.id == list[i].extension.brand_id);
+                    if (!string.IsNullOrWhiteSpace(list[i].extension.category_ids))
+                        list[i].extension.categories = _categories?.Where(x => list[i].extension.category_ids.Split(",").Contains(x.id.ToString())).ToList();
+                }
+
+                //_exts = GetProductExts(_customer_id, ref _brands, ref _categories);
                 _product_sources = GetProductSources(_customer_id);
 
                 foreach (var item in list) {
-                    item.extension = _exts.Find(x => x.sku == item.sku);
-                    item.sources = _product_sources?.FindAll(x => x.sku == item.sku);
-
                     //var selected_ext = _exts.Find(x => x.sku == item.sku);
                     //if (selected_ext != null)
                     //    item.extension = selected_ext;
@@ -2175,14 +2196,14 @@ namespace Merchanter {
                     //    OnError("GetProducts: " + item.sku + " - Product Extension Not Found");
                     //    return null;
                     //}
-                    //
-                    //var selected_product_source = _product_sources?.FindAll(x => x.sku == item.sku);
-                    //if (selected_product_source != null)
-                    //    item.sources = selected_product_source;
-                    //else {
-                    //    OnError("GetProducts: " + item.sku + " - Product Source Not Found");
-                    //    return null;
-                    //}
+
+                    var selected_product_source = _product_sources?.FindAll(x => x.sku == item.sku);
+                    if (selected_product_source != null)
+                        item.sources = selected_product_source;
+                    else {
+                        OnError("GetProducts: " + item.sku + " - Product Source Not Found");
+                        return null;
+                    }
                 }
 
                 if (_with_attr) {
@@ -2202,6 +2223,7 @@ namespace Merchanter {
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
+                if (state == System.Data.ConnectionState.Open) connection.Close();
                 return null;
             }
         }
@@ -2381,6 +2403,99 @@ namespace Merchanter {
             catch (Exception ex) {
                 OnError(ex.ToString());
                 return -1;
+            }
+        }
+
+        /// <summary>
+        /// Gets products from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_keyword">Keyword</param>
+        /// <param name="_with_ext">Get with extension</param>
+        /// <returns>[Error] returns 'null'</returns>
+        public List<Product> SearchProducts(int _customer_id, string[] _skus, bool _with_attr = false, bool _with_ext = true) {
+            try {
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                string skus = string.Empty;
+                for (int i = 0; i < _skus.Length; i++) {
+                    if (i == 0)
+                        skus += "@sku" + i.ToString();
+                    else
+                        skus += "," + "@sku" + i.ToString();
+                }
+                string _query = "SELECT * FROM products WHERE sku IN (" + skus + ") AND customer_id=@customer_id ORDER BY id DESC";
+                List<Product> list = new List<Product>();
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                for (int i = 0; i < _skus.Length; i++) {
+                    cmd.Parameters.Add(new MySqlParameter("sku" + i.ToString(), _skus[i]));
+                }
+                //cmd.Parameters.Add(new MySqlParameter("keyword", string.Format("%{0}%", _keyword)));
+                MySqlDataReader dataReader = cmd.ExecuteReader();
+                while (dataReader.Read()) {
+                    Product p = new Product {
+                        id = Convert.ToInt32(dataReader["id"].ToString()),
+                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                        source_product_id = Convert.ToInt32(dataReader["source_product_id"].ToString()),
+                        update_date = Convert.ToDateTime(dataReader["update_date"].ToString()),
+                        sku = dataReader["sku"].ToString(),
+                        type = (Product.ProductTypes)Convert.ToInt32(dataReader["type"].ToString()),
+                        total_qty = Convert.ToInt32(dataReader["total_qty"].ToString()),
+                        name = dataReader["name"].ToString(),
+                        barcode = dataReader["barcode"].ToString(),
+                        price = decimal.Parse(dataReader["price"].ToString()),
+                        special_price = decimal.Parse(dataReader["special_price"].ToString()),
+                        custom_price = decimal.Parse(dataReader["custom_price"].ToString()),
+                        currency = dataReader["currency"].ToString(),
+                        tax = Convert.ToInt32(dataReader["tax"].ToString()),
+                        tax_included = Convert.ToBoolean(Convert.ToInt32(dataReader["tax_included"].ToString())),
+                    };
+                    list.Add(p);
+                }
+                dataReader.Close();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
+                if (_with_ext) {
+                    var exts = GetProductExts(_customer_id);
+                    foreach (var item in list) {
+                        var selected_ext = exts?.Where(x => x.sku == item.sku).FirstOrDefault();
+                        if (selected_ext != null)
+                            item.extension = selected_ext;
+                        else {
+                            OnError("SearchProducts: " + item.sku + " - Product Extension Not Found");
+                            return null;
+                        }
+                    }
+                }
+
+                if (_with_attr) {
+                    var attrs = GetProductAttributes(_customer_id);
+                    if (attrs != null) {
+                        foreach (var item in list) {
+                            item.attributes = [.. attrs.Where(x => x.product_id == item.id)];
+                        }
+                    }
+                    else {
+                        OnError("GetProducts: Product Attributes Not Found");
+                        return null;
+                    }
+                }
+
+                var product_sources = GetProductSources(_customer_id);
+                foreach (var item in list) {
+                    var selected_product_source = product_sources?.Where(x => x.sku == item.sku).ToList();
+                    if (selected_product_source != null)
+                        item.sources = selected_product_source;
+                    else {
+                        OnError("SearchProducts: " + item.sku + " - Product Source Not Found");
+                        return null;
+                    }
+                }
+
+                return list;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return null;
             }
         }
 
@@ -2655,15 +2770,20 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_products">Products</param>
         /// <param name="_with_ext">Insert with extension</param>
-        public bool InsertProducts(int _customer_id, List<Product> _products, bool _with_ext = true) {
+        public bool InsertProducts(int _customer_id, List<Product> _products, bool _with_ext = true, bool _with_attr = false) {
             try {
-                int val = 0;
+                UInt64 inserted_id = 0;
                 foreach (Product item in _products) {
                     if (this.IsProductExists(_customer_id, item.sku)) {
                         OnError("InsertProducts: " + item.sku + " - Product Already Exists");
                         return false;
                     }
-                    string _query = "INSERT INTO products (customer_id,source_product_id,sku,type,barcode,total_qty,price,special_price,custom_price,currency,tax,tax_included,name,sources) VALUES (@customer_id,@source_product_id,@sku,@type,@barcode,@total_qty,@price,@special_price,@custom_price,@currency,@tax,@tax_included,@name,@sources)";
+
+                    string _query = "START TRANSACTION;" +
+                        "INSERT INTO products (customer_id,source_product_id,sku,type,barcode,total_qty,price,special_price,custom_price,currency,tax,tax_included,name,sources) VALUES (@customer_id,@source_product_id,@sku,@type,@barcode,@total_qty,@price,@special_price,@custom_price,@currency,@tax,@tax_included,@name,@sources);" +
+                        "SELECT LAST_INSERT_ID();" +
+                        "COMMIT;";
+                    //string _query = "INSERT INTO products (customer_id,source_product_id,sku,type,barcode,total_qty,price,special_price,custom_price,currency,tax,tax_included,name,sources) VALUES (@customer_id,@source_product_id,@sku,@type,@barcode,@total_qty,@price,@special_price,@custom_price,@currency,@tax,@tax_included,@name,@sources)";
                     MySqlCommand cmd = new MySqlCommand(_query, connection);
                     cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                     cmd.Parameters.Add(new MySqlParameter("source_product_id", item.source_product_id));
@@ -2680,7 +2800,7 @@ namespace Merchanter {
                     cmd.Parameters.Add(new MySqlParameter("name", item.name));
                     cmd.Parameters.Add(new MySqlParameter("sources", string.Join(",", item.sources.Where(x => x.is_active).Select(x => x.name))));
                     if (state != System.Data.ConnectionState.Open) connection.Open();
-                    val += cmd.ExecuteNonQuery();
+                    inserted_id += (UInt64)cmd.ExecuteScalar();
                     if (state == System.Data.ConnectionState.Open) connection.Close();
                     foreach (var source_item in item.sources) {
                         if (!InsertProductSource(_customer_id, source_item)) {
@@ -2696,9 +2816,18 @@ namespace Merchanter {
                             }
                         }
                     }
+
+                    if (_with_attr) {
+                        if (item.attributes != null && item.attributes.Count > 0) {
+                            if (!UpdateProductAttributes(_customer_id, item.attributes, (int)inserted_id)) {
+                                OnError("UpdateProducts: " + item.sku + " - Product Attributes Update Error");
+                                return false;
+                            }
+                        }
+                    }
                 }
 
-                if (val > 0)
+                if (inserted_id > 0)
                     return true;
                 else return false;
             }
@@ -2757,9 +2886,9 @@ namespace Merchanter {
                         }
                     }
 
-                    if(_with_attr) {
+                    if (_with_attr) {
                         if (item.attributes != null && item.attributes.Count > 0) {
-                            if (!UpdateProductAttributes(_customer_id, item.attributes)) {
+                            if (!UpdateProductAttributes(_customer_id, item.attributes, item.id)) {
                                 OnError("UpdateProducts: " + item.sku + " - Product Attributes Update Error");
                                 return false;
                             }
@@ -3012,6 +3141,7 @@ namespace Merchanter {
             try {
                 if (this.IsProductExtExists(_customer_id, _source.sku)) {
                     OnError("Sku is already in table."); throw new Exception("Sku is already in table.");
+                    return false;
                 }
 
                 int val = 0;
@@ -3273,6 +3403,58 @@ namespace Merchanter {
                 if (state == System.Data.ConnectionState.Open)
                     connection.Close();
 
+                if (val > 0)
+                    return true;
+                else return false;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Updates the product attributes in the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_attrs">Product Attributes</param>
+        /// <returns>[No change] or [Error] returns 'false'</returns>
+        public bool UpdateProductAttributes(int _customer_id, List<ProductAttribute> _attrs, int _product_id) {
+            try {
+                UInt64 val = 0;
+                foreach (var item in _attrs) {
+                    if (item.product_id > 0) {
+                        string _query = "UPDATE product_attributes SET product_id=@product_id,value=@value,type=@type WHERE sku=@sku AND attribute_id=@attribute_id AND customer_id=@customer_id";
+                        MySqlCommand cmd = new MySqlCommand(_query, connection);
+                        cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                        cmd.Parameters.Add(new MySqlParameter("product_id", item.product_id));
+                        cmd.Parameters.Add(new MySqlParameter("sku", item.sku));
+                        cmd.Parameters.Add(new MySqlParameter("attribute_id", item.attribute_id));
+                        cmd.Parameters.Add(new MySqlParameter("type", item.type));
+                        cmd.Parameters.Add(new MySqlParameter("value", item.value));
+                        if (state != System.Data.ConnectionState.Open) connection.Open();
+                        val += (UInt64)cmd.ExecuteNonQuery();
+                        if (state == System.Data.ConnectionState.Open) connection.Close();
+                    }
+                    else {
+                        string _query = "START TRANSACTION;" +
+                            "INSERT INTO product_attributes (customer_id,product_id,sku,attribute_id,type,value,option_ids,update_date) VALUES (@customer_id,@product_id,@sku,@attribute_id,@type,@value,@option_ids,@update_date);" +
+                            "SELECT LAST_INSERT_ID();" +
+                            "COMMIT;";
+                        MySqlCommand cmd = new MySqlCommand(_query, connection);
+                        cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                        cmd.Parameters.Add(new MySqlParameter("product_id", _product_id));
+                        cmd.Parameters.Add(new MySqlParameter("sku", item.sku));
+                        cmd.Parameters.Add(new MySqlParameter("attribute_id", item.attribute_id));
+                        cmd.Parameters.Add(new MySqlParameter("type", (int)item.type));
+                        cmd.Parameters.Add(new MySqlParameter("value", item.value));
+                        cmd.Parameters.Add(new MySqlParameter("option_ids", item.option_ids));
+                        cmd.Parameters.Add(new MySqlParameter("update_date", DateTime.Now));
+                        if (state != System.Data.ConnectionState.Open) connection.Open();
+                        val += (UInt64)cmd.ExecuteScalar();
+                        if (state == System.Data.ConnectionState.Open) connection.Close();
+                    }
+                }
                 if (val > 0)
                     return true;
                 else return false;

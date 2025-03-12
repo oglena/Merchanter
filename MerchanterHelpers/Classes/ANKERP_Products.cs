@@ -140,7 +140,7 @@ public partial class UrunSicil {
 
     private UrunSicilUrunTanim urunTanimField;
 
-    private UrunSicilImages imagesField;
+    private UrunSicilImages[] imagesField;
 
     private UrunSicilMuadils muadilsField;
 
@@ -161,7 +161,7 @@ public partial class UrunSicil {
     }
 
     /// <remarks/>
-    public UrunSicilImages Images {
+    public UrunSicilImages[] Images {
         get {
             return this.imagesField;
         }
@@ -676,12 +676,12 @@ public partial class UrunSicilImages {
 [System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://www.ankarayazilim.com/UrunBilgisi")]
 public partial class UrunSicilImagesImage {
 
-    private object iFilenameField;
+    private string iFilenameField;
 
-    private object iBase64ValueField;
+    private string iBase64ValueField;
 
     /// <remarks/>
-    public object IFilename {
+    public string IFilename {
         get {
             return this.iFilenameField;
         }
@@ -691,7 +691,7 @@ public partial class UrunSicilImagesImage {
     }
 
     /// <remarks/>
-    public object IBase64Value {
+    public string IBase64Value {
         get {
             return this.iBase64ValueField;
         }
@@ -726,12 +726,12 @@ public partial class UrunSicilMuadils {
 [System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://www.ankarayazilim.com/UrunBilgisi")]
 public partial class UrunSicilMuadilsMuadil {
 
-    private object mUreticiAdiField;
+    private string mUreticiAdiField;
 
-    private object mUreticiKoduField;
+    private string mUreticiKoduField;
 
     /// <remarks/>
-    public object MUreticiAdi {
+    public string MUreticiAdi {
         get {
             return this.mUreticiAdiField;
         }
@@ -741,7 +741,7 @@ public partial class UrunSicilMuadilsMuadil {
     }
 
     /// <remarks/>
-    public object MUreticiKodu {
+    public string MUreticiKodu {
         get {
             return this.mUreticiKoduField;
         }
@@ -776,12 +776,12 @@ public partial class UrunSicilOems {
 [System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://www.ankarayazilim.com/UrunBilgisi")]
 public partial class UrunSicilOemsOem {
 
-    private object markaField;
+    private string markaField;
 
-    private object oemNoField;
+    private string oemNoField;
 
     /// <remarks/>
-    public object Marka {
+    public string Marka {
         get {
             return this.markaField;
         }
@@ -791,7 +791,7 @@ public partial class UrunSicilOemsOem {
     }
 
     /// <remarks/>
-    public object OemNo {
+    public string OemNo {
         get {
             return this.oemNoField;
         }
@@ -830,25 +830,25 @@ public partial class UrunSicilSkysSky {
 
     private string skyMarkaModelAdiField;
 
-    private object skyOemNoField;
+    private string skyOemNoField;
 
-    private object skyOzelKod4Field;
+    private string skyOzelKod4Field;
 
-    private object skyOzelKod5Field;
+    private string skyOzelKod5Field;
 
-    private object skyOzelKod6Field;
+    private string skyOzelKod6Field;
 
-    private object skyOzelKod7Field;
+    private string skyOzelKod7Field;
 
-    private object skyOzelKod8Field;
+    private string skyOzelKod8Field;
 
-    private object skyOzelKod9Field;
+    private string skyOzelKod9Field;
 
-    private object skyOzelKod10Field;
+    private string skyOzelKod10Field;
 
-    private object skyOtoakField;
+    private string skyOtoakField;
 
-    private object skyAktifmiField;
+    private string skyAktifmiField;
 
     /// <remarks/>
     public string SkyMarkaAdi {
@@ -871,7 +871,7 @@ public partial class UrunSicilSkysSky {
     }
 
     /// <remarks/>
-    public object SkyOemNo {
+    public string SkyOemNo {
         get {
             return this.skyOemNoField;
         }
@@ -881,7 +881,7 @@ public partial class UrunSicilSkysSky {
     }
 
     /// <remarks/>
-    public object SkyOzelKod4 {
+    public string SkyOzelKod4 {
         get {
             return this.skyOzelKod4Field;
         }
@@ -891,7 +891,7 @@ public partial class UrunSicilSkysSky {
     }
 
     /// <remarks/>
-    public object SkyOzelKod5 {
+    public string SkyOzelKod5 {
         get {
             return this.skyOzelKod5Field;
         }
@@ -901,7 +901,7 @@ public partial class UrunSicilSkysSky {
     }
 
     /// <remarks/>
-    public object SkyOzelKod6 {
+    public string SkyOzelKod6 {
         get {
             return this.skyOzelKod6Field;
         }
@@ -911,7 +911,7 @@ public partial class UrunSicilSkysSky {
     }
 
     /// <remarks/>
-    public object SkyOzelKod7 {
+    public string SkyOzelKod7 {
         get {
             return this.skyOzelKod7Field;
         }
@@ -921,7 +921,7 @@ public partial class UrunSicilSkysSky {
     }
 
     /// <remarks/>
-    public object SkyOzelKod8 {
+    public string SkyOzelKod8 {
         get {
             return this.skyOzelKod8Field;
         }
@@ -931,7 +931,7 @@ public partial class UrunSicilSkysSky {
     }
 
     /// <remarks/>
-    public object SkyOzelKod9 {
+    public string SkyOzelKod9 {
         get {
             return this.skyOzelKod9Field;
         }
@@ -941,7 +941,7 @@ public partial class UrunSicilSkysSky {
     }
 
     /// <remarks/>
-    public object SkyOzelKod10 {
+    public string SkyOzelKod10 {
         get {
             return this.skyOzelKod10Field;
         }
@@ -951,7 +951,7 @@ public partial class UrunSicilSkysSky {
     }
 
     /// <remarks/>
-    public object SkyOtoak {
+    public string SkyOtoak {
         get {
             return this.skyOtoakField;
         }
@@ -961,7 +961,7 @@ public partial class UrunSicilSkysSky {
     }
 
     /// <remarks/>
-    public object SkyAktifmi {
+    public string SkyAktifmi {
         get {
             return this.skyAktifmiField;
         }

@@ -104,6 +104,12 @@
 									</div>
 									<div class="row mt-3">
 										<div class="form-check form-switch mt-2 ms-3">
+											<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="settings.product.product_list_filter_source_products"></InputCheckbox>
+											<label class="form-check-label">&nbsp;<abbr title="This option will decrease load time for larger product count." class="initialism">Product list matches main source.</abbr></label>
+										</div>
+									</div>
+									<div class="row mt-3">
+										<div class="form-check form-switch mt-2 ms-3">
 											<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="settings.product.xml_qty_addictive_enable"></InputCheckbox>
 											<label class="form-check-label">&nbsp;<abbr title="If main source have positive stock, this disables qty increment from other sources." class="initialism">Qty Additive Status</abbr></label>
 										</div>
