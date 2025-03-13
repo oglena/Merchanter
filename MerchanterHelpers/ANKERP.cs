@@ -41,7 +41,7 @@ namespace MerchanterHelpers {
 
                 List<string> xmlreq = new List<string>();
                 xmlreq.Add("<root></root>"); //boş xml dokumanı gönder
-                client.InnerChannel.OperationTimeout = new TimeSpan(2, 0, 0);  //timeout 2 saat
+                client.InnerChannel.OperationTimeout = new TimeSpan(8, 0, 0);  //timeout 8 saat
                 BlobFile? res = await client.InvokeAsync(cuserdetail, string.Join("", xmlreq.ToArray())); //web servis çağrılıyor...
                 if (res.errormessages != null) {
                     Console.WriteLine(res.errormessages);
@@ -130,7 +130,7 @@ namespace MerchanterHelpers {
 
                 List<string> xmlreq = new List<string>();
                 xmlreq.Add("<root></root>"); //boş xml dokumanı gönder
-                client.InnerChannel.OperationTimeout = new TimeSpan(2, 0, 0);  //timeout 2 saat
+                client.InnerChannel.OperationTimeout = new TimeSpan(8, 0, 0);  //timeout 8 saat
                 BlobFile? res = await client.InvokeAsync(cuserdetail, string.Join("", xmlreq.ToArray())); //web servis çağrılıyor...
                 if (res.errormessages != null) {
                     Console.WriteLine(res.errormessages);

@@ -140,7 +140,7 @@ public partial class UrunSicil {
 
     private UrunSicilUrunTanim urunTanimField;
 
-    private UrunSicilImages[] imagesField;
+    private UrunSicilImage[] imagesField;
 
     private UrunSicilMuadils muadilsField;
 
@@ -161,7 +161,8 @@ public partial class UrunSicil {
     }
 
     /// <remarks/>
-    public UrunSicilImages[] Images {
+    [System.Xml.Serialization.XmlArrayItemAttribute("Image", IsNullable = false)]
+    public UrunSicilImage[] Images {
         get {
             return this.imagesField;
         }
@@ -655,26 +656,7 @@ public partial class UrunSicilUrunTanim {
 [System.SerializableAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
 [System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://www.ankarayazilim.com/UrunBilgisi")]
-public partial class UrunSicilImages {
-
-    private UrunSicilImagesImage imageField;
-
-    /// <remarks/>
-    public UrunSicilImagesImage Image {
-        get {
-            return this.imageField;
-        }
-        set {
-            this.imageField = value;
-        }
-    }
-}
-
-/// <remarks/>
-[System.SerializableAttribute()]
-[System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://www.ankarayazilim.com/UrunBilgisi")]
-public partial class UrunSicilImagesImage {
+public partial class UrunSicilImage {
 
     private string iFilenameField;
 

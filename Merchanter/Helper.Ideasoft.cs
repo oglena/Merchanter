@@ -9,13 +9,29 @@ namespace Merchanter {
     public static partial class Helper {
         public static bool UpdateIdeaProduct(int _id, decimal _price1, float _qty) {
             var pro_json = new {
-                price1= _price1, //_product.price1,
+                price1 = _price1, //_product.price1,
                 marketPriceDetail = _price1.ToString().Replace(".", string.Empty).Replace(",", "."), // _product.marketPriceDetail,
                 stockAmount = _qty, //_product.stockAmount,
             };
 
             using Executioner executioner = new();
             var json_qty = executioner.Execute(Helper.global.ideasoft.store_url + "/admin-api/products/" + _id.ToString(), RestSharp.Method.Put, pro_json, Helper.global.ideasoft.access_token);
+            if (json_qty != null) {
+                return true;
+            }
+            return false;
+        }
+        public static bool InsertIdeaProduct(string _sku, string _name, string _brand, string[] _categories, string _description, string[] _images, decimal _price1, float _qty) {
+            var pro_json = new {
+                sku = _sku,
+                name = _name,
+                price1 = _price1, //_product.price1,
+                marketPriceDetail = _price1.ToString().Replace(".", string.Empty).Replace(",", "."), // _product.marketPriceDetail,
+                stockAmount = _qty, //_product.stockAmount,
+            };
+
+            using Executioner executioner = new();
+            var json_qty = executioner.Execute(Helper.global.ideasoft.store_url + "/admin-api/products", RestSharp.Method.Post, pro_json, Helper.global.ideasoft.access_token);
             if (json_qty != null) {
                 return true;
             }
