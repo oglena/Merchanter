@@ -39,7 +39,7 @@ namespace Merchanter {
                     }
 
                     var response = restClient.Execute( request );
-                    if( response.StatusCode == System.Net.HttpStatusCode.OK ) {
+                    if( response.StatusCode == System.Net.HttpStatusCode.OK || response.StatusCode == System.Net.HttpStatusCode.Created ) {
                         Debug.WriteLine( "Executed!.. M:" + _method.ToString() + " | URL:'" + _url + "'" );
                         return response.Content;
                     }

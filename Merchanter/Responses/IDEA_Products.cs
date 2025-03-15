@@ -72,7 +72,7 @@ public class IDEA_Brand {
 }
 
 public class IDEA_Detail {
-    public int id { get; set; }
+    public int? id { get; set; }
     public string details { get; set; }
     public object extraDetails { get; set; }
 }
