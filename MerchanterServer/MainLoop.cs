@@ -1628,15 +1628,15 @@ namespace MerchanterServer {
                     }
 
                     if (product_targets.Contains(Constants.IDEASOFT)) {
-                        //var live_idea_products = Helper.GetIdeaProducts();
+                        var live_idea_products = Helper.GetIdeaProducts();
                         var live_idea_categories = Helper.GetIdeaCategories();
                         var live_idea_brands = Helper.GetIdeaBrands();
 
                         foreach (var item in live_products) {
                             bool is_update = false; bool is_insert = false; bool is_update_attr = false;
                             var selected_product = products.Where(x => x.sku == item.sku).FirstOrDefault();
-                            //var selected_live_idea_product = live_idea_products?.Where(x => x.sku == item.sku).FirstOrDefault();
-                            var selected_live_idea_product = Helper.GetIdeaProduct(item.sku);
+                            var selected_live_idea_product = live_idea_products?.Where(x => x.sku == item.sku).FirstOrDefault();
+                            //var selected_live_idea_product = Helper.GetIdeaProduct(item.sku);
 
                             if (selected_product != null) { //existing product
                                 #region Qty
@@ -1743,71 +1743,26 @@ namespace MerchanterServer {
                                 }
                             }
                             else { //insert
-                                List<int> idea_category_ids = []; int? idea_brand_id = null;
+                                //List<int> idea_category_ids = []; int? idea_brand_id = null;
 
                                 #region IDEA Category Update
-                                foreach (var citem in item.extension.categories) {
-                                    //IDEA_Category? selected_idea_category = null;
-                                    //Category? selected_parentof_parent_category = null;
-                                    //if (citem.id != root_category?.id) {
-                                    //    var selected_parent_category = categories?.FirstOrDefault(x => x.id == citem.parent_id);
-                                    //    if (selected_parent_category != null) {
-                                    //        selected_parentof_parent_category = categories?.FirstOrDefault(x => x.id == selected_parent_category.parent_id);
-                                    //    }
-
-                                    //    if (selected_parent_category != null) {
-                                    //        if (selected_parent_category.id == root_category?.id) {
-                                    //            selected_idea_category = live_idea_categories?.FirstOrDefault(x => x.name == citem.category_name && x.parent == null);
-                                    //        }
-                                    //        else {
-                                    //            if (selected_parentof_parent_category != null) {
-                                    //                var idea_parentof_parent_category = live_idea_categories?.Where(x => x.name == selected_parentof_parent_category.category_name);
-                                    //                if (idea_parentof_parent_category.Any()) {
-                                    //                    foreach (var idea_category_item in idea_parentof_parent_category) {
-                                    //                        if (idea_category_item.name == selected_parentof_parent_category.category_name) {
-                                    //                            var selected_parent_idea_category = live_idea_categories?.Where(x => x.name == citem.category_name && x.parent.name == selected_parent_category.category_name);
-                                    //                            if (selected_parent_idea_category.Any()) {
-                                    //                                foreach (var selected_idea_category_item in selected_parent_idea_category) {
-                                    //                                    if()
-                                    //                                }
-                                    //                            }
-                                    //                        }
-                                    //                    }
-                                    //                }
-                                    //                else {
-                                    //                    selected_idea_category = live_idea_categories?.FirstOrDefault(x => x.name == citem.category_name && x.parent.name == selected_parent_category.category_name);
-                                    //                }
-                                    //            }
-                                    //            else {
-                                    //                selected_idea_category = live_idea_categories?.FirstOrDefault(x => x.name == citem.category_name && x.parent.name == selected_parent_category.category_name);
-                                    //            }
-                                    //        }
-                                    //    }
-
-                                    //    if (selected_idea_category != null) {
-                                    //        idea_category_ids.Add(selected_idea_category.id);
-                                    //    }
-                                    //    else {
-                                    //        var parent_name = categories.FirstOrDefault(x => x.id == citem.parent_id)?.category_name;
-                                    //        idea_category_ids.Add(Helper.InsertIdeaCategory(citem.category_name, live_idea_categories?.FirstOrDefault(x => x.name == parent_name)?.id));
-                                    //        live_idea_categories?.Add(new IDEA_Category() { id = idea_category_ids.Last(), name = citem.category_name });
-                                    //    }
-                                    //}
-                                }
+                                //foreach (var citem in item.extension.categories) {
+                                //
+                                //}
                                 #endregion
 
                                 #region IDEA Brand Update
-                                idea_brand_id = live_idea_brands?.FirstOrDefault(x => x.name == item.extension.brand.brand_name)?.id;
-                                if (idea_brand_id == null) {
-                                    idea_brand_id = Helper.InsertIdeaBrand(item.extension.brand.brand_name);
-                                    live_idea_brands?.Add(new IDEA_Brand() { id = idea_brand_id.Value, name = item.extension.brand.brand_name });
-                                }
+                                //idea_brand_id = live_idea_brands?.FirstOrDefault(x => x.name == item.extension.brand.brand_name)?.id;
+                                //if (idea_brand_id == null) {
+                                //    idea_brand_id = Helper.InsertIdeaBrand(item.extension.brand.brand_name);
+                                //    live_idea_brands?.Add(new IDEA_Brand() { id = idea_brand_id.Value, name = item.extension.brand.brand_name });
+                                //}
                                 #endregion
 
-                                int inserted_idea_product_id = Helper.InsertIdeaProduct(is_insert ? selected_product : item, idea_brand_id, idea_category_ids);
-                                if (inserted_idea_product_id > 0) {
-
-                                }
+                                //int inserted_idea_product_id = Helper.InsertIdeaProduct(is_insert ? selected_product : item, idea_brand_id, idea_category_ids);
+                                //if (inserted_idea_product_id > 0) {
+                                //
+                                //}
                             }
 
                             if (is_update) {
@@ -1826,6 +1781,7 @@ namespace MerchanterServer {
                                     }
                                 }
                             }
+
                             if (is_insert) {
                                 if (selected_product.extension.brand_id == 0 && selected_product.extension.brand != null) { //insert brand
                                     int inserted_brand_id = db_helper.InsertBrand(customer.customer_id, selected_product.extension.brand, true);
