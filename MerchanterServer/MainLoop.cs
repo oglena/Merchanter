@@ -1120,8 +1120,8 @@ namespace MerchanterServer {
 
                         #region Product Memory Take
                         Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ANK_ERP + " product api take started.");
-                        //var ank_products_zip = ank_erp.GetProducts().Result;
-                        var ank_products_zip = ank_erp.GetProductsFromFolder("""C:\Users\caqn_\OneDrive\Masaüstü\otoahmet_products""");
+                        var ank_products_zip = ank_erp.GetProducts().Result;
+                        //var ank_products_zip = ank_erp.GetProductsFromFolder("""C:\Users\caqn_\OneDrive\Masaüstü\otoahmet_products_2""");
                         List<UrunSicil> ank_products = [];
                         if (ank_products_zip != null && ank_products_zip.Count > 0) {
                             foreach (var zip_item in ank_products_zip) {
@@ -1733,13 +1733,15 @@ namespace MerchanterServer {
                             }
 
                             if (selected_live_idea_product != null) {
-                                if (Helper.UpdateIdeaProduct(selected_live_idea_product.id, selected_live_idea_product.price1, selected_live_idea_product.stockAmount)) {
-                                    Console.WriteLine("[" + DateTime.Now.ToString() + "] Sku:" + item.sku + " updated." + " (" + Constants.IDEASOFT + ")");
-                                    db_helper.LogToServer(thread_id, "product_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
-                                }
-                                else {
-                                    notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_UPDATE_ERROR, product_sku = item.sku, notification_content = Constants.IDEASOFT });
-                                    db_helper.LogToServer(thread_id, "product_update_error", Helper.global.settings.company_name + " Sku:" + item.sku, customer.customer_id, "product");
+                                if (Math.Round(selected_live_idea_product.price1,2,MidpointRounding.AwayFromZero) != item.price || selected_live_idea_product.stockAmount != item.total_qty) {
+                                    if (Helper.UpdateIdeaProduct(selected_live_idea_product.id, item.price, item.total_qty)) {
+                                        Console.WriteLine("[" + DateTime.Now.ToString() + "] Sku:" + item.sku + " updated." + " (" + Constants.IDEASOFT + ")");
+                                        db_helper.LogToServer(thread_id, "product_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
+                                    }
+                                    else {
+                                        notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_UPDATE_ERROR, product_sku = item.sku, notification_content = Constants.IDEASOFT });
+                                        db_helper.LogToServer(thread_id, "product_update_error", Helper.global.settings.company_name + " Sku:" + item.sku, customer.customer_id, "product");
+                                    }
                                 }
                             }
                             else { //insert

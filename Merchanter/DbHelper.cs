@@ -2121,6 +2121,7 @@ namespace Merchanter {
         #endregion
 
         #region Catalog
+
         #region Products
         /// <summary>
         /// Gets the products from the database
