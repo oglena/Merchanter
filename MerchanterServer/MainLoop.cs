@@ -1778,80 +1778,80 @@ namespace MerchanterServer {
                                 }
                                 else { //insert
                                     #region IDEA Category Update
-                                    //List<int> idea_category_ids = [];
-                                    //foreach (var citem in item.extension.categories) {
-                                    //    if (citem.id == Helper.global.product.customer_root_category_id) continue;
-                                    //    if (citem.id == 0) {
-                                    //        citem.id = db_helper.InsertCategory(customer.customer_id, citem)?.id ?? 0;
-                                    //    }
+                                    List<int> idea_category_ids = [];
+                                    foreach (var citem in item.extension.categories) {
+                                        if (citem.id == Helper.global.product.customer_root_category_id) continue;
+                                        if (citem.id == 0) {
+                                            citem.id = db_helper.InsertCategory(customer.customer_id, citem)?.id ?? 0;
+                                        }
 
-                                    //    var category_relation = category_target_relation.FirstOrDefault(x => x.category_id == citem.id);
-                                    //    if (category_relation != null) {
-                                    //        idea_category_ids.Add(category_relation.target_id);
-                                    //    }
-                                    //    else {
-                                    //        int? idea_category_id = live_idea_categories?.FirstOrDefault(x => x.name == citem.category_name)?.id;
-                                    //        if (idea_category_id.HasValue) {
-                                    //            db_helper.InsertCategoryTarget(customer.customer_id, new CategoryTarget() {
-                                    //                customer_id = customer.customer_id,
-                                    //                category_id = citem.id,
-                                    //                target_id = idea_category_id.Value,
-                                    //                target_name = Constants.IDEASOFT
-                                    //            });
-                                    //            idea_category_ids.Add(idea_category_id.Value);
-                                    //        }
-                                    //        else {
-                                    //            if (!string.IsNullOrWhiteSpace(citem.category_name)) {
-                                    //                idea_category_id = Helper.InsertIdeaCategory(citem.category_name, category_target_relation.FirstOrDefault(x => x.category_id == citem.parent_id)?.target_id);
-                                    //                live_idea_categories?.Add(new IDEA_Category() { id = idea_category_id.Value, name = citem.category_name });
-                                    //                if (idea_category_id.HasValue && idea_category_id > 0) {
-                                    //                    db_helper.InsertCategoryTarget(customer.customer_id, new CategoryTarget() {
-                                    //                        customer_id = customer.customer_id,
-                                    //                        category_id = citem.id,
-                                    //                        target_id = idea_category_id.Value,
-                                    //                        target_name = Constants.IDEASOFT
-                                    //                    });
-                                    //                    idea_category_ids.Add(idea_category_id.Value);
-                                    //                    Console.WriteLine("[" + DateTime.Now.ToString() + "] Category:" + citem.category_name + " updated." + " (" + Constants.IDEASOFT + ")");
-                                    //                    db_helper.LogToServer(thread_id, "category_inserted", Helper.global.settings.company_name + " Category:" + citem.category_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
-                                    //                }
-                                    //                else {
-                                    //                    Console.WriteLine("[" + DateTime.Now.ToString() + "] Category:" + citem.category_name + " insert failed." + " (" + Constants.IDEASOFT + ")");
-                                    //                    db_helper.LogToServer(thread_id, "category_insert_error", Helper.global.settings.company_name + " Category:" + citem.category_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
-                                    //                }
-                                    //            }
-                                    //        }
-                                    //    }
-                                    //}
+                                        var category_relation = category_target_relation.FirstOrDefault(x => x.category_id == citem.id);
+                                        if (category_relation != null) {
+                                            idea_category_ids.Add(category_relation.target_id);
+                                        }
+                                        else {
+                                            int? idea_category_id = live_idea_categories?.FirstOrDefault(x => x.name == citem.category_name)?.id;
+                                            if (idea_category_id.HasValue) {
+                                                db_helper.InsertCategoryTarget(customer.customer_id, new CategoryTarget() {
+                                                    customer_id = customer.customer_id,
+                                                    category_id = citem.id,
+                                                    target_id = idea_category_id.Value,
+                                                    target_name = Constants.IDEASOFT
+                                                });
+                                                idea_category_ids.Add(idea_category_id.Value);
+                                            }
+                                            else {
+                                                if (!string.IsNullOrWhiteSpace(citem.category_name)) {
+                                                    idea_category_id = Helper.InsertIdeaCategory(citem.category_name, category_target_relation.FirstOrDefault(x => x.category_id == citem.parent_id)?.target_id);
+                                                    live_idea_categories?.Add(new IDEA_Category() { id = idea_category_id.Value, name = citem.category_name });
+                                                    if (idea_category_id.HasValue && idea_category_id > 0) {
+                                                        db_helper.InsertCategoryTarget(customer.customer_id, new CategoryTarget() {
+                                                            customer_id = customer.customer_id,
+                                                            category_id = citem.id,
+                                                            target_id = idea_category_id.Value,
+                                                            target_name = Constants.IDEASOFT
+                                                        });
+                                                        idea_category_ids.Add(idea_category_id.Value);
+                                                        Console.WriteLine("[" + DateTime.Now.ToString() + "] Category:" + citem.category_name + " updated." + " (" + Constants.IDEASOFT + ")");
+                                                        db_helper.LogToServer(thread_id, "category_inserted", Helper.global.settings.company_name + " Category:" + citem.category_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
+                                                    }
+                                                    else {
+                                                        Console.WriteLine("[" + DateTime.Now.ToString() + "] Category:" + citem.category_name + " insert failed." + " (" + Constants.IDEASOFT + ")");
+                                                        db_helper.LogToServer(thread_id, "category_insert_error", Helper.global.settings.company_name + " Category:" + citem.category_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
                                     #endregion
 
                                     #region IDEA Brand Update
-                                    //var idea_brand_id = live_idea_brands?.FirstOrDefault(x => x.name == item.extension.brand?.brand_name)?.id;
-                                    //if (idea_brand_id == null && item.extension.brand != null && !string.IsNullOrWhiteSpace(item.extension.brand.brand_name)) {
-                                    //    idea_brand_id = Helper.InsertIdeaBrand(item.extension.brand.brand_name);
-                                    //    if (idea_brand_id > 0) {
-                                    //        live_idea_brands?.Add(new IDEA_Brand() { id = idea_brand_id.Value, name = item.extension.brand.brand_name });
+                                    var idea_brand_id = live_idea_brands?.FirstOrDefault(x => x.name == item.extension.brand?.brand_name)?.id;
+                                    if (idea_brand_id == null && item.extension.brand != null && !string.IsNullOrWhiteSpace(item.extension.brand.brand_name)) {
+                                        idea_brand_id = Helper.InsertIdeaBrand(item.extension.brand.brand_name);
+                                        if (idea_brand_id > 0) {
+                                            live_idea_brands?.Add(new IDEA_Brand() { id = idea_brand_id.Value, name = item.extension.brand.brand_name });
 
-                                    //        Console.WriteLine("[" + DateTime.Now.ToString() + "] Brand:" + item.extension.brand.brand_name + " updated." + " (" + Constants.IDEASOFT + ")");
-                                    //        db_helper.LogToServer(thread_id, "brand_inserted", Helper.global.settings.company_name + " Brand:" + item.extension.brand.brand_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
-                                    //    }
-                                    //    else {
-                                    //        Console.WriteLine("[" + DateTime.Now.ToString() + "] Brand:" + item.extension.brand.brand_name + " insert failed." + " (" + Constants.IDEASOFT + ")");
-                                    //        db_helper.LogToServer(thread_id, "brand_insert_error", Helper.global.settings.company_name + " Brand:" + item.extension.brand.brand_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
-                                    //    }
-                                    //}
+                                            Console.WriteLine("[" + DateTime.Now.ToString() + "] Brand:" + item.extension.brand.brand_name + " updated." + " (" + Constants.IDEASOFT + ")");
+                                            db_helper.LogToServer(thread_id, "brand_inserted", Helper.global.settings.company_name + " Brand:" + item.extension.brand.brand_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
+                                        }
+                                        else {
+                                            Console.WriteLine("[" + DateTime.Now.ToString() + "] Brand:" + item.extension.brand.brand_name + " insert failed." + " (" + Constants.IDEASOFT + ")");
+                                            db_helper.LogToServer(thread_id, "brand_insert_error", Helper.global.settings.company_name + " Brand:" + item.extension.brand.brand_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
+                                        }
+                                    }
                                     #endregion
 
-                                    //idea_product_id = Helper.InsertIdeaProduct(is_insert ? selected_product : item, idea_brand_id, idea_category_ids);
-                                    //if (idea_product_id > 0) {
-                                    //    is_processed = true;
-                                    //    Console.WriteLine("[" + DateTime.Now.ToString() + "] Sku:" + (is_insert ? selected_product.sku : item.sku) + " inserted." + " (" + Constants.IDEASOFT + ")");
-                                    //    db_helper.LogToServer(thread_id, "product_inserted", Helper.global.settings.company_name + " Sku:" + (is_insert ? selected_product.sku : item.sku) + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
-                                    //}
-                                    //else {
-                                    //    Console.WriteLine("[" + DateTime.Now.ToString() + "] Sku:" + (is_insert ? selected_product.sku : item.sku) + " insert failed." + " (" + Constants.IDEASOFT + ")");
-                                    //    db_helper.LogToServer(thread_id, "product_insert_error", Helper.global.settings.company_name + " Sku:" + (is_insert ? selected_product.sku : item.sku) + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
-                                    //}
+                                    idea_product_id = Helper.InsertIdeaProduct(is_insert ? selected_product : item, idea_brand_id, idea_category_ids);
+                                    if (idea_product_id > 0) {
+                                        is_processed = true;
+                                        Console.WriteLine("[" + DateTime.Now.ToString() + "] Sku:" + (is_insert ? selected_product.sku : item.sku) + " inserted." + " (" + Constants.IDEASOFT + ")");
+                                        db_helper.LogToServer(thread_id, "product_inserted", Helper.global.settings.company_name + " Sku:" + (is_insert ? selected_product.sku : item.sku) + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
+                                    }
+                                    else {
+                                        Console.WriteLine("[" + DateTime.Now.ToString() + "] Sku:" + (is_insert ? selected_product.sku : item.sku) + " insert failed." + " (" + Constants.IDEASOFT + ")");
+                                        db_helper.LogToServer(thread_id, "product_insert_error", Helper.global.settings.company_name + " Sku:" + (is_insert ? selected_product.sku : item.sku) + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
+                                    }
                                 }
                             }
 
