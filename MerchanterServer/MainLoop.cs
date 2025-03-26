@@ -116,19 +116,12 @@ namespace MerchanterServer {
 
                 default_brand = db_helper.GetDefaultBrand(customer.customer_id);
                 root_category = db_helper.GetRootCategory(customer.customer_id);
+                if (default_brand == null || root_category == null) { health = false; }
 
-                if (!Helper.global.product.product_list_filter_source_products) {
-                    products = db_helper.GetProducts(customer.customer_id, out brands, out categories, true, true);
-                    product_target_relation = db_helper.GetProductTargets(customer.customer_id);
-                    category_target_relation = db_helper.GetCategoryTargets(customer.customer_id);
-                }
-                else {
-                    brands = db_helper.GetBrands(customer.customer_id);
-                    categories = db_helper.GetCategories(customer.customer_id);
-                    product_sources = db_helper.GetProductSources(customer.customer_id);
-                    product_target_relation = db_helper.GetProductTargets(customer.customer_id);
-                    category_target_relation = db_helper.GetCategoryTargets(customer.customer_id);
-                }
+                products = db_helper.GetProducts(customer.customer_id, out brands, out categories, true, true);
+                product_target_relation = db_helper.GetProductTargets(customer.customer_id);
+                category_target_relation = db_helper.GetCategoryTargets(customer.customer_id);
+                if (products == null || product_target_relation == null || category_target_relation == null) { health = false; }
 
                 if (health) { this.ProductLoop(out health); }
 
@@ -1118,28 +1111,8 @@ namespace MerchanterServer {
                         ANKERP ank_erp = new(Helper.global.ank_erp.company_code, Helper.global.ank_erp.user_name, Helper.global.ank_erp.password, Helper.global.ank_erp.work_year, Helper.global.ank_erp.url,
                             """C:\MerchanterServer\ankaraerp""");
 
-                        #region Product Memory Take
-                        Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ANK_ERP + " product api take started.");
-                        var ank_products_zip = ank_erp.GetProducts().Result;
-                        //var ank_products_zip = ank_erp.GetProductsFromFolder("""C:\Users\caqn_\OneDrive\Masaüstü\otoahmet_products_2""");
-                        List<UrunSicil> ank_products = [];
-                        if (ank_products_zip != null && ank_products_zip.Count > 0) {
-                            foreach (var zip_item in ank_products_zip) {
-                                ank_products.AddRange([.. zip_item.DokumanPaket.Eleman.ElemanListe]);
-                            }
-                        }
-                        else {
-                            Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " MAIN_SOURCE:" + Constants.ANK_ERP + " connection:products failed");
-                        }
-                        Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ANK_ERP + " " + ank_products.Count + " products found in api.");
-                        ank_products = [.. ank_products.DistinctBy(x => x.UrunTanim.SicilKodu)];  //Remove duplicates
-                        Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ANK_ERP + " " + ank_products.Count + " products found in api. (removed duplicates list)");
-                        #endregion
-
                         #region Category Pre-Sync
-                        //Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ANK_ERP + " category sync started.");
                         var ank_categories = ank_erp.GetCategories().Result?.DokumanPaket.Eleman.ElemanListe.ToList();
-                        //var ank_categories = new List<KategoriItem>();
                         Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ANK_ERP + " total " + ank_categories?.Count + " categories found.");
                         if (ank_categories != null && ank_categories.Count > 0) {
                             foreach (var item in ank_categories) {
@@ -1202,9 +1175,29 @@ namespace MerchanterServer {
                                 }
                             }
                         }
+                        else {
+                            Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " MAIN_SOURCE:" + Constants.ANK_ERP + " connection:categories failed");
+                        }
                         Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ANK_ERP + " category sync ended.");
-
                         categories = db_helper.GetCategories(customer.customer_id);  //Re-take updated categories
+                        #endregion
+
+                        #region Product Memory Take
+                        Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ANK_ERP + " product api take started.");
+                        //var ank_products_zip = ank_erp.GetProducts().Result;
+                        var ank_products_zip = ank_erp.GetProductsFromFolder("""C:\Users\caqn_\OneDrive\Masaüstü\otoahmet_products_2""");
+                        List<UrunSicil> ank_products = [];
+                        if (ank_products_zip != null && ank_products_zip.Count > 0) {
+                            foreach (var zip_item in ank_products_zip) {
+                                ank_products.AddRange([.. zip_item.DokumanPaket.Eleman.ElemanListe]);
+                            }
+                        }
+                        else {
+                            Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " MAIN_SOURCE:" + Constants.ANK_ERP + " connection:products failed");
+                        }
+                        Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ANK_ERP + " " + ank_products.Count + " products found in api.");
+                        ank_products = [.. ank_products.DistinctBy(x => x.UrunTanim.SicilKodu)];  //Remove duplicates
+                        Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ANK_ERP + " " + ank_products.Count + " products found in api. --Duplicates removed by SKU !!!");
                         #endregion
 
                         #region Set Enabled Attributes
@@ -1226,14 +1219,22 @@ namespace MerchanterServer {
                             }
 
                             if (!string.IsNullOrWhiteSpace(item.UrunTanim.SicilKodu)) {
-                                #region Checking existing Product Brand, Extension and Categories
+                                #region Checking existing Product Brand and Categories
                                 Brand? existed_brand = !string.IsNullOrWhiteSpace(item.UrunTanim.UrAdi) ? brands.FirstOrDefault(x => x.brand_name == item.UrunTanim.UrAdi.Trim()) : default_brand;
-                                Product? existed_product = products?.FirstOrDefault(x => x.sku == item.UrunTanim.SicilKodu);
-                                List<Category>? existed_p_cats = null;
-                                if (existed_product != null) {
-                                    //existed_product.extension.brand_id = existed_brand?.id ?? 0;
-                                    //existed_product.extension.brand = existed_brand ?? new Brand() { customer_id = customer.customer_id, brand_name = item.UrunTanim.UrAdi, status = true };
-                                    existed_p_cats = categories?.Where(x => existed_product.extension.category_ids.Split(",").Contains(x.id.ToString())).ToList();
+                                List<Category> existed_p_cats = [root_category];
+                                foreach (var citem in item.UrunTanim.KategoriKodu.Split(",")) {
+                                    if (int.TryParse(citem, out int cat_code)) {
+                                        var existed_cat = categories?.FirstOrDefault(x => x.source_category_id == cat_code);
+                                        if (existed_cat != null) existed_p_cats.Add(existed_cat);
+                                        else {
+                                            existed_p_cats.Add(new Category() {
+                                                id = 0, customer_id = customer.customer_id, is_active = true,
+                                                source_category_id = Convert.ToInt32(citem),
+                                                category_name = ank_categories?.FirstOrDefault(x => x.Kodu == citem)?.Adi,
+                                                parent_id = Helper.global.product.customer_root_category_id
+                                            });
+                                        }
+                                    }
                                 }
                                 #endregion
 
@@ -1262,8 +1263,8 @@ namespace MerchanterServer {
                                                 status = true,
                                                 id = 0
                                             }),
-                                        category_ids = existed_product?.extension != null ? existed_product.extension.category_ids : Helper.global.product.customer_root_category_id.ToString(),
-                                        categories = existed_p_cats ?? ([root_category])
+                                        category_ids = string.Join(",", existed_p_cats.Select(x => x.id)),
+                                        categories = existed_p_cats
                                     },
                                     sources = [ new ProductSource( customer.customer_id, 0,
                                         Constants.ANK_ERP,
@@ -1276,66 +1277,66 @@ namespace MerchanterServer {
                                 #endregion
 
                                 #region Product Attribute
-                                var attr_descs = enabled_attributes.FirstOrDefault(x => x.attribute_name == "description");
-                                var attr_images = enabled_attributes.FirstOrDefault(x => x.attribute_name == "image");
-                                var attr_image_names = enabled_attributes.FirstOrDefault(x => x.attribute_name == "image_name");
-                                #region Description
-                                if (attr_descs != null) {
-                                    foreach (var description_item in item.Gsozelliks) {
-                                        if (!string.IsNullOrWhiteSpace(description_item.IBase64Value)) {
-                                            p.attributes.Add(new ProductAttribute() {
-                                                customer_id = customer.customer_id,
-                                                product_id = existed_product != null ? existed_product.id : 0,
-                                                sku = p.sku,
-                                                attribute_id = attr_descs.id,
-                                                type = AttributeTypes.Text,
-                                                options = null,
-                                                option_ids = null,
-                                                value = description_item.IBase64Value,
-                                                attribute = attr_descs
-                                            });
-                                        }
-                                    }
-                                }
-                                #endregion
-                                #region Image
-                                if (attr_images != null) {
-                                    foreach (var image_item in item.Images) {
-                                        if (!string.IsNullOrWhiteSpace(image_item.IBase64Value)) {
-                                            p.attributes.Add(new ProductAttribute() {
-                                                customer_id = customer.customer_id,
-                                                product_id = existed_product != null ? existed_product.id : 0,
-                                                sku = p.sku,
-                                                attribute_id = attr_images.id,
-                                                type = AttributeTypes.Image,
-                                                options = null,
-                                                option_ids = null,
-                                                value = image_item.IBase64Value,
-                                                attribute = attr_images
-                                            });
-                                        }
-                                    }
-                                }
-                                #endregion
-                                #region Image Name
-                                if (attr_image_names != null) {
-                                    foreach (var image_item in item.Images) {
-                                        if (!string.IsNullOrWhiteSpace(image_item.IFilename)) {
-                                            p.attributes.Add(new ProductAttribute() {
-                                                customer_id = customer.customer_id,
-                                                product_id = existed_product != null ? existed_product.id : 0,
-                                                sku = p.sku,
-                                                attribute_id = attr_image_names.id,
-                                                type = AttributeTypes.Text,
-                                                options = null,
-                                                option_ids = null,
-                                                value = image_item.IFilename,
-                                                attribute = attr_image_names
-                                            });
-                                        }
-                                    }
-                                }
-                                #endregion
+                                //var attr_descs = enabled_attributes.FirstOrDefault(x => x.attribute_name == "description");
+                                //var attr_images = enabled_attributes.FirstOrDefault(x => x.attribute_name == "image");
+                                //var attr_image_names = enabled_attributes.FirstOrDefault(x => x.attribute_name == "image_name");
+                                //#region Description
+                                //if (attr_descs != null) {
+                                //    foreach (var description_item in item.Gsozelliks) {
+                                //        if (!string.IsNullOrWhiteSpace(description_item.IBase64Value)) {
+                                //            p.attributes.Add(new ProductAttribute() {
+                                //                customer_id = customer.customer_id,
+                                //                product_id = existed_product != null ? existed_product.id : 0,
+                                //                sku = p.sku,
+                                //                attribute_id = attr_descs.id,
+                                //                type = AttributeTypes.Text,
+                                //                options = null,
+                                //                option_ids = null,
+                                //                value = description_item.IBase64Value,
+                                //                attribute = attr_descs
+                                //            });
+                                //        }
+                                //    }
+                                //}
+                                //#endregion
+                                //#region Image
+                                //if (attr_images != null) {
+                                //    foreach (var image_item in item.Images) {
+                                //        if (!string.IsNullOrWhiteSpace(image_item.IBase64Value)) {
+                                //            p.attributes.Add(new ProductAttribute() {
+                                //                customer_id = customer.customer_id,
+                                //                product_id = existed_product != null ? existed_product.id : 0,
+                                //                sku = p.sku,
+                                //                attribute_id = attr_images.id,
+                                //                type = AttributeTypes.Image,
+                                //                options = null,
+                                //                option_ids = null,
+                                //                value = image_item.IBase64Value,
+                                //                attribute = attr_images
+                                //            });
+                                //        }
+                                //    }
+                                //}
+                                //#endregion
+                                //#region Image Name
+                                //if (attr_image_names != null) {
+                                //    foreach (var image_item in item.Images) {
+                                //        if (!string.IsNullOrWhiteSpace(image_item.IFilename)) {
+                                //            p.attributes.Add(new ProductAttribute() {
+                                //                customer_id = customer.customer_id,
+                                //                product_id = existed_product != null ? existed_product.id : 0,
+                                //                sku = p.sku,
+                                //                attribute_id = attr_image_names.id,
+                                //                type = AttributeTypes.Text,
+                                //                options = null,
+                                //                option_ids = null,
+                                //                value = image_item.IFilename,
+                                //                attribute = attr_image_names
+                                //            });
+                                //        }
+                                //    }
+                                //}
+                                //#endregion
                                 #endregion
 
                                 live_products.Add(p);
@@ -1354,8 +1355,8 @@ namespace MerchanterServer {
             }
             finally {
                 Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + product_main_source + " " + live_products.Count + " live products loaded.");
-                live_products = [.. live_products.DistinctBy(x => x.sku)];
-                Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + product_main_source + " " + live_products.Count + " live products loaded. (removed duplicates list)");
+                live_products = [.. live_products.DistinctBy(x => x.sku)];  //Remove duplicates
+                Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + product_main_source + " " + live_products.Count + " live products loaded. --Duplicates removed by SKU !!!");
             }
         }
 
@@ -1604,10 +1605,14 @@ namespace MerchanterServer {
                             }
                             if (is_insert) {
                                 if (selected_product.id == 0) {
-                                    if (db_helper.InsertProducts(customer.customer_id, [selected_product], true, false)) {
+                                    if (db_helper.InsertProducts(customer.customer_id, [selected_product], true, false) > 0) {
                                         Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Sku:" + item.sku + " " + "inserted.");
                                         Debug.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Sku:" + item.sku + " " + "inserted.");
                                         db_helper.LogToServer(thread_id, "new_product", Helper.global.settings.company_name + " Sku:" + item.sku, customer.customer_id, "product");
+                                    }
+                                    else {
+                                        Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Sku:" + item.sku + " " + "insert error.");
+                                        Debug.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Sku:" + item.sku + " " + "insert error.");
                                     }
                                 }
                             }
@@ -1628,15 +1633,16 @@ namespace MerchanterServer {
                     }
 
                     if (product_targets.Contains(Constants.IDEASOFT)) {
-                        var live_idea_products = Helper.GetIdeaProducts();
+                        //var live_idea_products = Helper.GetIdeaProducts();
                         var live_idea_categories = Helper.GetIdeaCategories();
+                        Console.WriteLine("[" + DateTime.Now.ToString() + "] Total " + live_idea_categories?.Count + " categories found." + " (" + Constants.IDEASOFT + ")");
                         var live_idea_brands = Helper.GetIdeaBrands();
+                        Console.WriteLine("[" + DateTime.Now.ToString() + "] Total " + live_idea_brands?.Count + " brands found." + " (" + Constants.IDEASOFT + ")");
 
                         foreach (var item in live_products) {
-                            bool is_update = false; bool is_insert = false; bool is_update_attr = false;
+                            bool is_update = false; bool is_insert = false;
                             var selected_product = products.Where(x => x.sku == item.sku).FirstOrDefault();
-                            var selected_live_idea_product = live_idea_products?.Where(x => x.sku == item.sku).FirstOrDefault();
-                            //var selected_live_idea_product = Helper.GetIdeaProduct(item.sku);
+                            //var selected_live_idea_product = live_idea_products?.FirstOrDefault(x => x.sku == item.sku);
 
                             if (selected_product != null) { //existing product
                                 #region Qty
@@ -1661,7 +1667,10 @@ namespace MerchanterServer {
                                 #endregion
 
                                 #region Brand
-                                if (!selected_product.extension.brand.brand_name.Trim().Equals(item.extension.brand.brand_name.Trim())) {
+                                if (!selected_product.extension.brand.brand_name.Trim().Equals(item.extension.brand?.brand_name.Trim())) {
+                                    is_update = true;
+                                }
+                                if (selected_product.extension.brand_id != item.extension.brand_id) {
                                     is_update = true;
                                 }
                                 #endregion
@@ -1673,30 +1682,30 @@ namespace MerchanterServer {
                                 #endregion
 
                                 #region Attributes
-                                if (item.attributes != null && item.attributes.Count > 0) {
-                                    foreach (var pa in item.attributes) {
-                                        var pa_exist = selected_product.attributes?.Where(x => x.attribute_id == pa.attribute_id);
-                                        if (pa_exist != null && pa_exist.Any()) {
-                                            foreach (var pa_item_exist in pa_exist) {
-                                                if (pa_item_exist.id > 0) {
-                                                    item.id = pa_item_exist.id;
-                                                    if (pa_item_exist.value != pa.value) {
-                                                        pa.product_id = pa_item_exist.product_id;
-                                                        pa_item_exist.value = pa.value;
-                                                        is_update = true; is_update_attr = true;
-                                                    }
-                                                }
-                                                else {
-                                                    selected_product.attributes?.Add(pa);
-                                                    is_update = true; is_update_attr = true;
-                                                }
-                                            }
-                                        }
-                                        else {
-                                            is_update = true; is_update_attr = true;
-                                        }
-                                    }
-                                }
+                                //if (item.attributes != null && item.attributes.Count > 0) {
+                                //    foreach (var pa in item.attributes) {
+                                //        var pa_exist = selected_product.attributes?.Where(x => x.attribute_id == pa.attribute_id);
+                                //        if (pa_exist != null && pa_exist.Any()) {
+                                //            foreach (var pa_item_exist in pa_exist) {
+                                //                if (pa_item_exist.id > 0) {
+                                //                    item.id = pa_item_exist.id;
+                                //                    if (pa_item_exist.value != pa.value) {
+                                //                        pa.product_id = pa_item_exist.product_id;
+                                //                        pa_item_exist.value = pa.value;
+                                //                        is_update = true; is_update_attr = true;
+                                //                    }
+                                //                }
+                                //                else {
+                                //                    selected_product.attributes?.Add(pa);
+                                //                    is_update = true; is_update_attr = true;
+                                //                }
+                                //            }
+                                //        }
+                                //        else {
+                                //            is_update = true; is_update_attr = true;
+                                //        }
+                                //    }
+                                //}
                                 #endregion
                             }
                             else { //new product
@@ -1729,12 +1738,34 @@ namespace MerchanterServer {
                                     sources = item.sources,
                                     attributes = item.attributes
                                 };
-                                is_insert = true; is_update_attr = true;
+                                is_insert = true;
                             }
 
-                            if (selected_live_idea_product != null) {
-                                if (Math.Round(selected_live_idea_product.price1,2,MidpointRounding.AwayFromZero) != item.price || selected_live_idea_product.stockAmount != item.total_qty) {
-                                    if (Helper.UpdateIdeaProduct(selected_live_idea_product.id, item.price, item.total_qty)) {
+                            bool is_processed = false; int idea_product_id = 0;
+                            if (is_update) item.id = selected_product.id;  //important early arrangement
+                            if (is_update || is_insert) {
+                                var selected_live_idea_product = Helper.GetIdeaProduct(item.sku);
+                                if (selected_live_idea_product != null) {
+                                    //if (Math.Round(selected_live_idea_product.price1, 2, MidpointRounding.AwayFromZero) != item.price || selected_live_idea_product.stockAmount != item.total_qty) {
+                                    idea_product_id = selected_live_idea_product.id; //Helper.UpdateIdeaProduct(selected_live_idea_product.id, item.price, item.total_qty);
+                                    if (idea_product_id > 0) {
+                                        var product_relation = product_target_relation.FirstOrDefault(x => x.target_id == idea_product_id && x.target_name == Constants.IDEASOFT);
+                                        if (product_relation != null) {
+                                            if (product_relation.target_id != idea_product_id) {
+                                                product_relation.target_id = idea_product_id;
+                                                db_helper.UpdateProductTarget(customer.customer_id, product_relation);
+                                            }
+                                        }
+                                        else {
+                                            if (is_update)
+                                                db_helper.InsertProductTarget(customer.customer_id, new ProductTarget() {
+                                                    customer_id = customer.customer_id,
+                                                    product_id = item.id,
+                                                    target_id = idea_product_id,
+                                                    target_name = Constants.IDEASOFT
+                                                });
+                                        }
+                                        is_processed = true;
                                         Console.WriteLine("[" + DateTime.Now.ToString() + "] Sku:" + item.sku + " updated." + " (" + Constants.IDEASOFT + ")");
                                         db_helper.LogToServer(thread_id, "product_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
                                     }
@@ -1742,60 +1773,126 @@ namespace MerchanterServer {
                                         notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_UPDATE_ERROR, product_sku = item.sku, notification_content = Constants.IDEASOFT });
                                         db_helper.LogToServer(thread_id, "product_update_error", Helper.global.settings.company_name + " Sku:" + item.sku, customer.customer_id, "product");
                                     }
+                                    //}
+                                    //else is_processed = true;  //TODO: delete this after checking
+                                }
+                                else { //insert
+                                    #region IDEA Category Update
+                                    //List<int> idea_category_ids = [];
+                                    //foreach (var citem in item.extension.categories) {
+                                    //    if (citem.id == Helper.global.product.customer_root_category_id) continue;
+                                    //    if (citem.id == 0) {
+                                    //        citem.id = db_helper.InsertCategory(customer.customer_id, citem)?.id ?? 0;
+                                    //    }
+
+                                    //    var category_relation = category_target_relation.FirstOrDefault(x => x.category_id == citem.id);
+                                    //    if (category_relation != null) {
+                                    //        idea_category_ids.Add(category_relation.target_id);
+                                    //    }
+                                    //    else {
+                                    //        int? idea_category_id = live_idea_categories?.FirstOrDefault(x => x.name == citem.category_name)?.id;
+                                    //        if (idea_category_id.HasValue) {
+                                    //            db_helper.InsertCategoryTarget(customer.customer_id, new CategoryTarget() {
+                                    //                customer_id = customer.customer_id,
+                                    //                category_id = citem.id,
+                                    //                target_id = idea_category_id.Value,
+                                    //                target_name = Constants.IDEASOFT
+                                    //            });
+                                    //            idea_category_ids.Add(idea_category_id.Value);
+                                    //        }
+                                    //        else {
+                                    //            if (!string.IsNullOrWhiteSpace(citem.category_name)) {
+                                    //                idea_category_id = Helper.InsertIdeaCategory(citem.category_name, category_target_relation.FirstOrDefault(x => x.category_id == citem.parent_id)?.target_id);
+                                    //                live_idea_categories?.Add(new IDEA_Category() { id = idea_category_id.Value, name = citem.category_name });
+                                    //                if (idea_category_id.HasValue && idea_category_id > 0) {
+                                    //                    db_helper.InsertCategoryTarget(customer.customer_id, new CategoryTarget() {
+                                    //                        customer_id = customer.customer_id,
+                                    //                        category_id = citem.id,
+                                    //                        target_id = idea_category_id.Value,
+                                    //                        target_name = Constants.IDEASOFT
+                                    //                    });
+                                    //                    idea_category_ids.Add(idea_category_id.Value);
+                                    //                    Console.WriteLine("[" + DateTime.Now.ToString() + "] Category:" + citem.category_name + " updated." + " (" + Constants.IDEASOFT + ")");
+                                    //                    db_helper.LogToServer(thread_id, "category_inserted", Helper.global.settings.company_name + " Category:" + citem.category_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
+                                    //                }
+                                    //                else {
+                                    //                    Console.WriteLine("[" + DateTime.Now.ToString() + "] Category:" + citem.category_name + " insert failed." + " (" + Constants.IDEASOFT + ")");
+                                    //                    db_helper.LogToServer(thread_id, "category_insert_error", Helper.global.settings.company_name + " Category:" + citem.category_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
+                                    //                }
+                                    //            }
+                                    //        }
+                                    //    }
+                                    //}
+                                    #endregion
+
+                                    #region IDEA Brand Update
+                                    //var idea_brand_id = live_idea_brands?.FirstOrDefault(x => x.name == item.extension.brand?.brand_name)?.id;
+                                    //if (idea_brand_id == null && item.extension.brand != null && !string.IsNullOrWhiteSpace(item.extension.brand.brand_name)) {
+                                    //    idea_brand_id = Helper.InsertIdeaBrand(item.extension.brand.brand_name);
+                                    //    if (idea_brand_id > 0) {
+                                    //        live_idea_brands?.Add(new IDEA_Brand() { id = idea_brand_id.Value, name = item.extension.brand.brand_name });
+
+                                    //        Console.WriteLine("[" + DateTime.Now.ToString() + "] Brand:" + item.extension.brand.brand_name + " updated." + " (" + Constants.IDEASOFT + ")");
+                                    //        db_helper.LogToServer(thread_id, "brand_inserted", Helper.global.settings.company_name + " Brand:" + item.extension.brand.brand_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
+                                    //    }
+                                    //    else {
+                                    //        Console.WriteLine("[" + DateTime.Now.ToString() + "] Brand:" + item.extension.brand.brand_name + " insert failed." + " (" + Constants.IDEASOFT + ")");
+                                    //        db_helper.LogToServer(thread_id, "brand_insert_error", Helper.global.settings.company_name + " Brand:" + item.extension.brand.brand_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
+                                    //    }
+                                    //}
+                                    #endregion
+
+                                    //idea_product_id = Helper.InsertIdeaProduct(is_insert ? selected_product : item, idea_brand_id, idea_category_ids);
+                                    //if (idea_product_id > 0) {
+                                    //    is_processed = true;
+                                    //    Console.WriteLine("[" + DateTime.Now.ToString() + "] Sku:" + (is_insert ? selected_product.sku : item.sku) + " inserted." + " (" + Constants.IDEASOFT + ")");
+                                    //    db_helper.LogToServer(thread_id, "product_inserted", Helper.global.settings.company_name + " Sku:" + (is_insert ? selected_product.sku : item.sku) + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
+                                    //}
+                                    //else {
+                                    //    Console.WriteLine("[" + DateTime.Now.ToString() + "] Sku:" + (is_insert ? selected_product.sku : item.sku) + " insert failed." + " (" + Constants.IDEASOFT + ")");
+                                    //    db_helper.LogToServer(thread_id, "product_insert_error", Helper.global.settings.company_name + " Sku:" + (is_insert ? selected_product.sku : item.sku) + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
+                                    //}
                                 }
                             }
-                            else { //insert
-                                //List<int> idea_category_ids = []; int? idea_brand_id = null;
 
-                                #region IDEA Category Update
-                                //foreach (var citem in item.extension.categories) {
-                                //
-                                //}
-                                #endregion
-
-                                #region IDEA Brand Update
-                                //idea_brand_id = live_idea_brands?.FirstOrDefault(x => x.name == item.extension.brand.brand_name)?.id;
-                                //if (idea_brand_id == null) {
-                                //    idea_brand_id = Helper.InsertIdeaBrand(item.extension.brand.brand_name);
-                                //    live_idea_brands?.Add(new IDEA_Brand() { id = idea_brand_id.Value, name = item.extension.brand.brand_name });
-                                //}
-                                #endregion
-
-                                //int inserted_idea_product_id = Helper.InsertIdeaProduct(is_insert ? selected_product : item, idea_brand_id, idea_category_ids);
-                                //if (inserted_idea_product_id > 0) {
-                                //
-                                //}
-                            }
-
-                            if (is_update) {
-                                if (selected_product.id > 0) {
-                                    item.id = selected_product.id;
-                                    if (item.extension.brand_id == 0 && item.extension.brand != null) { //insert brand
-                                        int inserted_brand_id = db_helper.InsertBrand(customer.customer_id, item.extension.brand, true);
-                                        if (inserted_brand_id > 0) {
-                                            item.extension.brand_id = inserted_brand_id;
-                                            item.extension.brand.id = inserted_brand_id;
-                                        }
+                            if (is_processed && is_update) {
+                                if (item.extension.brand_id == 0 && item.extension.brand != null) { //checking brand
+                                    int inserted_brand_id = db_helper.InsertBrand(customer.customer_id, item.extension.brand, true);
+                                    if (inserted_brand_id > 0) {
+                                        item.extension.brand_id = inserted_brand_id;
+                                        item.extension.brand.id = inserted_brand_id;
                                     }
-                                    if (db_helper.UpdateProducts(customer.customer_id, [item], true, is_update_attr)) {
-                                        Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Sku:" + item.sku + " " + "updated.");
-                                        Debug.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Sku:" + item.sku + " " + "updated.");
-                                    }
+                                }
+                                if (db_helper.UpdateProducts(customer.customer_id, [item], true, false)) {
+                                    Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Sku:" + item.sku + " " + "updated.");
+                                    Debug.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Sku:" + item.sku + " " + "updated.");
                                 }
                             }
 
-                            if (is_insert) {
-                                if (selected_product.extension.brand_id == 0 && selected_product.extension.brand != null) { //insert brand
+                            if (is_processed && is_insert) {
+                                if (selected_product.extension.brand_id == 0 && selected_product.extension.brand != null) { //checking brand
                                     int inserted_brand_id = db_helper.InsertBrand(customer.customer_id, selected_product.extension.brand, true);
                                     if (inserted_brand_id > 0) {
                                         selected_product.extension.brand_id = inserted_brand_id;
                                         selected_product.extension.brand.id = inserted_brand_id;
                                     }
                                 }
-                                if (db_helper.InsertProducts(customer.customer_id, [selected_product], true, is_update_attr)) {
+                                int inserted_id = db_helper.InsertProducts(customer.customer_id, [selected_product], true, false);
+                                if (inserted_id > 0) {
+                                    if (idea_product_id > 0)
+                                        db_helper.InsertProductTarget(customer.customer_id, new ProductTarget() {
+                                            customer_id = customer.customer_id,
+                                            product_id = inserted_id,
+                                            target_id = idea_product_id,
+                                            target_name = Constants.IDEASOFT
+                                        });
                                     Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Sku:" + item.sku + " " + "inserted.");
                                     Debug.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Sku:" + item.sku + " " + "inserted.");
                                     db_helper.LogToServer(thread_id, "new_product", Helper.global.settings.company_name + " Sku:" + item.sku, customer.customer_id, "product");
+                                }
+                                else {
+                                    Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Sku:" + item.sku + " " + "insert error.");
+                                    Debug.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Sku:" + item.sku + " " + "insert error.");
                                 }
                             }
                         }

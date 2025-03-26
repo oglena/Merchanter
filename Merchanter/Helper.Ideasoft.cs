@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Merchanter {
     public static partial class Helper {
-        public static bool UpdateIdeaProduct(int _id, decimal _price1, float _qty) {
+        public static int UpdateIdeaProduct(int _id, decimal _price1, float _qty) {
             var pro_json = new {
                 price1 = _price1,
                 marketPriceDetail = _price1.ToString().Replace(".", string.Empty).Replace(",", "."),
@@ -15,11 +15,12 @@ namespace Merchanter {
             };
 
             using Executioner executioner = new();
-            var json_qty = executioner.Execute(Helper.global.ideasoft.store_url + "/admin-api/products/" + _id.ToString(), RestSharp.Method.Put, pro_json, Helper.global.ideasoft.access_token);
-            if (json_qty != null) {
-                return true;
+            var json = executioner.Execute(Helper.global.ideasoft.store_url + "/admin-api/products/" + _id.ToString(), RestSharp.Method.Put, pro_json, Helper.global.ideasoft.access_token);
+            if (json != null) {
+                var idea_product = Newtonsoft.Json.JsonConvert.DeserializeObject<IDEA_Product>(json);
+                return idea_product != null ? idea_product.id : 0;
             }
-            return false;
+            return 0;
         }
 
         public static int InsertIdeaProduct(Product _product, int? _brand_id, List<int> _category_ids) {

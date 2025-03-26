@@ -2763,13 +2763,13 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_products">Products</param>
         /// <param name="_with_ext">Insert with extension</param>
-        public bool InsertProducts(int _customer_id, List<Product> _products, bool _with_ext = true, bool _with_attr = false) {
+        public int InsertProducts(int _customer_id, List<Product> _products, bool _with_ext = true, bool _with_attr = false) {
             try {
                 UInt64 inserted_id = 0;
                 foreach (Product item in _products) {
                     if (this.IsProductExists(_customer_id, item.sku)) {
                         OnError("InsertProducts: " + item.sku + " - Product Already Exists");
-                        return false;
+                        return 0;
                     }
 
                     string _query = "START TRANSACTION;" +
@@ -2798,14 +2798,14 @@ namespace Merchanter {
                     foreach (var source_item in item.sources) {
                         if (!InsertProductSource(_customer_id, source_item)) {
                             OnError("InsertProducts: " + item.sku + " - Product Source Insert Error");
-                            return false;
+                            return 0;
                         }
                     }
                     if (_with_ext) {
                         if (item.extension != null) {
                             if (!InsertProductExt(_customer_id, item.extension)) {
                                 OnError("InsertProducts: " + item.sku + " - Product Extension Insert Error");
-                                return false;
+                                return 0;
                             }
                         }
                     }
@@ -2814,19 +2814,19 @@ namespace Merchanter {
                         if (item.attributes != null && item.attributes.Count > 0) {
                             if (!UpdateProductAttributes(_customer_id, item.attributes, (int)inserted_id)) {
                                 OnError("UpdateProducts: " + item.sku + " - Product Attributes Update Error");
-                                return false;
+                                return 0;
                             }
                         }
                     }
                 }
 
                 if (inserted_id > 0)
-                    return true;
-                else return false;
+                    return (int)inserted_id;
+                else return 0;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
-                return false;
+                return 0;
             }
         }
 
@@ -3615,7 +3615,7 @@ namespace Merchanter {
                     "COMMIT;";
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("category_id", _target.product_id));
+                cmd.Parameters.Add(new MySqlParameter("product_id", _target.product_id));
                 cmd.Parameters.Add(new MySqlParameter("target_id", _target.target_id));
                 cmd.Parameters.Add(new MySqlParameter("target_name", _target.target_name));
 
