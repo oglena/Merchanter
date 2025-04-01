@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MerchanterHelpers.Classes;
+using System;
 using System.IO;
 using System.Xml.Serialization;
 

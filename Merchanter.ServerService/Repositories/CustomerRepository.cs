@@ -58,7 +58,7 @@ namespace Merchanter.CustomerService.Repositories {
                 }
                 return await Task.Run( () => merchanterService.helper.GetLogsCount( _customer_id, filters ) );
             }
-            return -1;
+            return await Task.Run(() => merchanterService.helper.GetLogsCount(_customer_id));
         }
 
 
@@ -68,10 +68,12 @@ namespace Merchanter.CustomerService.Repositories {
         }
 
         private async Task<List<Log>> GetCustomerLogs( int _customer_id, ApiFilter _filters ) {
-            if( _filters.Filters != null && _filters.Pager != null ) {
-                Dictionary<string, string?> filters = new Dictionary<string, string?>();
-                foreach( var item in _filters.Filters ) {
-                    filters.Add( item.Field, Convert.ToString( item.Value ) );
+            if( _filters.Pager != null ) {
+                Dictionary<string, string?> filters = [];
+                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                    foreach (var item in _filters.Filters) {
+                        filters.Add(item.Field, Convert.ToString(item.Value));
+                    }
                 }
                 return await Task.Run( () => customer_logs = merchanterService.helper.GetLastLogs( _customer_id, filters,
                     _filters.Pager.ItemsPerPage, _filters.Pager.CurrentPageIndex )

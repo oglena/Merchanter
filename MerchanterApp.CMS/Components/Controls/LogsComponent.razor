@@ -17,15 +17,13 @@
             </h2>
         </div>
     </div>
-    @if (show_customer_select && customers != null)
-    {
+    @if (show_customer_select && customers != null) {
         <div class="row mt-3">
             <div class="col-12 ps-2">
                 <div class="form-floating">
                     <select class="form-select text-start" aria-label="servers-select" @onchange="CustomerSelected">
                         <option value="0" selected>Select a Customer to Show Logs...</option>
-                        @foreach (var item in customers)
-                        {
+                        @foreach (var item in customers) {
                             <option value="@item.customer_id" selected="@(item.customer_id == int.Parse(!string.IsNullOrWhiteSpace(CID) ? CID : "0"))">@item.user_name</option>
                         }
                     </select>
@@ -38,8 +36,7 @@
 <div class="container-fluid">
     <div class="row mt-3">
         <AlertComponent page_message="@page_message" />
-        @if (!string.IsNullOrWhiteSpace(CID) && int.Parse(CID) > 0)
-        {
+        @if (!string.IsNullOrWhiteSpace(CID) && int.Parse(CID) > 0) {
             <nav class="d-flex align-items-center justify-content-between bg-dark bg-gradient text-light rounded-2 mb-3">
                 <ul class="pagination my-2">
                     <li class="page-item">
@@ -67,8 +64,7 @@
         <div class="col-12 table-overflow p-0">
             <table class="table table-striped table-hover w-100">
                 <thead>
-                    @if (!string.IsNullOrWhiteSpace(CID))
-                    {
+                    @if (!string.IsNullOrWhiteSpace(CID)) {
                         <tr class="border-1">
                             <td class="w-25">
                                 <div class="form-floating">
@@ -148,11 +144,9 @@
                         </tr>
                     }
                 </thead>
-                @if (customer_logs.Count > 0)
-                {
+                @if (customer_logs.Count > 0) {
                     <tbody class="table-group-divider">
-                        @foreach (var item in customer_logs)
-                        {
+                        @foreach (var item in customer_logs) {
                             <tr>
                                 <td class="align-content-center">
                                     <span class='badge @(item.worker != "helper_instance" ? "text-bg-primary" : "text-bg-secondary")'>@item.worker</span>
@@ -160,16 +154,14 @@
                                 <td class="align-content-center">
                                     <span class='badge @(item.title == "thread" ? "text-bg-dark" : item.title.Contains("error") ? "text-bg-danger" : (item.title == "info" || item.title == "qp_mysqlupdate") ? "text-bg-info" : "text-bg-secondary")'>@item.title</span>
                                 </td>
-                                @if (item.worker == "notification")
-                                {
+                                @if (item.worker == "notification") {
                                     <td class="align-content-center">
                                         @(item.message.Split("=>")[0])
                                         <button type="button" class="btn btn-warning btn-sm" @onclick='() => Modal.Open(item.title,item.message.Split("=>")[0].Trim(),item.message.Split("=>")[1].Trim(),item.update_date.ToString())'>Show</button>
                                         <ModalComponent @ref="Modal"></ModalComponent>
                                     </td>
                                 }
-                                else
-                                {
+                                else {
                                     <td class="align-content-center user-select-all">
                                         @item.message
                                     </td>
@@ -181,8 +173,7 @@
                         }
                     </tbody>
                 }
-                else
-                {
+                else {
                     <tbody class="table-group-divider">
                         <tr>
                             <td class="text-center" colspan="4">
@@ -216,25 +207,20 @@
 
     private ModalComponent Modal { get; set; }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
+    protected override async Task OnAfterRenderAsync(bool firstRender) {
+        if (firstRender) {
             int customer_id = 0;
-            if (!string.IsNullOrWhiteSpace(CID) && int.TryParse(CID, out customer_id))
-            {
+            if (!string.IsNullOrWhiteSpace(CID) && int.TryParse(CID, out customer_id)) {
                 await SetSessionValueAsync("selected_customer_id", CID != null ? CID : "0");
             }
-            else
-            {
+            else {
                 await GetSessionValueAsync("selected_customer_id");
                 int.TryParse(CID, out customer_id);
             }
             if (show_customer_select)
                 await LoadCustomers();
 
-            if (customer_id > 0)
-            {
+            if (customer_id > 0) {
                 await GetSessionValueAsync("filtered_worker");
                 await GetSessionValueAsync("filtered_message");
                 await GetSessionValueAsync("filtered_title");
@@ -242,8 +228,7 @@
                 await GetSessionValueAsync("filtered_pagecount");
                 await LoadCustomerLogs(customer_id);
             }
-            else
-            {
+            else {
                 await SetSessionValueAsync("selected_customer_id", "0");
                 await SetSessionValueAsync("filtered_worker", string.Empty);
                 await SetSessionValueAsync("filtered_message", string.Empty);
@@ -256,44 +241,35 @@
         }
     }
 
-    protected override async Task OnParametersSetAsync()
-    {
-        if (CID != "0")
-        {
+    protected override async Task OnParametersSetAsync() {
+        if (CID != "0") {
             //await RefreshLogs();
         }
         await base.OnParametersSetAsync();
     }
 
-    protected async Task LoadCustomers()
-    {
+    protected async Task LoadCustomers() {
         var response = await PostHelper.Request<List<Customer>?>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
             Classes.PostHelper.PostMethod.Get,
             "api/Customer/GetCustomers");
 
-        if (response != null && response.Success && response.Data != null)
-        {
+        if (response != null && response.Success && response.Data != null) {
             customers = response.Data;
             if (customers != null && customers.Count == 0)
                 page_message = "No servers working.";
             else
                 page_message = string.Empty;
         }
-        else
-        {
+        else {
             page_message = "Merchanter Server ServiceAPI data response empty.";
         }
     }
 
-    protected async Task LoadCustomerLogs(int _customer_id)
-    {
-        if (_customer_id > 0)
-        {
+    protected async Task LoadCustomerLogs(int _customer_id) {
+        if (_customer_id > 0) {
             string json = JsonConvert.SerializeObject(
-                new ApiFilter()
-                    {
-                        Pager = new Pager()
-                        {
+                new ApiFilter() {
+                        Pager = new Pager() {
                             ItemsPerPage = pageItemsCount,
                             CurrentPageIndex = currentPage - 1
                         },
@@ -309,8 +285,7 @@
                 new StringContent(json, Encoding.UTF8, "application/json")
                 );
 
-            if (response != null && response.Success && response.Data != null)
-            {
+            if (response != null && response.Success && response.Data != null) {
                 customer_logs = response.Data;
                 if (response.ApiFilter != null)
                     pageCount = (response.ApiFilter.TotalCount.GetValueOrDefault() + pageItemsCount - 1) / pageItemsCount;
@@ -322,18 +297,15 @@
 
                 StateHasChanged();
             }
-            else
-            {
+            else {
                 page_message = "Merchanter Server ServiceAPI data response";
             }
         }
     }
 
-    protected async Task CustomerSelected(ChangeEventArgs e)
-    {
+    protected async Task CustomerSelected(ChangeEventArgs e) {
         int customer_id = 0;
-        if (e.Value != null && int.TryParse(e.Value.ToString(), out customer_id))
-        {
+        if (e.Value != null && int.TryParse(e.Value.ToString(), out customer_id)) {
             CID = e.Value.ToString();
             await SetSessionValueAsync("selected_customer_id", CID != null ? CID : "0");
             currentPage = 1;
@@ -341,10 +313,8 @@
         }
     }
 
-    protected async Task FilterWorkerChanged(ChangeEventArgs e)
-    {
-        if (e.Value != null)
-        {
+    protected async Task FilterWorkerChanged(ChangeEventArgs e) {
+        if (e.Value != null) {
             filtered_worker = e.Value.ToString();
             await SetSessionValueAsync("filtered_worker", filtered_worker != null ? filtered_worker : string.Empty);
             currentPage = 1;
@@ -352,10 +322,8 @@
         }
     }
 
-    protected async Task PageCountChanged(ChangeEventArgs e)
-    {
-        if (e.Value != null)
-        {
+    protected async Task PageCountChanged(ChangeEventArgs e) {
+        if (e.Value != null) {
             pageItemsCount = int.TryParse(e.Value.ToString(), out int pic) ? pic : 10;
             await SetSessionValueAsync("filtered_pagecount", pageItemsCount.ToString());
             currentPage = 1;
@@ -364,10 +332,8 @@
         }
     }
 
-    protected async Task FilterTitleChanged(ChangeEventArgs e)
-    {
-        if (e.Value != null)
-        {
+    protected async Task FilterTitleChanged(ChangeEventArgs e) {
+        if (e.Value != null) {
             filtered_title = e.Value.ToString();
             await SetSessionValueAsync("filtered_title", filtered_title != null ? filtered_title : string.Empty);
             currentPage = 1;
@@ -375,10 +341,8 @@
         }
     }
 
-    protected async Task FilterDateChanged(ChangeEventArgs e)
-    {
-        if (e.Value != null)
-        {
+    protected async Task FilterDateChanged(ChangeEventArgs e) {
+        if (e.Value != null) {
             filtered_date = int.TryParse(e.Value.ToString(), out int selected_date) ? selected_date : 0;
             await SetSessionValueAsync("filtered_date", filtered_date.ToString());
             currentPage = 1;
@@ -386,126 +350,101 @@
         }
     }
 
-    private async Task FilterMessageChanged(KeyboardEventArgs? e)
-    {
+    private async Task FilterMessageChanged(KeyboardEventArgs? e) {
         var search = this.filtered_message;
         if (e != null)
-            if (e.Code == "Enter" || e.Code == "NumpadEnter")
-            {
+            if (e.Code == "Enter" || e.Code == "NumpadEnter") {
                 await SetSessionValueAsync("filtered_message", search);
                 currentPage = 1;
                 await RefreshLogs();
             }
     }
 
-    protected async Task RefreshLogs()
-    {
+    protected async Task RefreshLogs() {
         is_refreshing = true;
-        try
-        {
-            if (!string.IsNullOrWhiteSpace(CID) && int.TryParse(CID, out int customer_id) && customer_id > 0)
-            {
+        try {
+            if (!string.IsNullOrWhiteSpace(CID) && int.TryParse(CID, out int customer_id) && customer_id > 0) {
                 StateHasChanged();
                 await Task.Delay(1);
                 await LoadCustomerLogs(customer_id);
                 StateHasChanged();
             }
-            else
-            {
+            else {
                 customer_logs.Clear();
                 StateHasChanged();
             }
         }
-        finally
-        {
+        finally {
             is_refreshing = false;
         }
     }
 
-    private async Task PreviousPage()
-    {
-        if (currentPage != pageCount)
-        {
+    private async Task PreviousPage() {
+        if (currentPage != pageCount) {
             currentPage += 1;
             customer_logs.Clear();
             await RefreshLogs();
         }
     }
 
-    private async Task NextPage()
-    {
-        if (currentPage > 1)
-        {
+    private async Task NextPage() {
+        if (currentPage > 1) {
             currentPage -= 1;
             customer_logs.Clear();
             await RefreshLogs();
         }
     }
 
-    async Task GetSessionValueAsync(string _session)
-    {
-        if (_session == "selected_customer_id")
-        {
+    async Task GetSessionValueAsync(string _session) {
+        if (_session == "selected_customer_id") {
             var result = await ProtectedLocalStorage.GetAsync<string>("selected_customer_id");
             if (result.Success)
                 CID = result.Value;
         }
-        if (_session == "filtered_worker")
-        {
+        if (_session == "filtered_worker") {
             var result = await ProtectedLocalStorage.GetAsync<string>("filtered_worker");
             if (result.Success)
                 filtered_worker = result.Value;
         }
-        if (_session == "filtered_date")
-        {
+        if (_session == "filtered_date") {
             var result = await ProtectedLocalStorage.GetAsync<string>("filtered_date");
             if (result.Success)
                 filtered_date = int.TryParse(result.Value, out int fd) ? fd : 0;
         }
-        if (_session == "filtered_title")
-        {
+        if (_session == "filtered_title") {
             var result = await ProtectedLocalStorage.GetAsync<string>("filtered_title");
             if (result.Success)
                 filtered_title = result.Value;
         }
-        if (_session == "filtered_message")
-        {
+        if (_session == "filtered_message") {
             var result = await ProtectedLocalStorage.GetAsync<string>("filtered_message");
             if (result.Success)
                 filtered_message = result.Value;
         }
-        if (_session == "filtered_pagecount")
-        {
+        if (_session == "filtered_pagecount") {
             var result = await ProtectedLocalStorage.GetAsync<string>("filtered_pagecount");
             if (result.Success)
                 pageItemsCount = int.TryParse(result.Value, out int pc) ? pc : 10;
         }
     }
 
-    async Task SetSessionValueAsync(string _session, string _value)
-    {
-        if (_session == "selected_customer_id")
-        {
+    async Task SetSessionValueAsync(string _session, string _value) {
+        if (_session == "selected_customer_id") {
             await ProtectedLocalStorage.SetAsync("selected_customer_id", _value);
         }
-        if (_session == "filtered_worker")
-        {
+        if (_session == "filtered_worker") {
             await ProtectedLocalStorage.SetAsync("filtered_worker", _value);
         }
-        if (_session == "filtered_date")
-        {
+        if (_session == "filtered_date") {
             await ProtectedLocalStorage.SetAsync("filtered_date", _value);
         }
-        if (_session == "filtered_title")
-        {
+        if (_session == "filtered_title") {
             await ProtectedLocalStorage.SetAsync("filtered_title", _value);
         }
-        if (_session == "filtered_message")
-        {
+        if (_session == "filtered_message") {
             await ProtectedLocalStorage.SetAsync("filtered_message", _value);
         }
-        if (_session == "filtered_pagecount")
-        {
+        if (_session == "filtered_pagecount") {
             await ProtectedLocalStorage.SetAsync("filtered_pagecount", _value);
         }
     }

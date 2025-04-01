@@ -2,13 +2,11 @@
 using Merchanter.Classes;
 using Merchanter.Classes.Settings;
 using MerchanterHelpers;
-using Org.BouncyCastle.Utilities.Encoders;
+using MerchanterHelpers.Classes;
 using ShipmentHelpers;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Diagnostics.Eventing.Reader;
-using System.Linq;
-using Executioner = Merchanter.Executioner;
+using System.Xml.Serialization;
 
 namespace MerchanterServer {
     internal class MainLoop {
@@ -141,6 +139,7 @@ namespace MerchanterServer {
                 db_helper.SetOrderSyncWorking(customer.customer_id, true);
 
                 orders = db_helper.GetOrders(customer.customer_id, OrderStatus.GetProcessEnabledCodes());
+                products = db_helper.GetProducts(customer.customer_id, out brands, out categories, true, true);  //TODO: delete this
 
                 if (health) { this.OrderLoop(out health); }
 
@@ -1111,6 +1110,24 @@ namespace MerchanterServer {
                         ANKERP ank_erp = new(Helper.global.ank_erp.company_code, Helper.global.ank_erp.user_name, Helper.global.ank_erp.password, Helper.global.ank_erp.work_year, Helper.global.ank_erp.url,
                             """C:\MerchanterServer\ankaraerp""");
 
+                        #region Product Memory Take
+                        Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ANK_ERP + " product api take started.");
+                        //var ank_products_zip = ank_erp.GetProducts().Result;
+                        var ank_products_zip = ank_erp.GetProductsFromFolder("""C:\Users\caqn_\OneDrive\Masaüstü\otoahmet_products_3""");
+                        List<UrunSicil> ank_products = [];
+                        if (ank_products_zip != null && ank_products_zip.Count > 0) {
+                            foreach (var zip_item in ank_products_zip) {
+                                ank_products.AddRange([.. zip_item.DokumanPaket.Eleman.ElemanListe]);
+                            }
+                        }
+                        else {
+                            Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " MAIN_SOURCE:" + Constants.ANK_ERP + " connection:products failed");
+                        }
+                        Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ANK_ERP + " " + ank_products.Count + " products found in api.");
+                        ank_products = [.. ank_products.DistinctBy(x => x.UrunTanim.SicilKodu)];  //Remove duplicates
+                        Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ANK_ERP + " " + ank_products.Count + " products found in api. --Duplicates removed by SKU !!!");
+                        #endregion
+
                         #region Category Pre-Sync
                         var ank_categories = ank_erp.GetCategories().Result?.DokumanPaket.Eleman.ElemanListe.ToList();
                         Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ANK_ERP + " total " + ank_categories?.Count + " categories found.");
@@ -1180,24 +1197,6 @@ namespace MerchanterServer {
                         }
                         Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ANK_ERP + " category sync ended.");
                         categories = db_helper.GetCategories(customer.customer_id);  //Re-take updated categories
-                        #endregion
-
-                        #region Product Memory Take
-                        Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ANK_ERP + " product api take started.");
-                        //var ank_products_zip = ank_erp.GetProducts().Result;
-                        var ank_products_zip = ank_erp.GetProductsFromFolder("""C:\Users\caqn_\OneDrive\Masaüstü\otoahmet_products_2""");
-                        List<UrunSicil> ank_products = [];
-                        if (ank_products_zip != null && ank_products_zip.Count > 0) {
-                            foreach (var zip_item in ank_products_zip) {
-                                ank_products.AddRange([.. zip_item.DokumanPaket.Eleman.ElemanListe]);
-                            }
-                        }
-                        else {
-                            Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " MAIN_SOURCE:" + Constants.ANK_ERP + " connection:products failed");
-                        }
-                        Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ANK_ERP + " " + ank_products.Count + " products found in api.");
-                        ank_products = [.. ank_products.DistinctBy(x => x.UrunTanim.SicilKodu)];  //Remove duplicates
-                        Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + Constants.ANK_ERP + " " + ank_products.Count + " products found in api. --Duplicates removed by SKU !!!");
                         #endregion
 
                         #region Set Enabled Attributes
@@ -1745,26 +1744,10 @@ namespace MerchanterServer {
                             if (is_update) item.id = selected_product.id;  //important early arrangement
                             if (is_update || is_insert) {
                                 var selected_live_idea_product = Helper.GetIdeaProduct(item.sku);
-                                if (selected_live_idea_product != null) {
+                                if (selected_live_idea_product != null) { //update ideasoft product
                                     //if (Math.Round(selected_live_idea_product.price1, 2, MidpointRounding.AwayFromZero) != item.price || selected_live_idea_product.stockAmount != item.total_qty) {
                                     idea_product_id = selected_live_idea_product.id; //Helper.UpdateIdeaProduct(selected_live_idea_product.id, item.price, item.total_qty);
                                     if (idea_product_id > 0) {
-                                        var product_relation = product_target_relation.FirstOrDefault(x => x.target_id == idea_product_id && x.target_name == Constants.IDEASOFT);
-                                        if (product_relation != null) {
-                                            if (product_relation.target_id != idea_product_id) {
-                                                product_relation.target_id = idea_product_id;
-                                                db_helper.UpdateProductTarget(customer.customer_id, product_relation);
-                                            }
-                                        }
-                                        else {
-                                            if (is_update)
-                                                db_helper.InsertProductTarget(customer.customer_id, new ProductTarget() {
-                                                    customer_id = customer.customer_id,
-                                                    product_id = item.id,
-                                                    target_id = idea_product_id,
-                                                    target_name = Constants.IDEASOFT
-                                                });
-                                        }
                                         is_processed = true;
                                         Console.WriteLine("[" + DateTime.Now.ToString() + "] Sku:" + item.sku + " updated." + " (" + Constants.IDEASOFT + ")");
                                         db_helper.LogToServer(thread_id, "product_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
@@ -1776,8 +1759,16 @@ namespace MerchanterServer {
                                     //}
                                     //else is_processed = true;  //TODO: delete this after checking
                                 }
-                                else { //insert
-                                    #region IDEA Category Update
+                                else { //insert ideasoft product
+                                    if (is_update) {  //insert ideasoft product and update product
+                                        var product_relation = product_target_relation.FirstOrDefault(x => x.product_id == item.id && x.target_name == Constants.IDEASOFT);
+                                        if (product_relation != null) {
+                                            is_processed = true;
+                                            goto LEAP;
+                                        }
+                                    }
+
+                                    #region Ideasoft Category Update
                                     List<int> idea_category_ids = [];
                                     foreach (var citem in item.extension.categories) {
                                         if (citem.id == Helper.global.product.customer_root_category_id) continue;
@@ -1825,13 +1816,12 @@ namespace MerchanterServer {
                                     }
                                     #endregion
 
-                                    #region IDEA Brand Update
+                                    #region Ideasoft Brand Update
                                     var idea_brand_id = live_idea_brands?.FirstOrDefault(x => x.name == item.extension.brand?.brand_name)?.id;
                                     if (idea_brand_id == null && item.extension.brand != null && !string.IsNullOrWhiteSpace(item.extension.brand.brand_name)) {
                                         idea_brand_id = Helper.InsertIdeaBrand(item.extension.brand.brand_name);
                                         if (idea_brand_id > 0) {
                                             live_idea_brands?.Add(new IDEA_Brand() { id = idea_brand_id.Value, name = item.extension.brand.brand_name });
-
                                             Console.WriteLine("[" + DateTime.Now.ToString() + "] Brand:" + item.extension.brand.brand_name + " updated." + " (" + Constants.IDEASOFT + ")");
                                             db_helper.LogToServer(thread_id, "brand_inserted", Helper.global.settings.company_name + " Brand:" + item.extension.brand.brand_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
                                         }
@@ -1842,6 +1832,7 @@ namespace MerchanterServer {
                                     }
                                     #endregion
 
+                                    #region Ideasoft Product Insert
                                     idea_product_id = Helper.InsertIdeaProduct(is_insert ? selected_product : item, idea_brand_id, idea_category_ids);
                                     if (idea_product_id > 0) {
                                         is_processed = true;
@@ -1852,8 +1843,10 @@ namespace MerchanterServer {
                                         Console.WriteLine("[" + DateTime.Now.ToString() + "] Sku:" + (is_insert ? selected_product.sku : item.sku) + " insert failed." + " (" + Constants.IDEASOFT + ")");
                                         db_helper.LogToServer(thread_id, "product_insert_error", Helper.global.settings.company_name + " Sku:" + (is_insert ? selected_product.sku : item.sku) + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
                                     }
+                                    #endregion
                                 }
                             }
+                        LEAP:
 
                             if (is_processed && is_update) {
                                 if (item.extension.brand_id == 0 && item.extension.brand != null) { //checking brand
@@ -1864,6 +1857,20 @@ namespace MerchanterServer {
                                     }
                                 }
                                 if (db_helper.UpdateProducts(customer.customer_id, [item], true, false)) {
+                                    if (idea_product_id > 0) {
+                                        var product_relation = product_target_relation.FirstOrDefault(x => x.target_id == idea_product_id && x.target_name == Constants.IDEASOFT);
+                                        if (product_relation != null) {
+                                            if (product_relation.product_id == 0 && product_relation.product_id != item.id) {
+                                                product_relation.product_id = item.id;
+                                                db_helper.UpdateProductTarget(customer.customer_id, product_relation);
+                                            }
+                                        }
+                                        else {
+                                            db_helper.InsertProductTarget(customer.customer_id, new ProductTarget() {
+                                                customer_id = customer.customer_id, product_id = item.id, target_id = idea_product_id, target_name = Constants.IDEASOFT
+                                            });
+                                        }
+                                    }
                                     Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Sku:" + item.sku + " " + "updated.");
                                     Debug.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " Sku:" + item.sku + " " + "updated.");
                                 }
@@ -2025,6 +2032,68 @@ namespace MerchanterServer {
                     }
                     Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + m2_orders?.items.Length + " magento2 orders loaded");
                 }
+
+                if (order_sources.Contains(Constants.IDEASOFT)) {
+                    var idea_orders = Helper.GetIdeaOrders(Helper.global.order.daysto_ordersync);
+                    if (idea_orders != null && idea_orders.Count > 0) {
+                        foreach (var item in idea_orders) {
+                            var o = new Order();
+                            o.order_id = item.id;
+                            o.order_label = item.transactionId;
+                            o.grand_total = item.finalAmount;
+                            o.order_status = OrderStatus.GetStatusOf(item.status, Constants.IDEASOFT);
+                            o.payment_method = PaymentMethod.GetPaymentMethodOf(item.paymentTypeName, Constants.IDEASOFT);
+                            o.shipment_method = ShipmentMethod.GetShipmentMethodOf(item.shippingProviderCode, Constants.IDEASOFT);
+                            o.order_date = item.createdAt;
+                            o.order_source = Constants.IDEASOFT;
+                            o.currency = item.currency;
+                            o.email = item.customerEmail;
+                            o.firstname = item.customerFirstname;
+                            o.lastname = item.customerSurname;
+                            o.subtotal = item.amount;
+                            o.installment_amount = (item.generalAmount * item.installmentRate) - item.generalAmount;
+                            o.discount_amount = item.couponDiscount + item.promotionDiscount;
+                            o.comment = item.memberGroupName;
+                            o.billing_address = new BillingAddress() {
+                                billing_id = item.billingAddress.id,
+                                order_id = item.id,
+                                firstname = item.billingAddress.firstname,
+                                lastname = item.billingAddress.surname,
+                                telephone = item.billingAddress.phoneNumber,
+                                street = item.billingAddress.address,
+                                region = item.billingAddress.subLocation,
+                                city = item.billingAddress.location
+                            };
+                            o.shipping_address = new ShippingAddress() {
+                                shipping_id = item.shippingAddress.id,
+                                order_id = item.id,
+                                firstname = item.shippingAddress.firstname,
+                                lastname = item.shippingAddress.surname,
+                                telephone = item.shippingAddress.phoneNumber,
+                                street = item.shippingAddress.address,
+                                region = item.shippingAddress.subLocation,
+                                city = item.shippingAddress.location
+                            };
+                            o.order_items = new List<OrderItem>();
+
+                            foreach (var order_item in item.orderItems) {
+                                o.order_items.Add(new OrderItem() {
+                                    order_id = item.id,
+                                    order_item_id = order_item.id,
+                                    sku = order_item.productSku,
+                                    price = order_item.productPrice,
+                                    tax = (int)order_item.productTax,
+                                    tax_included = Helper.global.order.siparis_kdvdahilmi,
+                                    qty_ordered = (int)order_item.productQuantity,
+                                    tax_amount = order_item.productPrice * (order_item.productTax / 100f)
+                                });
+                            }
+                            o.order_shipping_barcode = available_shipments.Length > 0 ? null : "N/A";
+                            live_orders.Add(o);
+                        }
+                    }
+                    Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " " + idea_orders?.Count + " ideasoft orders loaded");
+                }
             }
             catch (Exception _ex) {
                 db_helper.LogToServer(thread_id, "order_source_error", _ex.Message + newline + _ex.ToString(), customer.customer_id, "order");
@@ -2047,8 +2116,8 @@ namespace MerchanterServer {
                                 if (!selected_order.is_erp_sent) {  //process
                                     string? inserted_musteri_siparis_no = null;
 
-                                    #region Fill Corporate Info for Order
                                     if (order_sources.Contains(Constants.MAGENTO2)) {
+                                        #region Fill Corporate Info for Order
                                         var corporate_info = Helper.GetCustomerCorporateInfo(order_item.email, out bool is_corporate);
                                         if (corporate_info != null && is_corporate) {
                                             order_item.billing_address.is_corporate = is_corporate;
@@ -2060,35 +2129,216 @@ namespace MerchanterServer {
                                         else if (corporate_info != null && !is_corporate) {
                                             order_item.billing_address.tc_no = corporate_info.GetValueOrDefault(Helper.global.magento.customer_tc_no_attribute_code) ?? Constants.DUMMY_TCNO;
                                         }
+                                        #endregion
                                     }
-                                    #endregion
 
                                     if (order_main_target != null && order_main_target == Constants.NETSIS) {
-                                        string? inserted_cari_kodu = NetOpenXHelper.InsertNetsisCari(order_item.billing_address.billing_id.ToString(), order_item.email, order_item.billing_address, order_item.payment_method);
-                                        if (inserted_cari_kodu != null) {
-                                            string? musteri_selected_siparis_no = NetOpenXHelper.GetNetsisSiparis(order_item.order_id.ToString());
-                                            if (Helper.global.order.is_rewrite_siparis && !string.IsNullOrWhiteSpace(musteri_selected_siparis_no)) {
-                                                //TODO: rewrite ?
+                                        if (Helper.global.ank_erp != null && Helper.global.ank_erp.company_code != null && Helper.global.ank_erp.user_name != null && Helper.global.ank_erp.password != null && Helper.global.ank_erp.work_year != null && Helper.global.ank_erp.url != null) {
+                                            string? inserted_cari_kodu = NetOpenXHelper.InsertNetsisCari(order_item.billing_address.billing_id.ToString(), order_item.email, order_item.billing_address, order_item.payment_method);
+                                            if (inserted_cari_kodu != null) {
+                                                string? musteri_selected_siparis_no = NetOpenXHelper.GetNetsisSiparis(order_item.order_id.ToString());
+                                                if (Helper.global.order.is_rewrite_siparis && !string.IsNullOrWhiteSpace(musteri_selected_siparis_no)) {
+                                                    //TODO: rewrite ?
+                                                }
+                                                inserted_musteri_siparis_no = NetOpenXHelper.InsertNetsisMusSiparis(order_item, inserted_cari_kodu, selected_order.order_shipping_barcode);
+                                                db_helper.LogToServer(thread_id, "new_order", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + order_item.grand_total.ToString() + order_item.currency, customer.customer_id, "order");
+                                                #region Notify Order - NEW_ORDER
+                                                notifications.Add(new Notification() {
+                                                    customer_id = customer.customer_id,
+                                                    type = Notification.NotificationTypes.NEW_ORDER,
+                                                    order_label = order_item.order_label,
+                                                    notification_content = Constants.NETSIS,
+                                                    is_notification_sent = true
+                                                });
+                                                #endregion
                                             }
-                                            inserted_musteri_siparis_no = NetOpenXHelper.InsertNetsisMusSiparis(order_item, inserted_cari_kodu, selected_order.order_shipping_barcode);
-                                            db_helper.LogToServer(thread_id, "new_order", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + order_item.grand_total.ToString() + order_item.currency, customer.customer_id, "order");
-                                            #region Notify Order - NEW_ORDER
-                                            notifications.Add(new Notification() {
-                                                customer_id = customer.customer_id,
-                                                type = Notification.NotificationTypes.NEW_ORDER,
-                                                order_label = order_item.order_label,
-                                                notification_content = Constants.NETSIS,
-                                                is_notification_sent = true
-                                            });
+                                        }
+                                    }
+
+                                    if (order_main_target != null && order_main_target == Constants.ANK_ERP) {
+                                        if (Helper.global.ank_erp != null && Helper.global.ank_erp.company_code != null && Helper.global.ank_erp.user_name != null && Helper.global.ank_erp.password != null && Helper.global.ank_erp.work_year != null && Helper.global.ank_erp.url != null) {
+                                            ANKERP ank_erp = new(Helper.global.ank_erp.company_code, Helper.global.ank_erp.user_name, Helper.global.ank_erp.password, Helper.global.ank_erp.work_year, Helper.global.ank_erp.url,
+                                            """C:\MerchanterServer\ankaraerp""");
+                                            Guid guid = Guid.NewGuid(); bool health = true;
+
+                                            #region ANKARA ERP - TICARI DOKUMAN
+                                            BS_TicariDokuman dokuman = new() {
+                                                DokumanBaslik = new BS_TicariDokumanDokumanBaslik() {
+                                                    Versiyon = "1.0",
+                                                    Gonderen = new BS_TicariDokumanDokumanBaslikGonderen() {
+                                                        VergiNo = 0123456789,
+                                                        Unvani = "ENTEGRASYON",
+                                                        Tanimlayici = "WSU003"
+                                                    },
+                                                    Alici = new BS_TicariDokumanDokumanBaslikAlici() {
+                                                        VergiNo = 16111116806,
+                                                        Unvani = "OTO AHMET - AHMET AVCI",
+                                                        Tanimlayici = "otoahmetankara@gmail.com"
+                                                    },
+                                                    DokumanTanimi = new BS_TicariDokumanDokumanBaslikDokumanTanimi() {
+                                                        Turu = "GIDEN",
+                                                        Versiyon = "1.0",
+                                                        DosyaAdi = guid.ToString(),
+                                                        OlusturulmaZamani = DateTime.Now.ToString("yyyy/MM/ddTHH:mm:ss"),
+                                                    }
+                                                },
+                                                DokumanPaket = new BS_DokumanPaket() {
+                                                    Eleman = new BS_Eleman() {
+                                                        ElemanTipi = "TICARIBELGE",
+                                                        ElemanSayisi = 1,
+                                                        ElemanListe = new ElemanElemanListe() {
+                                                            BelgeSicil = new BelgeSicil() {
+                                                                Baslik = new BelgeSicilBaslik() {
+                                                                    Aciliyet = "NORMAL",
+                                                                    HareketKodu = "",
+                                                                    ProjeNo = "",
+                                                                    BelgeNo = (ushort)order_item.order_id,
+                                                                    DovizKodu = "TRL",
+                                                                    DovizKuru = 1,
+                                                                    HariciNumara = "",
+                                                                    TanzimTarihi = order_item.update_date.ToString("dd-MM-yyyy"),
+                                                                    TanzimSaati = order_item.update_date.ToString("HH:mm"),
+                                                                    TeslimTarihi = order_item.update_date.ToString("dd-MM-yyyy"),
+                                                                    OzelKod = (ushort)order_item.id,
+                                                                    PlasiyerKodu = "B2C",
+                                                                    OdemeSekli = "",
+                                                                    OdemeTarihi = order_item.update_date.ToString("dd-MM-yyyy"),
+                                                                    OdemeRefNo = order_item.order_label,
+                                                                    OdemeTutar = (decimal)order_item.grand_total,
+                                                                    OdemeNotu = "",
+                                                                    MalTutar = (decimal)order_item.grand_total,
+                                                                    MalIndTutar = (decimal)order_item.discount_amount,
+                                                                    HizmetTutar = 0,
+                                                                    HizmetIndTutar = 0,
+                                                                    OtvMatrah = 0,
+                                                                    OtvOran = 0,
+                                                                    OtvTutar = 0,
+                                                                    KdvMatrah = 0,
+                                                                    KdvTutar = 0,
+                                                                    BelgeTutar = 0
+                                                                },
+                                                                BaslikNot = "",
+                                                                Dipnot = "",
+                                                                SatirDetay = [],
+                                                                CariSicil = new BelgeSicilCariSicil() {
+                                                                    HesapNo = order_item.billing_address.billing_id.ToString(),
+                                                                    Adi = order_item.billing_address.firstname,
+                                                                    Soyadi = order_item.billing_address.lastname,
+                                                                    Unvani = order_item.billing_address.is_corporate ? order_item.billing_address.firma_ismi : (order_item.firstname + " " + order_item.lastname),
+                                                                    Adres1 = order_item.billing_address.street,
+                                                                    Ilce = order_item.billing_address.region,
+                                                                    Sehir = order_item.billing_address.city,
+                                                                    Ulke = "TÜRKİYE",
+                                                                    Telefon = order_item.billing_address.telephone,
+                                                                    GsmNo = order_item.billing_address.telephone,
+                                                                    EPosta = order_item.email,
+                                                                    WebSiteURL = "",
+                                                                    VergiNo = order_item.billing_address.is_corporate ? order_item.billing_address.firma_vergino : order_item.billing_address.tc_no,
+                                                                    VergiDaireAdi = order_item.billing_address.is_corporate ? order_item.billing_address.firma_vergidairesi : "YOK",
+                                                                    OzelKod = "", OzelKod1 = "", OzelKod2 = "", OzelKod3 = ""
+
+                                                                },
+                                                                SevkYeri = new BelgeSicilSevkYeri() {
+                                                                    HesapNo = order_item.shipping_address.shipping_id.ToString(),
+                                                                    Adi = order_item.shipping_address.firstname,
+                                                                    Soyadi = order_item.shipping_address.lastname,
+                                                                    Unvani = order_item.shipping_address.firstname + " " + order_item.shipping_address.lastname,
+                                                                    Adres1 = order_item.shipping_address.street,
+                                                                    Ilce = order_item.shipping_address.region,
+                                                                    Sehir = order_item.shipping_address.city,
+                                                                    Ulke = "TÜRKİYE",
+                                                                    Telefon = order_item.shipping_address.telephone,
+                                                                    GsmNo = order_item.shipping_address.telephone,
+                                                                    EPosta = order_item.email,
+                                                                    WebSiteURL = "",
+                                                                    VergiNo = order_item.billing_address.is_corporate ? order_item.billing_address.firma_vergino : order_item.billing_address.tc_no,
+                                                                    VergiDaireAdi = order_item.billing_address.is_corporate ? order_item.billing_address.firma_vergidairesi : "YOK",
+                                                                    OzelKod = "",
+                                                                    KargoKodu = order_item.shipment_method
+                                                                },
+                                                                Irsaliye = "",
+                                                                Siparis = "",
+                                                                IsEmri = "",
+                                                                BELTUR = "SIPARIS",
+                                                                MS = "M"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            };
+                                            foreach (var item in order_item.order_items) {
+                                                var sold_product = products.Where(x => x.sku == item.sku).FirstOrDefault();
+                                                if (sold_product != null) {
+                                                    dokuman.DokumanPaket.Eleman.ElemanListe.BelgeSicil.SatirDetay.Add(new BelgeSicilSatirDetay() {
+                                                        Items = new BelgeSicilSatirDetayItems() {
+                                                            BarkodKodu = sold_product.barcode,
+                                                            UrunGrubu = sold_product.extension.brand.brand_name,
+                                                            UrunKodu = item.sku,
+                                                            UrunTanim = sold_product.name,
+                                                            Miktar = (byte)item.qty_ordered,
+                                                            OlcuBirim = "Adet",
+                                                            BirimFiyat = (decimal)item.price,
+                                                            Tutar = (decimal)(item.price * item.qty_ordered),
+                                                            IndOran = 0,
+                                                            KdvOran = (byte)item.tax,
+                                                            Notlar = ""
+                                                        },
+                                                        StokSicil = new BelgeSicilSatirDetayStokSicil() {
+                                                            UrunGrubu = sold_product.extension.brand.brand_name,
+                                                            UrunKodu = item.sku,
+                                                            UrunTanim = sold_product.name,
+                                                            OlcuBirim = "Adet",
+                                                            KdvOran = (byte)item.tax,
+                                                        },
+                                                        HizmasSicil = new BelgeSicilSatirDetayHizmasSicil() {
+                                                            UrunGrubu = sold_product.extension.brand.brand_name,
+                                                            UrunKodu = item.sku,
+                                                            UrunTanim = sold_product.name,
+                                                            OlcuBirim = "Adet",
+                                                            KdvOran = (byte)item.tax,
+                                                        }
+                                                    });
+                                                }
+                                                else { health = false; }
+                                            }
                                             #endregion
+                                            if (!health) continue;
+
+                                            using var stringwriter = new StringWriter();
+                                            var serializer = new XmlSerializer(dokuman.GetType());
+                                            serializer.Serialize(stringwriter, dokuman);
+                                            var order_xml = stringwriter.ToString();
+                                            if (!string.IsNullOrWhiteSpace(order_xml)) {
+                                                if (ank_erp.SendOrder(guid.ToString(), order_xml).Result) {
+                                                    inserted_musteri_siparis_no = order_item.order_label;
+                                                    db_helper.LogToServer(thread_id, "order_process", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + "ANK ERP Success", customer.customer_id, "order");
+                                                    #region Notify Order - NEW_ORDER
+                                                    notifications.Add(new Notification() {
+                                                        customer_id = customer.customer_id,
+                                                        type = Notification.NotificationTypes.NEW_ORDER,
+                                                        order_label = order_item.order_label,
+                                                        notification_content = Constants.ANK_ERP,
+                                                        is_notification_sent = true
+                                                    });
+                                                    #endregion
+                                                }
+                                                else {
+                                                    Console.WriteLine(thread_id, "order_process_error", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + "ANK ERP Error", customer.customer_id, "order");
+                                                    db_helper.LogToServer(thread_id, "order_process_error", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + "ANK ERP Error", customer.customer_id, "order");
+                                                }
+                                            }
+                                            else {
+                                                Console.WriteLine(thread_id, "order_process_error", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + "XML Serialization Error", customer.customer_id, "order");
+                                                db_helper.LogToServer(thread_id, "order_process_error", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + "XML Serialization Error", customer.customer_id, "order");
+                                            }
                                         }
                                     }
 
                                     if (inserted_musteri_siparis_no != null) {
                                         if (order_sources.Contains(Constants.MAGENTO2) && order_item.order_status != "HAZIRLANIYOR") { //processed | do order status change => processing
                                             if (!string.IsNullOrWhiteSpace(Helper.CreateOrderInvoice(order_item))) {
-                                                Helper.ChangeOrderStatus(order_item, Helper.global.order_statuses.Where(x => x.status_code == "HAZIRLANIYOR").FirstOrDefault()?.magento2_status_code);
-                                                db_helper.LogToServer(thread_id, "order_process", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + Helper.global.order_statuses.Where(x => x.status_code == "HAZIRLANIYOR").FirstOrDefault()?.magento2_status_code, customer.customer_id, "order");
+                                                Helper.ChangeOrderStatus(order_item, Helper.global.order_statuses.Where(x => x.status_code == "HAZIRLANIYOR" && x.platform == Constants.MAGENTO2).FirstOrDefault()?.platform_status_code);
+                                                db_helper.LogToServer(thread_id, "order_process", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + Helper.global.order_statuses.Where(x => x.status_code == "HAZIRLANIYOR" && x.platform == Constants.MAGENTO2).FirstOrDefault()?.platform_status_code, customer.customer_id, "order");
                                                 #region Notify Order - ORDER_PROCESS
                                                 notifications.Add(new Notification() {
                                                     customer_id = customer.customer_id,
@@ -2099,6 +2349,10 @@ namespace MerchanterServer {
                                                 });
                                                 #endregion
                                             }
+                                        }
+
+                                        if (order_sources.Contains(Constants.IDEASOFT) && order_item.order_status == "YENİ_SİPARİŞ") {
+
                                         }
 
                                         if (db_helper.SetOrderProcess(customer.customer_id, order_item.order_id, inserted_musteri_siparis_no)) {
@@ -2152,7 +2406,7 @@ namespace MerchanterServer {
                                                         " Detaylı takip için: https://www.yurticikargo.com/tr/online-servisler/gonderi-sorgula?code=" +
                                                         string.Join(",", tracking_codes),
                                                         order_item.shipment_method, ShipmentMethod.GetShipmentName(order_item.shipment_method));
-                                                    db_helper.LogToServer(thread_id, "order_process", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + Helper.global.order_statuses.Where(x => x.status_code == "TAMAMLANDI").FirstOrDefault()?.magento2_status_code, customer.customer_id, "order");
+                                                    db_helper.LogToServer(thread_id, "order_process", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + Helper.global.order_statuses.Where(x => x.status_code == "TAMAMLANDI" && x.platform == Constants.MAGENTO2).FirstOrDefault()?.platform_status_code, customer.customer_id, "order");
                                                     #region Notify Order - ORDER_COMPLETE
                                                     notifications.Add(new Notification() {
                                                         customer_id = customer.customer_id,

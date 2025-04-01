@@ -1,4 +1,5 @@
-﻿using RestSharp;
+﻿using MerchanterHelpers.Classes;
+using RestSharp;
 using System;
 using System.IO;
 using System.Xml.Serialization;

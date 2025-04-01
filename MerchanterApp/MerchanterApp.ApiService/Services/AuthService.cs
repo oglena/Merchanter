@@ -26,9 +26,9 @@ namespace MerchanterApp.ApiService.Services {
                 throw new ArgumentNullException( nameof( request ) );
             }
 
-            var customer = merchanterService.helper.GetCustomer( request.CustomerID, request.Username, request.Password );
+            var customer = merchanterService.helper.GetCustomer( request.Username, request.Password );
             if( customer != null ) {
-                var generatedTokenInformation = await tokenService.GenerateToken( new GenerateTokenRequest { CustomerID = request.CustomerID, Username = request.Username } );
+                var generatedTokenInformation = await tokenService.GenerateToken( new GenerateTokenRequest { Username = request.Username, Password = request.Password } );
 
                 response.AuthenticateResult = true;
                 response.AuthToken = generatedTokenInformation.Token;

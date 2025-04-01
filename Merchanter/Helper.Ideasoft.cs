@@ -1,9 +1,4 @@
 ﻿using Merchanter.Classes;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Merchanter {
     public static partial class Helper {
@@ -27,7 +22,8 @@ namespace Merchanter {
             List<object> category_ids = [];
             if (_category_ids.Count > 0) {
                 foreach (var item in _category_ids) {
-                    category_ids.Add(new { id = item });
+                    if (item != 0)
+                        category_ids.Add(new { id = item });
                 }
             }
             var pro_json = new {
@@ -95,21 +91,31 @@ namespace Merchanter {
             return 0;
         }
 
-        public static IDEA_Product? GetIdeaProduct(string _sku) {
+        public static IDEA_Product? GetIdeaProduct(string _sku, int _limit = 100) {
             using Executioner executioner = new();
-            var json = executioner.Execute(Helper.global.ideasoft.store_url + "/admin-api/products?s=" + _sku, RestSharp.Method.Get, null, Helper.global.ideasoft.access_token);
+            List<IDEA_Product> products = []; int page = 1;
+        QUERY:
+            var json = executioner.Execute(Helper.global.ideasoft.store_url + "/admin-api/products?s=" + _sku + "&limit=" + _limit.ToString() + "&page=" + page.ToString(), RestSharp.Method.Get, null, Helper.global.ideasoft.access_token);
             if (json != null) {
-                var idea_products = Newtonsoft.Json.JsonConvert.DeserializeObject<List<IDEA_Product>>(json);
-                if (idea_products != null) {
-                    return idea_products.FirstOrDefault(x => x.sku == _sku);
+                var temp_products = Newtonsoft.Json.JsonConvert.DeserializeObject<List<IDEA_Product>>(json);
+                if (temp_products != null) {
+                    if (temp_products.Count == _limit) {
+                        products.AddRange(temp_products);
+                        page++;
+                        goto QUERY;
+                    }
+                    else {
+                        products.AddRange(temp_products);
+                    }
                 }
             }
-            return null;
+
+            return products.FirstOrDefault(x => x.sku == _sku);
         }
 
         public static List<IDEA_Product>? GetIdeaProducts(int _limit = 100) {
             using Executioner executioner = new();
-            List<IDEA_Product> products = new List<IDEA_Product>(); int page = 1;
+            List<IDEA_Product> products = []; int page = 1;
         QUERY:
             var json = executioner.Execute(Helper.global.ideasoft.store_url +
                 "/admin-api/products?limit=" + _limit.ToString() + "&page=" + page.ToString(),
@@ -133,7 +139,7 @@ namespace Merchanter {
 
         public static List<IDEA_Category>? GetIdeaCategories(int _limit = 100) {
             using Executioner executioner = new();
-            List<IDEA_Category> categories = new List<IDEA_Category>(); int page = 1;
+            List<IDEA_Category> categories = []; int page = 1;
         QUERY:
             var json = executioner.Execute(Helper.global.ideasoft.store_url +
                 "/admin-api/categories?limit=" + _limit.ToString() + "&page=" + page.ToString(),
@@ -157,7 +163,7 @@ namespace Merchanter {
 
         public static List<IDEA_Brand>? GetIdeaBrands(int _limit = 100) {
             using Executioner executioner = new();
-            List<IDEA_Brand> brands = new List<IDEA_Brand>(); int page = 1;
+            List<IDEA_Brand> brands = []; int page = 1;
         QUERY:
             var json = executioner.Execute(Helper.global.ideasoft.store_url +
                 "/admin-api/brands?limit=" + _limit.ToString() + "&page=" + page.ToString(),
@@ -179,6 +185,28 @@ namespace Merchanter {
             return null;
         }
 
-
+        public static List<IDEA_Order>? GetIdeaOrders(int _daysto_ordersync, int _limit = 100) {
+            using Executioner executioner = new();
+            List<IDEA_Order> orders = []; int page = 1;
+        QUERY:
+            var json = executioner.Execute(Helper.global.ideasoft.store_url +
+                "/admin-api/orders?limit=" + _limit.ToString() + "&page=" + page.ToString() + "&startCreatedAt=" + DateTime.Now.AddDays(_daysto_ordersync * -1).ToString("yyyy-MM-dd") + "&endCreatedAt=" + DateTime.Now.ToString("yyyy-MM-dd"),
+                RestSharp.Method.Get, null, Helper.global.ideasoft.access_token);
+            if (json != null) {
+                var temp_orders = Newtonsoft.Json.JsonConvert.DeserializeObject<List<IDEA_Order>>(json);
+                if (temp_orders != null) {
+                    if (temp_orders.Count == _limit) {
+                        orders.AddRange(temp_orders);
+                        page++;
+                        goto QUERY;
+                    }
+                    else {
+                        orders.AddRange(temp_orders);
+                        return orders;
+                    }
+                }
+            }
+            return null;
+        }
     }
 }

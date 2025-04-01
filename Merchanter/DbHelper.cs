@@ -173,14 +173,13 @@ namespace Merchanter {
         /// <param name="_username">Username</param>
         /// <param name="_password">Password</param>
         /// <returns>[No data] or [Error] returns 'null'</returns>
-        public Customer? GetCustomer(int _customer_id, string _username, string _password) {
+        public Customer? GetCustomer(string _username, string _password) {
             try {
                 if (state != System.Data.ConnectionState.Open)
                     connection.Open();
-                string _query = "SELECT * FROM customer WHERE user_name=@user_name AND password=@password AND customer_id=@customer_id";
+                string _query = "SELECT * FROM customer WHERE user_name=@user_name AND password=@password;";
                 Customer? c = null;
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("user_name", _username));
                 cmd.Parameters.Add(new MySqlParameter("password", _password));
                 MySqlDataReader dataReader = cmd.ExecuteReader(System.Data.CommandBehavior.CloseConnection);
@@ -415,7 +414,7 @@ namespace Merchanter {
                 List<Log> list = new List<Log>();
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("start", _items_per_page * (_current_page_index)));
+                cmd.Parameters.Add(new MySqlParameter("start", _items_per_page * _current_page_index));
                 cmd.Parameters.Add(new MySqlParameter("end", _items_per_page));
                 MySqlDataReader dataReader = cmd.ExecuteReader();
                 while (dataReader.Read()) {
@@ -453,10 +452,10 @@ namespace Merchanter {
             try {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
                 string _query = "SELECT * FROM log WHERE customer_id=@customer_id";
-                string? filtered_worker = _filters["worker"];
-                string? filtered_title = _filters["title"];
-                string? filtered_message = _filters["message"];
-                string? filtered_date = _filters["date"];
+                string? filtered_worker = _filters.ContainsKey("worker") ? _filters["worker"] : null;
+                string? filtered_title = _filters.ContainsKey("title") ? _filters["title"] : null;
+                string? filtered_message = _filters.ContainsKey("message") ? _filters["message"] : null;
+                string? filtered_date = _filters.ContainsKey("date") ? _filters["date"] : null;
                 List<Log> list = [];
                 if (filtered_worker != null || filtered_title != null || filtered_message != null || filtered_date != null) {
                     _query += !string.IsNullOrWhiteSpace(filtered_worker) && filtered_worker != "0" ? " AND worker='" + filtered_worker + "'" : string.Empty;
@@ -466,7 +465,7 @@ namespace Merchanter {
                     _query += " ORDER BY id DESC LIMIT @start,@end";
                     MySqlCommand cmd = new MySqlCommand(_query, connection);
                     cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                    cmd.Parameters.Add(new MySqlParameter("start", _items_per_page * (_current_page_index)));
+                    cmd.Parameters.Add(new MySqlParameter("start", _items_per_page * _current_page_index));
                     cmd.Parameters.Add(new MySqlParameter("end", _items_per_page));
                     MySqlDataReader dataReader = cmd.ExecuteReader();
                     while (dataReader.Read()) {
@@ -529,10 +528,10 @@ namespace Merchanter {
             try {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
                 string _query = "SELECT COUNT(*) FROM log WHERE customer_id=@customer_id";
-                string? filtered_worker = _filters["worker"];
-                string? filtered_title = _filters["title"];
-                string? filtered_message = _filters["message"];
-                string? filtered_date = _filters["date"];
+                string? filtered_worker = _filters.ContainsKey("worker") ? _filters["worker"] : null;
+                string? filtered_title = _filters.ContainsKey("title") ? _filters["title"] : null;
+                string? filtered_message = _filters.ContainsKey("message") ? _filters["message"] : null;
+                string? filtered_date = _filters.ContainsKey("date") ? _filters["date"] : null;
                 int total_count = 0;
                 if (filtered_worker != null || filtered_title != null || filtered_message != null || filtered_date != null) {
                     _query += !string.IsNullOrWhiteSpace(filtered_worker) && filtered_worker != "0" ? " AND worker='" + filtered_worker + "'" : string.Empty;
@@ -1633,18 +1632,19 @@ namespace Merchanter {
             try {
                 if (this.state != System.Data.ConnectionState.Open)
                     if (this.OpenConnection()) {
-                        string _query = "SELECT * FROM m_order_statuses WHERE customer_id=@customer_id";
+                        string _query = "SELECT * FROM order_statuses WHERE customer_id=@customer_id";
                         MySqlCommand cmd = new MySqlCommand(_query, Connection);
                         cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id.ToString()));
                         MySqlDataReader dataReader = cmd.ExecuteReader();
-                        List<OrderStatus> list = new List<OrderStatus>();
+                        List<OrderStatus> list = [];
                         while (dataReader.Read()) {
                             list.Add(new OrderStatus(
                                 Convert.ToInt32(dataReader["id"].ToString()),
                                  Convert.ToInt32(dataReader["customer_id"].ToString()),
                                  dataReader["status_name"].ToString(),
                                  dataReader["status_code"].ToString(),
-                                 dataReader["magento2_status_code"].ToString(),
+                                 dataReader["platform"].ToString(),
+                                 dataReader["platform_status_code"].ToString(),
                                  Convert.ToBoolean(Convert.ToInt32(dataReader["sync_status"].ToString())),
                                  Convert.ToBoolean(Convert.ToInt32(dataReader["process_status"].ToString()))
                             ));
@@ -1673,18 +1673,19 @@ namespace Merchanter {
             try {
                 if (this.state != System.Data.ConnectionState.Open)
                     if (this.OpenConnection()) {
-                        string _query = "SELECT * FROM m_payment_methods WHERE customer_id=@customer_id";
+                        string _query = "SELECT * FROM payment_methods WHERE customer_id=@customer_id";
                         MySqlCommand cmd = new MySqlCommand(_query, Connection);
                         cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id.ToString()));
                         MySqlDataReader dataReader = cmd.ExecuteReader();
-                        List<PaymentMethod> list = new List<PaymentMethod>();
+                        List<PaymentMethod> list = [];
                         while (dataReader.Read()) {
                             list.Add(new PaymentMethod(
                                 Convert.ToInt32(dataReader["id"].ToString()),
-                                 Convert.ToInt32(dataReader["customer_id"].ToString()),
-                                 dataReader["payment_name"].ToString(),
-                                 dataReader["payment_code"].ToString(),
-                                 dataReader["magento2_payment_code"].ToString()
+                                Convert.ToInt32(dataReader["customer_id"].ToString()),
+                                dataReader["payment_name"].ToString(),
+                                dataReader["payment_code"].ToString(),
+                                dataReader["platform"].ToString(),
+                                dataReader["platform_payment_code"].ToString()
                             ));
                         }
                         dataReader.Close();
@@ -1711,18 +1712,19 @@ namespace Merchanter {
             try {
                 if (this.state != System.Data.ConnectionState.Open)
                     if (this.OpenConnection()) {
-                        string _query = "SELECT * FROM m_shipment_methods WHERE customer_id=@customer_id";
+                        string _query = "SELECT * FROM shipment_methods WHERE customer_id=@customer_id";
                         MySqlCommand cmd = new MySqlCommand(_query, Connection);
                         cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id.ToString()));
                         MySqlDataReader dataReader = cmd.ExecuteReader();
-                        List<ShipmentMethod> list = new List<ShipmentMethod>();
+                        List<ShipmentMethod> list = [];
                         while (dataReader.Read()) {
                             list.Add(new ShipmentMethod(
                                 Convert.ToInt32(dataReader["id"].ToString()),
-                                 Convert.ToInt32(dataReader["customer_id"].ToString()),
-                                 dataReader["shipment_name"].ToString(),
-                                 dataReader["shipment_code"].ToString(),
-                                 dataReader["magento2_shipment_code"].ToString()
+                                Convert.ToInt32(dataReader["customer_id"].ToString()),
+                                dataReader["shipment_name"].ToString(),
+                                dataReader["shipment_code"].ToString(),
+                                dataReader["platform"].ToString(),
+                                dataReader["platform_shipment_code"].ToString()
                             ));
                         }
                         dataReader.Close();
@@ -2229,11 +2231,16 @@ namespace Merchanter {
         /// <param name="_current_page_index">Current Page Index</param>
         /// <param name="_with_ext">Get with extension</param>
         /// <returns>[Error] returns 'null'</returns>
-        public List<Product> GetProducts(int _customer_id, int _items_per_page, int _current_page_index, bool _with_attr = false, bool _with_ext = true) {
+        public List<Product> GetProducts(int _customer_id, int _items_per_page, int _current_page_index, bool _with_attr = false, bool _with_other_sources = true) {
             try {
+                var brands = GetBrands(_customer_id);
+                var categories = GetCategories(_customer_id);
+                List<ProductSource>? product_other_sources = [];
+
                 if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM products WHERE customer_id=@customer_id ORDER BY id DESC LIMIT @start,@end";
-                List<Product> list = new List<Product>();
+                string _query = "SELECT p.id AS p_id, p.customer_id AS p_customer_id, p.source_product_id AS p_source_product_id, p.sources AS p_sources, p.update_date AS p_update_date, p.sku AS p_sku, p.type AS p_type, p.total_qty AS p_total_qty, p.name AS p_name, p.barcode AS p_barcode, p.price AS p_price, p.special_price AS p_special_price, p.custom_price AS p_custom_price, p.currency AS p_currency, p.tax AS p_tax, p.tax_included AS p_tax_included, pe.id AS pe_id, pe.brand_id AS pe_brand_id, pe.category_ids AS pe_category_ids, pe.is_xml_enabled AS pe_is_xml_enabled, pe.xml_sources AS pe_xml_sources, pe.update_date AS pe_update_date, ps.id AS ps_id, ps.name AS ps_name, ps.is_active AS ps_is_active, ps.qty AS ps_qty FROM products AS p INNER JOIN products_ext AS pe ON p.sku = pe.sku INNER JOIN product_sources AS ps ON p.sku = ps.sku AND ps.name = SUBSTRING_INDEX(p.sources, ',', 1) WHERE p.customer_id=@customer_id ORDER BY id DESC LIMIT @start,@end;";
+                //string _query = "SELECT * FROM products WHERE customer_id=@customer_id ORDER BY id DESC LIMIT @start,@end";
+                List<Product> list = [];
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("start", _items_per_page * (_current_page_index)));
@@ -2241,63 +2248,72 @@ namespace Merchanter {
                 MySqlDataReader dataReader = cmd.ExecuteReader();
                 while (dataReader.Read()) {
                     Product p = new Product {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        source_product_id = Convert.ToInt32(dataReader["source_product_id"].ToString()),
-                        update_date = Convert.ToDateTime(dataReader["update_date"].ToString()),
-                        sku = dataReader["sku"].ToString(),
-                        type = (Product.ProductTypes)Convert.ToInt32(dataReader["type"].ToString()),
-                        total_qty = Convert.ToInt32(dataReader["total_qty"].ToString()),
-                        name = dataReader["name"].ToString(),
-                        barcode = dataReader["barcode"].ToString(),
-                        price = decimal.Parse(dataReader["price"].ToString()),
-                        special_price = decimal.Parse(dataReader["special_price"].ToString()),
-                        custom_price = decimal.Parse(dataReader["custom_price"].ToString()),
-                        currency = dataReader["currency"].ToString(),
-                        tax = Convert.ToInt32(dataReader["tax"].ToString()),
-                        tax_included = Convert.ToBoolean(Convert.ToInt32(dataReader["tax_included"].ToString())),
+                        id = Convert.ToInt32(dataReader["p_id"].ToString()),
+                        customer_id = Convert.ToInt32(dataReader["p_customer_id"].ToString()),
+                        source_product_id = Convert.ToInt32(dataReader["p_source_product_id"].ToString()),
+                        update_date = Convert.ToDateTime(dataReader["p_update_date"].ToString()),
+                        sku = dataReader["p_sku"].ToString(),
+                        type = (Product.ProductTypes)Convert.ToInt32(dataReader["p_type"].ToString()),
+                        total_qty = Convert.ToInt32(dataReader["p_total_qty"].ToString()),
+                        name = dataReader["p_name"].ToString(),
+                        barcode = dataReader["p_barcode"].ToString(),
+                        price = decimal.Parse(dataReader["p_price"].ToString()),
+                        special_price = decimal.Parse(dataReader["p_special_price"].ToString()),
+                        custom_price = decimal.Parse(dataReader["p_custom_price"].ToString()),
+                        currency = dataReader["p_currency"].ToString(),
+                        tax = Convert.ToInt32(dataReader["p_tax"].ToString()),
+                        tax_included = Convert.ToBoolean(Convert.ToInt32(dataReader["p_tax_included"].ToString()))
                     };
+                    p.extension = new ProductExtension() {
+                        id = Convert.ToInt32(dataReader["pe_id"].ToString()),
+                        customer_id = p.customer_id,
+                        sku = p.sku,
+                        barcode = p.barcode,
+                        brand_id = Convert.ToInt32(dataReader["pe_brand_id"].ToString()),
+                        category_ids = dataReader["pe_category_ids"].ToString(),
+                        is_xml_enabled = dataReader["pe_is_xml_enabled"].ToString() == "1",
+                        xml_sources = dataReader["pe_xml_sources"]?.ToString()?.Split(','),
+                        update_date = Convert.ToDateTime(dataReader["pe_update_date"].ToString())
+                    };
+                    p.sources = [new ProductSource(_customer_id,
+                        Convert.ToInt32(dataReader["ps_id"].ToString()),
+                        dataReader["ps_name"].ToString(),
+                        p.sku, p.barcode, Convert.ToInt32(dataReader["ps_qty"].ToString()),
+                        Convert.ToBoolean(Convert.ToInt32(dataReader["ps_is_active"].ToString()))
+                    )];
                     list.Add(p);
                 }
                 dataReader.Close();
                 if (state == System.Data.ConnectionState.Open) connection.Close();
-                if (_with_ext) {
-                    var exts = GetProductExts(_customer_id);
-                    foreach (var item in list) {
-                        var selected_ext = exts?.Where(x => x.sku == item.sku).FirstOrDefault();
-                        if (selected_ext != null)
-                            item.extension = selected_ext;
-                        else {
-                            OnError("GetProducts: " + item.sku + " - Product Extension Not Found");
-                            return null;
-                        }
-                    }
+
+                for (int i = 0; i < list.Count; i++) {
+                    if (list[i].extension.brand_id > 0)
+                        list[i].extension.brand = brands.FirstOrDefault(x => x.id == list[i].extension.brand_id);
+                    if (!string.IsNullOrWhiteSpace(list[i].extension.category_ids))
+                        list[i].extension.categories = categories?.Where(x => list[i].extension.category_ids.Split(",").Contains(x.id.ToString())).ToList();
                 }
 
                 if (_with_attr) {
                     var attrs = GetProductAttributes(_customer_id);
-                    if (attrs != null) {
+                    if (attrs != null && attrs.Count > 0) {
                         foreach (var item in list) {
-                            item.attributes = attrs.Where(x => x.product_id == item.id).ToList();
+                            item.attributes = [.. attrs.Where(x => x.product_id == item.id)];
                         }
                     }
-                    else {
-                        OnError("GetProducts: Product Attributes Not Found");
-                        return null;
-                    }
                 }
 
-                var product_sources = GetProductSources(_customer_id);
-                foreach (var item in list) {
-                    var selected_product_source = product_sources?.Where(x => x.sku == item.sku).ToList();
-                    if (selected_product_source != null)
-                        item.sources = selected_product_source;
-                    else {
-                        OnError("GetProducts: " + item.sku + " - Product Source Not Found");
-                        return null;
+                if (_with_other_sources) {
+                    string? main_source = Helper.global.integrations.Where(x => x.work?.type == Work.WorkType.PRODUCT && x.work?.direction == Work.WorkDirection.MAIN_SOURCE && x.work.status && x.is_active).FirstOrDefault()?.work.name;
+                    if (!string.IsNullOrWhiteSpace(main_source))
+                        product_other_sources = GetProductOtherSources(_customer_id, main_source);
+                    if (product_other_sources != null && product_other_sources.Count > 0) {
+                        foreach (var item in list) {
+                            var selected_product_source = product_other_sources?.FindAll(x => x.sku == item.sku);
+                            if (selected_product_source != null && selected_product_source.Count > 0)
+                                item.sources.AddRange(selected_product_source);
+                        }
                     }
                 }
-
 
                 return list;
             }

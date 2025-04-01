@@ -12,8 +12,8 @@ namespace Merchanter.ServerService.Classes {
 	}
 
 	public class Pager {
-		public int ItemsPerPage { get; set; }
-		public int CurrentPageIndex { get; set; }
+		public int ItemsPerPage { get; set; } = 20;
+		public int CurrentPageIndex { get; set; } = 1;
 	}
 
 	public class Filter<T> {

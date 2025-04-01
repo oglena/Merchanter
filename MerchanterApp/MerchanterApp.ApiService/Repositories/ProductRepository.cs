@@ -12,8 +12,8 @@ namespace MerchanterApp.ApiService.Repositories {
     }
     public class ProductRepository(MerchanterService merchanterService) : IProductRepository {
         public async Task<List<Product>?> GetProducts(int _customer_id) {
-            var mert = await GetProductsAsync(_customer_id);
-            return mert;
+            var merts = await GetProductsAsync(_customer_id);
+            return merts;
         }
         public async Task<Product?> GetProduct(int _customer_id, int _product_id) {
             var mert = await GetProductAsync(_customer_id, _product_id);
@@ -27,7 +27,7 @@ namespace MerchanterApp.ApiService.Repositories {
 
         private Task<List<Product>> GetProductsAsync(int _customer_id) {
             merchanterService.global = merchanterService.helper.LoadSettings(_customer_id);
-            return Task.Run(() => merchanterService.helper.GetProducts(_customer_id, out var _brands, out var _categories, true, true));
+            return Task.Run(() => merchanterService.helper.GetProducts(_customer_id, 20, 1, false, true));
         }
     }
 }
