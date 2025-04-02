@@ -1,6 +1,6 @@
 ﻿using Swashbuckle.AspNetCore.Annotations;
 
-namespace MerchanterApp.ApiService.Classes {
+namespace Merchanter.Classes {
     [Serializable]
     public class ApiFilter {
         public List<Filter<dynamic>>? Filters { get; set; }

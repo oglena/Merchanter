@@ -1,5 +1,4 @@
 ﻿using Merchanter.Classes;
-using Merchanter.ServerService.Classes;
 using Merchanter.ServerService.Models;
 using Merchanter.ServerService.Services;
 using Microsoft.AspNetCore.Authorization;

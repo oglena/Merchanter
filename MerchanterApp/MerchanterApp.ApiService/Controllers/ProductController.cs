@@ -2,22 +2,19 @@
 using MerchanterApp.ApiService.Models;
 using MerchanterApp.ApiService.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
-using System.Security.Claims;
 
 namespace MerchanterApp.ApiService.Controllers {
     [Route("api/[controller]")]
     [ApiController]
     public class ProductController(IProductService productService) : ControllerBase {
 
-        [HttpGet("GetProducts")]
+        [HttpPost("GetProducts")]
         [Authorize]
-        public async Task<ActionResult<BaseResponseModel>> GetProducts() {
+        public async Task<ActionResult<BaseResponseModel>> GetProducts(ApiFilter _filters) {
             int.TryParse(HttpContext.User.FindFirst("customerId")?.Value, out int customer_id);
             if (customer_id > 0) {
-                var products = await productService.GetProducts(customer_id);
+                var products = await productService.GetProducts(customer_id, _filters);
 
                 return Ok(new BaseResponseModel() { Success = products != null, Data = products ?? [], ErrorMessage = products != null ? "" : "Error -1" });
                 //return Ok( products );

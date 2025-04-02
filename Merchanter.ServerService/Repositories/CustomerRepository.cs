@@ -1,5 +1,4 @@
 ﻿using Merchanter.Classes;
-using Merchanter.ServerService.Classes;
 using Merchanter.ServerService.Services;
 
 namespace Merchanter.CustomerService.Repositories {

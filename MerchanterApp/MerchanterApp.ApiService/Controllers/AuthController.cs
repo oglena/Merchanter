@@ -5,19 +5,19 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace MerchanterApp.ApiService.Controllers {
 
-    [Route( "api/[controller]" )]
+    [Route("api/[controller]")]
     [ApiController]
-    public class AuthController :Controller {
+    public class AuthController : Controller {
         readonly IAuthService authService;
 
-        public AuthController( IAuthService authService ) {
+        public AuthController(IAuthService authService) {
             this.authService = authService;
         }
 
-        [HttpPost( "Login" )]
+        [HttpPost("Login")]
         [AllowAnonymous]
-        public async Task<ActionResult<UserLoginResponse>> LoginUserAsync( [FromBody] UserLoginRequest request ) {
-            var result = await authService.LoginUserAsync( request );
+        public async Task<ActionResult<UserLoginResponse>> LoginUserAsync([FromBody] UserLoginRequest request) {
+            var result = await authService.LoginUserAsync(request);
 
             return result;
         }

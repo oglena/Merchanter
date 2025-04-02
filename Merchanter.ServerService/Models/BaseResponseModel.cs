@@ -1,4 +1,4 @@
-﻿using Merchanter.ServerService.Classes;
+﻿using Merchanter.Classes;
 
 namespace Merchanter.ServerService.Models {
     public class BaseResponseModel<T> {

@@ -14,11 +14,6 @@
 		<FileVersion>1.1.0.0</FileVersion>
 	</PropertyGroup>
 	<ItemGroup>
-	  <PackageReference Include="Grpc.Net.ClientFactory" Version="2.49.0" />
-	  <PackageReference Include="System.Formats.Asn1" Version="6.0.1" />
-	  <PackageReference Include="System.Security.Cryptography.Pkcs" Version="6.0.4" />
-	</ItemGroup>
-	<ItemGroup>
 		<ProjectReference Include="..\MerchanterHelpers\MerchanterHelpers.csproj" />
 		<ProjectReference Include="..\Merchanter\Merchanter.csproj" />
 		<ProjectReference Include="..\ShipmentHelpers\ShipmentHelpers.csproj" />

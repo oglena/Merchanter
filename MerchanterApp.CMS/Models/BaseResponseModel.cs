@@ -1,4 +1,4 @@
-﻿using MerchanterApp.CMS.Classes;
+﻿using Merchanter.Classes;
 
 namespace MerchanterApp.CMS.Models {
     public class BaseResponseModel<T> {
