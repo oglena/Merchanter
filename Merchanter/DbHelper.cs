@@ -1,8 +1,6 @@
 ﻿using Merchanter.Classes;
 using Merchanter.Classes.Settings;
 using MySql.Data.MySqlClient;
-using System.Web.Http.Filters;
-using static Org.BouncyCastle.Asn1.Cmp.Challenge;
 using Attribute = Merchanter.Classes.Attribute;
 
 namespace Merchanter {
@@ -2130,17 +2128,14 @@ namespace Merchanter {
         /// Gets the products from the database
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
-        /// <param name="_with_ext">Get with extension</param>
+        /// <param name="_brands"> Brands</param>
+        /// <param name="_categories"> Categories</param>
         /// <returns>[Error] returns 'null'</returns>
-        public List<Product> GetProducts(int _customer_id, out List<Brand> _brands, out List<Category> _categories,
-            bool _with_attr = false, bool _with_other_sources = true) {
+        public List<Product> GetProducts(int _customer_id, out List<Brand> _brands, out List<Category> _categories) {
             _brands = []; _categories = []; List<ProductSource>? _product_other_sources = [];
             try {
-                _brands = GetBrands(_customer_id);
-                _categories = GetCategories(_customer_id);
-
                 if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT p.id AS p_id, p.customer_id AS p_customer_id, p.source_product_id AS p_source_product_id, p.sources AS p_sources, p.update_date AS p_update_date, p.sku AS p_sku, p.type AS p_type, p.total_qty AS p_total_qty, p.name AS p_name, p.barcode AS p_barcode, p.price AS p_price, p.special_price AS p_special_price, p.custom_price AS p_custom_price, p.currency AS p_currency, p.tax AS p_tax, p.tax_included AS p_tax_included, pe.id AS pe_id, pe.brand_id AS pe_brand_id, pe.category_ids AS pe_category_ids, pe.is_xml_enabled AS pe_is_xml_enabled, pe.xml_sources AS pe_xml_sources, pe.update_date AS pe_update_date, ps.id AS ps_id, ps.name AS ps_name, ps.is_active AS ps_is_active, ps.qty AS ps_qty " +
+                string _query = "SELECT p.id AS p_id, p.customer_id AS p_customer_id, p.source_product_id AS p_source_product_id, p.sources AS p_sources, p.update_date AS p_update_date, p.sku AS p_sku, p.type AS p_type, p.total_qty AS p_total_qty, p.name AS p_name, p.barcode AS p_barcode, p.price AS p_price, p.special_price AS p_special_price, p.custom_price AS p_custom_price, p.currency AS p_currency, p.tax AS p_tax, p.tax_included AS p_tax_included, pe.id AS pe_id, pe.brand_id AS pe_brand_id, pe.category_ids AS pe_category_ids, pe.is_xml_enabled AS pe_is_xml_enabled, pe.xml_sources AS pe_xml_sources, pe.update_date AS pe_update_date, ps.id AS ps_id, ps.name AS ps_name, ps.is_active AS ps_is_active, ps.qty AS ps_qty, pe.weight AS pe_weight, pe.volume AS pe_volume, pe.is_enabled AS pe_is_enabled, pe.description AS pe_description " +
                     "FROM products AS p INNER JOIN products_ext AS pe ON p.sku = pe.sku " +
                     "INNER JOIN product_sources AS ps ON p.sku = ps.sku AND ps.name = SUBSTRING_INDEX(p.sources, ',', 1) " +
                     "WHERE p.customer_id=@customer_id;";
@@ -2170,12 +2165,16 @@ namespace Merchanter {
                     p.extension = new ProductExtension() {
                         id = Convert.ToInt32(dataReader["pe_id"].ToString()),
                         customer_id = p.customer_id,
+                        is_enabled = dataReader["pe_is_enabled"].ToString() == "1",
                         sku = p.sku,
                         barcode = p.barcode,
                         brand_id = Convert.ToInt32(dataReader["pe_brand_id"].ToString()),
                         category_ids = dataReader["pe_category_ids"].ToString(),
                         is_xml_enabled = dataReader["pe_is_xml_enabled"].ToString() == "1",
                         xml_sources = dataReader["pe_xml_sources"]?.ToString()?.Split(','),
+                        weight = Convert.ToDecimal(dataReader["pe_weight"].ToString()),
+                        volume = Convert.ToDecimal(dataReader["pe_volume"].ToString()),
+                        description = dataReader["pe_description"].ToString(),
                         update_date = Convert.ToDateTime(dataReader["pe_update_date"].ToString())
                     };
                     p.sources = [new ProductSource(_customer_id,
@@ -2189,17 +2188,22 @@ namespace Merchanter {
                 dataReader.Close();
                 if (state == System.Data.ConnectionState.Open) connection.Close();
 
+                _brands = GetBrands(_customer_id);
+                _categories = GetCategories(_customer_id);
+                // Attach brands and categories
                 for (int i = 0; i < list.Count; i++) {
                     if (list[i].extension.brand_id > 0)
-                        list[i].extension.brand = _brands.FirstOrDefault(x => x.id == list[i].extension.brand_id);
+                        list[i].extension.brand = _brands.First(x => x.id == list[i].extension.brand_id);
                     if (!string.IsNullOrWhiteSpace(list[i].extension.category_ids))
-                        list[i].extension.categories = _categories?.Where(x => list[i].extension.category_ids.Split(",").Contains(x.id.ToString())).ToList();
+                        list[i].extension.categories = [.. _categories.Where(x => list[i].extension.category_ids.Split(",").Contains(x.id.ToString()))];
                 }
 
-                if (_with_other_sources) {
-                    string? main_source = Helper.global.integrations.Where(x => x.work?.type == Work.WorkType.PRODUCT && x.work?.direction == Work.WorkDirection.MAIN_SOURCE && x.work.status && x.is_active).FirstOrDefault()?.work.name;
-                    if (!string.IsNullOrWhiteSpace(main_source))
-                        _product_other_sources = GetProductOtherSources(_customer_id, main_source);
+                #region Attach other product sources
+                string? main_source = Helper.global.integrations.Where(x => x.work?.type == Work.WorkType.PRODUCT &&
+                                                                                    x.work?.direction == Work.WorkDirection.MAIN_SOURCE &&
+                                                                                    x.work.status && x.is_active).FirstOrDefault()?.work.name;
+                if (!string.IsNullOrWhiteSpace(main_source)) {
+                    _product_other_sources = GetProductOtherSources(_customer_id, main_source);
                     if (_product_other_sources != null && _product_other_sources.Count > 0) {
                         foreach (var item in list) {
                             var selected_product_source = _product_other_sources?.FindAll(x => x.sku == item.sku);
@@ -2208,22 +2212,32 @@ namespace Merchanter {
                         }
                     }
                 }
+                #endregion
 
-                if (_with_attr) {
-                    var attrs = GetProductAttributes(_customer_id);
-                    if (attrs != null && attrs.Count > 0) {
-                        foreach (var item in list) {
-                            item.attributes = [.. attrs.Where(x => x.product_id == item.id)];
-                        }
+                #region Attach product attributes
+                var attrs = GetProductAttributes(_customer_id);
+                if (attrs != null && attrs.Count > 0) {
+                    foreach (var item in list) {
+                        item.attributes = [.. attrs.Where(x => x.product_id == item.id)];
                     }
                 }
+                #endregion
+
+                #region Attach product images
+                var images = GetProductImages(_customer_id);
+                if (images != null && images.Count > 0) {
+                    foreach (var item in list) {
+                        item.images = [.. images.Where(x => x.product_id == item.id)];
+                    }
+                }
+                #endregion
 
                 return list;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
                 if (state == System.Data.ConnectionState.Open) connection.Close();
-                return null;
+                return [];
             }
         }
 
@@ -2235,15 +2249,14 @@ namespace Merchanter {
         /// <param name="_current_page_index">Current Page Index</param>
         /// <param name="_with_ext">Get with extension</param>
         /// <returns>[Error] returns 'null'</returns>
-        public List<Product> GetProducts(int _customer_id, int _items_per_page, int _current_page_index, ApiFilter _filters,
-            bool _with_attr = false, bool _with_other_sources = true) {
+        public List<Product> GetProducts(int _customer_id, int _items_per_page, int _current_page_index, ApiFilter _filters) {
             try {
                 var brands = GetBrands(_customer_id);
                 var categories = GetCategories(_customer_id);
                 List<ProductSource>? product_other_sources = [];
 
                 if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT p.id AS p_id, p.customer_id AS p_customer_id, p.source_product_id AS p_source_product_id, p.sources AS p_sources, p.update_date AS p_update_date, p.sku AS p_sku, p.type AS p_type, p.total_qty AS p_total_qty, p.name AS p_name, p.barcode AS p_barcode, p.price AS p_price, p.special_price AS p_special_price, p.custom_price AS p_custom_price, p.currency AS p_currency, p.tax AS p_tax, p.tax_included AS p_tax_included, pe.id AS pe_id, pe.brand_id AS pe_brand_id, pe.category_ids AS pe_category_ids, pe.is_xml_enabled AS pe_is_xml_enabled, pe.xml_sources AS pe_xml_sources, pe.update_date AS pe_update_date, ps.id AS ps_id, ps.name AS ps_name, ps.is_active AS ps_is_active, ps.qty AS ps_qty " +
+                string _query = "SELECT p.id AS p_id, p.customer_id AS p_customer_id, p.source_product_id AS p_source_product_id, p.sources AS p_sources, p.update_date AS p_update_date, p.sku AS p_sku, p.type AS p_type, p.total_qty AS p_total_qty, p.name AS p_name, p.barcode AS p_barcode, p.price AS p_price, p.special_price AS p_special_price, p.custom_price AS p_custom_price, p.currency AS p_currency, p.tax AS p_tax, p.tax_included AS p_tax_included, pe.id AS pe_id, pe.brand_id AS pe_brand_id, pe.category_ids AS pe_category_ids, pe.is_xml_enabled AS pe_is_xml_enabled, pe.xml_sources AS pe_xml_sources, pe.update_date AS pe_update_date, ps.id AS ps_id, ps.name AS ps_name, ps.is_active AS ps_is_active, ps.qty AS ps_qty, pe.weight AS pe_weight, pe.volume AS pe_volume, pe.is_enabled AS pe_is_enabled, pe.description AS pe_description " +
                     "FROM products AS p INNER JOIN products_ext AS pe ON p.sku = pe.sku " +
                     "INNER JOIN product_sources AS ps ON p.sku = ps.sku AND ps.name = SUBSTRING_INDEX(p.sources, ',', 1) " +
                     "WHERE p.customer_id=@customer_id ORDER BY p.id DESC LIMIT @start,@end;";
@@ -2280,6 +2293,9 @@ namespace Merchanter {
                         category_ids = dataReader["pe_category_ids"].ToString(),
                         is_xml_enabled = dataReader["pe_is_xml_enabled"].ToString() == "1",
                         xml_sources = dataReader["pe_xml_sources"]?.ToString()?.Split(','),
+                        weight = Convert.ToDecimal(dataReader["pe_weight"].ToString()),
+                        volume = Convert.ToDecimal(dataReader["pe_volume"].ToString()),
+                        description = dataReader["pe_description"].ToString(),
                         update_date = Convert.ToDateTime(dataReader["pe_update_date"].ToString())
                     };
                     p.sources = [new ProductSource(_customer_id,
@@ -2293,6 +2309,7 @@ namespace Merchanter {
                 dataReader.Close();
                 if (state == System.Data.ConnectionState.Open) connection.Close();
 
+                // Attach brands and categories
                 for (int i = 0; i < list.Count; i++) {
                     if (list[i].extension.brand_id > 0)
                         list[i].extension.brand = brands.FirstOrDefault(x => x.id == list[i].extension.brand_id);
@@ -2300,25 +2317,31 @@ namespace Merchanter {
                         list[i].extension.categories = categories?.Where(x => list[i].extension.category_ids.Split(",").Contains(x.id.ToString())).ToList();
                 }
 
-                if (_with_attr) {
-                    var attrs = GetProductAttributes(_customer_id);
-                    if (attrs != null && attrs.Count > 0) {
-                        foreach (var item in list) {
-                            item.attributes = [.. attrs.Where(x => x.product_id == item.id)];
-                        }
+                // Get other product sources
+                string? main_source = Helper.global.integrations.Where(x => x.work?.type == Work.WorkType.PRODUCT && x.work?.direction == Work.WorkDirection.MAIN_SOURCE && x.work.status && x.is_active).FirstOrDefault()?.work.name;
+                if (!string.IsNullOrWhiteSpace(main_source))
+                    product_other_sources = GetProductOtherSources(_customer_id, main_source);
+                if (product_other_sources != null && product_other_sources.Count > 0) {
+                    foreach (var item in list) {
+                        var selected_product_source = product_other_sources?.FindAll(x => x.sku == item.sku);
+                        if (selected_product_source != null && selected_product_source.Count > 0)
+                            item.sources.AddRange(selected_product_source);
                     }
                 }
 
-                if (_with_other_sources) {
-                    string? main_source = Helper.global.integrations.Where(x => x.work?.type == Work.WorkType.PRODUCT && x.work?.direction == Work.WorkDirection.MAIN_SOURCE && x.work.status && x.is_active).FirstOrDefault()?.work.name;
-                    if (!string.IsNullOrWhiteSpace(main_source))
-                        product_other_sources = GetProductOtherSources(_customer_id, main_source);
-                    if (product_other_sources != null && product_other_sources.Count > 0) {
-                        foreach (var item in list) {
-                            var selected_product_source = product_other_sources?.FindAll(x => x.sku == item.sku);
-                            if (selected_product_source != null && selected_product_source.Count > 0)
-                                item.sources.AddRange(selected_product_source);
-                        }
+                // Get product attributes
+                var attrs = GetProductAttributes(_customer_id);
+                if (attrs != null && attrs.Count > 0) {
+                    foreach (var item in list) {
+                        item.attributes = [.. attrs.Where(x => x.product_id == item.id)];
+                    }
+                }
+
+                // Get product images
+                var images = GetProductImages(_customer_id);
+                if (images != null && images.Count > 0) {
+                    foreach (var item in list) {
+                        item.images = [.. images.Where(x => x.product_id == item.id)];
                     }
                 }
 
@@ -2983,6 +3006,10 @@ namespace Merchanter {
                     px.barcode = dataReader["barcode"].ToString();
                     px.is_xml_enabled = Convert.ToBoolean(Convert.ToInt32(dataReader["is_xml_enabled"].ToString()));
                     px.xml_sources = dataReader["xml_sources"]?.ToString()?.Split(',');
+                    px.description = dataReader["description"].ToString();
+                    px.weight = decimal.Parse(dataReader["weight"].ToString());
+                    px.volume = decimal.Parse(dataReader["volume"].ToString());
+                    px.is_enabled = Convert.ToBoolean(Convert.ToInt32(dataReader["is_enabled"].ToString()));
                     px.update_date = Convert.ToDateTime(dataReader["update_date"].ToString());
                 }
                 dataReader.Close();
@@ -3041,6 +3068,10 @@ namespace Merchanter {
                         barcode = dataReader["barcode"].ToString(),
                         is_xml_enabled = dataReader["is_xml_enabled"] != null && dataReader["is_xml_enabled"].ToString() == "1",
                         xml_sources = dataReader["xml_sources"]?.ToString()?.Split(','),
+                        description = dataReader["description"].ToString(),
+                        weight = decimal.Parse(dataReader["weight"].ToString()),
+                        volume = decimal.Parse(dataReader["volume"].ToString()),
+                        is_enabled = dataReader["is_enabled"] != null && dataReader["is_enabled"].ToString() == "1",
                         update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
                     };
                     list.Add(s);
@@ -3106,6 +3137,10 @@ namespace Merchanter {
                         barcode = dataReader["barcode"].ToString(),
                         is_xml_enabled = dataReader["is_xml_enabled"] != null && dataReader["is_xml_enabled"].ToString() == "1",
                         xml_sources = dataReader["xml_sources"]?.ToString()?.Split(','),
+                        description = dataReader["description"].ToString(),
+                        weight = decimal.Parse(dataReader["weight"].ToString()),
+                        volume = decimal.Parse(dataReader["volume"].ToString()),
+                        is_enabled = dataReader["is_enabled"] != null && dataReader["is_enabled"].ToString() == "1",
                         update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
                     };
                     list.Add(s);
@@ -3161,14 +3196,17 @@ namespace Merchanter {
                 }
 
                 int val = 0;
-                string _query = "INSERT INTO products_ext (customer_id,brand_id,category_ids,sku,barcode) VALUES " +
-                    "(@customer_id,@brand_id,@category_ids,@sku,@barcode)"; //,@is_xml_enabled,@xml_sources
+                string _query = "INSERT INTO products_ext (customer_id,brand_id,category_ids,sku,barcode,weight,volume,description) VALUES " +
+                    "(@customer_id,@brand_id,@category_ids,@sku,@barcode,@weight,@volume,@description)"; //,@is_xml_enabled,@xml_sources
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("brand_id", _source.brand_id));
                 cmd.Parameters.Add(new MySqlParameter("category_ids", _source.category_ids));
                 cmd.Parameters.Add(new MySqlParameter("sku", _source.sku));
                 cmd.Parameters.Add(new MySqlParameter("barcode", _source.barcode));
+                cmd.Parameters.Add(new MySqlParameter("weight", _source.weight));
+                cmd.Parameters.Add(new MySqlParameter("volume", _source.volume));
+                cmd.Parameters.Add(new MySqlParameter("description", _source.description));
                 //cmd.Parameters.Add( new MySqlParameter( "is_xml_enabled", _source.is_xml_enabled ) );
                 //cmd.Parameters.Add( new MySqlParameter( "xml_sources", _source.xml_sources != null ? string.Join( ",", _source.xml_sources ) : null ) );
                 if (state != System.Data.ConnectionState.Open) connection.Open();
@@ -3197,7 +3235,7 @@ namespace Merchanter {
                     connection.Open();
 
                 int val = 0;
-                string _query = "UPDATE products_ext SET brand_id=@brand_id,category_ids=@category_ids,barcode=@barcode,is_xml_enabled=@is_xml_enabled,xml_sources=@xml_sources,update_date=@update_date " +
+                string _query = "UPDATE products_ext SET brand_id=@brand_id,category_ids=@category_ids,barcode=@barcode,is_xml_enabled=@is_xml_enabled,xml_sources=@xml_sources,update_date=@update_date,weight=@weight,volume=@volume,description=@description,is_enabled=@is_enabled " +
                     "WHERE sku=@sku AND customer_id=@customer_id";
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
@@ -3207,6 +3245,10 @@ namespace Merchanter {
                 cmd.Parameters.Add(new MySqlParameter("barcode", _source.barcode));
                 cmd.Parameters.Add(new MySqlParameter("xml_sources", (_source.xml_sources != null && _source.xml_sources.Length > 0) ? string.Join(",", _source.xml_sources) : string.Empty));
                 cmd.Parameters.Add(new MySqlParameter("is_xml_enabled", _source.is_xml_enabled));
+                cmd.Parameters.Add(new MySqlParameter("weight", _source.weight));
+                cmd.Parameters.Add(new MySqlParameter("volume", _source.volume));
+                cmd.Parameters.Add(new MySqlParameter("description", _source.description));
+                cmd.Parameters.Add(new MySqlParameter("is_enabled", _source.is_enabled));
                 cmd.Parameters.Add(new MySqlParameter("update_date", DateTime.Now));
                 val = cmd.ExecuteNonQuery();
 
@@ -3238,7 +3280,7 @@ namespace Merchanter {
                 string _query = "DELETE FROM products_ext WHERE sku=@sku AND customer_id=@customer_id";
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("product_id", _sku));
+                cmd.Parameters.Add(new MySqlParameter("sku", _sku));
                 val = cmd.ExecuteNonQuery();
 
                 if (state == System.Data.ConnectionState.Open)
@@ -3520,6 +3562,160 @@ namespace Merchanter {
         }
 
         /// <summary>
+        /// Inserts the product image to the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_image">ProductImage</param>
+        /// <returns>Error returns 'int:0'</returns>
+        public int InsertProductImage(int _customer_id, ProductImage _image) {
+            try {
+                object val;
+                string _query = "START TRANSACTION;" +
+                    "INSERT INTO product_images (customer_id,product_id,sku,type,image_name,image_url,image_base64,is_default) VALUES (@customer_id,@product_id,@sku,@type,@image_name,@image_url,@image_base64,@is_default);" +
+                    "SELECT LAST_INSERT_ID();" +
+                    "COMMIT;";
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                cmd.Parameters.Add(new MySqlParameter("product_id", _image.product_id));
+                cmd.Parameters.Add(new MySqlParameter("sku", _image.sku));
+                cmd.Parameters.Add(new MySqlParameter("type", (int)_image.type));
+                cmd.Parameters.Add(new MySqlParameter("image_name", _image.image_name));
+                cmd.Parameters.Add(new MySqlParameter("image_url", _image.image_url));
+                cmd.Parameters.Add(new MySqlParameter("image_base64", _image.image_base64));
+                cmd.Parameters.Add(new MySqlParameter("is_default", _image.is_default ? 1 : 0));
+
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                val = cmd.ExecuteScalar();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
+                if (val != null) {
+                    if (int.TryParse(val.ToString(), out int PIID))
+                        return PIID;
+                }
+                return 0;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return 0;
+            }
+        }
+
+        /// <summary>
+        /// Updates the product image in the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_image">ProductImage</param>
+        /// <returns>[No change] or [Error] returns 'null'</returns>
+        public bool UpdateProductImage(int _customer_id, ProductImage _image) {
+            try {
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                int val = 0;
+                string _query = "UPDATE product_images SET product_id=@product_id,sku=@sku,type=@type,image_name=@image_name,image_url=@image_url,image_base64=@image_base64,is_default=@is_default,update_date=@update_date " +
+                    "WHERE id=@id AND customer_id=@customer_id";
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                cmd.Parameters.Add(new MySqlParameter("id", _image.id));
+                cmd.Parameters.Add(new MySqlParameter("product_id", _image.product_id));
+                cmd.Parameters.Add(new MySqlParameter("sku", _image.sku));
+                cmd.Parameters.Add(new MySqlParameter("image_name", _image.image_name));
+                cmd.Parameters.Add(new MySqlParameter("image_url", _image.image_url));
+                cmd.Parameters.Add(new MySqlParameter("image_base64", _image.image_base64));
+                cmd.Parameters.Add(new MySqlParameter("is_default", _image.is_default ? 1 : 0));
+                cmd.Parameters.Add(new MySqlParameter("type", (int)_image.type));
+                cmd.Parameters.Add(new MySqlParameter("update_date", DateTime.Now));
+                val = cmd.ExecuteNonQuery();
+
+                if (state == System.Data.ConnectionState.Open) connection.Close();
+                if (val > 0)
+                    return true;
+                else return false;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Gets the product images from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <returns>[Error] returns 'null'</returns>
+        public List<ProductImage> GetProductImages(int _customer_id) {
+            try {
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                string _query = "SELECT * FROM product_images WHERE customer_id=@customer_id";
+                List<ProductImage> list = new List<ProductImage>();
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                MySqlDataReader dataReader = cmd.ExecuteReader();
+                while (dataReader.Read()) {
+                    ProductImage pi = new ProductImage {
+                        id = Convert.ToInt32(dataReader["id"].ToString()),
+                        product_id = Convert.ToInt32(dataReader["product_id"].ToString()),
+                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                        sku = dataReader["sku"].ToString(),
+                        type = (ImageTypes)Convert.ToInt32(dataReader["type"].ToString()),
+                        image_name = dataReader["image_name"].ToString(),
+                        image_url = dataReader["image_url"].ToString(),
+                        image_base64 = dataReader["image_base64"].ToString(),
+                        is_default = dataReader["is_default"] != null && dataReader["is_default"].ToString() == "1",
+                        update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
+                    };
+                    list.Add(pi);
+                }
+                dataReader.Close();
+                if (state == System.Data.ConnectionState.Open)
+                    connection.Close();
+                return list;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets the product images by sku from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_sku">SKU</param>
+        /// <returns>[Error] returns 'null'</returns>
+        public List<ProductImage> GetProductImages(int _customer_id, string _sku) {
+            try {
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                string _query = "SELECT * FROM product_images WHERE customer_id=@customer_id AND sku=@sku;";
+                List<ProductImage> list = new List<ProductImage>();
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                cmd.Parameters.Add(new MySqlParameter("sku", _sku));
+                MySqlDataReader dataReader = cmd.ExecuteReader();
+                while (dataReader.Read()) {
+                    ProductImage pi = new ProductImage {
+                        id = Convert.ToInt32(dataReader["id"].ToString()),
+                        product_id = Convert.ToInt32(dataReader["product_id"].ToString()),
+                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                        sku = dataReader["sku"].ToString(),
+                        type = (ImageTypes)Convert.ToInt32(dataReader["type"].ToString()),
+                        image_name = dataReader["image_name"].ToString(),
+                        image_url = dataReader["image_url"].ToString(),
+                        image_base64 = dataReader["image_base64"].ToString(),
+                        is_default = dataReader["is_default"] != null && dataReader["is_default"].ToString() == "1",
+                        update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
+                    };
+                    list.Add(pi);
+                }
+                dataReader.Close();
+                if (state == System.Data.ConnectionState.Open)
+                    connection.Close();
+                return list;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return null;
+            }
+        }
+
+        /// <summary>
         /// Gets the category targets from the database
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
@@ -3711,6 +3907,37 @@ namespace Merchanter {
                 val = cmd.ExecuteNonQuery();
 
                 if (state == System.Data.ConnectionState.Open) connection.Close();
+                if (val > 0)
+                    return true;
+                else return false;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Deletes the product target from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_product_id">Product ID</param>
+        /// <returns>[No change] or [Error] returns 'false'</returns>
+        public bool DeleteProductTarget(int _customer_id, int _product_id) {
+            try {
+                if (state != System.Data.ConnectionState.Open)
+                    connection.Open();
+
+                int val = 0;
+                string _query = "DELETE FROM product_targets WHERE product_id=@product_id AND customer_id=@customer_id";
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                cmd.Parameters.Add(new MySqlParameter("product_id", _product_id));
+                val = cmd.ExecuteNonQuery();
+
+                if (state == System.Data.ConnectionState.Open)
+                    connection.Close();
+
                 if (val > 0)
                     return true;
                 else return false;

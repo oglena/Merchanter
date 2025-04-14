@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
@@ -26,8 +27,8 @@ namespace MerchanterHelpers {
             this.temp_folder_url = p_temp_folder_url;
         }
 
-        public async Task<List<US_TicariDokuman>?> GetProducts() {
-            List<US_TicariDokuman>? dokumans = null;
+        public async Task<List<TicariDokumanUrun>?> GetProducts() {
+            List<TicariDokumanUrun>? dokumans = null;
             using (DataShareClient client = new DataShareClient(DataShareClient.EndpointConfiguration.BasicHttpBinding_IDataShare,
                 url)) {
                 try {
@@ -58,7 +59,7 @@ namespace MerchanterHelpers {
                     XmlDocument xmldoc = new XmlDocument();
                     xmldoc.Load(this.temp_folder_url + "\\" + Path.GetFileNameWithoutExtension(res.filename) + ".xml");
 
-                    dokumans = new List<US_TicariDokuman>();
+                    dokumans = new List<TicariDokumanUrun>();
                     foreach (XmlNode node in xmldoc.SelectSingleNode("/root")) {
                         xmlreq.Clear();
                         xmlreq.Add("<root>");
@@ -77,9 +78,9 @@ namespace MerchanterHelpers {
 
                             string xmlFilePath = this.temp_folder_url + "\\" + Path.GetFileNameWithoutExtension(rsp.filename) + ".xml";
                             if (File.Exists(xmlFilePath)) {
-                                XmlSerializer serializer = new XmlSerializer(typeof(US_TicariDokuman));
+                                XmlSerializer serializer = new XmlSerializer(typeof(TicariDokumanUrun));
                                 using FileStream fs = new FileStream(xmlFilePath, FileMode.Open);
-                                US_TicariDokuman? dokuman = (US_TicariDokuman?)serializer.Deserialize(fs);
+                                TicariDokumanUrun? dokuman = (TicariDokumanUrun?)serializer.Deserialize(fs);
                                 if (dokuman != null) {
                                     dokumans.Add(dokuman);
                                 }
@@ -89,39 +90,61 @@ namespace MerchanterHelpers {
                 }
                 catch (Exception ex) {
                     Console.WriteLine(ex.Message);
-                    return null;
+                    //return null;
                 }
             }
 
             return dokumans;
         }
 
-        public List<US_TicariDokuman>? GetProductsFromFolder(string _folder_url) {
+        public TicariDokumanKategori? GetCategoriesFromFolder(string _folder_url) {
             string[] files = Directory.GetFiles(_folder_url, "*.xml");
             if (files.Length == 0) return null;
 
-            List<US_TicariDokuman> dokumans = new List<US_TicariDokuman>();
+            TicariDokumanKategori? dokuman = null;
+                try {
+                    string xmlFilePath = files[0];
+                    if (File.Exists(files[0])) {
+                        XmlSerializer serializer = new XmlSerializer(typeof(TicariDokumanKategori));
+                        using FileStream fs = new FileStream(files[0], FileMode.Open);
+                        dokuman = (TicariDokumanKategori?)serializer.Deserialize(fs);
+                        if (dokuman != null) {
+                        return dokuman;
+                        }
+                    }
+                }
+                catch (Exception ex) {
+                    //return null;
+                }
+            return dokuman;
+        }
+
+        public List<TicariDokumanUrun>? GetProductsFromFolder(string _folder_url) {
+            string[] files = Directory.GetFiles(_folder_url, "*.xml");
+            if (files.Length == 0) return null;
+
+            List<TicariDokumanUrun> dokumans = new List<TicariDokumanUrun>();
             foreach (var item in files) {
                 try {
                     string xmlFilePath = item;
                     if (File.Exists(item)) {
-                        XmlSerializer serializer = new XmlSerializer(typeof(US_TicariDokuman));
+                        XmlSerializer serializer = new XmlSerializer(typeof(TicariDokumanUrun));
                         using FileStream fs = new FileStream(item, FileMode.Open);
-                        US_TicariDokuman? dokuman = (US_TicariDokuman?)serializer.Deserialize(fs);
+                        TicariDokumanUrun? dokuman = (TicariDokumanUrun?)serializer.Deserialize(fs);
                         if (dokuman != null) {
                             dokumans.Add(dokuman);
                         }
                     }
                 }
                 catch (Exception ex) {
-                    return null;
+                    //return null;
                 }
             }
             return dokumans;
         }
 
-        public async Task<CAT_TicariDokuman?> GetCategories() {
-            CAT_TicariDokuman? dokuman = null;
+        public async Task<TicariDokumanKategori?> GetCategories() {
+            TicariDokumanKategori? dokuman = null;
             using (DataShareClient client = new DataShareClient(DataShareClient.EndpointConfiguration.BasicHttpBinding_IDataShare,
                 url)) {
                 try {
@@ -149,9 +172,9 @@ namespace MerchanterHelpers {
 
                     string xmlFilePath = this.temp_folder_url + "\\" + Path.GetFileNameWithoutExtension(res.filename) + ".xml";
                     if (File.Exists(xmlFilePath)) {
-                        XmlSerializer serializer = new XmlSerializer(typeof(CAT_TicariDokuman));
+                        XmlSerializer serializer = new XmlSerializer(typeof(TicariDokumanKategori));
                         using FileStream fs = new FileStream(xmlFilePath, FileMode.Open);
-                        dokuman = (CAT_TicariDokuman?)serializer.Deserialize(fs);
+                        dokuman = (TicariDokumanKategori?)serializer.Deserialize(fs);
                     }
                 }
                 catch (Exception ex) {

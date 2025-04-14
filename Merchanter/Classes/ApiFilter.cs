@@ -17,13 +17,13 @@ namespace Merchanter.Classes {
     }
 
     public class Filter<T> {
-        public string Field { get; set; } = string.Empty;
+        public string Field { get; set; }
         public T? Value { get; set; } = default;
-        public string Operator { get; set; } = "like"; // equal, like, in, greater, less, greaterorequal, lessorequal
+        public string Operator { get; set; } = "equal"; // equal, like, in, greater, less, greaterorequal, lessorequal
     }
 
     public class Sort {
-        public string Field { get; set; } = string.Empty;
-        public bool Descending { get; set; } = true;
+        public string Field { get; set; }
+        public string Direction { get; set; } = "desc";
     }
 }

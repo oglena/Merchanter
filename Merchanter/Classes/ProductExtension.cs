@@ -2,12 +2,16 @@
     public class ProductExtension {
         public int id { get; set; }
         public int customer_id { get; set; }
+        public bool is_enabled { get; set; } = true;
         public string sku { get; set; }
         public string barcode { get; set; }
         public int brand_id { get; set; }
         public string category_ids { get; set; }
         public bool is_xml_enabled { get; set; } = false;
         public string[]? xml_sources { get; set; } = [];
+        public decimal weight { get; set; } = 0;
+        public decimal volume { get; set; } = 0;
+        public string? description { get; set; }
         public DateTime update_date { get; set; }
 
 

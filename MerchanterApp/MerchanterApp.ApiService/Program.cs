@@ -46,6 +46,8 @@ builder.Services.AddSwaggerGen( c => {
             new string[] { }
         }
     } );
+    c.EnableAnnotations();
+    c.OperationFilter<IgnorePropertyFilter>();
 } );
 
 builder.Services.AddTransient<IAuthService, AuthService>();

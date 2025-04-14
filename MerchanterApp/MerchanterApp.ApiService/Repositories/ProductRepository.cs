@@ -25,7 +25,7 @@ namespace MerchanterApp.ApiService.Repositories {
 
         private async Task<List<Product>> GetProductsAsync(int _customer_id, ApiFilter _filters) {
             await Task.Run(() => merchanterService.global = merchanterService.helper.LoadSettings(_customer_id));
-            return await Task.Run(() => merchanterService.helper.GetProducts(_customer_id, 20, 1, _filters, false, true));
+            return await Task.Run(() => merchanterService.helper.GetProducts(_customer_id, 20, 1, _filters));
         }
     }
 }

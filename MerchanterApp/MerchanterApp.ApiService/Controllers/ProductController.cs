@@ -11,28 +11,26 @@ namespace MerchanterApp.ApiService.Controllers {
 
         [HttpPost("GetProducts")]
         [Authorize]
-        public async Task<ActionResult<BaseResponseModel>> GetProducts(ApiFilter _filters) {
+        public async Task<ActionResult<BaseResponseModel<List<Product>>>> GetProducts([FromBody] ApiFilter _filters) {
             int.TryParse(HttpContext.User.FindFirst("customerId")?.Value, out int customer_id);
             if (customer_id > 0) {
                 var products = await productService.GetProducts(customer_id, _filters);
 
-                return Ok(new BaseResponseModel() { Success = products != null, Data = products ?? [], ErrorMessage = products != null ? "" : "Error -1" });
-                //return Ok( products );
+                return Ok(new BaseResponseModel<List<Product>>() { Success = products != null, Data = products ?? [], ApiFilter = _filters, ErrorMessage = products != null ? "" : "Error -1" });
             }
             return BadRequest();
         }
 
         [HttpGet("GetProduct/{PID}")]
         [Authorize]
-        public async Task<ActionResult<BaseResponseModel>> GetProduct(string PID) {
+        public async Task<ActionResult<BaseResponseModel<Product>>> GetProduct(string PID) {
             int.TryParse(HttpContext.User.FindFirst("customerId")?.Value, out int customer_id);
             if (customer_id > 0) {
                 if (int.TryParse(PID, out int product_id) && product_id > 0) {
                     var product = await productService.GetProduct(customer_id, product_id);
 
-                    return Ok(new BaseResponseModel() { Success = product != null, Data = product ?? new(), ErrorMessage = product != null ? "" : "Error -1" });
+                    return Ok(new BaseResponseModel<Product>() { Success = product != null, Data = product ?? new(), ErrorMessage = product != null ? "" : "Error -1", ApiFilter = null });
                 }
-                //return Ok( products );
             }
             return BadRequest();
         }
