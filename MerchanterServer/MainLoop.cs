@@ -159,7 +159,6 @@ namespace MerchanterServer {
 
                 if (health) { this.OrderSync(out health); }
 
-
                 if (customer.order_sync_status) {
                     db_helper.SetOrderSyncDate(customer.customer_id);
                     db_helper.SetOrderSyncWorking(customer.customer_id, false);
@@ -173,7 +172,16 @@ namespace MerchanterServer {
             if (customer.notification_sync_status && !customer.is_notificationsync_working) {
                 db_helper.notification.SetNotificationSyncWorking(customer.customer_id, true);
                 //Task task = Task.Run( this.NotificationLoop );
-                if (health) { this.NotificationLoop(); }
+                if(products != null && products.Count > 0 && orders != null && orders.Count > 0) {
+                    if (health) { this.NotificationLoop(); }
+                }
+                else {
+                    if (customer.notification_sync_status) {
+                        db_helper.notification.SetNotificationSyncDate(customer.customer_id);
+                        db_helper.notification.SetNotificationSyncWorking(customer.customer_id, false);
+                    }
+                }
+
             }
             #endregion
 
@@ -721,7 +729,7 @@ namespace MerchanterServer {
                                                "<td>" + (x.is_active ? "active" : "passive") + "</td>" +
                                                "</tr>"
                                        })));
-                                if (GMail.Send(Constants.QP_MailSender, Constants.QP_MailPassword, Constants.QP_MailSenderName, Constants.QP_MailTo,
+                                if (GMailOAuth2.Send(Constants.QP_Gmail_ClientId, Constants.QP_Gmail_ClientSecret, Constants.QP_MailSender, Constants.QP_MailTo,
                                     mail_title,
                                     mail_body)) {
                                     item.is_notification_sent = true;
@@ -769,7 +777,7 @@ namespace MerchanterServer {
                                                "<td>" + (x.is_active ? "active" : "passive") + "</td>" +
                                                "</tr>"
                                        })));
-                                if (GMail.Send(Constants.QP_MailSender, Constants.QP_MailPassword, Constants.QP_MailSenderName, Constants.QP_MailTo,
+                                if (GMailOAuth2.Send(Constants.QP_Gmail_ClientId, Constants.QP_Gmail_ClientSecret, Constants.QP_MailSender, Constants.QP_MailTo,
                                     mail_title,
                                     mail_body)) {
                                     item.is_notification_sent = true;
@@ -817,7 +825,7 @@ namespace MerchanterServer {
                                                "<td>" + (x.is_active ? "active" : "passive") + "</td>" +
                                                "</tr>"
                                        })));
-                                if (GMail.Send(Constants.QP_MailSender, Constants.QP_MailPassword, Constants.QP_MailSenderName, Constants.QP_MailTo,
+                                if (GMailOAuth2.Send(Constants.QP_Gmail_ClientId, Constants.QP_Gmail_ClientSecret, Constants.QP_MailSender, Constants.QP_MailTo,
                                     mail_title,
                                     mail_body)) {
                                     item.is_notification_sent = true;
@@ -881,7 +889,7 @@ namespace MerchanterServer {
                                            selected_xproducts?.Where(x => x.xml_source == xsource).FirstOrDefault()?.qty,
                                            Math.Round(old_price, 2, MidpointRounding.AwayFromZero) + selected_xproducts?.Where(x => x.xml_source == xsource).FirstOrDefault()?.currency,
                                            Math.Round(new_price, 2, MidpointRounding.AwayFromZero) + selected_xproducts?.Where(x => x.xml_source == xsource).FirstOrDefault()?.currency);
-                                    if (GMail.Send(Constants.QP_MailSender, Constants.QP_MailPassword, Constants.QP_MailSenderName, Constants.QP_MailTo,
+                                    if (GMailOAuth2.Send(Constants.QP_Gmail_ClientId, Constants.QP_Gmail_ClientSecret, Constants.QP_MailSender, Constants.QP_MailTo,
                                        mail_title,
                                        mail_body)) {
                                         item.is_notification_sent = true;
