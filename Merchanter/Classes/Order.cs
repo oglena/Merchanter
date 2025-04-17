@@ -17,8 +17,9 @@
         public bool is_erp_sent { get; set; } = false;
         public float grand_total { get; set; }
         public float subtotal { get; set; }
-        public float discount_amount { get; set; }
-        public float installment_amount { get; set; }
+        public float discount_amount { get; set; } = 0;
+        public float installment_amount { get; set; } = 0;
+        public float shipment_amount { get; set; } = 0;
         public string currency { get; set; }
         public string order_status { get; set; }
         public DateTime order_date { get; set; }

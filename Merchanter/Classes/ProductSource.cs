@@ -7,6 +7,7 @@
         public string barcode { get; set; }
         public int qty { get; set; }
         public bool is_active { get; set; } = false;
+        public DateTime update_date { get; set; }
 
         /// <summary>
         /// ProductSource constructor
@@ -18,7 +19,7 @@
         /// <param name="_barcode">Product Barcode</param>
         /// <param name="_qty">Product Quantity</param>
         /// <param name="_is_active">Product Source Active Status</param>
-        public ProductSource( int _customer_id, int _id,  string _name, string _sku, string _barcode, int _qty, bool _is_active ) {
+        public ProductSource( int _customer_id, int _id,  string _name, string _sku, string _barcode, int _qty, bool _is_active, DateTime _update_date ) {
             customer_id = _customer_id;
             id = _id;
             name = _name;
@@ -26,6 +27,7 @@
             barcode = _barcode;
             qty = _qty;
             is_active = _is_active;
+            update_date = _update_date;
         }
     }
 }

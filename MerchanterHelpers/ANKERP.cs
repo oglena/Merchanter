@@ -2,6 +2,7 @@
 using MerchanterHelpers.Classes;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -45,14 +46,14 @@ namespace MerchanterHelpers {
                     client.InnerChannel.OperationTimeout = new TimeSpan(10, 0, 0);  //timeout 8 saat
                     BlobFile? res = await client.InvokeAsync(cuserdetail, string.Join("", xmlreq.ToArray())); //web servis çağrılıyor...
                     if (res.errormessages != null) {
-                        Console.WriteLine(res.errormessages);
+                        PrintConsole(res.errormessages);
                         return null;
                     }
 
                     Directory.CreateDirectory(this.temp_folder_url);
                     File.WriteAllBytes(this.temp_folder_url + "\\" + res.filename, res.blob_data);
                     UnZip(this.temp_folder_url + "\\" + res.filename, this.temp_folder_url + "\\", "", true);
-                    Console.WriteLine("Ana dosya indirildi ve açıldı.");
+                    PrintConsole("Ana dosya indirildi ve açıldı.");
 
                     cuserdetail.MethodName = "B2CDownloadZipFile"; //paketlenen zip dosyasını indir.
 
@@ -68,13 +69,13 @@ namespace MerchanterHelpers {
                         var rsp = await client.InvokeAsync(cuserdetail, string.Join("", xmlreq.ToArray()));
 
                         if (res.errormessages != null) {
-                            Console.WriteLine(res.errormessages);
+                            PrintConsole(res.errormessages);
                             return null;
                         }
                         else {
                             File.WriteAllBytes(this.temp_folder_url + "\\" + rsp.filename, rsp.blob_data);
                             UnZip(this.temp_folder_url + "\\" + rsp.filename, this.temp_folder_url + "\\", "", true);
-                            Console.WriteLine(rsp.filename + " dosyası indirildi ve açıldı.");
+                            PrintConsole(rsp.filename + " dosyası indirildi ve açıldı.");
 
                             string xmlFilePath = this.temp_folder_url + "\\" + Path.GetFileNameWithoutExtension(rsp.filename) + ".xml";
                             if (File.Exists(xmlFilePath)) {
@@ -89,8 +90,8 @@ namespace MerchanterHelpers {
                     }
                 }
                 catch (Exception ex) {
-                    Console.WriteLine(ex.Message);
-                    //return null;
+                    PrintConsole(ex.Message);
+                    return null;
                 }
             }
 
@@ -102,20 +103,21 @@ namespace MerchanterHelpers {
             if (files.Length == 0) return null;
 
             TicariDokumanKategori? dokuman = null;
-                try {
-                    string xmlFilePath = files[0];
-                    if (File.Exists(files[0])) {
-                        XmlSerializer serializer = new XmlSerializer(typeof(TicariDokumanKategori));
-                        using FileStream fs = new FileStream(files[0], FileMode.Open);
-                        dokuman = (TicariDokumanKategori?)serializer.Deserialize(fs);
-                        if (dokuman != null) {
+            try {
+                string xmlFilePath = files[0];
+                if (File.Exists(files[0])) {
+                    XmlSerializer serializer = new XmlSerializer(typeof(TicariDokumanKategori));
+                    using FileStream fs = new FileStream(files[0], FileMode.Open);
+                    dokuman = (TicariDokumanKategori?)serializer.Deserialize(fs);
+                    if (dokuman != null) {
                         return dokuman;
-                        }
                     }
                 }
-                catch (Exception ex) {
-                    //return null;
-                }
+            }
+            catch (Exception ex) {
+                PrintConsole(ex.Message);
+                return null;
+            }
             return dokuman;
         }
 
@@ -137,7 +139,8 @@ namespace MerchanterHelpers {
                     }
                 }
                 catch (Exception ex) {
-                    //return null;
+                    PrintConsole(ex.Message);
+                    return null;
                 }
             }
             return dokumans;
@@ -161,14 +164,14 @@ namespace MerchanterHelpers {
                     client.InnerChannel.OperationTimeout = new TimeSpan(8, 0, 0);  //timeout 8 saat
                     BlobFile? res = await client.InvokeAsync(cuserdetail, string.Join("", xmlreq.ToArray())); //web servis çağrılıyor...
                     if (res.errormessages != null) {
-                        Console.WriteLine(res.errormessages);
+                        PrintConsole(res.errormessages);
                         return null;
                     }
 
                     Directory.CreateDirectory(this.temp_folder_url);
                     File.WriteAllBytes(this.temp_folder_url + "\\" + res.filename, res.blob_data);
                     UnZip(this.temp_folder_url + "\\" + res.filename, this.temp_folder_url + "\\", "", true);
-                    Console.WriteLine(res.filename + " dosyası indirildi ve açıldı.");
+                    PrintConsole(res.filename + " dosyası indirildi ve açıldı.");
 
                     string xmlFilePath = this.temp_folder_url + "\\" + Path.GetFileNameWithoutExtension(res.filename) + ".xml";
                     if (File.Exists(xmlFilePath)) {
@@ -178,7 +181,7 @@ namespace MerchanterHelpers {
                     }
                 }
                 catch (Exception ex) {
-                    Console.WriteLine(ex.Message);
+                    PrintConsole(ex.Message);
                     return null;
                 }
             }
@@ -186,7 +189,7 @@ namespace MerchanterHelpers {
             return dokuman;
         }
 
-        public async Task<bool> SendOrder(string _guid, string _order_xml) {
+        public async Task<string> SendOrder(string _guid, string _order_xml) {
             using (DataShareClient client = new DataShareClient(DataShareClient.EndpointConfiguration.BasicHttpBinding_IDataShare,
                 url)) {
                 try {
@@ -208,17 +211,19 @@ namespace MerchanterHelpers {
 
                     ReturnMessage? rem = await client.SendDocumentAsync(cuserdetail, zipdoc); //web servis çağrılıyor...
                     if (rem?.Number != null) {
-                        Console.WriteLine(rem.Message);
-                        Directory.Delete(this.temp_folder_url + "\\Orders\\" + _guid.ToString());
-                        return true;
+                        PrintConsole(rem.Number + " - " + rem.Message);
+                        File.Move(this.temp_folder_url + "\\Orders\\" + _guid.ToString() + ".xml",
+                            this.temp_folder_url + "\\Orders\\Processed\\" + _guid.ToString() + ".xml");
+                        Directory.Delete(this.temp_folder_url + "\\Orders\\" + _guid.ToString(), true);
+                        return rem.Number.ToString();
                     }
                 }
                 catch (Exception ex) {
-                    Console.WriteLine(ex.Message);
-                    return false;
+                    PrintConsole(ex.Message);
+                    return string.Empty;
                 }
             }
-            return false;
+            return string.Empty;
         }
 
         private void UnZip(string zipPath, string extractPath, string password, bool overwrite) {
@@ -238,6 +243,19 @@ namespace MerchanterHelpers {
             }
 
             ZipFile.CreateFromDirectory(sourcePath, zipPath);
+        }
+
+        /// <summary>
+        /// Writes console and debug messages.
+        /// </summary>
+        /// <param name="message">Message</param>
+        /// <param name="is_console">Is Console ?</param>
+        /// <param name="is_debug">Is Debug ?</param>
+        private static void PrintConsole(string message, bool is_console = true, bool is_debug = true) {
+            if (is_console)
+                Console.WriteLine("#" + DateTime.Now.ToString("dd.MM.yy HH:mm:ss") + "," + "ANKARA_ERP" + "] " + message);
+            if (is_debug)
+                Debug.WriteLine("#" + DateTime.Now.ToString("dd.MM.yy HH:mm:ss") + "," + "ANKARA_ERP" + "] " + message);
         }
     }
 }

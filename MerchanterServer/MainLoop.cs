@@ -1,5 +1,4 @@
-﻿using iText.Kernel.Colors;
-using Merchanter;
+﻿using Merchanter;
 using Merchanter.Classes;
 using Merchanter.Classes.Settings;
 using MerchanterHelpers;
@@ -7,8 +6,8 @@ using MerchanterHelpers.Classes;
 using ShipmentHelpers;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Drawing;
 using System.Xml.Serialization;
-using ZstdSharp.Unsafe;
 
 namespace MerchanterServer {
     internal class MainLoop {
@@ -85,11 +84,11 @@ namespace MerchanterServer {
                 x.work.status && x.is_active
             ).Select(x => x.work.name)];
             Console.Write("ProductMainSource:" + product_main_source + "; OrderMainTarget:" + order_main_target);
-            Console.Write("; OtherProductSources:" + string.Join(",", other_product_sources));
-            Console.Write("; ProductTargets:" + string.Join(",", product_targets));
+            Console.WriteLine("; OtherProductSources:" + string.Join(",", other_product_sources));
+            Console.Write("ProductTargets:" + string.Join(",", product_targets));
             Console.Write("; OrderSources:" + string.Join(",", order_sources));
-            Console.WriteLine("; AvailableShipments:" + string.Join(",", available_shipments));
-            PrintConsole("All settings and integrations initiated...");
+            Console.Write("; AvailableShipments:" + string.Join(",", available_shipments) + Environment.NewLine);
+            Console.WriteLine("All settings and integrations initiated...");
             #endregion
         }
 
@@ -126,7 +125,7 @@ namespace MerchanterServer {
                 if (default_brand == null || root_category == null) { health = false; }
 
                 products = db_helper.GetProducts(customer.customer_id, out brands, out categories);
-                Console.Write("Products:" + products.Count + "; Brands:" + brands.Count + "; Categories:" + categories.Count + Environment.NewLine);
+                Console.WriteLine("Products:" + products.Count + "; Brands:" + brands.Count + "; Categories:" + categories.Count);
                 product_target_relation = db_helper.GetProductTargets(customer.customer_id);
                 Console.Write("ProductTargets:" + product_target_relation.Count);
                 category_target_relation = db_helper.GetCategoryTargets(customer.customer_id);
@@ -168,7 +167,7 @@ namespace MerchanterServer {
             }
             #endregion
 
-            //INFO: Need to be last executed
+            //INFO: Need to be last executed 
             #region Notification LOOP
             notifications = db_helper.GetNotifications(customer.customer_id, false);
             if (customer.notification_sync_status && !customer.is_notificationsync_working) {
@@ -584,6 +583,7 @@ namespace MerchanterServer {
                             if (selected_invoice != null) {
                                 invoice.id = selected_invoice.id;
                                 if (!selected_invoice.is_belge_created) {
+                                    if (string.IsNullOrWhiteSpace(selected_invoice.gib_fatura_no)) continue;
                                     string? fullpath = NetOpenXHelper.GetEbelge(selected_invoice.gib_fatura_no);
                                     if (!string.IsNullOrWhiteSpace(fullpath)) {
                                         if (order_sources.Contains(Constants.MAGENTO2)) {
@@ -653,7 +653,6 @@ namespace MerchanterServer {
                     db_helper.invoice.SetInvoiceSyncDate(customer.customer_id);
                     db_helper.invoice.SetInvoiceSyncWorking(customer.customer_id, false);
                 }
-                Console.WriteLine("[" + DateTime.Now.ToString() + "] " + Helper.global.settings.company_name + " invoice sync ended");
                 PrintConsole("Invoice sync ended.");
             }
         }
@@ -672,7 +671,6 @@ namespace MerchanterServer {
 
                         case Notification.NotificationTypes.NEW_ORDER:
                             selected_order = orders?.Where(x => x.order_label == item.order_label).FirstOrDefault();
-
                             if (selected_order != null) {
                                 string mail_title = string.Format("NEW ORDER {0}", item.order_label);
                                 string mail_body = string.Empty;
@@ -834,6 +832,12 @@ namespace MerchanterServer {
                             break;
 
                         case Notification.NotificationTypes.XML_PRODUCT_ADDED:
+                            item.is_notification_sent = true;
+                            item.notification_content = string.Format("XML_PRODUCT_ADDED {0}", item.xproduct_barcode);
+                            if (db_helper.notification.UpdateNotifications(customer.customer_id, [item])) {
+                                PrintConsole("ID:" + item.id.ToString() + " notification sent [" + item.xproduct_barcode + "]");
+                                db_helper.notification.LogToServer(thread_id, "xml_product_added", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification");
+                            }
                             break;
 
                         case Notification.NotificationTypes.XML_PRODUCT_REMOVED:
@@ -893,18 +897,48 @@ namespace MerchanterServer {
                             break;
 
                         case Notification.NotificationTypes.PRODUCT_PRICE_UPDATE_ERROR:
+                            item.is_notification_sent = true;
+                            item.notification_content = string.Format("PRODUCT_PRICE_UPDATE_ERROR {0}", item.product_sku);
+                            if (db_helper.notification.UpdateNotifications(customer.customer_id, [item])) {
+                                PrintConsole("ID:" + item.id.ToString() + " notification sent [" + item.product_sku + "]");
+                                db_helper.notification.LogToServer(thread_id, "product_price_update_error", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification");
+                            }
                             break;
 
                         case Notification.NotificationTypes.PRODUCT_SPECIAL_PRICE_UPDATE_ERROR:
+                            item.is_notification_sent = true;
+                            item.notification_content = string.Format("PRODUCT_SPECIAL_PRICE_UPDATE_ERROR {0}", item.product_sku);
+                            if (db_helper.notification.UpdateNotifications(customer.customer_id, [item])) {
+                                PrintConsole("ID:" + item.id.ToString() + " notification sent [" + item.product_sku + "]");
+                                db_helper.notification.LogToServer(thread_id, "product_special_price_update_error", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification");
+                            }
                             break;
 
                         case Notification.NotificationTypes.PRODUCT_CUSTOM_PRICE_UPDATE_ERROR:
+                            item.is_notification_sent = true;
+                            item.notification_content = string.Format("PRODUCT_CUSTOM_PRICE_UPDATE_ERROR {0}", item.product_sku);
+                            if (db_helper.notification.UpdateNotifications(customer.customer_id, [item])) {
+                                PrintConsole("ID:" + item.id.ToString() + " notification sent [" + item.product_sku + "]");
+                                db_helper.notification.LogToServer(thread_id, "product_custom_price_update_error", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification");
+                            }
                             break;
 
                         case Notification.NotificationTypes.PRODUCT_QTY_UPDATE_ERROR:
+                            item.is_notification_sent = true;
+                            item.notification_content = string.Format("PRODUCT_QTY_UPDATE_ERROR {0}", item.product_sku);
+                            if (db_helper.notification.UpdateNotifications(customer.customer_id, [item])) {
+                                PrintConsole("ID:" + item.id.ToString() + " notification sent [" + item.product_sku + "]");
+                                db_helper.notification.LogToServer(thread_id, "product_qty_update_error", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification");
+                            }
                             break;
 
                         case Notification.NotificationTypes.PRODUCT_UPDATE_ERROR:
+                            item.is_notification_sent = true;
+                            item.notification_content = string.Format("PRODUCT_UPDATE_ERROR {0}", item.product_sku);
+                            if (db_helper.notification.UpdateNotifications(customer.customer_id, [item])) {
+                                PrintConsole("ID:" + item.id.ToString() + " notification sent [" + item.product_sku + "]");
+                                db_helper.notification.LogToServer(thread_id, "product_update_error", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification");
+                            }
                             break;
 
                         case Notification.NotificationTypes.XML_SYNC_ERROR:
@@ -1039,14 +1073,15 @@ namespace MerchanterServer {
                         foreach (var item in ent_products) {
                             if (Helper.global.product.is_barcode_required) {
                                 if (string.IsNullOrWhiteSpace(item.Barcode)) {
-                                    PrintConsole(Constants.ENTEGRA + " " + item.Sku + " barcode missing, not sync.");
+                                    PrintConsole(Constants.ENTEGRA + " " + item.Sku + " barcode missing, not sync.", false);
                                     continue;
                                 }
                             }
 
                             if (item.Sku != string.Empty) {
                                 #region Checking Product Extension If exist
-                                Brand? existed_brand = brands.Where(x => x.brand_name.Trim().Equals(item.BrandName?.Trim().ToLower(), StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
+                                //Brand? existed_brand = brands.Where(x => x.brand_name.Trim().Equals(item.BrandName?.Trim().ToLower(), StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
+                                Brand existed_brand = !string.IsNullOrWhiteSpace(item.BrandName?.Trim()) ? brands.FirstOrDefault(x => x.brand_name == item.BrandName.Trim()) ?? default_brand : default_brand;
                                 ProductExtension? existed_p_ext = products.Where(x => x.sku == item.Sku).FirstOrDefault()?.extension;
                                 if (existed_p_ext != null) existed_p_ext.brand = existed_brand;
                                 List<Category>? existed_p_cats = existed_p_ext != null ? categories?.Where(x => existed_p_ext.category_ids.Split(",").Contains(x.id.ToString())).ToList() : null;
@@ -1072,7 +1107,7 @@ namespace MerchanterServer {
                                             item.Sku,
                                             item.Barcode,
                                             item.Qty,
-                                            true) ],
+                                            true, DateTime.Now) ],
                                     extension = new ProductExtension() {
                                         sku = item.Sku,
                                         barcode = item.Barcode,
@@ -1089,8 +1124,15 @@ namespace MerchanterServer {
                                             brand_name = item.BrandName,
                                             status = true,
                                             id = 0
-                                        })
-                                    }
+                                        }),
+                                        is_enabled = true,
+                                        volume = 0,
+                                        weight = 0,
+                                        description = null
+                                    },
+                                    type = Product.ProductTypes.SIMPLE,
+                                    attributes = [],
+                                    images = []
                                 };
 
                                 live_products.Add(p);
@@ -1117,10 +1159,11 @@ namespace MerchanterServer {
                     if (Helper.global.ank_erp != null && Helper.global.ank_erp.company_code != null && Helper.global.ank_erp.user_name != null && Helper.global.ank_erp.password != null && Helper.global.ank_erp.work_year != null && Helper.global.ank_erp.url != null) {
                         ANKERP ank_erp = new(Helper.global.ank_erp.company_code, Helper.global.ank_erp.user_name, Helper.global.ank_erp.password, Helper.global.ank_erp.work_year, Helper.global.ank_erp.url,
                             """C:\MerchanterServer\ankaraerp""");
+                        PrintConsole("Started loading " + Constants.ANK_ERP + " sources.");
 
                         #region Category Pre-Sync
                         var ank_categories = ank_erp.GetCategoriesFromFolder("""C:\Users\caqn_\OneDrive\Masaüstü\otoahmet_categories""")?.DokumanPaketKategori.Eleman.ElemanListe.KategoriItem;
-                        //var ank_categories = ank_erp.GetCategories().Result?.DokumanPaket.Eleman.ElemanListe.ToList();
+                        //var ank_categories = ank_erp.GetCategories()?.Result?.DokumanPaketKategori.Eleman.ElemanListe.KategoriItem;
                         PrintConsole(Constants.ANK_ERP + " total " + ank_categories?.Count + " categories found.");
                         if (ank_categories != null && ank_categories.Count > 0) {
                             foreach (var item in ank_categories) {
@@ -1194,7 +1237,7 @@ namespace MerchanterServer {
                         #region Product Memory Take
                         PrintConsole(Constants.ANK_ERP + " product api take started.");
                         //var ank_products_zip = ank_erp.GetProducts().Result;
-                        var ank_products_zip = ank_erp.GetProductsFromFolder("""C:\Users\caqn_\OneDrive\Masaüstü\otoahmet_products_3""");
+                        var ank_products_zip = ank_erp.GetProductsFromFolder("""C:\Users\caqn_\OneDrive\Masaüstü\otoahmet_products_4""");
                         List<UrunSicil> ank_products = [];
                         if (ank_products_zip != null && ank_products_zip.Count > 0) {
                             foreach (var zip_item in ank_products_zip) {
@@ -1277,19 +1320,21 @@ namespace MerchanterServer {
                                         item.UrunTanim.SicilKodu,
                                         item.UrunTanim.BarkodKodu ?? string.Empty,
                                         item.UrunTanim.StokMevcudu > 0 ? item.UrunTanim.StokMevcudu : 0,
-                                        true) ],
+                                        true, DateTime.Now) ],
                                     attributes = [],
                                     images = [],
                                 };
+                                #endregion
 
-                                #region ANKERP Product Images
+                                #region Checking existing Product Images
                                 for (int i = 0; i < item.Images.Image.Count; i++) {
-                                    if (!string.IsNullOrWhiteSpace(item.Images.Image[i].IFilename) && !string.IsNullOrWhiteSpace(item.Images.Image[i].IBase64Value)) {
+                                    if (!string.IsNullOrWhiteSpace(item.Images.Image[i].IBase64Value)) {
+                                        var existed_image = product_images.FirstOrDefault(x => x.image_base64 == item.Images.Image[i].IBase64Value);
                                         p.images.Add(new ProductImage() {
                                             customer_id = customer.customer_id,
-                                            product_id = 0,
+                                            product_id = existed_image != null ? existed_image.product_id : 0,
                                             sku = item.UrunTanim.SicilKodu,
-                                            image_name = item.Images.Image[i].IFilename,
+                                            image_name = !string.IsNullOrWhiteSpace(item.Images.Image[i].IFilename) ? item.Images.Image[i].IFilename : item.UrunTanim.SicilKodu + ".jpg",
                                             image_base64 = item.Images.Image[i].IBase64Value,
                                             is_default = (i == 0),
                                             type = ImageTypes.base64,
@@ -1297,7 +1342,6 @@ namespace MerchanterServer {
                                         });
                                     }
                                 }
-                                #endregion
                                 #endregion
 
                                 live_products.Add(p);
@@ -1315,9 +1359,9 @@ namespace MerchanterServer {
                 _health = false;
             }
             finally {
-                PrintConsole("MAIN_SOURCE:" + product_main_source + " " + live_products.Count + " live products loaded.");
-                live_products = [.. live_products.DistinctBy(x => x.sku)];  //Remove duplicates
-                PrintConsole("MAIN_SOURCE:" + product_main_source + " " + live_products.Count + " live products loaded. --Duplicates removed by SKU !!!");
+                PrintConsole(product_main_source + " " + live_products.Count + " products initialized.");
+                //live_products = [.. live_products.DistinctBy(x => x.sku)];  //Remove duplicates
+                //PrintConsole(product_main_source + " " + live_products.Count + " products initialized. --Duplicates removed by SKU !!!");
             }
         }
 
@@ -1339,7 +1383,8 @@ namespace MerchanterServer {
                                         item.sku,
                                         item.barcode,
                                         xitem.qty,
-                                        (Helper.global.product.xml_qty_addictive_enable || item.sources[0].qty <= 0) && (xitem.is_active ? (item.extension.is_xml_enabled && item.extension.xml_sources.Contains(xitem.xml_source)) : false)
+                                        (Helper.global.product.xml_qty_addictive_enable || item.sources[0].qty <= 0) && (xitem.is_active ? (item.extension.is_xml_enabled && item.extension.xml_sources.Contains(xitem.xml_source)) : false),
+                                        DateTime.Now
                                     ));
                                 }
                             }
@@ -1390,23 +1435,29 @@ namespace MerchanterServer {
                         bool is_need_indexer = false;
                         foreach (var item in live_products) {
                             bool is_update = false; bool is_insert = false;
+                            Product prepared_product = null;
                             var selected_product = products.Where(x => x.sku == item.sku).FirstOrDefault();
+
                             if (selected_product != null) { //existing product
-                                if (selected_product.name?.ToString().Trim().ToLower() != item.name?.ToString().Trim().ToLower()) { }
-                                if (selected_product.tax_included != item.tax_included) { }
-                                if (selected_product.tax != item.tax) { }
+                                #region Name
+                                if (selected_product.name?.ToString().Trim().ToLower() != item.name?.ToString().Trim().ToLower()) {
+
+                                }
+                                #endregion
 
                                 #region Brand
-                                if (!selected_product.extension.brand.brand_name.Trim().Equals(item.extension.brand.brand_name.Trim(), StringComparison.CurrentCultureIgnoreCase)) {
+                                if (!selected_product.extension.brand.brand_name.Trim().Equals(item.extension.brand.brand_name?.Trim(), StringComparison.CurrentCultureIgnoreCase)) {
                                     var source_brands = Helper.GetProductAttribute(Helper.global.magento.brand_attribute_code);
                                     is_update = true; is_need_indexer = true;
                                     if (source_brands != null) {
                                         var selected_source_brand = source_brands.options.Where(x => x.label.Equals(item.extension.brand.brand_name, StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
                                         if (selected_source_brand != null) { //update
                                             if (true || Helper.UpdateProductAttribute(item.sku, Helper.global.magento.brand_attribute_code, selected_source_brand.value)) {
+                                                PrintConsole("Sku:" + item.sku + "Brand updated " + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString());
                                                 db_helper.LogToServer(thread_id, "product_brand_updated", Helper.global.settings.company_name + " Sku:" + item.sku + selected_source_brand.label + " => " + item.extension.brand.brand_name, customer.customer_id, "product");
                                             }
                                             else {
+                                                PrintConsole("Sku:" + item.sku + "Brand update error " + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString());
                                                 db_helper.LogToServer(thread_id, "product_brand_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString(), customer.customer_id, "product");
                                             }
                                         }
@@ -1414,9 +1465,11 @@ namespace MerchanterServer {
                                                //var inserted_id = Helper.InsertAttributeOption( Helper.global.magento.brand_attribute_code, item.brand.brand_name );
                                             if (true /*inserted_id != null*/ ) {
                                                 if (true /*|| Helper.UpdateProductAttribute( item.sku, Helper.global.magento.brand_attribute_code, inserted_id )*/ ) {
+                                                    PrintConsole("Sku:" + item.sku + "Brand inserted " + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString());
                                                     db_helper.LogToServer(thread_id, "product_brand_inserted", Helper.global.settings.company_name + " Sku:" + item.sku + "= " + selected_product.extension.brand.brand_name + " => " + item.extension.brand.brand_name, customer.customer_id, "product");
                                                 }
                                                 else {
+                                                    PrintConsole("Sku:" + item.sku + "Brand insert error " + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString());
                                                     db_helper.LogToServer(thread_id, "product_brand_insert_error", Helper.global.settings.company_name + " Sku:" + item.sku + "= " + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString(), customer.customer_id, "product");
                                                 }
                                             }
@@ -1429,6 +1482,7 @@ namespace MerchanterServer {
 
                                     }
                                     else { //no brand attribute exists
+                                        PrintConsole("Sku:" + item.sku + "Brand insert error " + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString());
                                         db_helper.LogToServer(thread_id, "product_brand_insert_error", Helper.global.settings.company_name + " - " + Helper.global.magento.brand_attribute_code + " brand attribute missing?", customer.customer_id, "product");
                                     }
                                 }
@@ -1526,7 +1580,7 @@ namespace MerchanterServer {
                                 #endregion
                             }
                             else { //new product
-                                selected_product = new Product() {
+                                prepared_product = new Product() {
                                     id = 0,
                                     customer_id = customer.customer_id,
                                     type = item.type,
@@ -1556,16 +1610,16 @@ namespace MerchanterServer {
                             }
 
                             if (is_update) {
-                                if (selected_product.id > 0) {
+                                if (selected_product != null && selected_product.id > 0) {
                                     item.id = selected_product.id;
-                                    if (db_helper.UpdateProducts(customer.customer_id, [item], true, false)) {
+                                    if (db_helper.UpdateProducts(customer.customer_id, [item])) {
                                         PrintConsole("Sku:" + item.sku + " " + "updated.");
                                     }
                                 }
                             }
                             if (is_insert) {
-                                if (selected_product.id == 0) {
-                                    if (db_helper.InsertProducts(customer.customer_id, [selected_product], true, false) > 0) {
+                                if (prepared_product?.id == 0) {
+                                    if (db_helper.InsertProducts(customer.customer_id, [prepared_product]) > 0) {
                                         PrintConsole("Sku:" + item.sku + " " + "inserted.");
                                         db_helper.LogToServer(thread_id, "new_product", Helper.global.settings.company_name + " Sku:" + item.sku, customer.customer_id, "product");
                                     }
@@ -1592,10 +1646,8 @@ namespace MerchanterServer {
 
                     if (product_targets.Contains(Constants.IDEASOFT)) {
                         //var live_idea_products = Helper.GetIdeaProducts();
-                        var live_idea_categories = Helper.GetIdeaCategories();
-                        PrintConsole(Constants.IDEASOFT + " total " + live_idea_categories?.Count + " categories found.");
-                        var live_idea_brands = Helper.GetIdeaBrands();
-                        PrintConsole(Constants.IDEASOFT + " total " + live_idea_brands?.Count + " brands found.");
+                        var live_idea_categories = Helper.GetIdeaCategories(); PrintConsole(Constants.IDEASOFT + " total " + live_idea_categories?.Count + " categories found.");
+                        var live_idea_brands = Helper.GetIdeaBrands(); PrintConsole(Constants.IDEASOFT + " total " + live_idea_brands?.Count + " brands found.");
 
                         foreach (var item in live_products) {
                             bool is_update = false; bool is_insert = false;
@@ -1603,6 +1655,14 @@ namespace MerchanterServer {
                             var selected_product = products.Where(x => x.sku == item.sku).FirstOrDefault();
 
                             if (selected_product != null) { //existing product
+                                #region Image
+                                if (item.images != null && item.images.Count > 0)
+                                    foreach (var image_item in item.images) {
+                                        if (selected_product.images?.FirstOrDefault(x => x.image_base64 == image_item.image_base64) == null)
+                                            is_update = true;
+                                    }
+                                #endregion
+
                                 #region Qty
                                 if (selected_product.total_qty != item.total_qty) {
                                     is_update = true;
@@ -1620,6 +1680,12 @@ namespace MerchanterServer {
                                     is_update = true;
                                 }
                                 else if (!selected_product.name.Equals(item.name?.Trim())) {
+                                    is_update = true;
+                                }
+                                #endregion
+
+                                #region Is Enabled
+                                if (selected_product.extension.is_enabled != item.extension.is_enabled) {
                                     is_update = true;
                                 }
                                 #endregion
@@ -1682,17 +1748,24 @@ namespace MerchanterServer {
                             if (is_update || is_insert) {
                                 var selected_live_idea_product = Helper.GetIdeaProduct(item.sku);
                                 if (selected_live_idea_product != null) { //update ideasoft product
-                                    //idea_product_id = Helper.UpdateIdeaProduct(selected_live_idea_product.id, item.price, item.total_qty); 
                                     idea_product_id = selected_live_idea_product.id;
+                                    //if (selected_live_idea_product.price1 != item.price || selected_live_idea_product.stockAmount != item.total_qty) {
+                                    #region Ideasoft Category and Brand Sync
+                                    List<int> idea_category_ids = Helper.GetIdeaCategoryIds(thread_id, db_helper, customer, ref live_idea_categories,
+                                        category_target_relation, item.extension.categories);
+                                    var idea_brand_id = Helper.GetIdeaBrandId(thread_id, db_helper, customer, ref live_idea_brands, item.extension.brand);
+                                    #endregion
+                                    idea_product_id = Helper.UpdateIdeaProduct(idea_product_id, item, idea_brand_id, idea_category_ids);
                                     if (idea_product_id > 0) {
                                         is_processed = true;
-                                        PrintConsole("Sku:" + item.sku + " updated." + " (" + Constants.IDEASOFT + ")");
+                                        PrintConsole("Sku:" + item.sku + " updated and sync to Id:" + idea_product_id.ToString() + " (" + Constants.IDEASOFT + ")");
                                         db_helper.LogToServer(thread_id, "product_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
                                     }
                                     else {
                                         notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_UPDATE_ERROR, product_sku = item.sku, notification_content = Constants.IDEASOFT });
                                         db_helper.LogToServer(thread_id, "product_update_error", Helper.global.settings.company_name + " Sku:" + item.sku, customer.customer_id, "product");
                                     }
+                                    //}
                                 }
                                 else { //insert ideasoft product
                                     if (is_update) {  //insert ideasoft product and update product
@@ -1702,80 +1775,21 @@ namespace MerchanterServer {
                                             if (db_helper.DeleteProductTarget(customer.customer_id, item.id)) {
                                                 PrintConsole("Product relation removed:" + item.sku + " deleted." + " (" + Constants.IDEASOFT + ")");
                                             }
-                                            //TODO: Remove product from product_targets table
                                             goto LEAP;
                                         }
                                     }
                                     if (prepared_product != null) {
-                                        #region Ideasoft Category Update
-                                        List<int> idea_category_ids = [];
-                                        foreach (var citem in item.extension.categories) {
-                                            if (citem.id == Helper.global.product.customer_root_category_id) continue;
-                                            if (citem.id == 0) {
-                                                citem.id = db_helper.InsertCategory(customer.customer_id, citem)?.id ?? 0;
-                                            }
-
-                                            var category_relation = category_target_relation.FirstOrDefault(x => x.category_id == citem.id);
-                                            if (category_relation != null) {
-                                                idea_category_ids.Add(category_relation.target_id);
-                                            }
-                                            else {
-                                                int? idea_category_id = live_idea_categories?.FirstOrDefault(x => x.name == citem.category_name)?.id;
-                                                if (idea_category_id.HasValue) {
-                                                    db_helper.InsertCategoryTarget(customer.customer_id, new CategoryTarget() {
-                                                        customer_id = customer.customer_id,
-                                                        category_id = citem.id,
-                                                        target_id = idea_category_id.Value,
-                                                        target_name = Constants.IDEASOFT
-                                                    });
-                                                    idea_category_ids.Add(idea_category_id.Value);
-                                                }
-                                                else {
-                                                    if (!string.IsNullOrWhiteSpace(citem.category_name)) {
-                                                        idea_category_id = Helper.InsertIdeaCategory(citem.category_name, category_target_relation.FirstOrDefault(x => x.category_id == citem.parent_id)?.target_id);
-                                                        live_idea_categories?.Add(new IDEA_Category() { id = idea_category_id.Value, name = citem.category_name });
-                                                        if (idea_category_id.HasValue && idea_category_id > 0) {
-                                                            db_helper.InsertCategoryTarget(customer.customer_id, new CategoryTarget() {
-                                                                customer_id = customer.customer_id,
-                                                                category_id = citem.id,
-                                                                target_id = idea_category_id.Value,
-                                                                target_name = Constants.IDEASOFT
-                                                            });
-                                                            idea_category_ids.Add(idea_category_id.Value);
-                                                            PrintConsole("Category:" + citem.category_name + " updated." + " (" + Constants.IDEASOFT + ")");
-                                                            db_helper.LogToServer(thread_id, "category_inserted", Helper.global.settings.company_name + " Category:" + citem.category_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
-                                                        }
-                                                        else {
-                                                            PrintConsole("Category:" + citem.category_name + " insert failed." + " (" + Constants.IDEASOFT + ")");
-                                                            db_helper.LogToServer(thread_id, "category_insert_error", Helper.global.settings.company_name + " Category:" + citem.category_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        #endregion
-
-                                        #region Ideasoft Brand Update
-                                        var idea_brand_id = live_idea_brands?.FirstOrDefault(x => x.name == item.extension.brand?.brand_name)?.id;
-                                        if (idea_brand_id == null && item.extension.brand != null && !string.IsNullOrWhiteSpace(item.extension.brand.brand_name)) {
-                                            idea_brand_id = Helper.InsertIdeaBrand(item.extension.brand.brand_name);
-                                            if (idea_brand_id > 0) {
-                                                live_idea_brands?.Add(new IDEA_Brand() { id = idea_brand_id.Value, name = item.extension.brand.brand_name });
-                                                PrintConsole("Brand:" + item.extension.brand.brand_name + " updated." + " (" + Constants.IDEASOFT + ")");
-                                                db_helper.LogToServer(thread_id, "brand_inserted", Helper.global.settings.company_name + " Brand:" + item.extension.brand.brand_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
-                                            }
-                                            else {
-                                                PrintConsole("Brand:" + item.extension.brand.brand_name + " insert failed." + " (" + Constants.IDEASOFT + ")");
-                                                db_helper.LogToServer(thread_id, "brand_insert_error", Helper.global.settings.company_name + " Brand:" + item.extension.brand.brand_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
-                                            }
-                                        }
-                                        #endregion
-
                                         #region Ideasoft Product Insert
+                                        #region Ideasoft Category and Brand Sync
+                                        List<int> idea_category_ids = Helper.GetIdeaCategoryIds(thread_id, db_helper, customer, ref live_idea_categories,
+                                            category_target_relation, prepared_product.extension.categories);
+                                        var idea_brand_id = Helper.GetIdeaBrandId(thread_id, db_helper, customer, ref live_idea_brands, prepared_product.extension.brand);
+                                        #endregion
+
                                         idea_product_id = Helper.InsertIdeaProduct(prepared_product, idea_brand_id, idea_category_ids);
                                         if (idea_product_id > 0) {
                                             is_processed = true;
-                                            PrintConsole("Sku:" + (prepared_product.sku) + " inserted." + " (" + Constants.IDEASOFT + ")");
+                                            PrintConsole("Sku:" + (prepared_product.sku) + " inserted and sync to Id:" + idea_product_id.ToString() + " (" + Constants.IDEASOFT + ")");
                                             db_helper.LogToServer(thread_id, "product_inserted", Helper.global.settings.company_name + " Sku:" + prepared_product.sku + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
                                         }
                                         else {
@@ -1789,18 +1803,11 @@ namespace MerchanterServer {
                         LEAP:
 
                             if (is_processed && is_update) {
-                                if (item.extension.brand_id == 0 && item.extension.brand != null) { //checking brand
-                                    int inserted_brand_id = db_helper.InsertBrand(customer.customer_id, item.extension.brand, true);
-                                    if (inserted_brand_id > 0) {
-                                        item.extension.brand_id = inserted_brand_id;
-                                        item.extension.brand.id = inserted_brand_id;
-                                    }
-                                }
-                                if (db_helper.UpdateProducts(customer.customer_id, [item], true, false)) {
+                                if (db_helper.UpdateProducts(customer.customer_id, [item])) {
                                     if (idea_product_id > 0) {
                                         var product_relation = product_target_relation.FirstOrDefault(x => x.target_id == idea_product_id && x.target_name == Constants.IDEASOFT);
                                         if (product_relation != null) {
-                                            if (product_relation.product_id == 0 && product_relation.product_id != item.id) {
+                                            if (product_relation.product_id != item.id) {
                                                 product_relation.product_id = item.id;
                                                 db_helper.UpdateProductTarget(customer.customer_id, product_relation);
                                             }
@@ -1811,19 +1818,12 @@ namespace MerchanterServer {
                                             });
                                         }
                                     }
-                                    PrintConsole("Sku:" + item.sku + " updated." + " (" + Constants.IDEASOFT + ")");
+                                    PrintConsole("Sku:" + item.sku + " updated.");
                                 }
                             }
 
                             if (is_processed && is_insert && prepared_product != null) {
-                                if (prepared_product.extension.brand_id == 0 && prepared_product.extension.brand != null) { //checking brand
-                                    int inserted_brand_id = db_helper.InsertBrand(customer.customer_id, prepared_product.extension.brand, true);
-                                    if (inserted_brand_id > 0) {
-                                        prepared_product.extension.brand_id = inserted_brand_id;
-                                        prepared_product.extension.brand.id = inserted_brand_id;
-                                    }
-                                }
-                                int inserted_id = db_helper.InsertProducts(customer.customer_id, [prepared_product], true, false);
+                                int inserted_id = db_helper.InsertProducts(customer.customer_id, [prepared_product]);
                                 if (inserted_id > 0) {
                                     if (idea_product_id > 0)
                                         db_helper.InsertProductTarget(customer.customer_id, new ProductTarget() {
@@ -1832,7 +1832,7 @@ namespace MerchanterServer {
                                             target_id = idea_product_id,
                                             target_name = Constants.IDEASOFT
                                         });
-                                    PrintConsole("Sku:" + item.sku + " inserted." + " (" + Constants.IDEASOFT + ")");
+                                    PrintConsole("Sku:" + item.sku + " inserted.");
                                     db_helper.LogToServer(thread_id, "new_product", Helper.global.settings.company_name + " Sku:" + item.sku, customer.customer_id, "product");
                                 }
                                 else {
@@ -1990,6 +1990,7 @@ namespace MerchanterServer {
                             o.subtotal = item.amount;
                             o.installment_amount = (item.generalAmount * item.installmentRate) - item.generalAmount;
                             o.discount_amount = item.couponDiscount + item.promotionDiscount;
+                            o.shipment_amount = item.shippingAmount;
                             o.comment = item.memberGroupName;
                             o.billing_address = new BillingAddress() {
                                 billing_id = item.billingAddress.id,
@@ -2070,7 +2071,7 @@ namespace MerchanterServer {
                                     }
 
                                     if (order_main_target != null && order_main_target == Constants.NETSIS) {
-                                        if (Helper.global.ank_erp != null && Helper.global.ank_erp.company_code != null && Helper.global.ank_erp.user_name != null && Helper.global.ank_erp.password != null && Helper.global.ank_erp.work_year != null && Helper.global.ank_erp.url != null) {
+                                        if (Helper.global.netsis != null && Helper.global.netsis.netopenx_user != null && Helper.global.netsis.netopenx_password != null) {
                                             string? inserted_cari_kodu = NetOpenXHelper.InsertNetsisCari(order_item.billing_address.billing_id.ToString(), order_item.email, order_item.billing_address, order_item.payment_method);
                                             if (inserted_cari_kodu != null) {
                                                 string? musteri_selected_siparis_no = NetOpenXHelper.GetNetsisSiparis(order_item.order_id.ToString());
@@ -2129,30 +2130,30 @@ namespace MerchanterServer {
                                                                     Aciliyet = "NORMAL",
                                                                     HareketKodu = "",
                                                                     ProjeNo = "",
-                                                                    BelgeNo = (ushort)order_item.order_id,
+                                                                    BelgeNo = order_item.order_id,
                                                                     DovizKodu = "TRL",
                                                                     DovizKuru = 1,
                                                                     HariciNumara = "",
                                                                     TanzimTarihi = order_item.update_date.ToString("dd-MM-yyyy"),
                                                                     TanzimSaati = order_item.update_date.ToString("HH:mm"),
                                                                     TeslimTarihi = order_item.update_date.ToString("dd-MM-yyyy"),
-                                                                    OzelKod = (ushort)order_item.id,
+                                                                    OzelKod = order_item.id.ToString(),
                                                                     PlasiyerKodu = "B2C",
                                                                     OdemeSekli = "",
                                                                     OdemeTarihi = order_item.update_date.ToString("dd-MM-yyyy"),
                                                                     OdemeRefNo = order_item.order_label,
                                                                     OdemeTutar = (decimal)order_item.grand_total,
                                                                     OdemeNotu = "",
-                                                                    MalTutar = (decimal)order_item.grand_total,
+                                                                    MalTutar = (decimal)order_item.grand_total - (decimal)order_item.shipment_amount,
                                                                     MalIndTutar = (decimal)order_item.discount_amount,
-                                                                    HizmetTutar = 0,
+                                                                    HizmetTutar = (decimal)order_item.shipment_amount,
                                                                     HizmetIndTutar = 0,
                                                                     OtvMatrah = 0,
                                                                     OtvOran = 0,
                                                                     OtvTutar = 0,
                                                                     KdvMatrah = 0,
-                                                                    KdvTutar = 0,
-                                                                    BelgeTutar = 0
+                                                                    KdvTutar = (decimal)order_item.subtotal,
+                                                                    BelgeTutar = (decimal)order_item.grand_total
                                                                 },
                                                                 BaslikNot = "",
                                                                 Dipnot = "",
@@ -2204,7 +2205,8 @@ namespace MerchanterServer {
                                                 }
                                             };
                                             foreach (var item in order_item.order_items) {
-                                                var sold_product = products.Where(x => x.sku == item.sku).FirstOrDefault();
+                                                //var sold_product = products.Where(x => x.sku == item.sku).FirstOrDefault();
+                                                var sold_product = db_helper.GetProductBySku(customer.customer_id, item.sku);
                                                 if (sold_product != null) {
                                                     dokuman.DokumanPaket.Eleman.ElemanListe.BelgeSicil.SatirDetay.Add(new BelgeSicilSatirDetay() {
                                                         Items = new BelgeSicilSatirDetayItems() {
@@ -2238,6 +2240,37 @@ namespace MerchanterServer {
                                                 }
                                                 else { health = false; }
                                             }
+                                            if (order_item.shipment_amount > 0) {
+                                                dokuman.DokumanPaket.Eleman.ElemanListe.BelgeSicil.SatirDetay.Add(new BelgeSicilSatirDetay() {
+                                                    Items = new BelgeSicilSatirDetayItems() {
+                                                        BarkodKodu = string.Empty,
+                                                        UrunGrubu = "GELİR",
+                                                        UrunKodu = Helper.global.order.siparis_kargo_sku,
+                                                        UrunTanim = "ARAS KARGO KARGO ÜCRETİ",
+                                                        Miktar = 1,
+                                                        OlcuBirim = "Adet",
+                                                        BirimFiyat = (decimal)order_item.shipment_amount,
+                                                        Tutar = (decimal)order_item.shipment_amount,
+                                                        IndOran = 0,
+                                                        KdvOran = 20,
+                                                        Notlar = ""
+                                                    },
+                                                    StokSicil = new BelgeSicilSatirDetayStokSicil() {
+                                                        UrunGrubu = "GELİR",
+                                                        UrunKodu = Helper.global.order.siparis_kargo_sku,
+                                                        UrunTanim = "ARAS KARGO",
+                                                        OlcuBirim = "Adet",
+                                                        KdvOran = 20,
+                                                    },
+                                                    HizmasSicil = new BelgeSicilSatirDetayHizmasSicil() {
+                                                        UrunGrubu = "GELİR",
+                                                        UrunKodu = Helper.global.order.siparis_kargo_sku,
+                                                        UrunTanim = "ARAS KARGO",
+                                                        OlcuBirim = "Adet",
+                                                        KdvOran = 20,
+                                                    }
+                                                });
+                                            }
                                             #endregion
                                             if (!health) continue;
 
@@ -2246,8 +2279,8 @@ namespace MerchanterServer {
                                             serializer.Serialize(stringwriter, dokuman);
                                             var order_xml = stringwriter.ToString();
                                             if (!string.IsNullOrWhiteSpace(order_xml)) {
-                                                if (ank_erp.SendOrder(guid.ToString(), order_xml).Result) {
-                                                    inserted_musteri_siparis_no = order_item.order_label;
+                                                inserted_musteri_siparis_no = ank_erp.SendOrder(guid.ToString(), order_xml).Result;
+                                                if (!string.IsNullOrWhiteSpace(inserted_musteri_siparis_no)) {
                                                     db_helper.LogToServer(thread_id, "order_process", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + "ANK ERP Success", customer.customer_id, "order");
                                                     #region Notify Order - NEW_ORDER
                                                     notifications.Add(new Notification() {
@@ -2444,9 +2477,20 @@ namespace MerchanterServer {
         /// <param name="is_debug">Is Debug ?</param>
         private static void PrintConsole(string message, bool is_console = true, bool is_debug = true) {
             if (is_console)
-                Console.WriteLine("[" + DateTime.Now.ToString("dd.M.yy HH:ss") + "," + Helper.global.settings.company_name + "] " + message);
+                Console.WriteLine("#" + DateTime.Now.ToString("dd.MM.yy HH:mm:ss") + "," + Helper.global.settings.company_name + ", " + message);
             if (is_debug)
-                Debug.WriteLine("[" + DateTime.Now.ToString("dd.M.yy HH:ss") + "," + Helper.global.settings.company_name + "] " + message);
+                Debug.WriteLine("#" + DateTime.Now.ToString("dd.MM.yy HH:mm:ss") + "," + Helper.global.settings.company_name + ", " + message);
+        }
+
+        /// <summary>
+        /// Writes colorful console messages.
+        /// </summary>
+        /// <param name="message">Message</param>
+        /// <param name="color">Color</param>
+        private static void PrintConsole(string message, ConsoleColor color) {
+            Console.BackgroundColor = color;
+            Console.WriteLine("#" + DateTime.Now.ToString("dd.MM.yy HH:mm:ss") + "," + Helper.global.settings.company_name + ", " + message);
+            Console.BackgroundColor = ConsoleColor.White;
         }
     }
 }

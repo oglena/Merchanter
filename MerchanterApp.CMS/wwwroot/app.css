@@ -1,14 +1,15 @@
 /*@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap');*/
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 /*@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap');*/
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap');
+/*@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap');*/
 
 * {
-    font-size: 13px;
+    font-size: 14px;
     line-height: 1.428;
 }
 
 html, body {
-    font-family: "Noto Sans", sans-serif;
+    font-family: "Montserrat", sans-serif;
     font-optical-sizing: auto;
     background-color: #FEFEFE;
     font-style: normal;

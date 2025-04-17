@@ -470,19 +470,19 @@ namespace MerchanterHelpers.Classes {
 
         private string aciliyetField;
 
-        private object hareketKoduField;
+        private string hareketKoduField;
 
-        private object projeNoField;
+        private string projeNoField;
 
-        private ushort belgeNoField;
+        private int belgeNoField;
 
-        private ushort mBelgeNoField;
+        private int mBelgeNoField;
 
         private string dovizKoduField;
 
-        private byte dovizKuruField;
+        private decimal dovizKuruField;
 
-        private object hariciNumaraField;
+        private string hariciNumaraField;
 
         private string tanzimTarihiField;
 
@@ -490,7 +490,7 @@ namespace MerchanterHelpers.Classes {
 
         private string teslimTarihiField;
 
-        private ushort ozelKodField;
+        private string ozelKodField;
 
         private string plasiyerKoduField;
 
@@ -508,7 +508,7 @@ namespace MerchanterHelpers.Classes {
 
         private decimal malIndTutarField;
 
-        private byte hizmetTutarField;
+        private decimal hizmetTutarField;
 
         private decimal hizmetIndTutarField;
 
@@ -535,7 +535,7 @@ namespace MerchanterHelpers.Classes {
         }
 
         /// <remarks/>
-        public object HareketKodu {
+        public string HareketKodu {
             get {
                 return this.hareketKoduField;
             }
@@ -545,7 +545,7 @@ namespace MerchanterHelpers.Classes {
         }
 
         /// <remarks/>
-        public object ProjeNo {
+        public string ProjeNo {
             get {
                 return this.projeNoField;
             }
@@ -555,7 +555,7 @@ namespace MerchanterHelpers.Classes {
         }
 
         /// <remarks/>
-        public ushort BelgeNo {
+        public int BelgeNo {
             get {
                 return this.belgeNoField;
             }
@@ -565,7 +565,7 @@ namespace MerchanterHelpers.Classes {
         }
 
         /// <remarks/>
-        public ushort MBelgeNo {
+        public int MBelgeNo {
             get {
                 return this.mBelgeNoField;
             }
@@ -585,7 +585,7 @@ namespace MerchanterHelpers.Classes {
         }
 
         /// <remarks/>
-        public byte DovizKuru {
+        public decimal DovizKuru {
             get {
                 return this.dovizKuruField;
             }
@@ -595,7 +595,7 @@ namespace MerchanterHelpers.Classes {
         }
 
         /// <remarks/>
-        public object HariciNumara {
+        public string HariciNumara {
             get {
                 return this.hariciNumaraField;
             }
@@ -635,7 +635,7 @@ namespace MerchanterHelpers.Classes {
         }
 
         /// <remarks/>
-        public ushort OzelKod {
+        public string OzelKod {
             get {
                 return this.ozelKodField;
             }
@@ -725,7 +725,7 @@ namespace MerchanterHelpers.Classes {
         }
 
         /// <remarks/>
-        public byte HizmetTutar {
+        public decimal HizmetTutar {
             get {
                 return this.hizmetTutarField;
             }

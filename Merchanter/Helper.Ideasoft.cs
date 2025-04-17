@@ -1,21 +1,122 @@
 ﻿using Merchanter.Classes;
+using ZstdSharp.Unsafe;
+using Product = Merchanter.Classes.Product;
 
 namespace Merchanter {
     public static partial class Helper {
-        public static int UpdateIdeaProduct(int _id, decimal _price1, float _qty) {
+        public static int UpdateIdeaProduct(int _id, Product _product, int? _brand_id, List<int> _category_ids) {
+            List<dynamic> category_ids = [];
+            if (_category_ids.Count > 0) {
+                foreach (var item in _category_ids) {
+                    if (item != 0)
+                        category_ids.Add(new { id = item });
+                }
+            }
             var pro_json = new {
-                price1 = _price1,
-                marketPriceDetail = _price1.ToString().Replace(".", string.Empty).Replace(",", "."),
-                stockAmount = _qty,
+                id = _id,
+                barcode = _product.barcode,
+                price1 = _product.price,
+                taxIncluded = _product.tax_included ? 1 : 0,
+                tax = _product.tax,
+                marketPriceDetail = _product.price.ToString().Replace(".", string.Empty).Replace(",", "."),
+                stockAmount = _product.total_qty,
+                volumetricWeight = _product.extension.volume,
+                brand = _brand_id.HasValue ? _brand_id > 0 ? new { id = _brand_id } : null : null,
+                status = _product.extension.is_enabled == true ? 1 : 0,
+                detail = new {
+                    sku = _product.sku,
+                    details = Base64ToString(_product.extension.description ?? "")
+                },
+                categories = category_ids.Count > 0 ? category_ids : null,
+                images = _product.images != null && _product.images.Count > 0 ? new List<dynamic>() : null
             };
 
+            if (_product.images != null && _product.images.Count > 0) {
+                foreach (var image_item in _product.images) {
+                    pro_json?.images?.Add(new {
+                        filename = image_item.image_name?.Split(".")[0], extension = image_item.image_name?.Split(".")[1],
+                        attachment = "data:image/jpeg;base64," + image_item.image_base64
+                    });
+                }
+            }
+
             using Executioner executioner = new();
-            var json = executioner.Execute(Helper.global.ideasoft.store_url + "/admin-api/products/" + _id.ToString(), RestSharp.Method.Put, pro_json, Helper.global.ideasoft.access_token);
+            var json = executioner.Execute(global.ideasoft.store_url + "/admin-api/products/" + _id.ToString(),
+                RestSharp.Method.Put, pro_json, global.ideasoft.access_token);
             if (json != null) {
                 var idea_product = Newtonsoft.Json.JsonConvert.DeserializeObject<IDEA_Product>(json);
+                PrintConsole("Product Updated: " + idea_product?.id.ToString() + " - " + idea_product?.name);
                 return idea_product != null ? idea_product.id : 0;
             }
             return 0;
+        }
+
+        public static List<int> GetIdeaCategoryIds(string thread_id, DbHelper db_helper, Customer customer, ref List<IDEA_Category>? live_idea_categories,
+            List<CategoryTarget> category_target_relation, List<Category> _categories) {
+
+            List<int> idea_category_ids = [];
+            foreach (var citem in _categories) {
+                if (citem.id == global.product.customer_root_category_id) continue;
+                if (citem.id == 0) {
+                    citem.id = db_helper.InsertCategory(customer.customer_id, citem)?.id ?? 0;
+                }
+
+                var category_relation = category_target_relation.FirstOrDefault(x => x.category_id == citem.id);
+                if (category_relation != null) {
+                    idea_category_ids.Add(category_relation.target_id);
+                }
+                else {
+                    int? idea_category_id = live_idea_categories?.FirstOrDefault(x => x.name == citem.category_name)?.id;
+                    if (idea_category_id.HasValue) {
+                        db_helper.InsertCategoryTarget(customer.customer_id, new CategoryTarget() {
+                            customer_id = customer.customer_id,
+                            category_id = citem.id,
+                            target_id = idea_category_id.Value,
+                            target_name = Constants.IDEASOFT
+                        });
+                        idea_category_ids.Add(idea_category_id.Value);
+                    }
+                    else {
+                        if (!string.IsNullOrWhiteSpace(citem.category_name)) {
+                            idea_category_id = InsertIdeaCategory(citem.category_name, category_target_relation.FirstOrDefault(x => x.category_id == citem.parent_id)?.target_id);
+                            live_idea_categories?.Add(new IDEA_Category() { id = idea_category_id.Value, name = citem.category_name });
+                            if (idea_category_id.HasValue && idea_category_id > 0) {
+                                db_helper.InsertCategoryTarget(customer.customer_id, new CategoryTarget() {
+                                    customer_id = customer.customer_id,
+                                    category_id = citem.id,
+                                    target_id = idea_category_id.Value,
+                                    target_name = Constants.IDEASOFT
+                                });
+                                idea_category_ids.Add(idea_category_id.Value);
+                                PrintConsole("Category:" + citem.category_name + " inserted and sync to Id:" + idea_category_id.Value.ToString() + " (" + Constants.IDEASOFT + ")");
+                                db_helper.LogToServer(thread_id, "category_inserted", global.settings.company_name + " Category:" + citem.category_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
+                            }
+                            else {
+                                PrintConsole("Category:" + citem.category_name + " insert failed." + " (" + Constants.IDEASOFT + ")");
+                                db_helper.LogToServer(thread_id, "category_insert_error", global.settings.company_name + " Category:" + citem.category_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
+                            }
+                        }
+                    }
+                }
+            }
+            return idea_category_ids;
+        }
+
+        public static int GetIdeaBrandId(string thread_id, DbHelper db_helper, Customer customer, ref List<IDEA_Brand>? live_idea_brands, Brand? _brand) {
+            var idea_brand_id = live_idea_brands?.FirstOrDefault(x => x.name == _brand?.brand_name)?.id;
+            if (idea_brand_id == null && _brand != null && !string.IsNullOrWhiteSpace(_brand.brand_name)) {
+                idea_brand_id = InsertIdeaBrand(_brand.brand_name);
+                if (idea_brand_id > 0) {
+                    live_idea_brands?.Add(new IDEA_Brand() { id = idea_brand_id.Value, name = _brand.brand_name });
+                    PrintConsole("Brand:" + _brand.brand_name + " updated." + " (" + Constants.IDEASOFT + ")");
+                    db_helper.LogToServer(thread_id, "brand_inserted", global.settings.company_name + " Brand:" + _brand.brand_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
+                }
+                else {
+                    PrintConsole("Brand:" + _brand.brand_name + " insert failed." + " (" + Constants.IDEASOFT + ")");
+                    db_helper.LogToServer(thread_id, "brand_insert_error", global.settings.company_name + " Brand:" + _brand.brand_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
+                }
+            }
+            return idea_brand_id.HasValue ? idea_brand_id.Value : 0;
         }
 
         public static int InsertIdeaProduct(Product _product, int? _brand_id, List<int> _category_ids) {
@@ -27,7 +128,7 @@ namespace Merchanter {
                 }
             }
             var pro_json = new {
-                status = 0,
+                status = _product.extension.is_enabled == true ? 1 : 0,
                 sku = _product.sku,
                 name = _product.name,
                 barcode = _product.barcode,
@@ -36,9 +137,10 @@ namespace Merchanter {
                 tax = _product.tax,
                 discountType = 1,
                 discount = 0,
-                currency = new { id = 3 }, //ID=3 is for Turkish Lira
+                currency = new { id = _product.currency == "TRL" ? 3 : 3 }, //ID=3 is for Turkish Lira
                 marketPriceDetail = _product.price.ToString().Replace(".", string.Empty).Replace(",", "."),
                 stockAmount = _product.total_qty,
+                volumetricWeight = _product.extension.volume,
                 categoryShowcaseStatus = 0,
                 stockTypeLabel = "Piece",
                 hasGift = 0,
@@ -46,15 +148,26 @@ namespace Merchanter {
                 brand = _brand_id.HasValue ? _brand_id > 0 ? new { id = _brand_id } : null : null,
                 detail = new {
                     sku = _product.sku,
-                    details = _product.attributes?.FirstOrDefault(x => x.attribute.attribute_name == "description")?.value ?? ""
+                    details = Base64ToString(_product.extension.description ?? "")
                 },
-                categories = category_ids.Count > 0 ? category_ids : null
+                categories = category_ids.Count > 0 ? category_ids : null,
+                images = _product.images != null && _product.images.Count > 0 ? new List<dynamic>() : null
             };
+
+            if (_product.images != null && _product.images.Count > 0) {
+                foreach (var image_item in _product.images) {
+                    pro_json?.images?.Add(new {
+                        filename = image_item.image_name?.Split(".")[0], extension = image_item.image_name?.Split(".")[1],
+                        attachment = "data:image/jpeg;base64," + image_item.image_base64
+                    });
+                }
+            }
 
             using Executioner executioner = new();
             var json = executioner.Execute(Helper.global.ideasoft.store_url + "/admin-api/products", RestSharp.Method.Post, pro_json, Helper.global.ideasoft.access_token);
             if (json != null) {
                 var idea_product = Newtonsoft.Json.JsonConvert.DeserializeObject<IDEA_Product>(json);
+                PrintConsole("Product Inserted: " + idea_product?.id.ToString() + " - " + idea_product?.name);
                 return idea_product != null ? idea_product.id : 0;
             }
             return 0;
@@ -71,6 +184,7 @@ namespace Merchanter {
             var json_cat = executioner.Execute(Helper.global.ideasoft.store_url + "/admin-api/categories", RestSharp.Method.Post, cat_json, Helper.global.ideasoft.access_token);
             if (json_cat != null) {
                 var idea_category = Newtonsoft.Json.JsonConvert.DeserializeObject<IDEA_Category>(json_cat);
+                PrintConsole("Category Inserted: " + idea_category?.id.ToString() + " - " + idea_category?.name);
                 return idea_category != null ? idea_category.id : 0;
             }
             return 0;
@@ -86,6 +200,7 @@ namespace Merchanter {
             var json_brand = executioner.Execute(Helper.global.ideasoft.store_url + "/admin-api/brands", RestSharp.Method.Post, brand_json, Helper.global.ideasoft.access_token);
             if (json_brand != null) {
                 var idea_brand = Newtonsoft.Json.JsonConvert.DeserializeObject<IDEA_Brand>(json_brand);
+                PrintConsole("Brand Inserted: " + idea_brand?.id.ToString() + " - " + idea_brand?.name);
                 return idea_brand != null ? idea_brand.id : 0;
             }
             return 0;
@@ -189,9 +304,9 @@ namespace Merchanter {
             using Executioner executioner = new();
             List<IDEA_Order> orders = []; int page = 1;
         QUERY:
-            var json = executioner.Execute(Helper.global.ideasoft.store_url +
+            var json = executioner.Execute(global.ideasoft.store_url +
                 "/admin-api/orders?limit=" + _limit.ToString() + "&page=" + page.ToString() + "&startCreatedAt=" + DateTime.Now.AddDays(_daysto_ordersync * -1).ToString("yyyy-MM-dd") + "&endCreatedAt=" + DateTime.Now.ToString("yyyy-MM-dd"),
-                RestSharp.Method.Get, null, Helper.global.ideasoft.access_token);
+                RestSharp.Method.Get, null, global.ideasoft.access_token);
             if (json != null) {
                 var temp_orders = Newtonsoft.Json.JsonConvert.DeserializeObject<List<IDEA_Order>>(json);
                 if (temp_orders != null) {
