@@ -242,7 +242,7 @@ namespace Merchanter.ServerService.Controllers {
 
         [HttpPut("{CID}/SaveIdeasoftSettings")]
         [Authorize]
-        public async Task<ActionResult<BaseResponseModel<SettingsAnkaraErp>>> SaveIdeasoftSettings(string CID, [FromBody] SettingsIdeasoft _settings) {
+        public async Task<ActionResult<BaseResponseModel<SettingsIdeasoft>>> SaveIdeasoftSettings(string CID, [FromBody] SettingsIdeasoft _settings) {
             int customer_id;
             if (int.TryParse(CID, out customer_id) && customer_id > 0) {
                 if (await settingsService.SaveIdeasoftSettings(customer_id, _settings)) {
@@ -253,6 +253,24 @@ namespace Merchanter.ServerService.Controllers {
                 }
                 else {
                     return Ok(new BaseResponseModel<SettingsIdeasoft>() { Success = false, Data = null, ErrorMessage = "Error saving IDEASOFT settings." });
+                }
+            }
+            return BadRequest("Invalid customer ID.");
+        }
+
+        [HttpPut("{CID}/SaveGoogleSettings")]
+        [Authorize]
+        public async Task<ActionResult<BaseResponseModel<SettingsGoogle>>> SaveGoogleSettings(string CID, [FromBody] SettingsGoogle _settings) {
+            int customer_id;
+            if (int.TryParse(CID, out customer_id) && customer_id > 0) {
+                if (await settingsService.SaveGoogleSettings(customer_id, _settings)) {
+                    SettingsGoogle? saved_settings = settingsService.GetCustomerSettings(customer_id).Result.google;
+                    if (saved_settings != null) {
+                        return Ok(new BaseResponseModel<SettingsGoogle>() { Success = true, Data = saved_settings, ErrorMessage = "" });
+                    }
+                }
+                else {
+                    return Ok(new BaseResponseModel<SettingsGoogle>() { Success = false, Data = null, ErrorMessage = "Error saving Google settings." });
                 }
             }
             return BadRequest("Invalid customer ID.");

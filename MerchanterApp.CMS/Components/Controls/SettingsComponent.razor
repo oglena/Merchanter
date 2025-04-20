@@ -6,421 +6,480 @@
 @inject IPostHelper PostHelper
 
 <div class="container-fluid bg-rebeccapurple bg-gradient text-light rounded-2 p-3">
-	<div class="row mt-3">
-		<div class="col-12 ps-2">
-			<h2>
-				<i class="bi bi-gear bi-lg"></i>&nbsp;Settings
-			</h2>
-		</div>
-	</div>
+    <div class="row mt-3">
+        <div class="col-12 ps-2">
+            <h2>
+                <i class="bi bi-gear bi-lg"></i>&nbsp;Settings
+            </h2>
+        </div>
+    </div>
 </div>
 
 <div class="row mt-3 p-2">
-	<AlertComponent page_message="@page_message" message_status="@message_status" />
-	@if (settings != null)
-	{
-		<ul class="nav nav-tabs" role="tablist">
-			<li class="nav-item" role="presentation">
-				<a class="big-text nav-link active" id="tab-general" data-bs-toggle="tab" href="#tab-general-panel" role="tab" aria-controls="tab-general-panel" aria-selected="true"><i class="bi bi-gear-wide"></i>&nbsp;General</a>
-			</li>
-			<li class="nav-item" role="presentation">
-				<a class="big-text nav-link" id="tab-product" data-bs-toggle="tab" href="#tab-product-panel" role="tab" aria-controls="tab-product-panel" aria-selected="false"><i class="bi bi-upc-scan"></i>&nbsp;Product</a>
-			</li>
-			<li class="nav-item" role="presentation">
-				<a class="big-text nav-link" id="tab-order" data-bs-toggle="tab" href="#tab-order-panel" role="tab" aria-controls="tab-order-panel" aria-selected="false"><i class="bi bi-basket3"></i>&nbsp;Order</a>
-			</li>
-			<li class="nav-item" role="presentation">
-				<a class="big-text nav-link" id="tab-invoice" data-bs-toggle="tab" href="#tab-invoice-panel" role="tab" aria-controls="tab-invoice-panel" aria-selected="false"><i class="bi bi-receipt"></i>&nbsp;Invoice</a>
-			</li>
-		</ul>
+    <AlertComponent page_message="@page_message" message_status="@message_status" />
+    @if (settings != null) {
+        <ul class="nav nav-tabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <a class="big-text nav-link active" id="tab-general" data-bs-toggle="tab" href="#tab-general-panel" role="tab" aria-controls="tab-general-panel" aria-selected="true"><i class="bi bi-gear-wide"></i>&nbsp;General</a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="big-text nav-link" id="tab-product" data-bs-toggle="tab" href="#tab-product-panel" role="tab" aria-controls="tab-product-panel" aria-selected="false"><i class="bi bi-upc-scan"></i>&nbsp;Product</a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="big-text nav-link" id="tab-order" data-bs-toggle="tab" href="#tab-order-panel" role="tab" aria-controls="tab-order-panel" aria-selected="false"><i class="bi bi-basket3"></i>&nbsp;Order</a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="big-text nav-link" id="tab-invoice" data-bs-toggle="tab" href="#tab-invoice-panel" role="tab" aria-controls="tab-invoice-panel" aria-selected="false"><i class="bi bi-receipt"></i>&nbsp;Invoice</a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="big-text nav-link" id="tab-google" data-bs-toggle="tab" href="#tab-google-panel" role="tab" aria-controls="tab-google-panel" aria-selected="false"><i class="bi bi-google"></i>&nbsp;Google</a>
+            </li>
+        </ul>
 
-		<div class="tab-content">
-			<div class="tab-pane active" id="tab-general-panel" role="tabpanel" aria-labelledby="tab-general">
-				@if (settings != null && settings.settings != null)
-				{
-					<div class="container-fluid">
-						<div class="row">
-							<div class="col-md-12 p-2">
-								<EditForm Model="settings.settings" class="container-fluid">
-									<div class="row mt-3">
-										<div class="col-12 ps-2 mb-3">
-											<div class="form-floating">
-												<InputText type="text" class="form-control" DisplayName="user_name" @bind-Value="settings.settings.company_name" style="font-size:1.3rem;" />
-												<label for="user_name" class="form-label">Company Name</label>
-											</div>
-										</div>
-									</div>
-									<div class="col-12 p-3 bg-light rounded-3 border">
-										<h5>
-											Currency Rates
-										</h5>
-										<div class="row mt-3">
-											<div class="col-4 ps-2 mb-3">
-												<div class="input-group mb-3">
-													<span class="input-group-text">TL</span>
-													<InputNumber type="text" class="form-control" DisplayName="TL_rate" @bind-Value="settings.settings.rate_TL" placeholder="Uneditable" disabled="true" />
-												</div>
-											</div>
-											<div class="col-4 ps-2 mb-3">
-												<div class="input-group mb-3">
-													<span class="input-group-text">USD</span>
-													<InputNumber type="text" class="form-control" DisplayName="USD_rate" @bind-Value="settings.settings.rate_USD" />
-												</div>
-											</div>
-											<div class="col-4 ps-2 mb-3">
-												<div class="input-group mb-3">
-													<span class="input-group-text">EUR</span>
-													<InputNumber type="text" class="form-control" DisplayName="EUR_rate" @bind-Value="settings.settings.rate_EUR" />
-												</div>
-											</div>
-										</div>
-									</div>
-									<div class="row mt-3 bg-light rounded-2">
-										<div class="col-12 pt-3 ps-2 mb-3">
-											<button type="submit" class="btn btn-success float-end @(!is_refreshing ? "shadow" : "")" @onclick="@(() => SaveGeneralSettings(settings.settings))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
-										</div>
-									</div>
-								</EditForm>
-							</div>
-						</div>
-					</div>
-				}
-			</div>
+        <div class="tab-content">
+            <div class="tab-pane active" id="tab-general-panel" role="tabpanel" aria-labelledby="tab-general">
+                @if (settings != null && settings.settings != null) {
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-md-12 p-2">
+                                <EditForm Model="settings.settings" class="container-fluid">
+                                    <div class="row mt-3">
+                                        <div class="col-12 ps-2 mb-3">
+                                            <div class="form-floating">
+                                                <InputText type="text" class="form-control" DisplayName="user_name" @bind-Value="settings.settings.company_name" style="font-size:1.3rem;" />
+                                                <label for="user_name" class="form-label">Company Name</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 p-3 bg-light rounded-3 border">
+                                        <h5>
+                                            Currency Rates
+                                        </h5>
+                                        <div class="row mt-3">
+                                            <div class="col-4 ps-2 mb-3">
+                                                <div class="input-group mb-3">
+                                                    <span class="input-group-text">TL</span>
+                                                    <InputNumber type="text" class="form-control" DisplayName="TL_rate" @bind-Value="settings.settings.rate_TL" placeholder="Uneditable" disabled="true" />
+                                                </div>
+                                            </div>
+                                            <div class="col-4 ps-2 mb-3">
+                                                <div class="input-group mb-3">
+                                                    <span class="input-group-text">USD</span>
+                                                    <InputNumber type="text" class="form-control" DisplayName="USD_rate" @bind-Value="settings.settings.rate_USD" />
+                                                </div>
+                                            </div>
+                                            <div class="col-4 ps-2 mb-3">
+                                                <div class="input-group mb-3">
+                                                    <span class="input-group-text">EUR</span>
+                                                    <InputNumber type="text" class="form-control" DisplayName="EUR_rate" @bind-Value="settings.settings.rate_EUR" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3 bg-light rounded-2">
+                                        <div class="col-12 pt-3 ps-2 mb-3">
+                                            <button type="submit" class="btn btn-success float-end @(!is_refreshing ? "shadow" : "")" @onclick="@(() => SaveGeneralSettings(settings.settings))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+                                        </div>
+                                    </div>
+                                </EditForm>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
 
-			<div class="tab-pane" id="tab-product-panel" role="tabpanel" aria-labelledby="tab-product">
-				@if (settings != null && settings.product != null)
-				{
-					<div class="container-fluid">
-						<div class="row">
-							<div class="col-md-12 p-2">
-								<EditForm Model="settings.product" class="container-fluid">
-									<div class="row mt-3">
-										<div class="col-4 ps-2 mb-3">
-											<div class="form-floating">
-												<InputNumber type="text" class="form-control" DisplayName="customer_root_category_id" @bind-Value="settings.product.customer_root_category_id" placeholder="Uneditable" disabled="true" />
-												<label for="customer_root_category_id" class="form-label">Root Category Id</label>
-											</div>
-										</div>
-									</div>
-									<div class="row mt-3">
-										<div class="form-check form-switch mt-2 ms-3">
-											<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="settings.product.product_list_filter_source_products"></InputCheckbox>
-											<label class="form-check-label">&nbsp;<abbr title="This option will decrease load time for larger product count." class="initialism">Product list matches main source.</abbr></label>
-										</div>
-									</div>
-									<div class="row mt-3">
-										<div class="form-check form-switch mt-2 ms-3">
-											<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="settings.product.xml_qty_addictive_enable"></InputCheckbox>
-											<label class="form-check-label">&nbsp;<abbr title="If main source have positive stock, this disables qty increment from other sources." class="initialism">Qty Additive Status</abbr></label>
-										</div>
-									</div>
-									<div class="row mt-3">
-										<div class="form-check form-switch mt-2 ms-3">
-											<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="settings.product.is_barcode_required"></InputCheckbox>
-											<label class="form-check-label">&nbsp;Is Barcode Required</label>
-										</div>
-									</div>
-									<div class="row mt-3 bg-light rounded-2">
-										<div class="col-12 pt-3 ps-2 mb-3">
-											<button type="submit" class="btn btn-success float-end @(!is_refreshing ? "shadow" : "")" @onclick="@(() => SaveProductSettings(settings.product))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
-										</div>
-									</div>
-								</EditForm>
-							</div>
-						</div>
-					</div>
-				}
-			</div>
+            <div class="tab-pane" id="tab-product-panel" role="tabpanel" aria-labelledby="tab-product">
+                @if (settings != null && settings.product != null) {
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-md-12 p-2">
+                                <EditForm Model="settings.product" class="container-fluid">
+                                    <div class="row mt-3">
+                                        <div class="col-4 ps-2 mb-3">
+                                            <div class="form-floating">
+                                                <InputNumber type="text" class="form-control" DisplayName="customer_root_category_id" @bind-Value="settings.product.customer_root_category_id" placeholder="Uneditable" disabled="true" />
+                                                <label for="customer_root_category_id" class="form-label">Root Category Id</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="form-check form-switch mt-2 ms-3">
+                                            <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="settings.product.product_list_filter_source_products"></InputCheckbox>
+                                            <label class="form-check-label">&nbsp;<abbr title="This option will decrease load time for larger product count." class="initialism">Product list matches main source.</abbr></label>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="form-check form-switch mt-2 ms-3">
+                                            <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="settings.product.xml_qty_addictive_enable"></InputCheckbox>
+                                            <label class="form-check-label">&nbsp;<abbr title="If main source have positive stock, this disables qty increment from other sources." class="initialism">Qty Additive Status</abbr></label>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="form-check form-switch mt-2 ms-3">
+                                            <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="settings.product.is_barcode_required"></InputCheckbox>
+                                            <label class="form-check-label">&nbsp;Is Barcode Required</label>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3 bg-light rounded-2">
+                                        <div class="col-12 pt-3 ps-2 mb-3">
+                                            <button type="submit" class="btn btn-success float-end @(!is_refreshing ? "shadow" : "")" @onclick="@(() => SaveProductSettings(settings.product))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+                                        </div>
+                                    </div>
+                                </EditForm>
+                            </div>
+                        </div>
+                    </div>
+                }
 
-			<div class="tab-pane" id="tab-order-panel" role="tabpanel" aria-labelledby="tab-order">
-				@if (settings != null && settings.order != null)
-				{
-					<div class="container-fluid">
-						<div class="row">
-							<div class="col-md-12 p-2">
-								<EditForm Model="settings.order" class="container-fluid">
-									<div class="row mt-3">
-										<div class="col-12 ps-2 mb-3">
-											<div class="form-floating">
-												<InputNumber type="text" class="form-control" DisplayName="daysto_ordersync" @bind-Value="settings.order.daysto_ordersync" />
-												<label for="daysto_ordersync" class="form-label">Days to Order Sync</label>
-											</div>
-										</div>
-									</div>
-									<div class="row mt-3">
-										<div class="col-6 ps-2 mb-3">
-											<div class="form-floating">
-												<InputText type="text" class="form-control" DisplayName="siparis_kargo_sku" @bind-Value="settings.order.siparis_kargo_sku" />
-												<label for="siparis_kargo_sku" class="form-label">Order Shipment SKU</label>
-											</div>
-										</div>
-										<div class="col-6 ps-2 mb-3">
-											<div class="form-floating">
-												<InputText type="text" class="form-control" DisplayName="siparis_taksitkomisyon_sku" @bind-Value="settings.order.siparis_taksitkomisyon_sku" />
-												<label for="siparis_taksitkomisyon_sku" class="form-label">Order Installation SKU</label>
-											</div>
-										</div>
-									</div>
-									<div class="row mt-3">
-										<div class="form-check form-switch mt-2 ms-3">
-											<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="settings.order.siparis_kdvdahilmi"></InputCheckbox>
-											<label class="form-check-label">&nbsp;Order Tax Included ?</label>
-										</div>
-									</div>
-									<div class="row mt-3">
-										<div class="form-check form-switch mt-2 ms-3">
-											<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="settings.order.is_rewrite_siparis"></InputCheckbox>
-											<label class="form-check-label">&nbsp;Can Rewrite Order ?</label>
-										</div>
-									</div>
-									<div class="row mt-3 bg-light rounded-2">
-										<div class="col-12 pt-3 ps-2 mb-3">
-											<button type="submit" class="btn btn-success float-end @(!is_refreshing ? "shadow" : "")" @onclick="@(() => SaveOrderSettings(settings.order))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
-										</div>
-									</div>
-								</EditForm>
-							</div>
-						</div>
-					</div>
-				}
-			</div>
+            </div>
 
-			<div class="tab-pane" id="tab-invoice-panel" role="tabpanel" aria-labelledby="tab-invoice">
-				@if (settings != null && settings.invoice != null)
-				{
-					<div class="container-fluid">
-						<div class="row">
-							<div class="col-md-12 p-2">
-								<EditForm Model="settings.invoice" class="container-fluid">
-									<div class="row mt-3">
-										<div class="col-12 ps-2 mb-3">
-											<div class="form-floating">
-												<InputNumber type="text" class="form-control" DisplayName="daysto_invoicesync" @bind-Value="settings.invoice.daysto_invoicesync" />
-												<label for="daysto_invoicesync" class="form-label">Days to Invoice Sync</label>
-											</div>
-										</div>
-									</div>
-									<div class="col-12 p-3 bg-light rounded-3 border">
-										<h5>
-											Invoice FTP
-										</h5>
-										<div class="row mt-3">
-											<div class="col-12 ps-2 mb-3">
-												<div class="form-floating">
-													<InputText type="text" class="form-control" DisplayName="erp_invoice_ftp_url" @bind-Value="settings.invoice.erp_invoice_ftp_url"/>
-													<label for="erp_invoice_ftp_url" class="form-label">Url</label>
-												</div>
-											</div>
-										</div>
-										<div class="row mt-3">
-											<div class="col-6 ps-2 mb-3">
-												<div class="form-floating">
-													<InputText type="text" class="form-control" DisplayName="erp_invoice_ftp_username" @bind-Value="settings.invoice.erp_invoice_ftp_username" />
-													<label for="erp_invoice_ftp_username" class="form-label">FTP User Name</label>
-												</div>
-											</div>
-											<div class="col-6 ps-2 mb-3">
-												<div class="form-floating">
-													<InputText autocomplete="new-password" type="password" class="form-control" DisplayName="erp_invoice_ftp_password" @bind-Value="settings.invoice.erp_invoice_ftp_password"/>
-													<label for="erp_invoice_ftp_password" class="form-label">FTP Password</label>
-												</div>
-											</div>
-										</div>
-									</div>
-									<div class="row mt-3 bg-light rounded-2">
-										<div class="col-12 pt-3 ps-2 mb-3">
-											<button type="submit" class="btn btn-success float-end @(!is_refreshing ? "shadow" : "")" @onclick="@(() => SaveInvoiceSettings(settings.invoice))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
-										</div>
-									</div>
-								</EditForm>
-							</div>
-						</div>
-					</div>
-				}
-			</div>
-		</div>
-	}
+            <div class="tab-pane" id="tab-order-panel" role="tabpanel" aria-labelledby="tab-order">
+                @if (settings != null && settings.order != null) {
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-md-12 p-2">
+                                <EditForm Model="settings.order" class="container-fluid">
+                                    <div class="row mt-3">
+                                        <div class="col-12 ps-2 mb-3">
+                                            <div class="form-floating">
+                                                <InputNumber type="text" class="form-control" DisplayName="daysto_ordersync" @bind-Value="settings.order.daysto_ordersync" />
+                                                <label for="daysto_ordersync" class="form-label">Days to Order Sync</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-6 ps-2 mb-3">
+                                            <div class="form-floating">
+                                                <InputText type="text" class="form-control" DisplayName="siparis_kargo_sku" @bind-Value="settings.order.siparis_kargo_sku" />
+                                                <label for="siparis_kargo_sku" class="form-label">Order Shipment SKU</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-6 ps-2 mb-3">
+                                            <div class="form-floating">
+                                                <InputText type="text" class="form-control" DisplayName="siparis_taksitkomisyon_sku" @bind-Value="settings.order.siparis_taksitkomisyon_sku" />
+                                                <label for="siparis_taksitkomisyon_sku" class="form-label">Order Installation SKU</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="form-check form-switch mt-2 ms-3">
+                                            <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="settings.order.siparis_kdvdahilmi"></InputCheckbox>
+                                            <label class="form-check-label">&nbsp;Order Tax Included ?</label>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="form-check form-switch mt-2 ms-3">
+                                            <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="settings.order.is_rewrite_siparis"></InputCheckbox>
+                                            <label class="form-check-label">&nbsp;Can Rewrite Order ?</label>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3 bg-light rounded-2">
+                                        <div class="col-12 pt-3 ps-2 mb-3">
+                                            <button type="submit" class="btn btn-success float-end @(!is_refreshing ? "shadow" : "")" @onclick="@(() => SaveOrderSettings(settings.order))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+                                        </div>
+                                    </div>
+                                </EditForm>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+            </div>
+
+            <div class="tab-pane" id="tab-invoice-panel" role="tabpanel" aria-labelledby="tab-invoice">
+                @if (settings != null && settings.invoice != null) {
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-md-12 p-2">
+                                <EditForm Model="settings.invoice" class="container-fluid">
+                                    <div class="row mt-3">
+                                        <div class="col-12 ps-2 mb-3">
+                                            <div class="form-floating">
+                                                <InputNumber type="text" class="form-control" DisplayName="daysto_invoicesync" @bind-Value="settings.invoice.daysto_invoicesync" />
+                                                <label for="daysto_invoicesync" class="form-label">Days to Invoice Sync</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 p-3 bg-light rounded-3 border">
+                                        <h5>
+                                            Invoice FTP
+                                        </h5>
+                                        <div class="row mt-3">
+                                            <div class="col-12 ps-2 mb-3">
+                                                <div class="form-floating">
+                                                    <InputText type="text" class="form-control" DisplayName="erp_invoice_ftp_url" @bind-Value="settings.invoice.erp_invoice_ftp_url" />
+                                                    <label for="erp_invoice_ftp_url" class="form-label">Url</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-3">
+                                            <div class="col-6 ps-2 mb-3">
+                                                <div class="form-floating">
+                                                    <InputText type="text" class="form-control" DisplayName="erp_invoice_ftp_username" @bind-Value="settings.invoice.erp_invoice_ftp_username" />
+                                                    <label for="erp_invoice_ftp_username" class="form-label">FTP User Name</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-6 ps-2 mb-3">
+                                                <div class="form-floating">
+                                                    <InputText autocomplete="new-password" type="password" class="form-control" DisplayName="erp_invoice_ftp_password" @bind-Value="settings.invoice.erp_invoice_ftp_password" />
+                                                    <label for="erp_invoice_ftp_password" class="form-label">FTP Password</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3 bg-light rounded-2">
+                                        <div class="col-12 pt-3 ps-2 mb-3">
+                                            <button type="submit" class="btn btn-success float-end @(!is_refreshing ? "shadow" : "")" @onclick="@(() => SaveInvoiceSettings(settings.invoice))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+                                        </div>
+                                    </div>
+                                </EditForm>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="tab-pane" id="tab-google-panel" role="tabpanel" aria-labelledby="tab-google">
+                @if (settings != null && settings.google != null) {
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-md-12 p-2">
+                                <EditForm Model="settings.google" class="container-fluid">
+                                    <div class="row mt-3">
+                                        <div class="col-12 ps-2 mb-3">
+                                            <div class="form-floating">
+                                                <InputText type="text" class="form-control" DisplayName="sender_name" @bind-Value="settings.google.sender_name" />
+                                                <label for="sender_name" class="form-label">Sender Name</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-12 ps-2 mb-3">
+                                            <div class="form-floating">
+                                                <InputText type="text" class="form-control" DisplayName="email" @bind-Value="settings.google.email" />
+                                                <label for="email" class="form-label">E-mail Adres</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 p-3 bg-light rounded-3 border">
+                                        <h5>
+                                            oAuth Credentials
+                                        </h5>
+                                        <div class="row mt-3">
+                                            <div class="col-12 ps-2 mb-3">
+                                                <div class="form-floating">
+                                                    <InputText type="text" class="form-control" DisplayName="oauth2_clientid" @bind-Value="settings.google.oauth2_clientid" />
+                                                    <label for="oauth2_clientid" class="form-label">oAuth2 Client Id</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-3">
+                                            <div class="col-12 ps-2 mb-3">
+                                                <div class="form-floating">
+                                                    <InputText type="password" class="form-control" DisplayName="oauth2_clientsecret" @bind-Value="settings.google.oauth2_clientsecret" />
+                                                    <label for="oauth2_clientsecret" class="form-label">oAuth2 Client Secret</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="row mt-3">
+                                            <div class="form-check form-switch mt-2 ms-3">
+                                                <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="settings.google.is_enabled"></InputCheckbox>
+                                                <label class="form-check-label">&nbsp;Is Enabled ?</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="row mt-3 bg-light rounded-2">
+                                            <div class="col-12 pt-3 ps-2 mb-3">
+                                                <button type="submit" class="btn btn-success float-end @(!is_refreshing ? "shadow" : "")" @onclick="@(() => SaveGoogleSettings(settings.google))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </EditForm>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+            </div>
+        </div>
+    }
 </div>
 
 @code {
-	[Parameter]
-	public string? CID { get; set; }
-	private bool is_refreshing = false;
-	private string loading = "Loading...";
-	private string page_message = "Settings Loading...";
-	private string message_status = "dark";
-	Customer? customer { get; set; }
-	SettingsMerchanter? settings { get; set; }
+    [Parameter]
+    public string? CID { get; set; }
+    private bool is_refreshing = false;
+    private string loading = "Loading...";
+    private string page_message = "Settings Loading...";
+    private string message_status = "dark";
+    Customer? customer { get; set; }
+    SettingsMerchanter? settings { get; set; }
 
-	protected override async Task OnAfterRenderAsync(bool firstRender)
-	{
-		if (firstRender)
-		{
-			int customer_id = 0;
-			if (!string.IsNullOrWhiteSpace(CID) && int.TryParse(CID, out customer_id))
-			{
-				//await LoadCustomer(customer_id);
-				await LoadCustomerSettings(customer_id);
-			}
-		}
-	}
+    protected override async Task OnAfterRenderAsync(bool firstRender) {
+        if (firstRender) {
+            int customer_id = 0;
+            if (!string.IsNullOrWhiteSpace(CID) && int.TryParse(CID, out customer_id)) {
+                //await LoadCustomer(customer_id);
+                await LoadCustomerSettings(customer_id);
+            }
+        }
+    }
 
-	public async Task LoadCustomerSettings(int _customer_id)
-	{
-		if (_customer_id > 0)
-		{
-			var response = await PostHelper.Request<SettingsMerchanter>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
-				Classes.PostHelper.PostMethod.Get,
-				"api/Settings/" + _customer_id.ToString() + "/GetCustomerSettings");
+    public async Task LoadCustomerSettings(int _customer_id) {
+        if (_customer_id > 0) {
+            var response = await PostHelper.Request<SettingsMerchanter>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                Classes.PostHelper.PostMethod.Get,
+                "api/Settings/" + _customer_id.ToString() + "/GetCustomerSettings");
 
-			if (response != null && response.Success && response.Data != null)
-			{
-				settings = response.Data;
-				page_message = string.Empty;
-				StateHasChanged();
-			}
-			else
-			{
-				page_message = "Merchanter Server ServiceAPI data response empty.";
-			}
-		}
-	}
+            if (response != null && response.Success && response.Data != null) {
+                settings = response.Data;
+                page_message = string.Empty;
+                StateHasChanged();
+            }
+            else {
+                page_message = "Merchanter Server ServiceAPI data response empty.";
+            }
+        }
+    }
 
-	public async Task LoadCustomer(int _customer_id)
-	{
-		if (_customer_id > 0)
-		{
-			customer = null;
-			var response = await PostHelper.Request<Customer>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
-				Classes.PostHelper.PostMethod.Get,
-				"api/Customer/" + _customer_id.ToString() + "/GetCustomer");
+    public async Task LoadCustomer(int _customer_id) {
+        if (_customer_id > 0) {
+            customer = null;
+            var response = await PostHelper.Request<Customer>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                Classes.PostHelper.PostMethod.Get,
+                "api/Customer/" + _customer_id.ToString() + "/GetCustomer");
 
-			if (response != null && response.Success && response.Data != null)
-			{
-				customer = response.Data;
-				StateHasChanged();
-			}
-			else
-			{
-				page_message = "Merchanter Server ServiceAPI data response empty.";
-			}
-		}
-	}
+            if (response != null && response.Success && response.Data != null) {
+                customer = response.Data;
+                StateHasChanged();
+            }
+            else {
+                page_message = "Merchanter Server ServiceAPI data response empty.";
+            }
+        }
+    }
 
-	public async Task SaveGeneralSettings(SettingsGeneral _settings)
-	{
-		if (settings != null && int.TryParse(CID, out int customer_id))
-		{
-			int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
-			if (admin_id > 0)
-			{
-				is_refreshing = true;
-				string json = JsonConvert.SerializeObject(_settings);
-				var response = await PostHelper.Request<SettingsGeneral>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
-					Classes.PostHelper.PostMethod.Put,
-					"api/Settings/" + CID + "/SaveGeneralSettings",
-					new StringContent(json, Encoding.UTF8, "application/json"));
+    public async Task SaveGeneralSettings(SettingsGeneral _settings) {
+        if (settings != null && int.TryParse(CID, out int customer_id)) {
+            int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
+            if (admin_id > 0) {
+                is_refreshing = true;
+                string json = JsonConvert.SerializeObject(_settings);
+                var response = await PostHelper.Request<SettingsGeneral>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                    Classes.PostHelper.PostMethod.Put,
+                    "api/Settings/" + CID + "/SaveGeneralSettings",
+                    new StringContent(json, Encoding.UTF8, "application/json"));
 
-				if (response != null && response.Success && response.Data != null)
-				{
-					settings.settings = response.Data;
-					page_message = "General settings saved. [" + DateTime.Now.ToString() + "]";
-					message_status = "success";
-				}
-				else
-				{
-					page_message = "General settings save failed. [" + DateTime.Now.ToString() + "]";
-					message_status = "danger";
-				}
-				is_refreshing = false;
-			}
-		}
-	}
+                if (response != null && response.Success && response.Data != null) {
+                    settings.settings = response.Data;
+                    page_message = "General settings saved. [" + DateTime.Now.ToString() + "]";
+                    message_status = "success";
+                }
+                else {
+                    page_message = "General settings save failed. [" + DateTime.Now.ToString() + "]";
+                    message_status = "danger";
+                }
+                is_refreshing = false;
+            }
+        }
+    }
 
-	public async Task SaveOrderSettings(SettingsOrder _settings)
-	{
-		if (settings != null && int.TryParse(CID, out int customer_id))
-		{
-			int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
-			if (admin_id > 0)
-			{
-				is_refreshing = true;
-				string json = JsonConvert.SerializeObject(_settings);
-				var response = await PostHelper.Request<SettingsOrder>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
-					Classes.PostHelper.PostMethod.Put,
-					"api/Settings/" + CID + "/SaveOrderSettings",
-					new StringContent(json, Encoding.UTF8, "application/json"));
-				if (response != null && response.Success && response.Data != null)
-				{
-					settings.order = response.Data;
-					page_message = "Order settings saved. [" + DateTime.Now.ToString() + "]";
-					message_status = "success";
-				}
-				else
-				{
-					page_message = "Order settings save failed. [" + DateTime.Now.ToString() + "]";
-					message_status = "danger";
-				}
-				is_refreshing = false;
-			}
-		}
-	}
+    public async Task SaveOrderSettings(SettingsOrder _settings) {
+        if (settings != null && int.TryParse(CID, out int customer_id)) {
+            int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
+            if (admin_id > 0) {
+                is_refreshing = true;
+                string json = JsonConvert.SerializeObject(_settings);
+                var response = await PostHelper.Request<SettingsOrder>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                    Classes.PostHelper.PostMethod.Put,
+                    "api/Settings/" + CID + "/SaveOrderSettings",
+                    new StringContent(json, Encoding.UTF8, "application/json"));
+                if (response != null && response.Success && response.Data != null) {
+                    settings.order = response.Data;
+                    page_message = "Order settings saved. [" + DateTime.Now.ToString() + "]";
+                    message_status = "success";
+                }
+                else {
+                    page_message = "Order settings save failed. [" + DateTime.Now.ToString() + "]";
+                    message_status = "danger";
+                }
+                is_refreshing = false;
+            }
+        }
+    }
 
-	public async Task SaveProductSettings(SettingsProduct _settings)
-	{
-		if (settings != null && int.TryParse(CID, out int customer_id))
-		{
-			int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
-			if (admin_id > 0)
-			{
-				is_refreshing = true;
-				string json = JsonConvert.SerializeObject(_settings);
-				var response = await PostHelper.Request<SettingsProduct>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
-					Classes.PostHelper.PostMethod.Put,
-					"api/Settings/" + CID + "/SaveProductSettings",
-					new StringContent(json, Encoding.UTF8, "application/json"));
-				if (response != null && response.Success && response.Data != null)
-				{
-					settings.product = response.Data;
-					page_message = "Product settings saved. [" + DateTime.Now.ToString() + "]";
-					message_status = "success";
-				}
-				else
-				{
-					page_message = "Product settings save failed. [" + DateTime.Now.ToString() + "]";
-					message_status = "danger";
-				}
-				is_refreshing = false;
-			}
-		}
-	}
+    public async Task SaveProductSettings(SettingsProduct _settings) {
+        if (settings != null && int.TryParse(CID, out int customer_id)) {
+            int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
+            if (admin_id > 0) {
+                is_refreshing = true;
+                string json = JsonConvert.SerializeObject(_settings);
+                var response = await PostHelper.Request<SettingsProduct>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                    Classes.PostHelper.PostMethod.Put,
+                    "api/Settings/" + CID + "/SaveProductSettings",
+                    new StringContent(json, Encoding.UTF8, "application/json"));
+                if (response != null && response.Success && response.Data != null) {
+                    settings.product = response.Data;
+                    page_message = "Product settings saved. [" + DateTime.Now.ToString() + "]";
+                    message_status = "success";
+                }
+                else {
+                    page_message = "Product settings save failed. [" + DateTime.Now.ToString() + "]";
+                    message_status = "danger";
+                }
+                is_refreshing = false;
+            }
+        }
+    }
 
-	public async Task SaveInvoiceSettings(SettingsInvoice _settings)
-	{
-		if (settings != null && int.TryParse(CID, out int customer_id))
-		{
-			int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
-			if (admin_id > 0)
-			{
-				is_refreshing = true;
-				string json = JsonConvert.SerializeObject(_settings);
-				var response = await PostHelper.Request<SettingsInvoice>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
-					Classes.PostHelper.PostMethod.Put,
-					"api/Settings/" + CID + "/SaveInvoiceSettings",
-					new StringContent(json, Encoding.UTF8, "application/json"));
-				if (response != null && response.Success && response.Data != null)
-				{
-					settings.invoice = response.Data;
-					page_message = "Invoice settings saved. [" + DateTime.Now.ToString() + "]";
-					message_status = "success";
-				}
-				else
-				{
-					page_message = "Invoice settings save failed. [" + DateTime.Now.ToString() + "]";
-					message_status = "danger";
-				}
-				is_refreshing = false;
-			}
-		}
-	}
+    public async Task SaveInvoiceSettings(SettingsInvoice _settings) {
+        if (settings != null && int.TryParse(CID, out int customer_id)) {
+            int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
+            if (admin_id > 0) {
+                is_refreshing = true;
+                string json = JsonConvert.SerializeObject(_settings);
+                var response = await PostHelper.Request<SettingsInvoice>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                    Classes.PostHelper.PostMethod.Put,
+                    "api/Settings/" + CID + "/SaveInvoiceSettings",
+                    new StringContent(json, Encoding.UTF8, "application/json"));
+                if (response != null && response.Success && response.Data != null) {
+                    settings.invoice = response.Data;
+                    page_message = "Invoice settings saved. [" + DateTime.Now.ToString() + "]";
+                    message_status = "success";
+                }
+                else {
+                    page_message = "Invoice settings save failed. [" + DateTime.Now.ToString() + "]";
+                    message_status = "danger";
+                }
+                is_refreshing = false;
+            }
+        }
+    }
+
+    public async Task SaveGoogleSettings(SettingsGoogle _settings) {
+        if (settings != null && int.TryParse(CID, out int customer_id)) {
+            int.TryParse(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.admin_id)?.Value, out int admin_id);
+            if (admin_id > 0) {
+                is_refreshing = true;
+                string json = JsonConvert.SerializeObject(_settings);
+                var response = await PostHelper.Request<SettingsGoogle>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                    Classes.PostHelper.PostMethod.Put,
+                    "api/Settings/" + CID + "/SaveGoogleSettings",
+                    new StringContent(json, Encoding.UTF8, "application/json"));
+                if (response != null && response.Success && response.Data != null) {
+                    settings.google = response.Data;
+                    page_message = "Google settings saved. [" + DateTime.Now.ToString() + "]";
+                    message_status = "success";
+                }
+                else {
+                    page_message = "Google settings save failed. [" + DateTime.Now.ToString() + "]";
+                    message_status = "danger";
+                }
+                is_refreshing = false;
+            }
+        }
+    }
 }

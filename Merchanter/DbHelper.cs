@@ -45,30 +45,34 @@ namespace Merchanter {
 
         private string? connectionString { get; set; } = null;
         public System.Data.ConnectionState state { get; set; }
-        public List<DBSetting> db_settings { get; set; } = [];
-        public DbHelper invoice { get; set; }
-        public DbHelper xml { get; set; }
-        public DbHelper notification { get; set; }
+        public List<DBSetting> DbSettings { get; set; } = [];
+        public DbHelper invoice_clone { get; set; }
+        public DbHelper xml_clone { get; set; }
+        public DbHelper notification_clone { get; set; }
 
-        public DbHelper(string _server, string _user, string _password, string _database, int _port = 3306) {
+        public DbHelper(string _server, string _user, string _password, string _database, int _port = 3306, int _timeout = 120) {
             try {
-                Server = _server;
-                User = _user;
-                Password = _password;
-                Database = _database;
-                Port = _port;
+                Server = _server; User = _user; Password = _password;
+                Database = _database; Port = _port;
                 connectionString = "Server=" + Server + ";Port=" + Port.ToString() + ";" + "Database=" +
-                    Database + ";" + "Uid=" + User + ";" + "Pwd=" + Password + ";CharSet=utf8;";
-                //Connection = new MySqlConnection( connectionString );
+                    Database + ";" + "Uid=" + User + ";" + "Pwd=" + Password + ";CharSet=utf8;" + "Connection Timeout=" + _timeout + ";";
                 Connection.ConnectionString = connectionString;
                 Connection.StateChange += Connection_StateChange;
+                Connection.InfoMessage += Connection_InfoMessage;
             }
             catch {
+                PrintConsole("Error in DB Connection", ConsoleColor.Red);
             }
         }
+        #endregion
 
         #region Delegates
         private void Connection_StateChange(object sender, System.Data.StateChangeEventArgs e) => state = e.CurrentState;
+        private void Connection_InfoMessage(object sender, MySqlInfoMessageEventArgs e) {
+            foreach (var item in e.errors) {
+                PrintConsole(item.Code + ":" + item.Level + ":" + item.Message, ConsoleColor.DarkYellow);
+            }
+        }
         public event EventHandler<string> ErrorOccured;
         #endregion
 
@@ -78,7 +82,7 @@ namespace Merchanter {
         }
         #endregion
 
-        #region Connection Functions
+        #region Connection Methods
         public bool OpenConnection() {
             try {
                 connection.Open();
@@ -108,8 +112,6 @@ namespace Merchanter {
                 return false;
             }
         }
-        #endregion
-
         #endregion
 
 
@@ -561,7 +563,7 @@ namespace Merchanter {
         /// <returns>[Error] returns 'null'</returns>
         public SettingsMerchanter LoadSettings(int _customer_id) {
             try {
-                db_settings = this.GetSettings(_customer_id);
+                DbSettings = this.GetSettings(_customer_id);
                 Helper.global = new SettingsMerchanter(_customer_id);
                 Helper.global.customer_id = _customer_id;
 
@@ -593,19 +595,20 @@ namespace Merchanter {
                 Helper.global.ty = GetTYSettings(_customer_id);
                 Helper.global.ank_erp = GetAnkERPSettings(_customer_id);
                 Helper.global.ideasoft = GetIdeasoftSettings(_customer_id);
+                Helper.global.google = GetGoogleSettings(_customer_id);
                 #endregion
 
-                Helper.global.erp_invoice_ftp_username = db_settings.Where(x => x.name == "erp_invoice_ftp_username").FirstOrDefault()?.value ?? string.Empty;
-                Helper.global.erp_invoice_ftp_password = db_settings.Where(x => x.name == "erp_invoice_ftp_password").FirstOrDefault()?.value ?? string.Empty;
-                Helper.global.erp_invoice_ftp_url = db_settings.Where(x => x.name == "erp_invoice_ftp_url").FirstOrDefault()?.value ?? string.Empty;
-                Helper.global.xml_bogazici_bayikodu = db_settings.Where(x => x.name == "xml_bogazici_bayikodu").FirstOrDefault()?.value ?? string.Empty;
-                Helper.global.xml_bogazici_email = db_settings.Where(x => x.name == "xml_bogazici_email").FirstOrDefault()?.value ?? string.Empty;
-                Helper.global.xml_bogazici_sifre = db_settings.Where(x => x.name == "xml_bogazici_sifre").FirstOrDefault()?.value ?? string.Empty;
-                Helper.global.xml_fsp_url = db_settings.Where(x => x.name == "xml_fsp_url").FirstOrDefault()?.value ?? string.Empty;
-                Helper.global.xml_koyuncu_url = db_settings.Where(x => x.name == "xml_koyuncu_url").FirstOrDefault()?.value ?? string.Empty;
-                Helper.global.xml_oksid_url = db_settings.Where(x => x.name == "xml_oksid_url").FirstOrDefault()?.value ?? string.Empty;
-                Helper.global.xml_penta_base_url = db_settings.Where(x => x.name == "xml_penta_base_url").FirstOrDefault()?.value ?? string.Empty;
-                Helper.global.xml_penta_customerid = db_settings.Where(x => x.name == "xml_penta_customerid").FirstOrDefault()?.value ?? string.Empty;
+                Helper.global.erp_invoice_ftp_username = DbSettings.Where(x => x.name == "erp_invoice_ftp_username").FirstOrDefault()?.value ?? string.Empty;
+                Helper.global.erp_invoice_ftp_password = DbSettings.Where(x => x.name == "erp_invoice_ftp_password").FirstOrDefault()?.value ?? string.Empty;
+                Helper.global.erp_invoice_ftp_url = DbSettings.Where(x => x.name == "erp_invoice_ftp_url").FirstOrDefault()?.value ?? string.Empty;
+                Helper.global.xml_bogazici_bayikodu = DbSettings.Where(x => x.name == "xml_bogazici_bayikodu").FirstOrDefault()?.value ?? string.Empty;
+                Helper.global.xml_bogazici_email = DbSettings.Where(x => x.name == "xml_bogazici_email").FirstOrDefault()?.value ?? string.Empty;
+                Helper.global.xml_bogazici_sifre = DbSettings.Where(x => x.name == "xml_bogazici_sifre").FirstOrDefault()?.value ?? string.Empty;
+                Helper.global.xml_fsp_url = DbSettings.Where(x => x.name == "xml_fsp_url").FirstOrDefault()?.value ?? string.Empty;
+                Helper.global.xml_koyuncu_url = DbSettings.Where(x => x.name == "xml_koyuncu_url").FirstOrDefault()?.value ?? string.Empty;
+                Helper.global.xml_oksid_url = DbSettings.Where(x => x.name == "xml_oksid_url").FirstOrDefault()?.value ?? string.Empty;
+                Helper.global.xml_penta_base_url = DbSettings.Where(x => x.name == "xml_penta_base_url").FirstOrDefault()?.value ?? string.Empty;
+                Helper.global.xml_penta_customerid = DbSettings.Where(x => x.name == "xml_penta_customerid").FirstOrDefault()?.value ?? string.Empty;
 
 
                 #region Decyrption
@@ -641,6 +644,8 @@ namespace Merchanter {
                     Helper.global.ideasoft.refresh_token = DBSetting.Decrypt(Helper.global.ideasoft.refresh_token);
                 if (Helper.global.ideasoft != null && !string.IsNullOrWhiteSpace(Helper.global.ideasoft.access_token))
                     Helper.global.ideasoft.access_token = DBSetting.Decrypt(Helper.global.ideasoft.access_token);
+                if (Helper.global.google != null && !string.IsNullOrWhiteSpace(Helper.global.google.oauth2_clientsecret))
+                    Helper.global.google.oauth2_clientsecret = DBSetting.Decrypt(Helper.global.google.oauth2_clientsecret);
                 #endregion
 
                 if (File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "local"))) {
@@ -985,6 +990,35 @@ namespace Merchanter {
         }
 
         /// <summary>
+        /// Saves the Google settings to the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_settings">Settings Google</param>
+        /// <returns>[No change] or [Error] returns 'false'</returns>
+        public bool SaveGoogleSettings(int _customer_id, SettingsGoogle _settings) {
+            try {
+                int val = 0;
+                string _query = "UPDATE settings_google SET email=@email,oauth2_clientid=@oauth2_clientid,oauth2_clientsecret=@oauth2_clientsecret,sender_name=@sender_name,is_enabled=@is_enabled WHERE customer_id=@customer_id";
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                cmd.Parameters.Add(new MySqlParameter("email", _settings.email));
+                cmd.Parameters.Add(new MySqlParameter("oauth2_clientid", _settings.oauth2_clientid));
+                cmd.Parameters.Add(new MySqlParameter("sender_name", _settings.sender_name));
+                cmd.Parameters.Add(new MySqlParameter("is_enabled", _settings.is_enabled));
+                cmd.Parameters.Add(new MySqlParameter("oauth2_clientsecret", !string.IsNullOrWhiteSpace(_settings.oauth2_clientsecret) ? DBSetting.Encrypt(_settings.oauth2_clientsecret) : null));
+
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                val = cmd.ExecuteNonQuery();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
+                return val > 0;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Saves the magento settings to the database
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
@@ -1141,8 +1175,7 @@ namespace Merchanter {
         /// <returns>[Error] returns 'null'</returns>
         public SettingsGeneral GetCustomerSettings(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open)
-                    connection.Open();
+                if (state != System.Data.ConnectionState.Open) connection.Open();
                 string _query = "SELECT * FROM settings WHERE customer_id=@customer_id";
                 SettingsGeneral? cs = null;
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
@@ -1159,8 +1192,7 @@ namespace Merchanter {
                     };
                 }
                 dataReader.Close();
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
                 return cs;
             }
             catch (Exception ex) {
@@ -1176,8 +1208,7 @@ namespace Merchanter {
         /// <returns>[Error] returns 'null'</returns>
         public SettingsInvoice GetInvoiceSettings(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open)
-                    connection.Open();
+                if (state != System.Data.ConnectionState.Open) connection.Open();
                 string _query = "SELECT * FROM settings_invoice WHERE customer_id=@customer_id";
                 SettingsInvoice? inv_s = null;
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
@@ -1194,8 +1225,7 @@ namespace Merchanter {
                     };
                 }
                 dataReader.Close();
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
                 return inv_s;
             }
             catch (Exception ex) {
@@ -1211,8 +1241,7 @@ namespace Merchanter {
         /// <returns>[Error] returns 'null'</returns>
         public SettingsProduct GetProductSettings(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open)
-                    connection.Open();
+                if (state != System.Data.ConnectionState.Open) connection.Open();
                 string _query = "SELECT * FROM settings_product WHERE customer_id=@customer_id";
                 SettingsProduct? ps = null;
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
@@ -1230,8 +1259,7 @@ namespace Merchanter {
                     };
                 }
                 dataReader.Close();
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
                 return ps;
             }
             catch (Exception ex) {
@@ -1247,8 +1275,7 @@ namespace Merchanter {
         /// <returns>[Error] returns 'null'</returns>
         public SettingsEntegra GetEntegraSettings(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open)
-                    connection.Open();
+                if (state != System.Data.ConnectionState.Open) connection.Open();
                 string _query = "SELECT * FROM settings_entegra WHERE customer_id=@customer_id";
                 SettingsEntegra? es = null;
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
@@ -1264,8 +1291,7 @@ namespace Merchanter {
                     };
                 }
                 dataReader.Close();
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
                 return es;
             }
             catch (Exception ex) {
@@ -1281,8 +1307,7 @@ namespace Merchanter {
         /// <returns>[Error] returns 'null'</returns>
         public SettingsMagento GetMagentoSettings(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open)
-                    connection.Open();
+                if (state != System.Data.ConnectionState.Open) connection.Open();
                 string _query = "SELECT * FROM settings_magento WHERE customer_id=@customer_id";
                 SettingsMagento? ms = null;
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
@@ -1307,8 +1332,7 @@ namespace Merchanter {
                     };
                 }
                 dataReader.Close();
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
                 return ms;
             }
             catch (Exception ex) {
@@ -1324,8 +1348,7 @@ namespace Merchanter {
         /// <returns>[Error] returns 'null'</returns>
         public SettingsOrder GetOrderSettings(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open)
-                    connection.Open();
+                if (state != System.Data.ConnectionState.Open) connection.Open();
                 string _query = "SELECT * FROM settings_order WHERE customer_id=@customer_id";
                 SettingsOrder? os = null;
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
@@ -1343,9 +1366,42 @@ namespace Merchanter {
                     };
                 }
                 dataReader.Close();
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
                 return os;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets the google settings from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <returns>[Error] returns 'null'</returns>
+        public SettingsGoogle GetGoogleSettings(int _customer_id) {
+            try {
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                string _query = "SELECT * FROM settings_google WHERE customer_id=@customer_id";
+                SettingsGoogle? gs = null;
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                MySqlDataReader dataReader = cmd.ExecuteReader(System.Data.CommandBehavior.CloseConnection);
+                while (dataReader.Read()) {
+                    gs = new SettingsGoogle {
+                        id = Convert.ToInt32(dataReader["id"].ToString()),
+                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                        email = dataReader["email"].ToString(),
+                        oauth2_clientid = dataReader["oauth2_clientid"].ToString(),
+                        oauth2_clientsecret = dataReader["oauth2_clientsecret"].ToString(),
+                        sender_name = dataReader["sender_name"].ToString(),
+                        is_enabled = Convert.ToBoolean(Convert.ToInt32(dataReader["is_enabled"].ToString())),
+                    };
+                }
+                dataReader.Close();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
+                return gs;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -1360,8 +1416,7 @@ namespace Merchanter {
         /// <returns>[Error] returns 'null'</returns>
         public SettingsNetsis GetNetsisSettings(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open)
-                    connection.Open();
+                if (state != System.Data.ConnectionState.Open) connection.Open();
                 string _query = "SELECT * FROM settings_netsis WHERE customer_id=@customer_id";
                 SettingsNetsis? ns = null;
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
@@ -1399,8 +1454,7 @@ namespace Merchanter {
                     };
                 }
                 dataReader.Close();
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
                 return ns;
             }
             catch (Exception ex) {
@@ -1416,8 +1470,7 @@ namespace Merchanter {
         /// <returns>[Error] returns 'null'</returns>
         public SettingsShipment GetShipmentSettings(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open)
-                    connection.Open();
+                if (state != System.Data.ConnectionState.Open) connection.Open();
                 string _query = "SELECT * FROM settings_shipment WHERE customer_id=@customer_id";
                 SettingsShipment? ss = null;
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
@@ -1439,8 +1492,7 @@ namespace Merchanter {
                     };
                 }
                 dataReader.Close();
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
                 return ss;
             }
             catch (Exception ex) {
@@ -1456,8 +1508,7 @@ namespace Merchanter {
         /// <returns>[Error] returns 'null'</returns>
         public SettingsN11 GetN11Settings(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open)
-                    connection.Open();
+                if (state != System.Data.ConnectionState.Open) connection.Open();
                 string _query = "SELECT * FROM settings_n11 WHERE customer_id=@customer_id";
                 SettingsN11? sn11 = null;
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
@@ -1472,8 +1523,7 @@ namespace Merchanter {
                     };
                 }
                 dataReader.Close();
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
                 return sn11;
             }
             catch (Exception ex) {
@@ -1489,8 +1539,7 @@ namespace Merchanter {
         /// <returns>[Error] returns 'null'</returns>
         public SettingsHB GetHBSettings(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open)
-                    connection.Open();
+                if (state != System.Data.ConnectionState.Open) connection.Open();
                 string _query = "SELECT * FROM settings_hb WHERE customer_id=@customer_id";
                 SettingsHB? shb = null;
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
@@ -1507,8 +1556,7 @@ namespace Merchanter {
                     };
                 }
                 dataReader.Close();
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
                 return shb;
             }
             catch (Exception ex) {
@@ -1524,8 +1572,7 @@ namespace Merchanter {
         /// <returns>[Error] returns 'null'</returns>
         public SettingsTY GetTYSettings(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open)
-                    connection.Open();
+                if (state != System.Data.ConnectionState.Open) connection.Open();
                 string _query = "SELECT * FROM settings_ty WHERE customer_id=@customer_id";
                 SettingsTY? sty = null;
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
@@ -1541,8 +1588,7 @@ namespace Merchanter {
                     };
                 }
                 dataReader.Close();
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
                 return sty;
             }
             catch (Exception ex) {
@@ -1592,8 +1638,7 @@ namespace Merchanter {
         /// <returns>[Error] returns 'null'</returns>
         public SettingsIdeasoft GetIdeasoftSettings(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open)
-                    connection.Open();
+                if (state != System.Data.ConnectionState.Open) connection.Open();
                 string _query = "SELECT * FROM settings_ideasoft WHERE customer_id=@customer_id";
                 SettingsIdeasoft? idea = null;
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
@@ -1612,8 +1657,7 @@ namespace Merchanter {
                     };
                 }
                 dataReader.Close();
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
                 return idea;
             }
             catch (Exception ex) {
@@ -1653,7 +1697,6 @@ namespace Merchanter {
                         dataReader.Close();
                         if (state == System.Data.ConnectionState.Open)
                             this.CloseConnection();
-
                         return list;
                     }
 
@@ -1692,7 +1735,6 @@ namespace Merchanter {
                         dataReader.Close();
                         if (state == System.Data.ConnectionState.Open)
                             this.CloseConnection();
-
                         return list;
                     }
 
@@ -1731,7 +1773,6 @@ namespace Merchanter {
                         dataReader.Close();
                         if (state == System.Data.ConnectionState.Open)
                             this.CloseConnection();
-
                         return list;
                     }
 
@@ -1768,7 +1809,6 @@ namespace Merchanter {
                         dataReader.Close();
                         if (state == System.Data.ConnectionState.Open)
                             this.CloseConnection();
-
                         return list;
                     }
 
@@ -1806,7 +1846,6 @@ namespace Merchanter {
                         dataReader.Close();
                         if (state == System.Data.ConnectionState.Open)
                             this.CloseConnection();
-
                         return list;
                     }
 
@@ -1844,7 +1883,6 @@ namespace Merchanter {
                         dataReader.Close();
                         if (state == System.Data.ConnectionState.Open)
                             this.CloseConnection();
-
                         return list;
                     }
 
@@ -1885,7 +1923,6 @@ namespace Merchanter {
                         dataReader.Close();
                         if (state == System.Data.ConnectionState.Open)
                             this.CloseConnection();
-
                         return list;
                     }
 
@@ -1922,9 +1959,7 @@ namespace Merchanter {
         /// <returns>[No change] or [Error] returns 'false'</returns>
         public bool InsertNotifications(int _customer_id, List<Notification> _notifications) {
             try {
-                if (state != System.Data.ConnectionState.Open)
-                    connection.Open();
-
+                if (state != System.Data.ConnectionState.Open) connection.Open();
                 int val = 0;
                 foreach (Notification item in _notifications) {
                     string _query = "INSERT INTO notifications (customer_id,type,order_label,product_sku,xproduct_barcode,invoice_no,notification_content) VALUES (@customer_id,@type,@order_label,@product_sku,@xproduct_barcode,@invoice_no,@notification_content)";
@@ -1939,10 +1974,7 @@ namespace Merchanter {
                     cmd.Parameters.Add(new MySqlParameter("invoice_no", item.invoice_no));
                     val += cmd.ExecuteNonQuery();
                 }
-
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
-
+                if (state == System.Data.ConnectionState.Open) connection.Close();
                 if (val > 0)
                     return true;
                 else return false;
@@ -1961,9 +1993,7 @@ namespace Merchanter {
         /// <returns>[No change] or [Error] returns 'false'</returns>
         public bool UpdateNotifications(int _customer_id, List<Notification> _notifications) {
             try {
-                if (state != System.Data.ConnectionState.Open)
-                    connection.Open();
-
+                if (state != System.Data.ConnectionState.Open) connection.Open();
                 int val = 0;
                 foreach (Notification item in _notifications) {
                     string _query = "UPDATE notifications SET notification_content=@notification_content,is_notification_sent=@is_notification_sent,notification_date=@notification_date WHERE id=@id AND customer_id=@customer_id";
@@ -1975,10 +2005,7 @@ namespace Merchanter {
                     cmd.Parameters.Add(new MySqlParameter("notification_date", DateTime.Now));
                     val += cmd.ExecuteNonQuery();
                 }
-
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
-
+                if (state == System.Data.ConnectionState.Open) connection.Close();
                 if (val > 0)
                     return true;
                 else return false;
@@ -1997,8 +2024,7 @@ namespace Merchanter {
         /// <returns>[Error] returns 'null'</returns>
         public List<Notification> GetNotifications(int _customer_id, bool? _is_notification_sent) {
             try {
-                if (state != System.Data.ConnectionState.Open)
-                    connection.Open();
+                if (state != System.Data.ConnectionState.Open) connection.Open();
                 string _query = (!_is_notification_sent.HasValue ? "SELECT * FROM notifications WHERE customer_id=@customer_id" :
                     "SELECT * FROM notifications WHERE is_notification_sent = " + (_is_notification_sent.Value ? "1" : "0") + " AND customer_id=@customer_id");
                 List<Notification> list = [];
@@ -2022,8 +2048,7 @@ namespace Merchanter {
                     list.Add(n);
                 }
                 dataReader.Close();
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
                 return list;
             }
             catch (Exception ex) {
@@ -2042,8 +2067,7 @@ namespace Merchanter {
         /// <returns>[Error] returns 'null'</returns>
         public List<Notification> GetNotifications(int _customer_id, bool? _is_notification_sent, int _items_per_page = 20, int _current_page_index = 0) {
             try {
-                if (state != System.Data.ConnectionState.Open)
-                    connection.Open();
+                if (state != System.Data.ConnectionState.Open) connection.Open();
                 string _query = (!_is_notification_sent.HasValue ? "SELECT * FROM notifications WHERE customer_id=@customer_id ORDER BY id DESC LIMIT @start,@end" :
                     "SELECT * FROM notifications WHERE is_notification_sent = " + (_is_notification_sent.Value ? "1" : "0") + " AND customer_id=@customer_id ORDER BY id DESC LIMIT @start,@end");
                 List<Notification> list = [];
@@ -2069,8 +2093,7 @@ namespace Merchanter {
                     list.Add(n);
                 }
                 dataReader.Close();
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
                 return list;
             }
             catch (Exception ex) {
@@ -2088,8 +2111,7 @@ namespace Merchanter {
         /// <returns>[Error] returns 'null'</returns>
         public List<SyncMapping> GetCustomerSyncMappings(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open)
-                    connection.Open();
+                if (state != System.Data.ConnectionState.Open) connection.Open();
                 string _query = "SELECT * FROM sync_mapping WHERE customer_id=@customer_id";
                 List<SyncMapping> list = [];
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
@@ -2112,8 +2134,7 @@ namespace Merchanter {
                     list.Add(sm);
                 }
                 dataReader.Close();
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
                 return list;
             }
             catch (Exception ex) {
@@ -2281,8 +2302,9 @@ namespace Merchanter {
         /// <param name="_brands"> Brands</param>
         /// <param name="_categories"> Categories</param>
         /// <returns>[Error] returns 'null'</returns>
-        public List<Product> GetProducts(int _customer_id, out List<Brand> _brands, out List<Category> _categories) {
-            _brands = []; _categories = []; List<ProductSource>? _product_other_sources = [];
+        public List<Product> GetProducts(int _customer_id, out List<Brand> _brands, out List<Category> _categories,
+            out List<ProductAttribute> _product_attributes, out List<ProductImage> _product_images) {
+            _brands = []; _categories = []; _product_attributes = []; _product_images = []; List<ProductSource>? _product_other_sources = [];
             try {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
                 string _query = "SELECT p.id AS p_id, p.customer_id AS p_customer_id, p.source_product_id AS p_source_product_id, p.sources AS p_sources, p.update_date AS p_update_date, p.sku AS p_sku, p.type AS p_type, p.total_qty AS p_total_qty, p.name AS p_name, p.barcode AS p_barcode, p.price AS p_price, p.special_price AS p_special_price, p.custom_price AS p_custom_price, p.currency AS p_currency, p.tax AS p_tax, p.tax_included AS p_tax_included, pe.id AS pe_id, pe.brand_id AS pe_brand_id, pe.category_ids AS pe_category_ids, pe.is_xml_enabled AS pe_is_xml_enabled, pe.xml_sources AS pe_xml_sources, pe.update_date AS pe_update_date, ps.id AS ps_id, ps.name AS ps_name, ps.is_active AS ps_is_active, ps.qty AS ps_qty, ps.update_date AS ps_update_date, pe.weight AS pe_weight, pe.volume AS pe_volume, pe.is_enabled AS pe_is_enabled, pe.description AS pe_description " +
@@ -2343,6 +2365,9 @@ namespace Merchanter {
 
                 _brands = GetBrands(_customer_id);
                 _categories = GetCategories(_customer_id);
+                _product_attributes = GetProductAttributes(_customer_id);
+                _product_images = GetProductImages(_customer_id);
+
                 // Attach brands and categories
                 for (int i = 0; i < list.Count; i++) {
                     if (list[i].extension.brand_id > 0)
@@ -2368,19 +2393,17 @@ namespace Merchanter {
                 #endregion
 
                 #region Attach product attributes
-                var attrs = GetProductAttributes(_customer_id);
-                if (attrs != null && attrs.Count > 0) {
+                if (_product_attributes != null && _product_attributes.Count > 0) {
                     foreach (var item in list) {
-                        item.attributes = [.. attrs.Where(x => x.product_id == item.id)];
+                        item.attributes = [.. _product_attributes.Where(x => x.product_id == item.id)];
                     }
                 }
                 #endregion
 
                 #region Attach product images
-                var images = GetProductImages(_customer_id);
-                if (images != null && images.Count > 0) {
+                if (_product_images != null && _product_images.Count > 0) {
                     foreach (var item in list) {
-                        item.images = [.. images.Where(x => x.product_id == item.id)];
+                        item.images = [.. _product_images.Where(x => x.product_id == item.id)];
                     }
                 }
                 #endregion
@@ -2395,29 +2418,52 @@ namespace Merchanter {
         }
 
         /// <summary>
-        /// Gets the products from the database
+        /// Gets the products from the database with filters
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
-        /// <param name="_items_per_page">Items Per Page</param>
-        /// <param name="_current_page_index">Current Page Index</param>
-        /// <param name="_with_ext">Get with extension</param>
+        /// <param name="_filters">Api Filters</param>
         /// <returns>[Error] returns 'null'</returns>
-        public List<Product> GetProducts(int _customer_id, int _items_per_page, int _current_page_index, ApiFilter _filters) {
+        public List<Product> GetProducts(int _customer_id, ApiFilter _filters) {
             try {
-                var brands = GetBrands(_customer_id);
-                var categories = GetCategories(_customer_id);
+                List<Brand> brands = GetBrands(_customer_id);
+                List<Category> categories = GetCategories(_customer_id);
                 List<ProductSource>? product_other_sources = [];
+                _filters.Pager ??= new Pager() { ItemsPerPage = 10, CurrentPageIndex = 0 };
 
-                if (state != System.Data.ConnectionState.Open) connection.Open();
                 string _query = "SELECT p.id AS p_id, p.customer_id AS p_customer_id, p.source_product_id AS p_source_product_id, p.sources AS p_sources, p.update_date AS p_update_date, p.sku AS p_sku, p.type AS p_type, p.total_qty AS p_total_qty, p.name AS p_name, p.barcode AS p_barcode, p.price AS p_price, p.special_price AS p_special_price, p.custom_price AS p_custom_price, p.currency AS p_currency, p.tax AS p_tax, p.tax_included AS p_tax_included, pe.id AS pe_id, pe.brand_id AS pe_brand_id, pe.category_ids AS pe_category_ids, pe.is_xml_enabled AS pe_is_xml_enabled, pe.xml_sources AS pe_xml_sources, pe.update_date AS pe_update_date, ps.id AS ps_id, ps.name AS ps_name, ps.is_active AS ps_is_active, ps.qty AS ps_qty, ps.update_date AS ps_update_date, pe.weight AS pe_weight, pe.volume AS pe_volume, pe.is_enabled AS pe_is_enabled, pe.description AS pe_description " +
                     "FROM products AS p INNER JOIN products_ext AS pe ON p.sku = pe.sku " +
                     "INNER JOIN product_sources AS ps ON p.sku = ps.sku AND ps.name = SUBSTRING_INDEX(p.sources, ',', 1) " +
-                    "WHERE p.customer_id=@customer_id ORDER BY p.id DESC LIMIT @start,@end;";
+                    "WHERE p.customer_id=@customer_id";
+
+                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                    foreach (var filter in _filters.Filters) {
+                        if (filter.Value == null)
+                            _query += $" AND {filter.Field} {filter.Operator} NULL";
+                        else
+                            _query += $" AND {filter.Field} {filter.Operator} @{filter.Field}";
+                    }
+                }
+                if (_filters.Sort != null)
+                    _query += " ORDER BY " + _filters.Sort.Field + " " + _filters.Sort.Direction + " LIMIT @start,@end;";
+                else {
+                    _filters.Sort = new Sort() { Field = "p.id", Direction = "DESC" };
+                    _query += " ORDER BY p.id DESC LIMIT @start,@end;";
+                }
+
+                if (state != System.Data.ConnectionState.Open) connection.Open();
                 List<Product> list = [];
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("start", _items_per_page * (_current_page_index)));
-                cmd.Parameters.Add(new MySqlParameter("end", _items_per_page));
+                //cmd.Parameters.Add(new MySqlParameter("start", _items_per_page * _current_page_index));
+                cmd.Parameters.Add(new MySqlParameter("start", _filters.Pager.ItemsPerPage * _filters.Pager.CurrentPageIndex));
+                //cmd.Parameters.Add(new MySqlParameter("end", _items_per_page));
+                cmd.Parameters.Add(new MySqlParameter("end", _filters.Pager.ItemsPerPage));
+                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                    foreach (var filter in _filters.Filters) {
+                        if (filter.Value != null)
+                            cmd.Parameters.Add(new MySqlParameter(filter.Field, filter.Value));
+                    }
+                }
                 MySqlDataReader dataReader = cmd.ExecuteReader();
                 while (dataReader.Read()) {
                     Product p = new Product {
@@ -2472,7 +2518,10 @@ namespace Merchanter {
                 }
 
                 // Get other product sources
-                string? main_source = Helper.global.integrations.Where(x => x.work?.type == Work.WorkType.PRODUCT && x.work?.direction == Work.WorkDirection.MAIN_SOURCE && x.work.status && x.is_active).FirstOrDefault()?.work.name;
+                string? main_source = Helper.global.integrations.Where(x =>
+                                        x.work?.type == Work.WorkType.PRODUCT &&
+                                        x.work?.direction == Work.WorkDirection.MAIN_SOURCE &&
+                                        x.work.status && x.is_active).FirstOrDefault()?.work.name;
                 if (!string.IsNullOrWhiteSpace(main_source))
                     product_other_sources = GetProductOtherSources(_customer_id, main_source);
                 if (product_other_sources != null && product_other_sources.Count > 0) {
@@ -2739,7 +2788,7 @@ namespace Merchanter {
                     }
 
                     if (item.images != null && item.images.Count > 0) {
-                        if (!UpdateProductImage(_customer_id, item.images, (int)inserted_id)) {
+                        if (!UpdateProductImages(_customer_id, item.images, (int)inserted_id)) {
                             OnError("InsertProducts: " + item.sku + " - Product Images Insert Error");
                             return 0;
                         }
@@ -2809,7 +2858,7 @@ namespace Merchanter {
                     }
 
                     if (item.images != null && item.images.Count > 0) {
-                        if (!UpdateProductImage(_customer_id, item.images, item.id)) {
+                        if (!UpdateProductImages(_customer_id, item.images, item.id)) {
                             OnError("UpdateProducts: " + item.sku + " - Product Images Insert Error");
                             return false;
                         }
@@ -2928,6 +2977,46 @@ namespace Merchanter {
             catch (Exception ex) {
                 OnError(ex.ToString());
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// Gets product count from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <returns>Error returns 'int:-1'</returns>
+        public int GetProductsCount(int _customer_id, ApiFilter _filters) {
+            try {
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                string _query = "SELECT COUNT(*) " +
+                    "FROM products AS p INNER JOIN products_ext AS pe ON p.sku = pe.sku " +
+                    "INNER JOIN product_sources AS ps ON p.sku = ps.sku AND ps.name = SUBSTRING_INDEX(p.sources, ',', 1) " +
+                    "WHERE p.customer_id=@customer_id";
+                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                    foreach (var filter in _filters.Filters) {
+                        if (filter.Value == null) {
+                            _query += $" AND {filter.Field} {filter.Operator} NULL";
+                        }
+                        else {
+                            _query += $" AND {filter.Field} {filter.Operator} @{filter.Field}";
+                        }
+                    }
+                }
+                MySqlCommand cmd = new(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                    foreach (var filter in _filters.Filters) {
+                        if (filter.Value != null)
+                            cmd.Parameters.Add(new MySqlParameter(filter.Field, filter.Value));
+                    }
+                }
+                int.TryParse(cmd.ExecuteScalar().ToString(), out int total_count);
+                if (state == System.Data.ConnectionState.Open) connection.Close();
+                return total_count;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return -1;
             }
         }
 
@@ -3317,7 +3406,7 @@ namespace Merchanter {
                     OnError("UpdateProductSources: No sources found");
                     return false;
                 }
-                int val = 0;
+                UInt64 val = 0;
                 var existed_sources = GetProductSources(_customer_id, _sku);
                 foreach (var item in _sources) {
                     var existed_source = existed_sources.FirstOrDefault(x => x.name == item.name && x.sku == item.sku);
@@ -3333,7 +3422,7 @@ namespace Merchanter {
                             cmd.Parameters.Add(new MySqlParameter("is_active", item.is_active));
                             cmd.Parameters.Add(new MySqlParameter("update_date", DateTime.Now));
                             if (state != System.Data.ConnectionState.Open) connection.Open();
-                            val = cmd.ExecuteNonQuery();
+                            val = (UInt64)cmd.ExecuteNonQuery();
                             if (state == System.Data.ConnectionState.Open) connection.Close();
                         }
                         else val++;
@@ -3348,7 +3437,7 @@ namespace Merchanter {
                         cmd.Parameters.Add(new MySqlParameter("qty", item.qty));
                         cmd.Parameters.Add(new MySqlParameter("is_active", item.is_active));
                         if (state != System.Data.ConnectionState.Open) connection.Open();
-                        val = cmd.ExecuteNonQuery();
+                        val = (UInt64)cmd.ExecuteNonQuery();
                         if (state == System.Data.ConnectionState.Open) connection.Close();
                     }
                 }
@@ -3590,25 +3679,30 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_image">ProductImage</param>
         /// <returns>[No change] or [Error] returns 'null'</returns>
-        public bool UpdateProductImage(int _customer_id, List<ProductImage> _images, int _product_id) {
+        public bool UpdateProductImages(int _customer_id, List<ProductImage> _images, int _product_id) {
             try {
                 UInt64 val = 0;
+                var existed_images = GetProductImages(_customer_id, _product_id);
                 foreach (var item in _images) {
-                    if (item.product_id > 0) {
-                        string _query = "UPDATE product_images SET type=@type,image_name=@image_name,image_url=@image_url,image_base64=@image_base64,is_default=@is_default,update_date=@update_date WHERE sku=@sku AND product_id=@product_id AND customer_id=@customer_id";
-                        MySqlCommand cmd = new MySqlCommand(_query, connection);
-                        cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                        cmd.Parameters.Add(new MySqlParameter("product_id", item.product_id));
-                        cmd.Parameters.Add(new MySqlParameter("sku", item.sku));
-                        cmd.Parameters.Add(new MySqlParameter("type", item.type));
-                        cmd.Parameters.Add(new MySqlParameter("image_name", item.image_name));
-                        cmd.Parameters.Add(new MySqlParameter("image_url", item.image_url));
-                        cmd.Parameters.Add(new MySqlParameter("image_base64", item.image_base64));
-                        cmd.Parameters.Add(new MySqlParameter("is_default", item.is_default));
-                        cmd.Parameters.Add(new MySqlParameter("update_date", DateTime.Now));
-                        if (state != System.Data.ConnectionState.Open) connection.Open();
-                        val += (UInt64)cmd.ExecuteNonQuery();
-                        if (state == System.Data.ConnectionState.Open) connection.Close();
+                    var existed_image = existed_images.FirstOrDefault(x => x.image_name == item.image_name && x.sku == item.sku);
+                    if (existed_image != null) {
+                        if (existed_image.image_url != item.image_url || existed_image.is_default != item.is_default || existed_image.type != item.type) {
+                            string _query = "UPDATE product_images SET type=@type,image_url=@image_url,image_base64=@image_base64,is_default=@is_default,update_date=@update_date WHERE sku=@sku AND product_id=@product_id AND image_name=@image_name AND customer_id=@customer_id;";
+                            MySqlCommand cmd = new MySqlCommand(_query, connection);
+                            cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                            cmd.Parameters.Add(new MySqlParameter("product_id", _product_id));
+                            cmd.Parameters.Add(new MySqlParameter("sku", item.sku));
+                            cmd.Parameters.Add(new MySqlParameter("type", item.type));
+                            cmd.Parameters.Add(new MySqlParameter("image_name", item.image_name));
+                            cmd.Parameters.Add(new MySqlParameter("image_url", item.image_url));
+                            cmd.Parameters.Add(new MySqlParameter("image_base64", item.image_base64));
+                            cmd.Parameters.Add(new MySqlParameter("is_default", item.is_default));
+                            cmd.Parameters.Add(new MySqlParameter("update_date", DateTime.Now));
+                            if (state != System.Data.ConnectionState.Open) connection.Open();
+                            val += (UInt64)cmd.ExecuteNonQuery();
+                            if (state == System.Data.ConnectionState.Open) connection.Close();
+                        }
+                        else val++;
                     }
                     else {
                         string _query = "START TRANSACTION;" +
@@ -3624,7 +3718,6 @@ namespace Merchanter {
                         cmd.Parameters.Add(new MySqlParameter("image_url", item.image_url));
                         cmd.Parameters.Add(new MySqlParameter("image_base64", item.image_base64));
                         cmd.Parameters.Add(new MySqlParameter("is_default", item.is_default));
-                        cmd.Parameters.Add(new MySqlParameter("update_date", DateTime.Now));
                         if (state != System.Data.ConnectionState.Open) connection.Open();
                         val += (UInt64)cmd.ExecuteScalar();
                         if (state == System.Data.ConnectionState.Open) connection.Close();
@@ -3648,10 +3741,51 @@ namespace Merchanter {
         public List<ProductImage> GetProductImages(int _customer_id) {
             try {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM product_images WHERE customer_id=@customer_id";
+                string _query = "SELECT * FROM product_images WHERE customer_id=@customer_id;";
+                List<ProductImage> list = new List<ProductImage>();
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.CommandTimeout = 600;
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                MySqlDataReader dataReader = cmd.ExecuteReader();
+                while (dataReader.Read()) {
+                    ProductImage pi = new ProductImage {
+                        id = Convert.ToInt32(dataReader["id"].ToString()),
+                        product_id = Convert.ToInt32(dataReader["product_id"].ToString()),
+                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                        sku = dataReader["sku"].ToString(),
+                        type = (ImageTypes)Convert.ToInt32(dataReader["type"].ToString()),
+                        image_name = dataReader["image_name"].ToString(),
+                        image_url = dataReader["image_url"].ToString(),
+                        image_base64 = dataReader["image_base64"].ToString(),
+                        is_default = dataReader["is_default"] != null && dataReader["is_default"].ToString() == "1",
+                        update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
+                    };
+                    list.Add(pi);
+                }
+                dataReader.Close();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
+                return list;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets the product images by sku from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_sku">SKU</param>
+        /// <returns>[Error] returns 'null'</returns>
+        public List<ProductImage> GetProductImages(int _customer_id, string _sku) {
+            try {
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                string _query = "SELECT * FROM product_images WHERE customer_id=@customer_id AND sku=@sku;";
                 List<ProductImage> list = new List<ProductImage>();
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                cmd.Parameters.Add(new MySqlParameter("sku", _sku));
                 MySqlDataReader dataReader = cmd.ExecuteReader();
                 while (dataReader.Read()) {
                     ProductImage pi = new ProductImage {
@@ -3680,19 +3814,19 @@ namespace Merchanter {
         }
 
         /// <summary>
-        /// Gets the product images by sku from the database
+        /// Gets the product images by product_id from the database
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
-        /// <param name="_sku">SKU</param>
+        /// <param name="_product_id">Product ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public List<ProductImage> GetProductImages(int _customer_id, string _sku) {
+        public List<ProductImage> GetProductImages(int _customer_id, int _product_id) {
             try {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM product_images WHERE customer_id=@customer_id AND sku=@sku;";
+                string _query = "SELECT * FROM product_images WHERE customer_id=@customer_id AND product_id=@product_id;";
                 List<ProductImage> list = new List<ProductImage>();
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("sku", _sku));
+                cmd.Parameters.Add(new MySqlParameter("product_id", _product_id));
                 MySqlDataReader dataReader = cmd.ExecuteReader();
                 while (dataReader.Read()) {
                     ProductImage pi = new ProductImage {
@@ -4451,6 +4585,10 @@ namespace Merchanter {
         public Brand? InsertBrand(int _customer_id, Brand _brand) {
             try {
                 object val; int inserted_id;
+                var existed_brand = GetBrandByName(_customer_id, _brand.brand_name);
+                if (existed_brand != null) {
+                    return existed_brand;
+                }
                 string _query = "START TRANSACTION;" +
                     "INSERT INTO brands (customer_id,brand_name,status) VALUES (@customer_id,@brand_name,@status);" +
                     "SELECT LAST_INSERT_ID();" +
@@ -4484,29 +4622,27 @@ namespace Merchanter {
         /// <returns>Error returns 'int:0'</returns>
         public int InsertBrand(int _customer_id, Brand _brand, bool return_bid) {
             try {
-                var temp_brand = GetBrandByName(_customer_id, _brand.brand_name);
-                if (temp_brand == null) {
-                    object val;
-                    string _query = "START TRANSACTION;" +
-                        "INSERT INTO brands (customer_id,brand_name,status) VALUES (@customer_id,@brand_name,@status);" +
-                        "SELECT LAST_INSERT_ID();" +
-                        "COMMIT;";
-                    MySqlCommand cmd = new MySqlCommand(_query, connection);
-                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                    cmd.Parameters.Add(new MySqlParameter("brand_name", _brand.brand_name));
-                    cmd.Parameters.Add(new MySqlParameter("status", _brand.status));
-                    if (state != System.Data.ConnectionState.Open) connection.Open();
-                    val = cmd.ExecuteScalar();
-                    if (state == System.Data.ConnectionState.Open) connection.Close();
-                    if (val != null) {
-                        if (int.TryParse(val.ToString(), out int BID))
-                            return BID;
-                    }
-                    return 0;
+                var existed_brand = GetBrandByName(_customer_id, _brand.brand_name);
+                if (existed_brand != null) {
+                    return existed_brand.id;
                 }
-                else {
-                    return temp_brand.id;
+                object val;
+                string _query = "START TRANSACTION;" +
+                    "INSERT INTO brands (customer_id,brand_name,status) VALUES (@customer_id,@brand_name,@status);" +
+                    "SELECT LAST_INSERT_ID();" +
+                    "COMMIT;";
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                cmd.Parameters.Add(new MySqlParameter("brand_name", _brand.brand_name));
+                cmd.Parameters.Add(new MySqlParameter("status", _brand.status));
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                val = cmd.ExecuteScalar();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
+                if (val != null) {
+                    if (int.TryParse(val.ToString(), out int BID))
+                        return BID;
                 }
+                return 0;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -6734,7 +6870,7 @@ namespace Merchanter {
         #endregion
 
 
-        #region Is_Working Functions
+        #region Is_Working Methods
         /// <summary>
         /// Sets the product sync working status
         /// </summary>
@@ -7031,10 +7167,12 @@ namespace Merchanter {
         }
         #endregion
 
+        #region Helper Methods
         private static void PrintConsole(string value, ConsoleColor _color) {
             Console.ForegroundColor = _color;
             Console.WriteLine(value.PadRight(Console.WindowWidth - 1));
             Console.ResetColor();
         }
+        #endregion
     }
 }

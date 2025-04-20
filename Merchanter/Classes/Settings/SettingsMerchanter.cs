@@ -16,6 +16,7 @@
 		public SettingsTY ty { get; set; }
         public SettingsAnkaraErp ank_erp { get; set; }
         public SettingsIdeasoft ideasoft { get; set; }
+        public SettingsGoogle google { get; set; }
 
         public List<OrderStatus> order_statuses { get; set; }
         public List<PaymentMethod> payment_methods { get; set; }

@@ -18,6 +18,7 @@ namespace Merchanter.ServerService.Repositories {
         Task<bool> SaveTYSettings( int _customer_id, SettingsTY _settings );
         Task<bool> SaveAnkErpSettings(int _customer_id, SettingsAnkaraErp _settings);
         Task<bool> SaveIdeasoftSettings(int _customer_id, SettingsIdeasoft _settings);
+        Task<bool> SaveGoogleSettings(int _customer_id, SettingsGoogle _settings);
         MerchanterService merchanterService { get; set; }
     }
 
@@ -79,6 +80,10 @@ namespace Merchanter.ServerService.Repositories {
 
         public async Task<bool> SaveIdeasoftSettings(int _customer_id, SettingsIdeasoft _settings) {
             return await Task.Run(() => merchanterService.helper.SaveIdeasoftSettings(_customer_id, _settings));
+        }
+
+        public async Task<bool> SaveGoogleSettings(int _customer_id, SettingsGoogle _settings) {
+            return await Task.Run(() => merchanterService.helper.SaveGoogleSettings(_customer_id, _settings));
         }
     }
 }

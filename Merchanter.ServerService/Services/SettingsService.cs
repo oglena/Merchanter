@@ -20,6 +20,7 @@ namespace Merchanter.ServerService.Services {
 		Task<bool> SaveTYSettings( int _customer_id, SettingsTY _settings );
         Task<bool> SaveAnkErpSettings(int _customer_id, SettingsAnkaraErp _settings);
         Task<bool> SaveIdeasoftSettings(int _customer_id, SettingsIdeasoft _settings);
+        Task<bool> SaveGoogleSettings(int _customer_id, SettingsGoogle _settings);
     }
     public class SettingsService(ISettingsRepository settingsRepository): ISettingsService {
         public Task<SettingsMerchanter> GetCustomerSettings( int _customer_id ) {
@@ -76,6 +77,10 @@ namespace Merchanter.ServerService.Services {
 
         public Task<bool> SaveIdeasoftSettings(int _customer_id, SettingsIdeasoft _settings) {
             return settingsRepository.SaveIdeasoftSettings(_customer_id, _settings);
+        }
+
+        public Task<bool> SaveGoogleSettings(int _customer_id, SettingsGoogle _settings) {
+            return settingsRepository.SaveGoogleSettings(_customer_id, _settings);
         }
     }
 }

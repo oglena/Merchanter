@@ -67,15 +67,12 @@ if (!db_helper.LogToServer(thread_id, "merchanter", "started " + thread_id, cust
     return -99;
 }
 else {
-    db_helper.invoice = new(db_helper.Server, db_helper.User, db_helper.Password, db_helper.Database, db_helper.Port);
-    db_helper.xml = new(db_helper.Server, db_helper.User, db_helper.Password, db_helper.Database, db_helper.Port);
-    db_helper.notification = new(db_helper.Server, db_helper.User, db_helper.Password, db_helper.Database, db_helper.Port);
+    db_helper.invoice_clone = new(db_helper.Server, db_helper.User, db_helper.Password, db_helper.Database, db_helper.Port);
+    db_helper.xml_clone = new(db_helper.Server, db_helper.User, db_helper.Password, db_helper.Database, db_helper.Port);
+    db_helper.notification_clone = new(db_helper.Server, db_helper.User, db_helper.Password, db_helper.Database, db_helper.Port);
 }
-#if WINDOWS
-PrintConsole("Welcome! " + System.Security.Principal.WindowsIdentity.GetCurrent()?.Name + " Program starting for " + customer_id, ConsoleColor.Blue);
-#else
+
 PrintConsole("Welcome! Program starting for " + customer_id, ConsoleColor.Blue);
-#endif
 AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
 #endregion
 
@@ -202,7 +199,6 @@ while (true) {
 void CurrentDomain_ProcessExit(object? sender, EventArgs e) {
     if (db_helper.LogToServer(thread_id, "merchanter", "ended " + thread_id, customer_id, "main_thread")) {
         PrintConsole("exit success", ConsoleColor.Cyan);
-        Thread.Sleep(2000);
     }
 }
 

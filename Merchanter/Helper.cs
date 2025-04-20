@@ -97,9 +97,9 @@ namespace Merchanter {
         /// <param name="is_debug">Is Debug ?</param>
         private static void PrintConsole(string message, bool is_console = true, bool is_debug = true) {
             if (is_console)
-                Console.WriteLine("[" + DateTime.Now.ToString("dd.MM.yy HH:mm:ss") + "," + global.settings.company_name + "] " + message);
+                Console.WriteLine("#" + DateTime.Now.ToString("dd.MM.yy HH:mm:ss") + "," + global.settings.company_name + ", " + message);
             if (is_debug)
-                Debug.WriteLine("[" + DateTime.Now.ToString("dd.MM.yy HH:mm:ss") + "," + global.settings.company_name + "] " + message);
+                Debug.WriteLine("#" + DateTime.Now.ToString("dd.MM.yy HH:mm:ss") + "," + global.settings.company_name + ", " + message);
         }
 
         /// <summary>

@@ -10,8 +10,8 @@
 		<SignAssembly>False</SignAssembly>
 		<Copyright>Ceres Software &amp; Consultancy</Copyright>
 		<PackageProjectUrl>https://merchanter.net</PackageProjectUrl>
-		<AssemblyVersion>1.1.0.0</AssemblyVersion>
-		<FileVersion>1.1.0.0</FileVersion>
+		<AssemblyVersion>1.2.0.0</AssemblyVersion>
+		<FileVersion>1.2.0.0</FileVersion>
 	</PropertyGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\MerchanterHelpers\MerchanterHelpers.csproj" />

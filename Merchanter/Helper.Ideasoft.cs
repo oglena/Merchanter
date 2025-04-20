@@ -164,7 +164,7 @@ namespace Merchanter {
             }
 
             using Executioner executioner = new();
-            var json = executioner.Execute(Helper.global.ideasoft.store_url + "/admin-api/products", RestSharp.Method.Post, pro_json, Helper.global.ideasoft.access_token);
+            var json = executioner.Execute(global.ideasoft.store_url + "/admin-api/products", RestSharp.Method.Post, pro_json, global.ideasoft.access_token);
             if (json != null) {
                 var idea_product = Newtonsoft.Json.JsonConvert.DeserializeObject<IDEA_Product>(json);
                 PrintConsole("Product Inserted: " + idea_product?.id.ToString() + " - " + idea_product?.name);
@@ -181,7 +181,7 @@ namespace Merchanter {
                 parent = _parent_id.HasValue ? _parent_id > 0 ? new { id = _parent_id } : null : null
             };
             using Executioner executioner = new();
-            var json_cat = executioner.Execute(Helper.global.ideasoft.store_url + "/admin-api/categories", RestSharp.Method.Post, cat_json, Helper.global.ideasoft.access_token);
+            var json_cat = executioner.Execute(global.ideasoft.store_url + "/admin-api/categories", RestSharp.Method.Post, cat_json, global.ideasoft.access_token);
             if (json_cat != null) {
                 var idea_category = Newtonsoft.Json.JsonConvert.DeserializeObject<IDEA_Category>(json_cat);
                 PrintConsole("Category Inserted: " + idea_category?.id.ToString() + " - " + idea_category?.name);
@@ -197,7 +197,7 @@ namespace Merchanter {
                 sortOrder = 999
             };
             using Executioner executioner = new();
-            var json_brand = executioner.Execute(Helper.global.ideasoft.store_url + "/admin-api/brands", RestSharp.Method.Post, brand_json, Helper.global.ideasoft.access_token);
+            var json_brand = executioner.Execute(global.ideasoft.store_url + "/admin-api/brands", RestSharp.Method.Post, brand_json, global.ideasoft.access_token);
             if (json_brand != null) {
                 var idea_brand = Newtonsoft.Json.JsonConvert.DeserializeObject<IDEA_Brand>(json_brand);
                 PrintConsole("Brand Inserted: " + idea_brand?.id.ToString() + " - " + idea_brand?.name);
@@ -210,7 +210,8 @@ namespace Merchanter {
             using Executioner executioner = new();
             List<IDEA_Product> products = []; int page = 1;
         QUERY:
-            var json = executioner.Execute(Helper.global.ideasoft.store_url + "/admin-api/products?s=" + _sku + "&limit=" + _limit.ToString() + "&page=" + page.ToString(), RestSharp.Method.Get, null, Helper.global.ideasoft.access_token);
+            var encodedSku = Uri.EscapeDataString(_sku);
+            var json = executioner.Execute(global.ideasoft.store_url + "/admin-api/products?s=" + encodedSku + "&limit=" + _limit.ToString() + "&page=" + page.ToString(), RestSharp.Method.Get, null, global.ideasoft.access_token);
             if (json != null) {
                 var temp_products = Newtonsoft.Json.JsonConvert.DeserializeObject<List<IDEA_Product>>(json);
                 if (temp_products != null) {
@@ -232,9 +233,9 @@ namespace Merchanter {
             using Executioner executioner = new();
             List<IDEA_Product> products = []; int page = 1;
         QUERY:
-            var json = executioner.Execute(Helper.global.ideasoft.store_url +
+            var json = executioner.Execute(global.ideasoft.store_url +
                 "/admin-api/products?limit=" + _limit.ToString() + "&page=" + page.ToString(),
-                RestSharp.Method.Get, null, Helper.global.ideasoft.access_token);
+                RestSharp.Method.Get, null, global.ideasoft.access_token);
             if (json != null) {
                 var temp_products = Newtonsoft.Json.JsonConvert.DeserializeObject<List<IDEA_Product>>(json);
                 if (temp_products != null) {
@@ -256,9 +257,9 @@ namespace Merchanter {
             using Executioner executioner = new();
             List<IDEA_Category> categories = []; int page = 1;
         QUERY:
-            var json = executioner.Execute(Helper.global.ideasoft.store_url +
+            var json = executioner.Execute(global.ideasoft.store_url +
                 "/admin-api/categories?limit=" + _limit.ToString() + "&page=" + page.ToString(),
-                RestSharp.Method.Get, null, Helper.global.ideasoft.access_token);
+                RestSharp.Method.Get, null, global.ideasoft.access_token);
             if (json != null) {
                 var temp_categories = Newtonsoft.Json.JsonConvert.DeserializeObject<List<IDEA_Category>>(json);
                 if (temp_categories != null) {
@@ -280,9 +281,9 @@ namespace Merchanter {
             using Executioner executioner = new();
             List<IDEA_Brand> brands = []; int page = 1;
         QUERY:
-            var json = executioner.Execute(Helper.global.ideasoft.store_url +
+            var json = executioner.Execute(global.ideasoft.store_url +
                 "/admin-api/brands?limit=" + _limit.ToString() + "&page=" + page.ToString(),
-                RestSharp.Method.Get, null, Helper.global.ideasoft.access_token);
+                RestSharp.Method.Get, null, global.ideasoft.access_token);
             if (json != null) {
                 var temp_brands = Newtonsoft.Json.JsonConvert.DeserializeObject<List<IDEA_Brand>>(json);
                 if (temp_brands != null) {
