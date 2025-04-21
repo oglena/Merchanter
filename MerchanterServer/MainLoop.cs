@@ -12,6 +12,7 @@ namespace MerchanterServer {
     internal class MainLoop {
         #region Constant Variables
         public static string newline = "\r\n";
+        public static string not_available = "N/A";
         #endregion
 
         #region Properties
@@ -147,7 +148,6 @@ namespace MerchanterServer {
                 db_helper.SetOrderSyncWorking(customer.customer_id, true);
 
                 orders = db_helper.GetOrders(customer.customer_id, OrderStatus.GetProcessEnabledCodes());
-                //products = db_helper.GetProducts(customer.customer_id, out brands, out categories);  //TODO: delete this
 
                 if (health) { this.OrderLoop(out health); }
 
@@ -538,7 +538,6 @@ namespace MerchanterServer {
                     db_helper.xml_clone.SetXmlSyncDate(customer.customer_id);
                     db_helper.xml_clone.SetXmlSyncWorking(customer.customer_id, false);
                 }
-                //db_helper.xml.LogToServer( thread_id, "info", _global.settings.company_name + xproducts.Count + " xproducts loaded from new cache", customer.customer_id, "xml" );
                 if (!xml_has_error)
                     PrintConsole(xproducts.Count + " xproducts loaded from new cache");
                 else
@@ -1053,6 +1052,14 @@ namespace MerchanterServer {
                                     PrintConsole("ID: " + item.id.ToString() + " notification sent[" + mail_title + "]");
                                     db_helper.notification_clone.LogToServer(thread_id, "order_shipped", mail_title + " => " + mail_body, customer.customer_id, "notification");
                                 }
+                            }
+                            break;
+                        case Notification.NotificationTypes.NEW_ORDER_ERROR:
+                            item.is_notification_sent = true;
+                            item.notification_content = string.Format("NEW_ORDER_ERROR {0}", item.order_label);
+                            if (db_helper.notification_clone.UpdateNotifications(customer.customer_id, [item])) {
+                                PrintConsole("ID:" + item.id.ToString() + " notification sent [" + item.order_label + "]");
+                                db_helper.notification_clone.LogToServer(thread_id, "new_order_error", item.notification_content, customer.customer_id, "notification");
                             }
                             break;
                     }
@@ -2026,45 +2033,46 @@ namespace MerchanterServer {
                     var idea_orders = Helper.GetIdeaOrders(Helper.global.order.daysto_ordersync);
                     if (idea_orders != null && idea_orders.Count > 0) {
                         foreach (var item in idea_orders) {
-                            var o = new Order();
-                            o.order_id = item.id;
-                            o.order_label = item.transactionId;
-                            o.grand_total = item.finalAmount;
-                            o.order_status = OrderStatus.GetStatusOf(item.status, Constants.IDEASOFT);
-                            o.payment_method = PaymentMethod.GetPaymentMethodOf(item.paymentTypeName, Constants.IDEASOFT);
-                            o.shipment_method = ShipmentMethod.GetShipmentMethodOf(item.shippingProviderCode, Constants.IDEASOFT);
-                            o.order_date = item.createdAt;
-                            o.order_source = Constants.IDEASOFT;
-                            o.currency = item.currency;
-                            o.email = item.customerEmail;
-                            o.firstname = item.customerFirstname;
-                            o.lastname = item.customerSurname;
-                            o.subtotal = item.amount;
-                            o.installment_amount = (item.generalAmount * item.installmentRate) - item.generalAmount;
-                            o.discount_amount = item.couponDiscount + item.promotionDiscount;
-                            o.shipment_amount = item.shippingAmount;
-                            o.comment = item.memberGroupName;
-                            o.billing_address = new BillingAddress() {
-                                billing_id = item.billingAddress.id,
+                            var o = new Order {
                                 order_id = item.id,
-                                firstname = item.billingAddress.firstname,
-                                lastname = item.billingAddress.surname,
-                                telephone = item.billingAddress.phoneNumber,
-                                street = item.billingAddress.address,
-                                region = item.billingAddress.subLocation,
-                                city = item.billingAddress.location
+                                order_label = item.transactionId,
+                                grand_total = item.finalAmount,
+                                order_status = OrderStatus.GetStatusOf(item.status, Constants.IDEASOFT),
+                                payment_method = PaymentMethod.GetPaymentMethodOf(item.paymentTypeName, Constants.IDEASOFT),
+                                shipment_method = ShipmentMethod.GetShipmentMethodOf(item.shippingProviderCode, Constants.IDEASOFT),
+                                order_date = item.createdAt,
+                                order_source = Constants.IDEASOFT,
+                                currency = item.currency,
+                                email = item.customerEmail,
+                                firstname = item.customerFirstname,
+                                lastname = item.customerSurname,
+                                subtotal = item.amount,
+                                installment_amount = (item.generalAmount * item.installmentRate) - item.generalAmount,
+                                discount_amount = item.couponDiscount + item.promotionDiscount,
+                                shipment_amount = item.shippingAmount,
+                                comment = item.memberGroupName,
+                                billing_address = new BillingAddress() {
+                                    billing_id = item.billingAddress.id,
+                                    order_id = item.id,
+                                    firstname = item.billingAddress.firstname,
+                                    lastname = item.billingAddress.surname,
+                                    telephone = item.billingAddress.phoneNumber,
+                                    street = item.billingAddress.address,
+                                    region = item.billingAddress.subLocation,
+                                    city = item.billingAddress.location
+                                },
+                                shipping_address = new ShippingAddress() {
+                                    shipping_id = item.shippingAddress.id,
+                                    order_id = item.id,
+                                    firstname = item.shippingAddress.firstname,
+                                    lastname = item.shippingAddress.surname,
+                                    telephone = item.shippingAddress.phoneNumber,
+                                    street = item.shippingAddress.address,
+                                    region = item.shippingAddress.subLocation,
+                                    city = item.shippingAddress.location
+                                },
+                                order_items = []
                             };
-                            o.shipping_address = new ShippingAddress() {
-                                shipping_id = item.shippingAddress.id,
-                                order_id = item.id,
-                                firstname = item.shippingAddress.firstname,
-                                lastname = item.shippingAddress.surname,
-                                telephone = item.shippingAddress.phoneNumber,
-                                street = item.shippingAddress.address,
-                                region = item.shippingAddress.subLocation,
-                                city = item.shippingAddress.location
-                            };
-                            o.order_items = new List<OrderItem>();
 
                             foreach (var order_item in item.orderItems) {
                                 o.order_items.Add(new OrderItem() {
@@ -2078,7 +2086,8 @@ namespace MerchanterServer {
                                     tax_amount = order_item.productPrice * (order_item.productTax / 100f)
                                 });
                             }
-                            o.order_shipping_barcode = available_shipments.Length > 0 ? null : "N/A";
+                            o.order_shipping_barcode = available_shipments.Length > 0 ? null : not_available;
+
                             live_orders.Add(o);
                         }
                     }
@@ -2131,16 +2140,30 @@ namespace MerchanterServer {
                                                     //TODO: rewrite ?
                                                 }
                                                 inserted_musteri_siparis_no = NetOpenXHelper.InsertNetsisMusSiparis(order_item, inserted_cari_kodu, selected_order.order_shipping_barcode);
-                                                db_helper.LogToServer(thread_id, "new_order", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + order_item.grand_total.ToString() + order_item.currency, customer.customer_id, "order");
-                                                #region Notify Order - NEW_ORDER
-                                                notifications.Add(new Notification() {
-                                                    customer_id = customer.customer_id,
-                                                    type = Notification.NotificationTypes.NEW_ORDER,
-                                                    order_label = order_item.order_label,
-                                                    notification_content = Constants.NETSIS,
-                                                    is_notification_sent = true
-                                                });
-                                                #endregion
+                                                if (!string.IsNullOrWhiteSpace(inserted_musteri_siparis_no)) {
+                                                    db_helper.LogToServer(thread_id, "new_order", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + order_item.grand_total.ToString() + order_item.currency, customer.customer_id, "order");
+                                                    #region Notify Order - NEW_ORDER
+                                                    notifications.Add(new Notification() {
+                                                        customer_id = customer.customer_id,
+                                                        type = Notification.NotificationTypes.NEW_ORDER,
+                                                        order_label = order_item.order_label,
+                                                        notification_content = Constants.NETSIS,
+                                                        is_notification_sent = true
+                                                    });
+                                                    #endregion
+                                                }
+                                                else {
+                                                    db_helper.LogToServer(thread_id, "new_order_error", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + order_item.grand_total.ToString() + order_item.currency, customer.customer_id, "order");
+                                                    #region Notify Order - NEW_ORDER_ERROR
+                                                    notifications.Add(new Notification() {
+                                                        customer_id = customer.customer_id,
+                                                        type = Notification.NotificationTypes.NEW_ORDER_ERROR,
+                                                        order_label = order_item.order_label,
+                                                        notification_content = Constants.NETSIS,
+                                                        is_notification_sent = true
+                                                    });
+                                                    #endregion
+                                                }
                                             }
                                         }
                                     }
@@ -2257,7 +2280,6 @@ namespace MerchanterServer {
                                                 }
                                             };
                                             foreach (var item in order_item.order_items) {
-                                                //var sold_product = products.Where(x => x.sku == item.sku).FirstOrDefault();
                                                 var sold_product = db_helper.GetProductBySku(customer.customer_id, item.sku);
                                                 if (sold_product != null) {
                                                     dokuman.DokumanPaket.Eleman.ElemanListe.BelgeSicil.SatirDetay.Add(new BelgeSicilSatirDetay() {
@@ -2333,7 +2355,7 @@ namespace MerchanterServer {
                                             if (!string.IsNullOrWhiteSpace(order_xml)) {
                                                 inserted_musteri_siparis_no = ank_erp.SendOrder(guid.ToString(), order_xml).Result;
                                                 if (!string.IsNullOrWhiteSpace(inserted_musteri_siparis_no)) {
-                                                    db_helper.LogToServer(thread_id, "order_process", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + "ANK ERP Success", customer.customer_id, "order");
+                                                    db_helper.LogToServer(thread_id, "new_order", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + order_item.grand_total.ToString() + order_item.currency, customer.customer_id, "order");
                                                     #region Notify Order - NEW_ORDER
                                                     notifications.Add(new Notification() {
                                                         customer_id = customer.customer_id,
@@ -2345,13 +2367,20 @@ namespace MerchanterServer {
                                                     #endregion
                                                 }
                                                 else {
-                                                    PrintConsole("OrderProcessError:" + order_item.order_source + ":" + order_item.order_label + " => " + "ANK ERP Error.");
-                                                    db_helper.LogToServer(thread_id, "order_process_error", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + "ANK ERP Error", customer.customer_id, "order");
+                                                    db_helper.LogToServer(thread_id, "new_order_error", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + order_item.grand_total.ToString() + order_item.currency, customer.customer_id, "order");
+                                                    #region Notify Order - NEW_ORDER_ERROR
+                                                    notifications.Add(new Notification() {
+                                                        customer_id = customer.customer_id,
+                                                        type = Notification.NotificationTypes.NEW_ORDER_ERROR,
+                                                        order_label = order_item.order_label,
+                                                        notification_content = Constants.ANK_ERP,
+                                                        is_notification_sent = true
+                                                    });
+                                                    #endregion
                                                 }
                                             }
                                             else {
-                                                PrintConsole("OrderProcessError:" + order_item.order_source + ":" + order_item.order_label + " => " + "XML Serialization Error.");
-                                                db_helper.LogToServer(thread_id, "order_process_error", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + "XML Serialization Error", customer.customer_id, "order");
+                                                db_helper.LogToServer(thread_id, "order_process_error", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + "XML Serialization Error " + Constants.ANK_ERP, customer.customer_id, "order");
                                             }
                                         }
                                     }
@@ -2379,7 +2408,6 @@ namespace MerchanterServer {
 
                                         if (db_helper.SetOrderProcess(customer.customer_id, order_item.order_id, inserted_musteri_siparis_no)) {
                                             db_helper.LogToServer(thread_id, "order_processed", "Order:" + order_item.order_source + ":" + order_item.order_label + ":" + inserted_musteri_siparis_no + " => " + order_item.grand_total.ToString() + order_item.currency, customer.customer_id, "order");
-
                                             #region Notify Order - NEW_ORDER, OUT_OF_STOCK_PRODUCT_SOLD
                                             foreach (var sold_item in order_item.order_items) {
                                                 if (live_products.Count > 0) {
@@ -2403,54 +2431,56 @@ namespace MerchanterServer {
                                     }
                                 }
                                 else {  //query ship
-                                    List<string> tracking_codes = [];
-                                    if (Helper.global.shipment.yurtici_kargo && available_shipments.Contains(Constants.YURTICI)) {
-                                        if (Helper.global.shipment.yurtici_kargo_user_name != null && Helper.global.shipment.yurtici_kargo_password != null) {
-                                            YK yk = new YK(Helper.global.shipment.yurtici_kargo_user_name, Helper.global.shipment.yurtici_kargo_password);
-                                            List<string>? tk = yk.GetShipment(selected_order.order_shipping_barcode);
-                                            if (tk != null) {
-                                                tracking_codes.AddRange(tk);
-                                                //Debug.WriteLine( order_item.order_shipping_barcode + ":TK:" + string.Join( "|", tk ) );
+                                    if (order_item.order_shipping_barcode != not_available) {
+                                        List<string> tracking_codes = [];
+                                        if (Helper.global.shipment.yurtici_kargo && available_shipments.Contains(Constants.YURTICI)) {
+                                            if (Helper.global.shipment.yurtici_kargo_user_name != null && Helper.global.shipment.yurtici_kargo_password != null) {
+                                                YK yk = new YK(Helper.global.shipment.yurtici_kargo_user_name, Helper.global.shipment.yurtici_kargo_password);
+                                                List<string>? tk = yk.GetShipment(selected_order.order_shipping_barcode);
+                                                if (tk != null) {
+                                                    tracking_codes.AddRange(tk);
+                                                    //Debug.WriteLine( order_item.order_shipping_barcode + ":TK:" + string.Join( "|", tk ) );
+                                                }
                                             }
                                         }
-                                    }
-                                    if (Helper.global.shipment.mng_kargo && available_shipments.Contains(Constants.MNG)) { }
-                                    if (Helper.global.shipment.aras_kargo && available_shipments.Contains(Constants.ARAS)) { }
+                                        if (Helper.global.shipment.mng_kargo && available_shipments.Contains(Constants.MNG)) { }
+                                        if (Helper.global.shipment.aras_kargo && available_shipments.Contains(Constants.ARAS)) { }
 
-                                    if (tracking_codes.Count > 0) { //insert tracking code | order status change => complete
-                                        Shipment? shipment = db_helper.GetShipment(customer.customer_id, order_item.order_id);
-                                        if (shipment != null) {
-                                            if (!shipment.is_shipped) {
-                                                if (order_sources.Contains(Constants.MAGENTO2) && order_item.order_status != "TAMAMLANDI") {
-                                                    Helper.CreateOrderShipment(order_item.order_id, order_item.order_label, string.Join(",", tracking_codes),
-                                                        "Siparişiniz " + ShipmentMethod.GetShipmentName(shipment.shipment_method) + " ile kargolanmıştır. " +
-                                                        "Kargo Takip Numaranız: " + string.Join(",", tracking_codes) + "." +
-                                                        " Detaylı takip için: https://www.yurticikargo.com/tr/online-servisler/gonderi-sorgula?code=" +
-                                                        string.Join(",", tracking_codes),
-                                                        order_item.shipment_method, ShipmentMethod.GetShipmentName(order_item.shipment_method));
-                                                    db_helper.LogToServer(thread_id, "order_process", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + Helper.global.order_statuses.Where(x => x.status_code == "TAMAMLANDI" && x.platform == Constants.MAGENTO2).FirstOrDefault()?.platform_status_code, customer.customer_id, "order");
-                                                    #region Notify Order - ORDER_COMPLETE
-                                                    notifications.Add(new Notification() {
-                                                        customer_id = customer.customer_id,
-                                                        type = Notification.NotificationTypes.ORDER_COMPLETE,
-                                                        order_label = order_item.order_label,
-                                                        notification_content = order_item.order_label + " => " + string.Join(",", tracking_codes),
-                                                        is_notification_sent = true
-                                                    });
-                                                    #endregion
-                                                }
+                                        if (tracking_codes.Count > 0) { //insert tracking code | order status change => complete
+                                            Shipment? shipment = db_helper.GetShipment(customer.customer_id, order_item.order_id);
+                                            if (shipment != null) {
+                                                if (!shipment.is_shipped) {
+                                                    if (order_sources.Contains(Constants.MAGENTO2) && order_item.order_status != "TAMAMLANDI") {
+                                                        Helper.CreateOrderShipment(order_item.order_id, order_item.order_label, string.Join(",", tracking_codes),
+                                                            "Siparişiniz " + ShipmentMethod.GetShipmentName(shipment.shipment_method) + " ile kargolanmıştır. " +
+                                                            "Kargo Takip Numaranız: " + string.Join(",", tracking_codes) + "." +
+                                                            " Detaylı takip için: https://www.yurticikargo.com/tr/online-servisler/gonderi-sorgula?code=" +
+                                                            string.Join(",", tracking_codes),
+                                                            order_item.shipment_method, ShipmentMethod.GetShipmentName(order_item.shipment_method));
+                                                        db_helper.LogToServer(thread_id, "order_process", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + Helper.global.order_statuses.Where(x => x.status_code == "TAMAMLANDI" && x.platform == Constants.MAGENTO2).FirstOrDefault()?.platform_status_code, customer.customer_id, "order");
+                                                        #region Notify Order - ORDER_COMPLETE
+                                                        notifications.Add(new Notification() {
+                                                            customer_id = customer.customer_id,
+                                                            type = Notification.NotificationTypes.ORDER_COMPLETE,
+                                                            order_label = order_item.order_label,
+                                                            notification_content = order_item.order_label + " => " + string.Join(",", tracking_codes),
+                                                            is_notification_sent = true
+                                                        });
+                                                        #endregion
+                                                    }
 
-                                                if (db_helper.SetShipped(customer.customer_id, order_item.order_label, string.Join(",", tracking_codes))) {
-                                                    db_helper.LogToServer(thread_id, "order_shipped", order_item.order_source + ":" + order_item.order_label + ":" + shipment.barcode + " => " + string.Join(",", tracking_codes), customer.customer_id, "order");
-                                                    #region Notify Order - ORDER_SHIPPED
-                                                    notifications.Add(new Notification() {
-                                                        customer_id = customer.customer_id,
-                                                        type = Notification.NotificationTypes.ORDER_SHIPPED,
-                                                        order_label = order_item.order_label,
-                                                        notification_content = shipment.barcode + " => " + string.Join(",", tracking_codes),
-                                                        is_notification_sent = true
-                                                    });
-                                                    #endregion
+                                                    if (db_helper.SetShipped(customer.customer_id, order_item.order_label, string.Join(",", tracking_codes))) {
+                                                        db_helper.LogToServer(thread_id, "order_shipped", order_item.order_source + ":" + order_item.order_label + ":" + shipment.barcode + " => " + string.Join(",", tracking_codes), customer.customer_id, "order");
+                                                        #region Notify Order - ORDER_SHIPPED
+                                                        notifications.Add(new Notification() {
+                                                            customer_id = customer.customer_id,
+                                                            type = Notification.NotificationTypes.ORDER_SHIPPED,
+                                                            order_label = order_item.order_label,
+                                                            notification_content = shipment.barcode + " => " + string.Join(",", tracking_codes),
+                                                            is_notification_sent = true
+                                                        });
+                                                        #endregion
+                                                    }
                                                 }
                                             }
                                         }

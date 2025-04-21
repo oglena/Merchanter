@@ -40,6 +40,7 @@ namespace Merchanter.Classes {
             ORDER_PROCESS = 18,
             ORDER_SHIPPED = 19,
             PRODUCT_UPDATE_ERROR = 20,
+            NEW_ORDER_ERROR = 21,
         }
     }
 }
