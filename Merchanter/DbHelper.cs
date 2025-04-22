@@ -123,8 +123,7 @@ namespace Merchanter {
         /// <returns>[No data] or [Error] returns 'null'</returns>
         public Customer? GetCustomer(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open)
-                    connection.Open();
+                if (state != System.Data.ConnectionState.Open) connection.Open();
                 string _query = "SELECT * FROM customer WHERE customer_id=@customer_id";
                 Customer? c = null;
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
@@ -134,6 +133,7 @@ namespace Merchanter {
                     c = new Customer {
                         customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
                         user_name = dataReader["user_name"].ToString(),
+                        email = dataReader["email"].ToString(),
                         password = dataReader["password"].ToString(),
                         status = Convert.ToBoolean(Convert.ToInt32(dataReader["status"]?.ToString())),
                         product_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["product_sync_status"].ToString())),
@@ -159,8 +159,7 @@ namespace Merchanter {
                     };
                 }
                 dataReader.Close();
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
                 return c;
             }
             catch (Exception ex) {
@@ -172,14 +171,12 @@ namespace Merchanter {
         /// <summary>
         /// Gets the customer from the database
         /// </summary>
-        /// <param name="_customer_id">Customer ID</param>
         /// <param name="_username">Username</param>
         /// <param name="_password">Password</param>
         /// <returns>[No data] or [Error] returns 'null'</returns>
         public Customer? GetCustomer(string _username, string _password) {
             try {
-                if (state != System.Data.ConnectionState.Open)
-                    connection.Open();
+                if (state != System.Data.ConnectionState.Open) connection.Open();
                 string _query = "SELECT * FROM customer WHERE user_name=@user_name AND password=@password;";
                 Customer? c = null;
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
@@ -190,6 +187,7 @@ namespace Merchanter {
                     c = new Customer {
                         customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
                         user_name = dataReader["user_name"].ToString(),
+                        email = dataReader["email"].ToString(),
                         password = dataReader["password"].ToString(),
                         status = Convert.ToBoolean(Convert.ToInt32(dataReader["status"].ToString())),
                         product_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["product_sync_status"].ToString())),
@@ -215,8 +213,61 @@ namespace Merchanter {
                     };
                 }
                 dataReader.Close();
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
+                return c;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets the customer from the database
+        /// </summary>
+        /// <param name="_email">E-mail</param>
+        /// <param name="_password">Password</param>
+        /// <returns>[No data] or [Error] returns 'null'</returns>
+        public Customer? GetCustomerByMail(string _email, string _password) {
+            try {
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                string _query = "SELECT * FROM customer WHERE email=@email AND password=@password;";
+                Customer? c = null;
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("email", _email));
+                cmd.Parameters.Add(new MySqlParameter("password", _password));
+                MySqlDataReader dataReader = cmd.ExecuteReader(System.Data.CommandBehavior.CloseConnection);
+                while (dataReader.Read()) {
+                    c = new Customer {
+                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                        user_name = dataReader["user_name"].ToString(),
+                        email = dataReader["email"].ToString(),
+                        password = dataReader["password"].ToString(),
+                        status = Convert.ToBoolean(Convert.ToInt32(dataReader["status"].ToString())),
+                        product_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["product_sync_status"].ToString())),
+                        order_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["order_sync_status"].ToString())),
+                        xml_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["xml_sync_status"].ToString())),
+                        invoice_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["invoice_sync_status"].ToString())),
+                        notification_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["notification_sync_status"].ToString())),
+                        product_sync_timer = Convert.ToInt32(dataReader["product_sync_timer"].ToString()),
+                        order_sync_timer = Convert.ToInt32(dataReader["order_sync_timer"].ToString()),
+                        xml_sync_timer = Convert.ToInt32(dataReader["xml_sync_timer"].ToString()),
+                        invoice_sync_timer = Convert.ToInt32(dataReader["invoice_sync_timer"].ToString()),
+                        notification_sync_timer = Convert.ToInt32(dataReader["notification_sync_timer"].ToString()),
+                        last_product_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_product_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_product_sync_date"].ToString()) : null,
+                        last_order_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_order_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_order_sync_date"].ToString()) : null,
+                        last_xml_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_xml_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_xml_sync_date"].ToString()) : null,
+                        last_invoice_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_invoice_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_invoice_sync_date"].ToString()) : null,
+                        last_notification_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_notification_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_notification_sync_date"].ToString()) : null,
+                        is_productsync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_productsync_working"].ToString())),
+                        is_ordersync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_ordersync_working"].ToString())),
+                        is_xmlsync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_xmlsync_working"].ToString())),
+                        is_invoicesync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_invoicesync_working"].ToString())),
+                        is_notificationsync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_notificationsync_working"].ToString())),
+                    };
+                }
+                dataReader.Close();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
                 return c;
             }
             catch (Exception ex) {
@@ -231,8 +282,7 @@ namespace Merchanter {
         /// <returns>[Error] returns 'null'</returns>
         public List<Customer> GetCustomers() {
             try {
-                if (state != System.Data.ConnectionState.Open)
-                    connection.Open();
+                if (state != System.Data.ConnectionState.Open) connection.Open();
                 string _query = "SELECT * FROM customer";
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 MySqlDataReader dataReader = cmd.ExecuteReader(System.Data.CommandBehavior.CloseConnection);
@@ -241,6 +291,7 @@ namespace Merchanter {
                     customers.Add(new Customer {
                         customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
                         user_name = dataReader["user_name"].ToString(),
+                        email = dataReader["email"].ToString(),
                         password = dataReader["password"].ToString(),
                         status = Convert.ToBoolean(Convert.ToInt32(dataReader["status"].ToString())),
                         product_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["product_sync_status"].ToString())),
@@ -266,8 +317,7 @@ namespace Merchanter {
                     });
                 }
                 dataReader.Close();
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
                 return customers;
             }
             catch (Exception ex) {
@@ -283,19 +333,20 @@ namespace Merchanter {
         /// <param name="_customer">Customer</param>
         /// <param name="_with_parameters">With working parameters</param>
         /// <returns>[Error] returns 'null'</returns>
-        public Customer? SaveCustomer(int _customer_id, Customer _customer, bool _with_parameters = true) {
+        public Customer? SaveCustomer(int _customer_id, Customer _customer, bool _with_working_parameters = true) {
             try {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
                 object val; int inserted_id;
                 string _query = "START TRANSACTION;" +
-                    "UPDATE customer SET customer_id=LAST_INSERT_ID(@customer_id),user_name=@user_name,status=@status,product_sync_status=@product_sync_status,order_sync_status=@order_sync_status,xml_sync_status=@xml_sync_status,invoice_sync_status=@invoice_sync_status,notification_sync_status=@notification_sync_status" +
+                    "UPDATE customer SET customer_id=LAST_INSERT_ID(@customer_id),user_name=@user_name,email=@email,status=@status,product_sync_status=@product_sync_status,order_sync_status=@order_sync_status,xml_sync_status=@xml_sync_status,invoice_sync_status=@invoice_sync_status,notification_sync_status=@notification_sync_status" +
                     ",product_sync_timer=@product_sync_timer,order_sync_timer=@order_sync_timer,xml_sync_timer=@xml_sync_timer,invoice_sync_timer=@invoice_sync_timer,notification_sync_timer=@notification_sync_timer" +
-                    (_with_parameters ? ",password=@password,is_productsync_working=@is_productsync_working,is_ordersync_working=@is_ordersync_working,is_xmlsync_working=@is_xmlsync_working,is_invoicesync_working=@is_invoicesync_working,is_notificationsync_working=@is_notificationsync_working" : "") + " WHERE customer_id=@customer_id;" +
+                    (_with_working_parameters ? ",password=@password,is_productsync_working=@is_productsync_working,is_ordersync_working=@is_ordersync_working,is_xmlsync_working=@is_xmlsync_working,is_invoicesync_working=@is_invoicesync_working,is_notificationsync_working=@is_notificationsync_working" : "") + " WHERE customer_id=@customer_id;" +
                     "SELECT LAST_INSERT_ID();" +
                     "COMMIT;";
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("user_name", _customer.user_name));
+                cmd.Parameters.Add(new MySqlParameter("email", _customer.email));
                 cmd.Parameters.Add(new MySqlParameter("status", _customer.status));
                 cmd.Parameters.Add(new MySqlParameter("product_sync_status", _customer.product_sync_status));
                 cmd.Parameters.Add(new MySqlParameter("order_sync_status", _customer.order_sync_status));
@@ -307,7 +358,7 @@ namespace Merchanter {
                 cmd.Parameters.Add(new MySqlParameter("xml_sync_timer", _customer.xml_sync_timer));
                 cmd.Parameters.Add(new MySqlParameter("invoice_sync_timer", _customer.invoice_sync_timer));
                 cmd.Parameters.Add(new MySqlParameter("notification_sync_timer", _customer.notification_sync_timer));
-                if (_with_parameters) {
+                if (_with_working_parameters) {
                     cmd.Parameters.Add(new MySqlParameter("is_productsync_working", _customer.is_productsync_working));
                     cmd.Parameters.Add(new MySqlParameter("is_ordersync_working", _customer.is_ordersync_working));
                     cmd.Parameters.Add(new MySqlParameter("is_xmlsync_working", _customer.is_xmlsync_working));
@@ -329,6 +380,15 @@ namespace Merchanter {
                 OnError(ex.ToString());
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Creates a new customer in the database
+        /// </summary>
+        /// <param name="_new_customer">New Customer</param>
+        /// <returns></returns>
+        public Customer? CreateCustomer(Customer _new_customer) {
+            return null;
         }
         #endregion
 
@@ -383,7 +443,6 @@ namespace Merchanter {
         public bool LogToServer(string? _thread_id, string _title, string _message, int _customer_id, string _worker = "general") {
             try {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
-
                 string query = "INSERT INTO log (thread_id,title,message,worker,customer_id) VALUES (@thread_id,@title,@message,@worker,@customer_id);";
                 MySqlCommand cmd = new MySqlCommand(query, connection);
                 cmd.Parameters.Add(new MySqlParameter() { ParameterName = "thread_id", Value = _thread_id });
@@ -393,7 +452,6 @@ namespace Merchanter {
                 cmd.Parameters.Add(new MySqlParameter() { ParameterName = "customer_id", Value = _customer_id });
                 int value = cmd.ExecuteNonQuery();
                 if (state == System.Data.ConnectionState.Open) connection.Close();
-
                 PrintConsole("log|" + _title + ":" + _message, ConsoleColor.Yellow);
                 return true;
             }
@@ -433,8 +491,6 @@ namespace Merchanter {
                     list.Add(l);
                 }
                 dataReader.Close();
-
-
                 return list;
             }
             catch (Exception ex) {
@@ -484,8 +540,6 @@ namespace Merchanter {
                         list.Add(l);
                     }
                     dataReader.Close();
-
-
                 }
                 else {
                     list = GetLastLogs(_customer_id, _items_per_page, _current_page_index);
@@ -3695,7 +3749,7 @@ namespace Merchanter {
                             cmd.Parameters.Add(new MySqlParameter("type", item.type));
                             cmd.Parameters.Add(new MySqlParameter("image_name", item.image_name));
                             cmd.Parameters.Add(new MySqlParameter("image_url", item.image_url));
-                            cmd.Parameters.Add(new MySqlParameter("image_base64", item.image_base64));
+                            //cmd.Parameters.Add(new MySqlParameter("image_base64", item.image_base64));
                             cmd.Parameters.Add(new MySqlParameter("is_default", item.is_default));
                             cmd.Parameters.Add(new MySqlParameter("update_date", DateTime.Now));
                             if (state != System.Data.ConnectionState.Open) connection.Open();
@@ -6112,7 +6166,7 @@ namespace Merchanter {
             try {
                 int val = 0;
                 foreach (Order item in _orders) {
-                    string _query = "INSERT INTO orders (customer_id,order_id,email,firstname,lastname,order_label,order_source,payment_method,shipment_method,comment,grand_total,subtotal,discount_amount,installment_amount,shipment_amount,order_status,order_date,currency) VALUES (@customer_id,@order_id,@email,@firstname,@lastname,@order_label,@order_source,@payment_method,@shipment_method,@comment,@grand_total,@subtotal,@discount_amount,@installment_amount,@shipment_amount,@order_status,@order_date,@currency)";
+                    string _query = "INSERT INTO orders (customer_id,order_id,email,firstname,lastname,order_label,order_source,payment_method,shipment_method,comment,grand_total,subtotal,discount_amount,installment_amount,shipment_amount,order_status,order_date,currency,order_shipping_barcode) VALUES (@customer_id,@order_id,@email,@firstname,@lastname,@order_label,@order_source,@payment_method,@shipment_method,@comment,@grand_total,@subtotal,@discount_amount,@installment_amount,@shipment_amount,@order_status,@order_date,@currency,@order_shipping_barcode)";
                     MySqlCommand cmd = new MySqlCommand(_query, connection);
                     cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                     cmd.Parameters.Add(new MySqlParameter("order_id", item.order_id));
@@ -6124,9 +6178,9 @@ namespace Merchanter {
                     cmd.Parameters.Add(new MySqlParameter("payment_method", item.payment_method));
                     cmd.Parameters.Add(new MySqlParameter("shipment_method", item.shipment_method));
                     cmd.Parameters.Add(new MySqlParameter("comment", item.comment));
-                    //cmd.Parameters.Add( new MySqlParameter( "order_shipping_barcode", item.order_shipping_barcode ) );
-                    //cmd.Parameters.Add( new MySqlParameter( "erp_no", item.erp_no ) );
-                    //cmd.Parameters.Add( new MySqlParameter( "is_erp_sent", item.is_erp_sent ) );
+                    cmd.Parameters.Add(new MySqlParameter("order_shipping_barcode", item.order_shipping_barcode));
+                    cmd.Parameters.Add(new MySqlParameter("erp_no", item.erp_no));
+                    cmd.Parameters.Add(new MySqlParameter("is_erp_sent", item.is_erp_sent));
                     cmd.Parameters.Add(new MySqlParameter("grand_total", item.grand_total));
                     cmd.Parameters.Add(new MySqlParameter("subtotal", item.subtotal));
                     cmd.Parameters.Add(new MySqlParameter("discount_amount", item.discount_amount));
@@ -6197,9 +6251,9 @@ namespace Merchanter {
                     cmd.Parameters.Add(new MySqlParameter("payment_method", item.payment_method));
                     cmd.Parameters.Add(new MySqlParameter("shipment_method", item.shipment_method));
                     cmd.Parameters.Add(new MySqlParameter("comment", item.comment));
-                    //cmd.Parameters.Add( new MySqlParameter( "order_shipping_barcode", item.order_shipping_barcode ) );
-                    //cmd.Parameters.Add( new MySqlParameter( "erp_no", item.erp_no ) );
-                    //cmd.Parameters.Add( new MySqlParameter( "is_erp_sent", item.is_erp_sent ) );
+                    //cmd.Parameters.Add(new MySqlParameter("order_shipping_barcode", item.order_shipping_barcode));
+                    //cmd.Parameters.Add(new MySqlParameter("erp_no", item.erp_no));
+                    //cmd.Parameters.Add(new MySqlParameter("is_erp_sent", item.is_erp_sent));
                     cmd.Parameters.Add(new MySqlParameter("grand_total", item.grand_total));
                     cmd.Parameters.Add(new MySqlParameter("subtotal", item.subtotal));
                     cmd.Parameters.Add(new MySqlParameter("discount_amount", item.discount_amount));

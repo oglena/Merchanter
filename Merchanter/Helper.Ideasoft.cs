@@ -28,17 +28,17 @@ namespace Merchanter {
                     details = Base64ToString(_product.extension.description ?? "")
                 },
                 categories = category_ids.Count > 0 ? category_ids : null,
-                images = _product.images != null && _product.images.Count > 0 ? new List<dynamic>() : null
+                //images = _product.images != null && _product.images.Count > 0 ? new List<dynamic>() : null
             };
 
-            if (_product.images != null && _product.images.Count > 0) {
-                foreach (var image_item in _product.images) {
-                    pro_json?.images?.Add(new {
-                        filename = image_item.image_name?.Split(".")[0], extension = image_item.image_name?.Split(".")[1],
-                        attachment = "data:image/jpeg;base64," + image_item.image_base64
-                    });
-                }
-            }
+            //if (_product.images != null && _product.images.Count > 0) {
+            //    foreach (var image_item in _product.images) {
+            //        pro_json?.images?.Add(new {
+            //            filename = image_item.image_name?.Split(".")[0], extension = image_item.image_name?.Split(".")[1],
+            //            attachment = "data:image/jpeg;base64," + image_item.image_base64
+            //        });
+            //    }
+            //}
 
             using Executioner executioner = new();
             var json = executioner.Execute(global.ideasoft.store_url + "/admin-api/products/" + _id.ToString(),

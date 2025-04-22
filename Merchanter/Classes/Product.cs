@@ -17,8 +17,8 @@
         public bool tax_included { get; set; } = false;
         public List<ProductSource> sources { get; set; }
         public ProductExtension extension { get; set; }
-        public List<ProductImage>? images { get; set; } = null;
-        public List<ProductAttribute>? attributes { get; set; } = null;
+        public List<ProductImage> images { get; set; } = [];
+        public List<ProductAttribute> attributes { get; set; } = [];
 
 		public enum ProductTypes {
             SIMPLE = 0,

@@ -22,16 +22,16 @@ namespace MerchanterApp.ApiService.Services {
         public async Task<UserLoginResponse> LoginUserAsync(UserLoginRequest request) {
             UserLoginResponse response = new();
 
-            if (string.IsNullOrEmpty(request.Username) || string.IsNullOrEmpty(request.Password)) {
+            if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password)) {
                 throw new ArgumentNullException(nameof(request));
             }
 
-            var customer = merchanterService.helper.GetCustomer(request.Username, request.Password);
+            var customer = merchanterService.helper.GetCustomerByMail(request.Email, request.Password);
             if (customer != null) {
                 var generatedTokenInformation = await tokenService.GenerateToken(
                     new GenerateTokenRequest {
                         CustomerID = customer.customer_id,
-                        Username = request.Username
+                        Email = request.Email
                     });
 
                 response.AuthenticateResult = true;

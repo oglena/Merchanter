@@ -205,6 +205,7 @@ namespace MerchanterHelpers {
                     Directory.CreateDirectory(this.temp_folder_url + "\\Orders\\" + _guid.ToString());
                     File.WriteAllText(this.temp_folder_url + "\\Orders\\" + _guid.ToString() + "\\" + _guid.ToString() + ".xml", _order_xml);
                     Zip(this.temp_folder_url + "\\Orders\\" + _guid.ToString(), this.temp_folder_url + "\\Orders\\" + _guid.ToString() + ".zip");
+                    Directory.Delete(this.temp_folder_url + "\\Orders\\" + _guid.ToString());
                     BlobFile zipdoc = new BlobFile { filename = _guid.ToString() + ".zip" };
                     zipdoc.blob_data = File.ReadAllBytes(this.temp_folder_url + "\\Orders\\" + zipdoc.filename);
                     zipdoc.filesize = zipdoc.blob_data.Length;
@@ -212,9 +213,8 @@ namespace MerchanterHelpers {
                     ReturnMessage? rem = await client.SendDocumentAsync(cuserdetail, zipdoc); //web servis çağrılıyor...
                     if (rem?.Number != null) {
                         PrintConsole(rem.Number + " - " + rem.Message);
-                        File.Move(this.temp_folder_url + "\\Orders\\" + _guid.ToString() + ".xml",
-                            this.temp_folder_url + "\\Orders\\Processed\\" + _guid.ToString() + ".xml");
-                        Directory.Delete(this.temp_folder_url + "\\Orders\\" + _guid.ToString(), true);
+                        File.Move(this.temp_folder_url + "\\Orders\\" + _guid.ToString() + ".zip",
+                            this.temp_folder_url + "\\Orders\\Processed\\" + _guid.ToString() + ".zip");
                         return rem.Number.ToString();
                     }
                 }
@@ -226,6 +226,7 @@ namespace MerchanterHelpers {
             return string.Empty;
         }
 
+        #region Helper Methods
         private void UnZip(string zipPath, string extractPath, string password, bool overwrite) {
             using (ZipArchive archive = ZipFile.OpenRead(zipPath)) {
                 foreach (ZipArchiveEntry entry in archive.Entries) {
@@ -257,5 +258,6 @@ namespace MerchanterHelpers {
             if (is_debug)
                 Debug.WriteLine("#" + DateTime.Now.ToString("dd.MM.yy HH:mm:ss") + "," + "ANKARA_ERP" + "] " + message);
         }
+        #endregion
     }
 }

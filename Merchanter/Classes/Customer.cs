@@ -7,6 +7,7 @@ namespace Merchanter.Classes {
         public int customer_id { get; set; }
         [Required]
         public string user_name { get; set; }
+        public string email { get; set; }
         //[JsonIgnore]
         public string? password { get; set; }
         public bool status { get; set; } = true;
