@@ -1265,7 +1265,7 @@ internal class MainLoop {
                     #region Product Memory Take
                     PrintConsole(Constants.ANK_ERP + " product api take started.");
                     var ank_products_zip = ank_erp.GetProducts().Result;
-                    //var ank_products_zip = ank_erp.GetProductsFromFolder("""C:\Users\caqn_\OneDrive\Masaüstü\otoahmet_products_2""");
+                    //var ank_products_zip = ank_erp.GetProductsFromFolder("""C:\Users\caqn_\OneDrive\Masaüstü\otoahmet_products_3""");
                     List<UrunSicil> ank_products = [];
                     if (ank_products_zip != null && ank_products_zip.Count > 0) {
                         foreach (var zip_item in ank_products_zip) {
@@ -1322,6 +1322,7 @@ internal class MainLoop {
                                 tax = item.UrunTanim.KdvOrani,
                                 currency = item.UrunTanim.ParaCinsi.Trim(),
                                 price = item.UrunTanim.PerSatFiyat,
+                                special_price = decimal.TryParse(item.UrunTanim.KamSatFiyat?.Replace(",", "").Replace(".", ","), out decimal _special_price) ? _special_price : 0,
                                 tax_included = true,
                                 extension = new ProductExtension() {
                                     customer_id = customer.customer_id,
@@ -1706,21 +1707,24 @@ internal class MainLoop {
 
                         if (selected_product != null) { //existing product
                             #region Image
-                            if (item.images != null && item.images.Count > 0)
-                                foreach (var image_item in item.images) {
-                                    if (selected_product.images?.FirstOrDefault(x => x.image_name == image_item.image_name) == null)
-                                        is_update = true;
-                                }
+                            //if (item.images != null && item.images.Count > 0)
+                            //    foreach (var image_item in item.images) {
+                            //        if (selected_product.images?.FirstOrDefault(x => x.image_name == image_item.image_name) == null)
+                            //            is_update = true;
+                            //    }
                             #endregion
 
                             #region Qty
                             if (selected_product.total_qty != item.total_qty) {
-                                is_update = true;
+                                //is_update = true;
                             }
                             #endregion
 
                             #region Price
                             if (selected_product.price != item.price) {
+                                //is_update = true;
+                            }
+                            if (selected_product.special_price != item.special_price) {
                                 is_update = true;
                             }
                             #endregion
@@ -1753,7 +1757,7 @@ internal class MainLoop {
 
                             #region Category
                             if (selected_product.extension.category_ids != item.extension.category_ids) {
-                                is_update = true;
+                                //is_update = true;
                             }
                             #endregion
                         }
@@ -2058,7 +2062,11 @@ internal class MainLoop {
                                 telephone = item.billingAddress.phoneNumber,
                                 street = item.billingAddress.address,
                                 region = item.billingAddress.subLocation,
-                                city = item.billingAddress.location
+                                city = item.billingAddress.location,
+                                is_corporate = item.billingAddress.invoiceType == "corporate",
+                                firma_ismi = item.billingAddress.firstname + " " + item.billingAddress.surname,
+                                firma_vergidairesi = item.billingAddress.invoiceType == "corporate" ? item.billingAddress.taxOffice.ToString() : "YOK",
+                                firma_vergino = item.billingAddress.invoiceType == "corporate" ? item.billingAddress.taxNo.ToString() : ""
                             },
                             shipping_address = new ShippingAddress() {
                                 shipping_id = item.shippingAddress.id,
@@ -2168,228 +2176,239 @@ internal class MainLoop {
                                 }
 
                                 if (order_main_target != null && order_main_target == Constants.ANK_ERP) {
-                                    if (Helper.global.ank_erp != null && Helper.global.ank_erp.company_code != null && Helper.global.ank_erp.user_name != null && Helper.global.ank_erp.password != null && Helper.global.ank_erp.work_year != null && Helper.global.ank_erp.url != null) {
-                                        ANKERP ank_erp = new(Helper.global.ank_erp.company_code, Helper.global.ank_erp.user_name, Helper.global.ank_erp.password, Helper.global.ank_erp.work_year, Helper.global.ank_erp.url,
-                                        """C:\MerchanterServer\ankaraerp""");
-                                        Guid guid = Guid.NewGuid(); bool health = true;
+                                    if (selected_order.order_status == "YENİ_SİPARİŞ") {
+                                        if (Helper.global.ank_erp != null && Helper.global.ank_erp.company_code != null && Helper.global.ank_erp.user_name != null && Helper.global.ank_erp.password != null && Helper.global.ank_erp.work_year != null && Helper.global.ank_erp.url != null) {
+                                            ANKERP ank_erp = new(Helper.global.ank_erp.company_code, Helper.global.ank_erp.user_name, Helper.global.ank_erp.password, Helper.global.ank_erp.work_year, Helper.global.ank_erp.url,
+                                            """C:\MerchanterServer\ankaraerp""");
+                                            Guid guid = Guid.NewGuid(); bool health = true;
 
-                                        #region ANKARA ERP - TICARI DOKUMAN
-                                        TicariDokumanSip dokuman = new() {
-                                            DokumanBaslik = new DokumanBaslikSip() {
-                                                Versiyon = "1.0",
-                                                Gonderen = new GonderenSip() {
-                                                    VergiNo = "0123456789",
-                                                    Unvani = "OTO AHMET AHMET AVCI",
-                                                    Tanimlayici = "WSU003"
-                                                },
-                                                Alici = new AliciSip() {
-                                                    VergiNo = "0123456789",
-                                                    Unvani = "parcamatik",
-                                                    Tanimlayici = "WSU003"
-                                                },
-                                                DokumanTanimi = new DokumanTanimiSip() {
-                                                    Turu = "GIDEN",
+                                            #region ANKARA ERP - TICARI DOKUMAN
+                                            #region CORE
+                                            TicariDokumanSip dokuman = new() {
+                                                DokumanBaslik = new DokumanBaslikSip() {
                                                     Versiyon = "1.0",
-                                                    DosyaAdi = guid.ToString(),
-                                                    OlusturulmaZamani = DateTime.Now.ToString("yyyy/MM/ddTHH:mm:ss"),
-                                                }
-                                            },
-                                            DokumanPaket = new DokumanPaketSip() {
-                                                Eleman = new ElemanSip() {
-                                                    ElemanTipi = "TICARIBELGE",
-                                                    ElemanSayisi = 1,
-                                                    ElemanListe = new ElemanListeSip() {
-                                                        BelgeSicil = new BelgeSicilSip() {
-                                                            Baslik = new BaslikSip() {
-                                                                Aciliyet = "NORMAL",
-                                                                HareketKodu = string.Empty,
-                                                                ProjeNo = string.Empty,
-                                                                BelgeNo = order_item.order_id + 500000,
-                                                                MBelgeNo = order_item.order_id + 500000,
-                                                                OzelKod = (order_item.order_id + 500000).ToString(),
-                                                                DovizKodu = "TRL",
-                                                                DovizKuru = 1,
-                                                                HariciNumara = string.Empty,
-                                                                TanzimTarihi = order_item.order_date.ToString("dd-MM-yyyy"),
-                                                                TanzimSaati = order_item.order_date.ToString("HH:mm"),
-                                                                TeslimTarihi = order_item.order_date.ToString("dd-MM-yyyy"),
-                                                                PlasiyerKodu = "B2C",
-                                                                OdemeSekli = order_item.payment_method == "BANKA_TRANSFERİ" ? "EFT/HAVALE" : "KAPIDAODEME",
-                                                                OdemeTarihi = order_item.order_date.ToString("dd-MM-yyyy"),
-                                                                OdemeRefNo = order_item.order_label,
-                                                                OdemeTutar = Math.Round((decimal)order_item.grand_total, 2, MidpointRounding.AwayFromZero),
-                                                                OdemeNotu = order_item.payment_method == "BANKA_TRANSFERİ" ? "ZIBN2" : "PYTR",
-                                                                MalTutar = Math.Round((decimal)order_item.grand_total - (decimal)order_item.shipment_amount, 2, MidpointRounding.AwayFromZero),
-                                                                MalIndTutar = Math.Round((decimal)order_item.discount_amount, 2, MidpointRounding.AwayFromZero),
-                                                                HizmetTutar = Math.Round((decimal)order_item.shipment_amount, 2, MidpointRounding.AwayFromZero),
-                                                                HizmetIndTutar = 0,
-                                                                OtvMatrah = 0,
-                                                                OtvOran = 0,
-                                                                OtvTutar = 0,
-                                                                KdvMatrah = 0,
-                                                                KdvTutar = 0,
-                                                                BelgeTutar = 0
-                                                            },
-                                                            BaslikNot = string.Empty,
-                                                            Dipnot = string.Empty,
-                                                            SatirDetay = [],
-                                                            CariSicil = new CariSicilSip() {
-                                                                HesapNo = string.Empty,
-                                                                Adi = order_item.billing_address.firstname.Trim().ToUpper(),
-                                                                Soyadi = order_item.billing_address.lastname.Trim().ToUpper(),
-                                                                Unvani = order_item.billing_address.is_corporate ? order_item.billing_address.firma_ismi.Trim().ToUpper() : (order_item.firstname.Trim().ToUpper() + " " + order_item.lastname.Trim().ToUpper()), 
-                                                                Adres1 = order_item.billing_address.street.Length > 40 ? string.Join(" ", order_item.billing_address.street.Split(' ').TakeWhile((s, i) => string.Join(" ", order_item.billing_address.street.Split(' ').Take(i + 1)).Length <= 40)).Trim().ToUpper() : order_item.billing_address.street.Trim().ToUpper(),
-                                                                Adres2 = order_item.billing_address.street.Length > 40 ? string.Join(" ", order_item.billing_address.street.Split(' ').SkipWhile((s, i) => string.Join(" ", order_item.billing_address.street.Split(' ').Take(i + 1)).Length <= 40)).Trim().ToUpper() : string.Empty,
-                                                                Adres3 = "----",
-                                                                Ilce = order_item.billing_address.region.Trim().ToUpper(),
-                                                                Sehir = order_item.billing_address.city.Trim().ToUpper(),
-                                                                Ulke = "TÜRKİYE",
-                                                                Telefon = order_item.billing_address.telephone?.Replace("+9","").Replace(" ", "").Replace("(","").Replace(")",""),
-                                                                GsmNo = order_item.billing_address.telephone?.Replace("+9", "").Replace(" ", "").Replace("(", "").Replace(")", ""),
-                                                                FaksNo = string.Empty,
-                                                                EPosta = order_item.email,
-                                                                WebSiteURL = string.Empty,
-                                                                VergiNo = order_item.billing_address.is_corporate ? order_item.billing_address.firma_vergino : order_item.billing_address.tc_no,
-                                                                VergiDaireAdi = order_item.billing_address.is_corporate ? order_item.billing_address.firma_vergidairesi.Trim().ToUpper() : "YOK",
-                                                                OzelKod = string.Empty, OzelKod1 = string.Empty, OzelKod2 = string.Empty, OzelKod3 = string.Empty,
-                                                                PostaKodu = string.Empty, Notlar = string.Empty
-                                                            },
-                                                            SevkYeri = new SevkYeriSip() {
-                                                                HesapNo = string.Empty,
-                                                                Adi = order_item.shipping_address.firstname.Trim().ToUpper(),
-                                                                Soyadi = order_item.shipping_address.lastname.Trim().ToUpper(),
-                                                                Unvani = order_item.shipping_address.firstname.Trim().ToUpper() + " " + order_item.shipping_address.lastname.Trim().ToUpper(),
-                                                                Adres1 = order_item.billing_address.street.Length > 40 ? string.Join(" ", order_item.billing_address.street.Split(' ').TakeWhile((s, i) => string.Join(" ", order_item.billing_address.street.Split(' ').Take(i + 1)).Length <= 40)).Trim().ToUpper() : order_item.billing_address.street.Trim().ToUpper(),
-                                                                Adres2 = order_item.billing_address.street.Length > 40 ? string.Join(" ", order_item.billing_address.street.Split(' ').SkipWhile((s, i) => string.Join(" ", order_item.billing_address.street.Split(' ').Take(i + 1)).Length <= 40)).Trim().ToUpper() : string.Empty,
-                                                                Adres3 = "----",
-                                                                Ilce = order_item.shipping_address.region.Trim().ToUpper(),
-                                                                Sehir = order_item.shipping_address.city.Trim().ToUpper(),
-                                                                Ulke = "TÜRKİYE",
-                                                                Telefon = order_item.shipping_address.telephone.Replace("+9", "").Replace(" ", "").Replace("(", "").Replace(")", ""),
-                                                                GsmNo = order_item.shipping_address.telephone.Replace("+9", "").Replace(" ", "").Replace("(", "").Replace(")", ""),
-                                                                FaksNo = string.Empty,
-                                                                EPosta = order_item.email,
-                                                                WebSiteURL = string.Empty,
-                                                                VergiNo = order_item.billing_address.is_corporate ? order_item.billing_address.firma_vergino : order_item.billing_address.tc_no,
-                                                                VergiDaireAdi = order_item.billing_address.is_corporate ? order_item.billing_address.firma_vergidairesi.Trim().ToUpper() : "YOK",
-                                                                OzelKod = string.Empty, //assign order_shipping_barcode maybe
-                                                                KargoKodu = order_item.shipment_method == Constants.ARAS ? "ARAS" : order_item.shipment_method,
-                                                                PostaKodu = string.Empty, Notlar = string.Empty
-                                                            },
-                                                            Irsaliye = string.Empty,
-                                                            Siparis = string.Empty,
-                                                            IsEmri = string.Empty,
-                                                            BELTUR = "SIPARIS",
-                                                            MS = "M"
+                                                    Gonderen = new GonderenSip() {
+                                                        VergiNo = "0123456789",
+                                                        Unvani = "OTO AHMET AHMET AVCI",
+                                                        Tanimlayici = "WSU003"
+                                                    },
+                                                    Alici = new AliciSip() {
+                                                        VergiNo = "0123456789",
+                                                        Unvani = "parcamatik",
+                                                        Tanimlayici = "WSU003"
+                                                    },
+                                                    DokumanTanimi = new DokumanTanimiSip() {
+                                                        Turu = "GIDEN",
+                                                        Versiyon = "1.0",
+                                                        DosyaAdi = guid.ToString(),
+                                                        OlusturulmaZamani = DateTime.Now.ToString("yyyy/MM/ddTHH:mm:ss"),
+                                                    }
+                                                },
+                                                DokumanPaket = new DokumanPaketSip() {
+                                                    Eleman = new ElemanSip() {
+                                                        ElemanTipi = "TICARIBELGE",
+                                                        ElemanSayisi = 1,
+                                                        ElemanListe = new ElemanListeSip() {
+                                                            BelgeSicil = new BelgeSicilSip() {
+                                                                Baslik = new BaslikSip() {
+                                                                    Aciliyet = "NORMAL",
+                                                                    HareketKodu = string.Empty,
+                                                                    ProjeNo = string.Empty,
+                                                                    BelgeNo = order_item.order_id + 500000,
+                                                                    MBelgeNo = order_item.order_id + 500000,
+                                                                    OzelKod = (order_item.order_id + 500000).ToString(),
+                                                                    DovizKodu = "TRL",
+                                                                    DovizKuru = 1,
+                                                                    HariciNumara = string.Empty,
+                                                                    TanzimTarihi = order_item.order_date.ToString("dd-MM-yyyy"),
+                                                                    TanzimSaati = order_item.order_date.ToString("HH:mm"),
+                                                                    TeslimTarihi = order_item.order_date.ToString("dd-MM-yyyy"),
+                                                                    PlasiyerKodu = "B2C",
+                                                                    OdemeSekli = order_item.payment_method == "BANKA_TRANSFERİ" ? "EFT/HAVALE" : "KAPIDAODEME",
+                                                                    OdemeTarihi = order_item.order_date.ToString("dd-MM-yyyy"),
+                                                                    OdemeRefNo = order_item.order_label,
+                                                                    OdemeTutar = Math.Round((decimal)order_item.grand_total, 2, MidpointRounding.AwayFromZero),
+                                                                    OdemeNotu = order_item.payment_method == "BANKA_TRANSFERİ" ? "ZIBN2" : "PYTR",
+                                                                    MalTutar = Math.Round((decimal)order_item.grand_total - (decimal)order_item.shipment_amount, 2, MidpointRounding.AwayFromZero),
+                                                                    MalIndTutar = Math.Round((decimal)order_item.discount_amount, 2, MidpointRounding.AwayFromZero),
+                                                                    HizmetTutar = Math.Round((decimal)order_item.shipment_amount, 2, MidpointRounding.AwayFromZero),
+                                                                    HizmetIndTutar = 0,
+                                                                    OtvMatrah = 0,
+                                                                    OtvOran = 0,
+                                                                    OtvTutar = 0,
+                                                                    KdvMatrah = 0,
+                                                                    KdvTutar = 0,
+                                                                    BelgeTutar = 0
+                                                                },
+                                                                BaslikNot = string.Empty,
+                                                                Dipnot = string.Empty,
+                                                                SatirDetay = [],
+                                                                CariSicil = new CariSicilSip() {
+                                                                    HesapNo = string.Empty,
+                                                                    Adi = order_item.billing_address.firstname.Trim().ToUpper(),
+                                                                    Soyadi = order_item.billing_address.lastname.Trim().ToUpper(),
+                                                                    Unvani = order_item.billing_address.is_corporate ? order_item.billing_address.firma_ismi.Trim().ToUpper() : (order_item.firstname.Trim().ToUpper() + " " + order_item.lastname.Trim().ToUpper()),
+                                                                    Adres1 = order_item.billing_address.street.Length > 40 ? string.Join(" ", order_item.billing_address.street.Split(' ').TakeWhile((s, i) => string.Join(" ", order_item.billing_address.street.Split(' ').Take(i + 1)).Length <= 40)).Trim().ToUpper() : order_item.billing_address.street.Trim().ToUpper(),
+                                                                    Adres2 = order_item.billing_address.street.Length > 40 ? string.Join(" ", order_item.billing_address.street.Split(' ').SkipWhile((s, i) => string.Join(" ", order_item.billing_address.street.Split(' ').Take(i + 1)).Length <= 40)).Trim().ToUpper() : string.Empty,
+                                                                    Adres3 = "",
+                                                                    Ilce = order_item.billing_address.region.Trim().ToUpper(),
+                                                                    Sehir = order_item.billing_address.city.Trim().ToUpper(),
+                                                                    Ulke = "TÜRKİYE",
+                                                                    Telefon = order_item.billing_address.telephone?.Replace("+9", "").Replace(" ", "").Replace("(", "").Replace(")", ""),
+                                                                    GsmNo = order_item.billing_address.telephone?.Replace("+9", "").Replace(" ", "").Replace("(", "").Replace(")", ""),
+                                                                    FaksNo = string.Empty,
+                                                                    EPosta = order_item.email,
+                                                                    WebSiteURL = string.Empty,
+                                                                    VergiNo = order_item.billing_address.is_corporate ? order_item.billing_address.firma_vergino : order_item.billing_address.tc_no,
+                                                                    VergiDaireAdi = order_item.billing_address.is_corporate ? order_item.billing_address.firma_vergidairesi.Trim().ToUpper() : "YOK",
+                                                                    OzelKod = string.Empty, OzelKod1 = string.Empty, OzelKod2 = string.Empty, OzelKod3 = string.Empty,
+                                                                    PostaKodu = string.Empty, Notlar = string.Empty
+                                                                },
+                                                                SevkYeri = new SevkYeriSip() {
+                                                                    HesapNo = string.Empty,
+                                                                    Adi = order_item.shipping_address.firstname.Trim().ToUpper(),
+                                                                    Soyadi = order_item.shipping_address.lastname.Trim().ToUpper(),
+                                                                    Unvani = order_item.shipping_address.firstname.Trim().ToUpper() + " " + order_item.shipping_address.lastname.Trim().ToUpper(),
+                                                                    Adres1 = order_item.billing_address.street.Length > 40 ? string.Join(" ", order_item.billing_address.street.Split(' ').TakeWhile((s, i) => string.Join(" ", order_item.billing_address.street.Split(' ').Take(i + 1)).Length <= 40)).Trim().ToUpper() : order_item.billing_address.street.Trim().ToUpper(),
+                                                                    Adres2 = order_item.billing_address.street.Length > 40 ? string.Join(" ", order_item.billing_address.street.Split(' ').SkipWhile((s, i) => string.Join(" ", order_item.billing_address.street.Split(' ').Take(i + 1)).Length <= 40)).Trim().ToUpper() : string.Empty,
+                                                                    Adres3 = "",
+                                                                    Ilce = order_item.shipping_address.region.Trim().ToUpper(),
+                                                                    Sehir = order_item.shipping_address.city.Trim().ToUpper(),
+                                                                    Ulke = "TÜRKİYE",
+                                                                    Telefon = order_item.shipping_address.telephone.Replace("+9", "").Replace(" ", "").Replace("(", "").Replace(")", ""),
+                                                                    GsmNo = order_item.shipping_address.telephone.Replace("+9", "").Replace(" ", "").Replace("(", "").Replace(")", ""),
+                                                                    FaksNo = string.Empty,
+                                                                    EPosta = order_item.email,
+                                                                    WebSiteURL = string.Empty,
+                                                                    VergiNo = order_item.billing_address.is_corporate ? order_item.billing_address.firma_vergino : order_item.billing_address.tc_no,
+                                                                    VergiDaireAdi = order_item.billing_address.is_corporate ? order_item.billing_address.firma_vergidairesi.Trim().ToUpper() : "YOK",
+                                                                    OzelKod = string.Empty, //assign order_shipping_barcode maybe
+                                                                    KargoKodu = order_item.shipment_method == Constants.ARAS ? "ARAS" : order_item.shipment_method,
+                                                                    PostaKodu = string.Empty, Notlar = string.Empty
+                                                                },
+                                                                Irsaliye = string.Empty,
+                                                                Siparis = string.Empty,
+                                                                IsEmri = string.Empty,
+                                                                BELTUR = "SIPARIS",
+                                                                MS = "M"
+                                                            }
                                                         }
                                                     }
                                                 }
+                                            };
+                                            #endregion
+
+                                            #region ORDER ITEMS
+                                            foreach (var item in order_item.order_items) {
+                                                var sold_product = db_helper.GetProductBySku(customer.customer_id, item.sku);
+                                                if (sold_product != null) {
+                                                    dokuman.DokumanPaket.Eleman.ElemanListe.BelgeSicil.SatirDetay.Add(new SatirDetaySip() {
+                                                        Items = new ItemsSip() {
+                                                            BarkodKodu = sold_product.barcode,
+                                                            UrunGrubu = sold_product.extension.brand.brand_name.Trim().ToUpper(),
+                                                            UrunKodu = item.sku,
+                                                            UrunTanim = sold_product.name?.Trim().ToUpper() ?? string.Empty,
+                                                            Miktar = (byte)item.qty_ordered,
+                                                            OlcuBirim = "ADET",
+                                                            BirimFiyat = Math.Round((decimal)(item.price + item.tax_amount), 2, MidpointRounding.AwayFromZero),
+                                                            Tutar = Math.Round((decimal)((item.price + item.tax_amount) * item.qty_ordered), 2, MidpointRounding.AwayFromZero),
+                                                            IndOran = 0,
+                                                            KdvOran = (byte)item.tax,
+                                                            Notlar = string.Empty
+                                                        },
+                                                        StokSicil = new StokSicilSip() {
+                                                            UrunGrubu = sold_product.extension.brand.brand_name.Trim().ToUpper(),
+                                                            UrunKodu = item.sku,
+                                                            UrunTanim = sold_product.name?.Trim().ToUpper() ?? string.Empty,
+                                                            OlcuBirim = "ADET",
+                                                            KdvOran = (byte)item.tax,
+                                                        },
+                                                        HizmasSicil = new HizmasSicilSip() {
+                                                            UrunGrubu = sold_product.extension.brand.brand_name.Trim().ToUpper(),
+                                                            UrunKodu = item.sku,
+                                                            UrunTanim = sold_product.name?.Trim().ToUpper() ?? string.Empty,
+                                                            OlcuBirim = "ADET",
+                                                            KdvOran = (byte)item.tax,
+                                                        }
+                                                    });
+                                                }
+                                                else { health = false; }
                                             }
-                                        };
-                                        foreach (var item in order_item.order_items) {
-                                            var sold_product = db_helper.GetProductBySku(customer.customer_id, item.sku);
-                                            if (sold_product != null) {
+                                            #endregion
+
+                                            #region ORDER SHIPMENT
+                                            if (order_item.shipment_amount > 0) {
                                                 dokuman.DokumanPaket.Eleman.ElemanListe.BelgeSicil.SatirDetay.Add(new SatirDetaySip() {
                                                     Items = new ItemsSip() {
-                                                        BarkodKodu = sold_product.barcode,
-                                                        UrunGrubu = sold_product.extension.brand.brand_name.Trim().ToUpper(),
-                                                        UrunKodu = item.sku,
-                                                        UrunTanim = sold_product.name?.Trim().ToUpper() ?? string.Empty,
-                                                        Miktar = (byte)item.qty_ordered,
+                                                        BarkodKodu = string.Empty,
+                                                        UrunGrubu = "GELİR",
+                                                        UrunKodu = Helper.global.order.siparis_kargo_sku,
+                                                        UrunTanim = "ARAS KARGO KARGO ÜCRETİ",
+                                                        Miktar = 1,
                                                         OlcuBirim = "ADET",
-                                                        BirimFiyat = Math.Round((decimal)(item.price + item.tax_amount), 2, MidpointRounding.AwayFromZero),
-                                                        Tutar = Math.Round((decimal)((item.price + item.tax_amount) * item.qty_ordered), 2, MidpointRounding.AwayFromZero),
+                                                        BirimFiyat = Math.Round((decimal)order_item.shipment_amount, 2, MidpointRounding.AwayFromZero),
+                                                        Tutar = Math.Round((decimal)order_item.shipment_amount, 2, MidpointRounding.AwayFromZero),
                                                         IndOran = 0,
-                                                        KdvOran = (byte)item.tax,
+                                                        KdvOran = 20,
                                                         Notlar = string.Empty
                                                     },
                                                     StokSicil = new StokSicilSip() {
-                                                        UrunGrubu = sold_product.extension.brand.brand_name.Trim().ToUpper(),
-                                                        UrunKodu = item.sku,
-                                                        UrunTanim = sold_product.name?.Trim().ToUpper() ?? string.Empty,
+                                                        UrunGrubu = "GELİR",
+                                                        UrunKodu = Helper.global.order.siparis_kargo_sku,
+                                                        UrunTanim = "ARAS KARGO",
                                                         OlcuBirim = "ADET",
-                                                        KdvOran = (byte)item.tax,
+                                                        KdvOran = 20,
                                                     },
                                                     HizmasSicil = new HizmasSicilSip() {
-                                                        UrunGrubu = sold_product.extension.brand.brand_name.Trim().ToUpper(),
-                                                        UrunKodu = item.sku,
-                                                        UrunTanim = sold_product.name?.Trim().ToUpper() ?? string.Empty,
+                                                        UrunGrubu = "GELİR",
+                                                        UrunKodu = Helper.global.order.siparis_kargo_sku,
+                                                        UrunTanim = "ARAS KARGO",
                                                         OlcuBirim = "ADET",
-                                                        KdvOran = (byte)item.tax,
+                                                        KdvOran = 20,
                                                     }
                                                 });
                                             }
-                                            else { health = false; }
-                                        }
-                                        if (order_item.shipment_amount > 0) {
-                                            dokuman.DokumanPaket.Eleman.ElemanListe.BelgeSicil.SatirDetay.Add(new SatirDetaySip() {
-                                                Items = new ItemsSip() {
-                                                    BarkodKodu = string.Empty,
-                                                    UrunGrubu = "GELİR",
-                                                    UrunKodu = Helper.global.order.siparis_kargo_sku,
-                                                    UrunTanim = "ARAS KARGO KARGO ÜCRETİ",
-                                                    Miktar = 1,
-                                                    OlcuBirim = "ADET",
-                                                    BirimFiyat = Math.Round((decimal)order_item.shipment_amount, 2, MidpointRounding.AwayFromZero),
-                                                    Tutar = Math.Round((decimal)order_item.shipment_amount, 2, MidpointRounding.AwayFromZero),
-                                                    IndOran = 0,
-                                                    KdvOran = 20,
-                                                    Notlar = string.Empty
-                                                },
-                                                StokSicil = new StokSicilSip() {
-                                                    UrunGrubu = "GELİR",
-                                                    UrunKodu = Helper.global.order.siparis_kargo_sku,
-                                                    UrunTanim = "ARAS KARGO",
-                                                    OlcuBirim = "ADET",
-                                                    KdvOran = 20,
-                                                },
-                                                HizmasSicil = new HizmasSicilSip() {
-                                                    UrunGrubu = "GELİR",
-                                                    UrunKodu = Helper.global.order.siparis_kargo_sku,
-                                                    UrunTanim = "ARAS KARGO",
-                                                    OlcuBirim = "ADET",
-                                                    KdvOran = 20,
-                                                }
-                                            });
-                                        }
-                                        #endregion
-                                        if (!health) continue;
+                                            #endregion
+                                            #endregion
 
-                                        var serializer = new XmlSerializer(dokuman.GetType());
-                                        using var stringwriter = new Utf8StringWriter();
-                                        var ns = new XmlSerializerNamespaces();
-                                        ns.Add("td", "http://www.ankarayazilim.com/TicariDokumanZarfi");
-                                        serializer.Serialize(stringwriter, dokuman, ns);
-                                        var order_xml = stringwriter.ToString();
-                                        if (!string.IsNullOrWhiteSpace(order_xml)) {
-                                            inserted_musteri_siparis_no = ank_erp.SendOrder(guid.ToString(), order_xml).Result;
-                                            if (!string.IsNullOrWhiteSpace(inserted_musteri_siparis_no)) {
-                                                db_helper.LogToServer(thread_id, "new_order", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + order_item.grand_total.ToString() + order_item.currency, customer.customer_id, "order");
-                                                #region Notify Order - NEW_ORDER
-                                                notifications.Add(new Notification() {
-                                                    customer_id = customer.customer_id,
-                                                    type = Notification.NotificationTypes.NEW_ORDER,
-                                                    order_label = order_item.order_label,
-                                                    notification_content = Constants.ANK_ERP,
-                                                    is_notification_sent = true
-                                                });
-                                                #endregion
+                                            if (!health) continue;
+
+                                            var serializer = new XmlSerializer(dokuman.GetType());
+                                            using var stringwriter = new Utf8StringWriter();
+                                            var ns = new XmlSerializerNamespaces();
+                                            ns.Add("td", "http://www.ankarayazilim.com/TicariDokumanZarfi");
+                                            serializer.Serialize(stringwriter, dokuman, ns);
+                                            var order_xml = stringwriter.ToString();
+                                            if (!string.IsNullOrWhiteSpace(order_xml)) {
+                                                inserted_musteri_siparis_no = ank_erp.SendOrder(guid.ToString(), order_xml).Result;
+                                                if (!string.IsNullOrWhiteSpace(inserted_musteri_siparis_no)) {
+                                                    db_helper.LogToServer(thread_id, "new_order", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + order_item.grand_total.ToString() + order_item.currency, customer.customer_id, "order");
+                                                    #region Notify Order - NEW_ORDER
+                                                    notifications.Add(new Notification() {
+                                                        customer_id = customer.customer_id,
+                                                        type = Notification.NotificationTypes.NEW_ORDER,
+                                                        order_label = order_item.order_label,
+                                                        notification_content = Constants.ANK_ERP,
+                                                        is_notification_sent = true
+                                                    });
+                                                    #endregion
+                                                }
+                                                else {
+                                                    db_helper.LogToServer(thread_id, "new_order_error", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + order_item.grand_total.ToString() + order_item.currency, customer.customer_id, "order");
+                                                    #region Notify Order - NEW_ORDER_ERROR
+                                                    notifications.Add(new Notification() {
+                                                        customer_id = customer.customer_id,
+                                                        type = Notification.NotificationTypes.NEW_ORDER_ERROR,
+                                                        order_label = order_item.order_label,
+                                                        notification_content = Constants.ANK_ERP,
+                                                        is_notification_sent = true
+                                                    });
+                                                    #endregion
+                                                }
                                             }
                                             else {
-                                                db_helper.LogToServer(thread_id, "new_order_error", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + order_item.grand_total.ToString() + order_item.currency, customer.customer_id, "order");
-                                                #region Notify Order - NEW_ORDER_ERROR
-                                                notifications.Add(new Notification() {
-                                                    customer_id = customer.customer_id,
-                                                    type = Notification.NotificationTypes.NEW_ORDER_ERROR,
-                                                    order_label = order_item.order_label,
-                                                    notification_content = Constants.ANK_ERP,
-                                                    is_notification_sent = true
-                                                });
-                                                #endregion
+                                                db_helper.LogToServer(thread_id, "order_process_error", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + "XML Serialization Error " + Constants.ANK_ERP, customer.customer_id, "order");
                                             }
-                                        }
-                                        else {
-                                            db_helper.LogToServer(thread_id, "order_process_error", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + "XML Serialization Error " + Constants.ANK_ERP, customer.customer_id, "order");
                                         }
                                     }
                                 }
