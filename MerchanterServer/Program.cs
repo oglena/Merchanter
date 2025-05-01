@@ -166,19 +166,19 @@ while (true) {
         MainLoop main_loop = new(thread_id, customer, db_helper);
         if (Helper.global != null && main_loop.DoWork()) {
             if (customer.product_sync_status && !customer.is_productsync_working) {
-                PrintConsole("PRODUCT SYNC COMPLETED", ConsoleColor.Blue);
+                PrintConsole("Product sync ended.", ConsoleColor.Green);
             }
             if (customer.order_sync_status && !customer.is_ordersync_working) {
-                PrintConsole("ORDER SYNC COMPLETED", ConsoleColor.Blue);
+                PrintConsole("Order sync ended.", ConsoleColor.Green);
             }
             if (customer.xml_sync_status && !customer.is_xmlsync_working) {
-                PrintConsole("XML SYNC COMPLETED", ConsoleColor.Blue);
+                PrintConsole("Xml sync ended.", ConsoleColor.Green);
             }
             if (customer.invoice_sync_status && !customer.is_invoicesync_working) {
-                PrintConsole("INVOICE SYNC COMPLETED", ConsoleColor.Blue);
+                PrintConsole("Invoice sync ended.", ConsoleColor.Green);
             }
             if (customer.notification_sync_status && !customer.is_notificationsync_working) {
-                PrintConsole("NOTIFICATION SYNC COMPLETED", ConsoleColor.Blue);
+                PrintConsole("Notification sync ended.", ConsoleColor.Green);
             }
         }
     }
@@ -190,9 +190,6 @@ while (true) {
         PrintConsole(_ex.Message + newline + _ex.ToString(), ConsoleColor.Red);
         PrintConsole("Thread will sleep 1m!"); Thread.Sleep(1000 * 60 * 1); //1m
         continue;
-    }
-    finally {
-
     }
 }
 

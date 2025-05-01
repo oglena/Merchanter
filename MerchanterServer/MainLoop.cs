@@ -1264,8 +1264,8 @@ internal class MainLoop {
 
                     #region Product Memory Take
                     PrintConsole(Constants.ANK_ERP + " product api take started.");
-                    var ank_products_zip = ank_erp.GetProducts().Result;
-                    //var ank_products_zip = ank_erp.GetProductsFromFolder("""C:\Users\caqn_\OneDrive\Masaüstü\otoahmet_products_3""");
+                    //var ank_products_zip = ank_erp.GetProducts().Result;
+                    var ank_products_zip = ank_erp.GetProductsFromFolder("""C:\Users\caqn_\OneDrive\Masaüstü\otoahmet_products_1""");
                     List<UrunSicil> ank_products = [];
                     if (ank_products_zip != null && ank_products_zip.Count > 0) {
                         foreach (var zip_item in ank_products_zip) {
@@ -1716,13 +1716,13 @@ internal class MainLoop {
 
                             #region Qty
                             if (selected_product.total_qty != item.total_qty) {
-                                //is_update = true;
+                                is_update = true;
                             }
                             #endregion
 
                             #region Price
                             if (selected_product.price != item.price) {
-                                //is_update = true;
+                                is_update = true;
                             }
                             if (selected_product.special_price != item.special_price) {
                                 is_update = true;
@@ -1757,7 +1757,7 @@ internal class MainLoop {
 
                             #region Category
                             if (selected_product.extension.category_ids != item.extension.category_ids) {
-                                //is_update = true;
+                                is_update = true;
                             }
                             #endregion
                         }
@@ -2248,9 +2248,9 @@ internal class MainLoop {
                                                                     Adi = order_item.billing_address.firstname.Trim().ToUpper(),
                                                                     Soyadi = order_item.billing_address.lastname.Trim().ToUpper(),
                                                                     Unvani = order_item.billing_address.is_corporate ? order_item.billing_address.firma_ismi.Trim().ToUpper() : (order_item.firstname.Trim().ToUpper() + " " + order_item.lastname.Trim().ToUpper()),
-                                                                    Adres1 = order_item.billing_address.street.Length > 40 ? string.Join(" ", order_item.billing_address.street.Split(' ').TakeWhile((s, i) => string.Join(" ", order_item.billing_address.street.Split(' ').Take(i + 1)).Length <= 40)).Trim().ToUpper() : order_item.billing_address.street.Trim().ToUpper(),
-                                                                    Adres2 = order_item.billing_address.street.Length > 40 ? string.Join(" ", order_item.billing_address.street.Split(' ').SkipWhile((s, i) => string.Join(" ", order_item.billing_address.street.Split(' ').Take(i + 1)).Length <= 40)).Trim().ToUpper() : string.Empty,
-                                                                    Adres3 = "",
+                                                                    Adres1 = order_item.billing_address.street.Length > 50 ? string.Join(" ", order_item.billing_address.street.Split(' ').TakeWhile((s, i) => string.Join(" ", order_item.billing_address.street.Split(' ').Take(i + 1)).Length <= 50)).Trim().ToUpper() : order_item.billing_address.street.Trim().ToUpper(),
+                                                                    Adres2 = order_item.billing_address.street.Length > 50 ? string.Join(" ", order_item.billing_address.street.Split(' ').SkipWhile((s, i) => string.Join(" ", order_item.billing_address.street.Split(' ').Take(i + 1)).Length <= 50).TakeWhile((s, i) => string.Join(" ", order_item.billing_address.street.Split(' ').SkipWhile((s, j) => string.Join(" ", order_item.billing_address.street.Split(' ').Take(j + 1)).Length <= 50).Take(i + 1)).Length <= 50)).Trim().ToUpper() : string.Empty,
+                                                                    Adres3 = order_item.billing_address.street.Length > 100 ? string.Join(" ", order_item.billing_address.street.Split(' ').SkipWhile((s, i) => string.Join(" ", order_item.billing_address.street.Split(' ').Take(i + 1)).Length <= 100)).Trim().ToUpper() : string.Empty,
                                                                     Ilce = order_item.billing_address.region.Trim().ToUpper(),
                                                                     Sehir = order_item.billing_address.city.Trim().ToUpper(),
                                                                     Ulke = "TÜRKİYE",
@@ -2269,9 +2269,10 @@ internal class MainLoop {
                                                                     Adi = order_item.shipping_address.firstname.Trim().ToUpper(),
                                                                     Soyadi = order_item.shipping_address.lastname.Trim().ToUpper(),
                                                                     Unvani = order_item.shipping_address.firstname.Trim().ToUpper() + " " + order_item.shipping_address.lastname.Trim().ToUpper(),
-                                                                    Adres1 = order_item.billing_address.street.Length > 40 ? string.Join(" ", order_item.billing_address.street.Split(' ').TakeWhile((s, i) => string.Join(" ", order_item.billing_address.street.Split(' ').Take(i + 1)).Length <= 40)).Trim().ToUpper() : order_item.billing_address.street.Trim().ToUpper(),
-                                                                    Adres2 = order_item.billing_address.street.Length > 40 ? string.Join(" ", order_item.billing_address.street.Split(' ').SkipWhile((s, i) => string.Join(" ", order_item.billing_address.street.Split(' ').Take(i + 1)).Length <= 40)).Trim().ToUpper() : string.Empty,
-                                                                    Adres3 = "",
+
+                                                                    Adres1 = order_item.shipping_address.street.Length > 50 ? string.Join(" ", order_item. shipping_address.street.Split(' ').TakeWhile((s, i) => string.Join(" ", order_item.shipping_address.street.Split(' ').Take(i + 1)).Length <= 50)).Trim().ToUpper() : order_item.shipping_address.street.Trim().ToUpper(),
+                                                                    Adres2 = order_item.shipping_address.street.Length > 50 ? string.Join(" ", order_item. shipping_address.street.Split(' ').SkipWhile((s, i) => string.Join(" ", order_item.shipping_address.street.Split(' ').Take(i + 1)).Length <= 50).TakeWhile((s, i) => string.Join(" ", order_item.shipping_address.street.Split(' ').SkipWhile((s, j) => string.Join(" ", order_item.shipping_address.street.Split(' ').Take(j + 1)).Length <= 50).Take(i + 1)).Length <= 50)).Trim().ToUpper() : string.Empty,
+                                                                    Adres3 = order_item.shipping_address.street.Length > 100 ? string.Join(" ", order_item.shipping_address.street.Split(' ').SkipWhile((s, i) => string.Join(" ", order_item.shipping_address.street.Split(' ').Take(i + 1)).Length <= 100)).Trim().ToUpper() : string.Empty,
                                                                     Ilce = order_item.shipping_address.region.Trim().ToUpper(),
                                                                     Sehir = order_item.shipping_address.city.Trim().ToUpper(),
                                                                     Ulke = "TÜRKİYE",
