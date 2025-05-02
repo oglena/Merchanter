@@ -115,7 +115,7 @@ namespace Merchanter {
         #endregion
 
 
-        #region Customers
+        #region Customer
         /// <summary>
         /// Gets the customer from the database
         /// </summary>
@@ -2004,7 +2004,7 @@ namespace Merchanter {
         }
         #endregion
 
-        #region Notifications
+        #region Notification
         /// <summary>
         /// Inserts the notifications to the database
         /// </summary>
@@ -2157,7 +2157,7 @@ namespace Merchanter {
         }
         #endregion
 
-        #region Sync Mappings
+        #region Mapping
         /// <summary>
         /// Gets the sync mappings from the database
         /// </summary>
@@ -2200,7 +2200,7 @@ namespace Merchanter {
 
         #region Catalog
 
-        #region Products
+        #region Product
         /// <summary>
         /// Gets product from the database
         /// </summary>
@@ -5285,7 +5285,7 @@ namespace Merchanter {
         }
         #endregion
 
-        #region Shipments
+        #region Shipment
         /// <summary>
         /// Gets the shipments from the database
         /// </summary>
@@ -5484,7 +5484,7 @@ namespace Merchanter {
         }
         #endregion
 
-        #region Invoices
+        #region Invoice
         /// <summary>
         /// Gets the invoices from the database
         /// </summary>
@@ -5867,7 +5867,7 @@ namespace Merchanter {
         }
         #endregion
 
-        #region Orders
+        #region Order
         /// <summary>
         /// Gets the orders from the database
         /// </summary>
