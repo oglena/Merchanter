@@ -1,12 +1,20 @@
 ﻿@inherits LayoutComponentBase
 
-<main class="form-signin">
-	@Body
-</main>
-
-<footer class="fixed-bottom bg-primary text-light text-center p-1 border-top">
-	<span class="copyright">©2024-2025 CERES Software & Consultancy, All Rights Reserved.</span>
-</footer>
+<FluentDesignTheme StorageName="theme" Mode="DesignThemeModes.System" OfficeColor="OfficeColor.Windows" />
+<FluentLayout>
+    <FluentStack Class="main" Orientation="Orientation.Horizontal" Width="100%">
+        <FluentBodyContent Class="form-signin">
+            <div class="content">
+                @Body
+            </div>
+        </FluentBodyContent>
+    </FluentStack>
+    <FluentFooter>
+        <span class="copyright">©2024-2025 CERES Software & Consultancy, All Rights Reserved.</span>
+        <FluentSpacer />
+        <a href="#" target="_blank">About Merchanter</a>
+    </FluentFooter>
+</FluentLayout>
 @code {
 
 }

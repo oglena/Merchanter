@@ -11,38 +11,38 @@
 @inject IConfiguration configuration
 @inject IPostHelper PostHelper
 
-<PageTitle>Admin Login | Merchanter</PageTitle>
+<PageTitle>Giriş | Merchanter</PageTitle>
 
 @if (customer != null) {
     <div class="container text-center mt-5">
         <div class="row">
-            <div class="col-1 col-sm-2 col-md-4"></div>
-            <div class="col-10 col-sm-8 col-md-4">
+            <div class="col-1 col-sm-2 col-md-3"></div>
+            <div class="col-10 col-sm-8 col-md-6">
                 <EditForm method="post" FormName="LoginForm" Model="customer" OnValidSubmit="LoginSubmit">
-                    <img class="mb-4" src="ceres_logo_transparent_base.png" alt="logo" width="150" />
-                    <h1 class="fw-normal">Merchanter Back Office</h1><hr />
+                    <img class="mb-4" src="ceres_logo_dark_base.png" alt="logo" width="150" />
+                    <h1 class="fw-normal">Merchanter Yönetici Girişi</h1><hr />
                     <span class="text-danger">@login_message</span>
                     <DataAnnotationsValidator></DataAnnotationsValidator>
                     <ValidationSummary></ValidationSummary>
                     <div class="form-floating mb-3">
-                        <InputText @bind-Value="customer.Email" class="form-control" placeholder="Enter your email"></InputText>
+                        <InputText @bind-Value="customer.Email" class="form-control" placeholder="Email adresinizi giriniz"></InputText>
                         <label for="floatingInput">Email</label>
                     </div>
                     <div class="form-floating mb-3">
-                        <InputText type="password" @bind-Value="customer.Password" class="form-control" placeholder="Enter your password"></InputText>
-                        <label for="floatingPassword">Password</label>
+                        <InputText type="password" @bind-Value="customer.Password" class="form-control" placeholder="Şifrenizi giriniz"></InputText>
+                        <label for="floatingPassword">Şifre</label>
                     </div>
                     <div class="form-floating mb-3">
                         <div class="checkbox">
                             <label>
-                                <InputCheckbox @bind-Value="remember_me"></InputCheckbox>&nbsp;&nbsp;&nbsp;Remember me
+                                <InputCheckbox @bind-Value="remember_me"></InputCheckbox>&nbsp;&nbsp;&nbsp;Beni hatırla
                             </label>
                         </div>
                     </div>
-                    <button type="submit" class="w-100 btn btn-lg btn-primary"><i class="bi bi-box-arrow-in-right"></i>&nbsp;Login</button>
+                    <button type="submit" class="w-100 btn btn-lg btn-primary"><i class="bi bi-box-arrow-in-right"></i>&nbsp;Giriş</button>
                 </EditForm>
             </div>
-            <div class="col-1 col-sm-2 col-md-4"></div>
+            <div class="col-1 col-sm-2 col-md-3"></div>
         </div>
     </div>
 }
@@ -54,8 +54,10 @@
     public bool remember_me { get; set; }
 
     private class CustomerLogin {
-        public string Email { get; set; } = "";
-        public string Password { get; set; } = "";
+        [Required]
+        public string Email { get; set; }
+        [Required]
+        public string Password { get; set; }
     }
 
     private string login_message = string.Empty;
@@ -72,7 +74,7 @@
                 if (response != null && response.Success && response.Data != null) {
                     var login = response.Data;
                     if (login != null && login.AuthenticateResult) {
-                        login_message = "Authenticating";
+                        login_message = "Giriş yapılıyor";
                         await HttpContextAccessor.HttpContext.SignInAsync(Variables.auth_cookie,
                             new ClaimsPrincipal(
                                 new ClaimsIdentity(
@@ -99,7 +101,7 @@
                     StateHasChanged();
                 }
                 else {
-                    login_message = "Cannot authenticate with provided credentials.";
+                    login_message = "Girilen bilgilerle giriş yapılamadı.";
                 }
             }
         }

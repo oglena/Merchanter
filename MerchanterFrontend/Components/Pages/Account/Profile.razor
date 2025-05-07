@@ -1,20 +1,14 @@
 ﻿@attribute [Authorize]
 @page "/Account/Profile"
 
-<div class="row mt-3 pb-2">
-	<div class="col-12 pb-2 bg-light rounded-3">
-		<h3>
-			Admin Profile
-			<a role="button" class="btn btn-outline-secondary" href="Account/Logout">Logout</a>
-		</h3>
-		@if (HttpContext != null && HttpContext.User.Identity != null &&
-				HttpContext.User.Identity.IsAuthenticated)
-		{
-			<span class="fs-6">@HttpContext.User.Identity.Name</span>
-		}
-	</div>
-</div>
+<PageTitle>Hesap > Profil | Merchanter</PageTitle>
+
+<h1>Firma Profili</h1>
+
+@if (HttpContext != null && HttpContext.User.Identity != null && HttpContext.User.Identity.IsAuthenticated) {
+    <span class="fs-6">@HttpContext.User.Identity.Name</span>
+}
 @code {
-	[CascadingParameter]
-	protected HttpContext? HttpContext { get; set; }
+    [CascadingParameter]
+    protected HttpContext? HttpContext { get; set; }
 }

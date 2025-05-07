@@ -1,7 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 @import '/_content/Microsoft.FluentUI.AspNetCore.Components/css/reboot.css';
 
 body {
-    --body-font: "Segoe UI Variable", "Segoe UI", sans-serif;
+    --body-font: "Montserrat", sans-serif;
     font-family: var(--body-font);
     font-size: var(--type-ramp-base-font-size);
     line-height: var(--type-ramp-base-line-height);

@@ -18,7 +18,6 @@ namespace MerchanterApp.ApiService.Controllers {
         [AllowAnonymous]
         public async Task<ActionResult<UserLoginResponse>> LoginUserAsync([FromBody] UserLoginRequest request) {
             var result = await authService.LoginUserAsync(request);
-
             return result;
         }
     }

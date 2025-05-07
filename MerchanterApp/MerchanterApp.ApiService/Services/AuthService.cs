@@ -37,6 +37,7 @@ namespace MerchanterApp.ApiService.Services {
                 response.AuthenticateResult = true;
                 response.AuthToken = generatedTokenInformation.Token;
                 response.AccessTokenExpireDate = generatedTokenInformation.TokenExpireDate;
+                response.CustomerInformation = customer;
             }
 
             return response;
