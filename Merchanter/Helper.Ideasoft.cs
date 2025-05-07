@@ -23,7 +23,7 @@ namespace Merchanter {
                 marketPriceDetail = _product.price.ToString().Replace(".", string.Empty).Replace(",", "."),
                 stockAmount = _product.total_qty,
                 volumetricWeight = _product.extension.volume,
-                customShippingDisabled = 1, 
+                customShippingDisabled = 1,
                 brand = _brand_id.HasValue ? _brand_id > 0 ? new { id = _brand_id } : null : null,
                 status = _product.extension.is_enabled == true ? 1 : 0,
                 detail = new {
@@ -31,24 +31,30 @@ namespace Merchanter {
                     details = Base64ToString(_product.extension.description ?? "")
                 },
                 categories = category_ids.Count > 0 ? category_ids : null,
-                //images = _product.images != null && _product.images.Count > 0 ? new List<dynamic>() : null
+                images = _product.images != null && _product.images.Count > 0 ? new List<dynamic>() : null
             };
 
-            //if (_product.images != null && _product.images.Count > 0) {
-            //    foreach (var image_item in _product.images) {
-            //        pro_json?.images?.Add(new {
-            //            filename = image_item.image_name?.Split(".")[0], extension = image_item.image_name?.Split(".")[1],
-            //            attachment = "data:image/jpeg;base64," + image_item.image_base64
-            //        });
-            //    }
-            //}
+            if (_product.images != null && _product.images.Count > 0) {
+                foreach (var image_item in _product.images) {
+                    string? base64image = GetImageAsBase64("""C:\MerchanterServer\ankaraerp""" + @"\Images\" + global.customer.user_name + @"\" + image_item.sku, image_item.image_name);
+                    if (!string.IsNullOrWhiteSpace(base64image)) {
+                        pro_json?.images?.Add(new {
+                            filename = image_item.image_name?.Split(".")[0], extension = image_item.image_name?.Split(".")[1].ToLower(),
+                            attachment = "data:image/jpeg;base64," + base64image
+                        });
+                    }
+                    else {
+                        PrintConsole("Image not found: " + image_item.image_name);
+                    }
+                }
+            }
 
             using Executioner executioner = new();
             var json = executioner.Execute(global.ideasoft.store_url + "/admin-api/products/" + _id.ToString(),
                 RestSharp.Method.Put, pro_json, global.ideasoft.access_token);
             if (json != null) {
                 var idea_product = Newtonsoft.Json.JsonConvert.DeserializeObject<IDEA_Product>(json);
-                PrintConsole("Product Updated: " + idea_product?.id.ToString() + " - " + idea_product?.name);
+                //PrintConsole("Product Updated: " + idea_product?.id.ToString() + " - " + idea_product?.name);
                 return idea_product != null ? idea_product.id : 0;
             }
             return 0;
@@ -159,10 +165,16 @@ namespace Merchanter {
 
             if (_product.images != null && _product.images.Count > 0) {
                 foreach (var image_item in _product.images) {
-                    pro_json?.images?.Add(new {
-                        filename = image_item.image_name?.Split(".")[0], extension = image_item.image_name?.Split(".")[1],
-                        attachment = "data:image/jpeg;base64," + image_item.image_base64
-                    });
+                    string? base64image = GetImageAsBase64(Environment.CurrentDirectory + @"\" + global.customer.user_name + @"\Images\" + image_item.sku, image_item.image_name);
+                    if (!string.IsNullOrWhiteSpace(base64image)) {
+                        pro_json?.images?.Add(new {
+                            filename = image_item.image_name?.Split(".")[0], extension = image_item.image_name?.Split(".")[1],
+                            attachment = "data:image/jpeg;base64," + base64image
+                        });
+                    }
+                    else {
+                        PrintConsole("Image not found: " + image_item.image_name);
+                    }
                 }
             }
 
@@ -170,7 +182,7 @@ namespace Merchanter {
             var json = executioner.Execute(global.ideasoft.store_url + "/admin-api/products", RestSharp.Method.Post, pro_json, global.ideasoft.access_token);
             if (json != null) {
                 var idea_product = Newtonsoft.Json.JsonConvert.DeserializeObject<IDEA_Product>(json);
-                PrintConsole("Product Inserted: " + idea_product?.id.ToString() + " - " + idea_product?.name);
+                //PrintConsole("Product Inserted: " + idea_product?.id.ToString() + " - " + idea_product?.name);
                 return idea_product != null ? idea_product.id : 0;
             }
             return 0;

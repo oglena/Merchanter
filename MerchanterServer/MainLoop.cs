@@ -11,8 +11,8 @@ using System.Xml.Serialization;
 namespace MerchanterServer;
 internal class MainLoop {
     #region Constant Variables
-    public static string newline = "\r\n";
-    public static string not_available = "N/A";
+    public const string newline = "\r\n";
+    public const string not_available = "N/A";
     #endregion
 
     #region Properties
@@ -53,35 +53,23 @@ internal class MainLoop {
         db_helper = _db_helper;
 
         #region Integrations
-        product_main_source = Helper.global.integrations.Where(x =>
-            x.work?.type == Work.WorkType.PRODUCT &&
-            x.work?.direction == Work.WorkDirection.MAIN_SOURCE &&
-            x.work.status && x.is_active
+        product_main_source = Helper.global.integrations.Where(x => x.work?.type == Work.WorkType.PRODUCT &&
+            x.work?.direction == Work.WorkDirection.MAIN_SOURCE && x.work.status && x.is_active
         ).FirstOrDefault()?.work.name;
-        order_main_target = Helper.global.integrations.Where(x =>
-            x.work?.type == Work.WorkType.ORDER &&
-            x.work?.direction == Work.WorkDirection.MAIN_TARGET &&
-            x.work.status && x.is_active
+        order_main_target = Helper.global.integrations.Where(x => x.work?.type == Work.WorkType.ORDER &&
+            x.work?.direction == Work.WorkDirection.MAIN_TARGET && x.work.status && x.is_active
         ).FirstOrDefault()?.work.name;
-        other_product_sources = [.. Helper.global.integrations.Where(x =>
-            x.work?.type == Work.WorkType.PRODUCT &&
-            x.work?.direction == Work.WorkDirection.SOURCE &&
-            x.work.status && x.is_active
+        other_product_sources = [.. Helper.global.integrations.Where(x => x.work?.type == Work.WorkType.PRODUCT &&
+            x.work?.direction == Work.WorkDirection.SOURCE && x.work.status && x.is_active
         ).Select(x => x.work.name)];
-        product_targets = [.. Helper.global.integrations.Where(x =>
-            x.work?.type == Work.WorkType.PRODUCT &&
-            x.work?.direction == Work.WorkDirection.TARGET &&
-            x.work.status && x.is_active
+        product_targets = [.. Helper.global.integrations.Where(x => x.work?.type == Work.WorkType.PRODUCT &&
+            x.work?.direction == Work.WorkDirection.TARGET && x.work.status && x.is_active
         ).Select(x => x.work.name)];
-        order_sources = [.. Helper.global.integrations.Where(x =>
-            x.work?.type == Work.WorkType.ORDER &&
-            x.work?.direction == Work.WorkDirection.SOURCE &&
-            x.work.status && x.is_active
+        order_sources = [.. Helper.global.integrations.Where(x => x.work?.type == Work.WorkType.ORDER &&
+            x.work?.direction == Work.WorkDirection.SOURCE && x.work.status && x.is_active
         ).Select(x => x.work.name)];
-        available_shipments = [.. Helper.global.integrations.Where(x =>
-            x.work?.type == Work.WorkType.SHIPMENT &&
-            x.work?.direction == Work.WorkDirection.BOTH &&
-            x.work.status && x.is_active
+        available_shipments = [.. Helper.global.integrations.Where(x => x.work?.type == Work.WorkType.SHIPMENT &&
+            x.work?.direction == Work.WorkDirection.BOTH && x.work.status && x.is_active
         ).Select(x => x.work.name)];
         Console.Write("ProductMainSource:" + product_main_source + "; OrderMainTarget:" + order_main_target);
         Console.WriteLine("; OtherProductSources:" + string.Join(",", other_product_sources));
@@ -101,7 +89,9 @@ internal class MainLoop {
 
         #region Xml LOOP
         if (other_product_sources?.Length > 0) {
+            #region Currency XProducts from MerchanterDB
             xproducts = db_helper.GetXProducts(customer.customer_id);
+            #endregion
             if (customer.xml_sync_status && !customer.is_xmlsync_working) {
                 db_helper.xml_clone.SetXmlSyncWorking(customer.customer_id, true);
                 if (health) { this.XmlLoop(Helper.global); }
@@ -114,6 +104,7 @@ internal class MainLoop {
         if (customer.product_sync_status && !customer.is_productsync_working) {
             db_helper.SetProductSyncWorking(customer.customer_id, true);
 
+            #region Current Catalog from MerchanterDB
             default_brand = db_helper.GetDefaultBrand(customer.customer_id);
             root_category = db_helper.GetRootCategory(customer.customer_id);
             Console.WriteLine("DefaultBrand:" + default_brand.brand_name + ", RootCategory:" + root_category?.category_name);
@@ -126,8 +117,8 @@ internal class MainLoop {
             Console.Write("ProductTargets:" + product_target_relation.Count);
             category_target_relation = db_helper.GetCategoryTargets(customer.customer_id);
             Console.Write("; CategoryTargets:" + category_target_relation.Count + Environment.NewLine);
-
             if (products == null) { health = false; }
+            #endregion
 
             if (health) { this.ProductLoop(out health); }
 
@@ -146,7 +137,9 @@ internal class MainLoop {
         if (customer.order_sync_status && !customer.is_ordersync_working) {
             db_helper.SetOrderSyncWorking(customer.customer_id, true);
 
+            #region Current Orders from MerchanterDB
             orders = db_helper.GetOrders(customer.customer_id, OrderStatus.GetProcessEnabledCodes());
+            #endregion
 
             if (health) { this.OrderLoop(out health); }
 
@@ -1264,8 +1257,8 @@ internal class MainLoop {
 
                     #region Product Memory Take
                     PrintConsole(Constants.ANK_ERP + " product api take started.");
-                    //var ank_products_zip = ank_erp.GetProducts().Result;
-                    var ank_products_zip = ank_erp.GetProductsFromFolder("""C:\Users\caqn_\OneDrive\Masaüstü\otoahmet_products_1""");
+                    var ank_products_zip = ank_erp.GetProducts().Result;
+                    //var ank_products_zip = ank_erp.GetProductsFromFolder("""C:\Users\caqn_\OneDrive\Masaüstü\otoahmet_products_2""");
                     List<UrunSicil> ank_products = [];
                     if (ank_products_zip != null && ank_products_zip.Count > 0) {
                         foreach (var zip_item in ank_products_zip) {
@@ -1273,7 +1266,7 @@ internal class MainLoop {
                         }
                     }
                     else {
-                        PrintConsole(Constants.ANK_ERP + " connection:products failed");
+                        PrintConsole(Constants.ANK_ERP + " connection:products failed.");
                     }
                     PrintConsole(Constants.ANK_ERP + " " + ank_products.Count + " products found in api.", false);
                     ank_products = [.. ank_products.DistinctBy(x => x.UrunTanim.SicilKodu)];  //Remove duplicates
@@ -1281,7 +1274,7 @@ internal class MainLoop {
                     #endregion
 
                     foreach (var item in ank_products) {
-                        if (item.UrunTanim.SicilKodu == "144608527RÜ") continue; //this products are corrupted
+                        if (customer.customer_id == 3 && item.UrunTanim.SicilKodu == "144608527RÜ") continue; //this products are corrupted
                         if (Helper.global.product.is_barcode_required) {
                             if (string.IsNullOrWhiteSpace(item.UrunTanim.BarkodKodu?.ToString())) {
                                 PrintConsole(Constants.ANK_ERP + " " + item.UrunTanim.SicilKodu + " barcode missing, not sync.", false);
@@ -1317,7 +1310,7 @@ internal class MainLoop {
                                 customer_id = customer.customer_id,
                                 sku = item.UrunTanim.SicilKodu.Trim(),
                                 barcode = item.UrunTanim.BarkodKodu != null ? item.UrunTanim.BarkodKodu.Trim() : string.Empty,
-                                name = !string.IsNullOrWhiteSpace(item.UrunTanim.SicilAdiy) ? item.UrunTanim.SicilAdiy.Trim() : item.UrunTanim.SicilAdi.Trim(),
+                                name = !string.IsNullOrWhiteSpace(item.UrunTanim.SicilAdiy) ? item.UrunTanim.SicilAdiy.Trim() : item.UrunTanim.SicilAdi?.Trim(),
                                 type = Product.ProductTypes.SIMPLE,
                                 tax = item.UrunTanim.KdvOrani,
                                 currency = item.UrunTanim.ParaCinsi.Trim(),
@@ -1381,7 +1374,7 @@ internal class MainLoop {
                                                 product_id = existed_image != null ? existed_image.product_id : 0,
                                                 sku = item.UrunTanim.SicilKodu.Trim(),
                                                 image_name = image_name,
-                                                image_base64 = item.Images.Image[i].IBase64Value,
+                                                image_base64 = null,
                                                 is_default = (i == 0),
                                                 type = ImageTypes.url,
                                                 image_url = Path.Combine(customer.user_name, item.UrunTanim.SicilKodu.Trim(), image_name)
@@ -1486,11 +1479,11 @@ internal class MainLoop {
                     foreach (var item in live_products) {
                         bool is_update = false; bool is_insert = false;
                         Product prepared_product = null;
-                        var selected_product = products.Where(x => x.sku == item.sku).FirstOrDefault();
+                        var selected_product = products.FirstOrDefault(x => x.sku == item.sku);
 
                         if (selected_product != null) { //existing product
                             #region Name
-                            if (selected_product.name?.ToString().Trim().ToLower() != item.name?.ToString().Trim().ToLower()) {
+                            if (selected_product.name?.ToString().Trim() != item.name?.ToString().Trim()) {
 
                             }
                             #endregion
@@ -1689,6 +1682,10 @@ internal class MainLoop {
                     }
                     #endregion
 
+                    foreach (var item in products) {
+
+                    }
+
                     if (notifications.Count > 0) {
                         db_helper.InsertNotifications(customer.customer_id, notifications);
                     }
@@ -1701,46 +1698,55 @@ internal class MainLoop {
                     var live_idea_brands = Helper.GetIdeaBrands(); PrintConsole(Constants.IDEASOFT + " total " + live_idea_brands?.Count + " brands found.");
 
                     foreach (var item in live_products) {
-                        bool is_update = false; bool is_insert = false;
+                        bool is_update = false; bool is_insert = false; string updated_attrs = "";
+                        bool is_processed = false; int idea_product_id = 0;
                         Product prepared_product = null;
-                        var selected_product = products.Where(x => x.sku == item.sku).FirstOrDefault();
+                        var selected_product = products.FirstOrDefault(x => x.sku == item.sku);
 
                         if (selected_product != null) { //existing product
                             #region Image
-                            //if (item.images != null && item.images.Count > 0)
-                            //    foreach (var image_item in item.images) {
-                            //        if (selected_product.images?.FirstOrDefault(x => x.image_name == image_item.image_name) == null)
-                            //            is_update = true;
-                            //    }
+                            if (item.images != null && item.images.Count > 0) {
+                                foreach (var image_item in item.images) {
+                                    if (selected_product.images?.FirstOrDefault(x => x.image_name == image_item.image_name) == null) {
+                                        is_update = true; updated_attrs += "image,";
+                                    }
+                                }
+                            }
                             #endregion
 
                             #region Qty
                             if (selected_product.total_qty != item.total_qty) {
                                 is_update = true;
+                                updated_attrs += "qty,";
                             }
                             #endregion
 
                             #region Price
                             if (selected_product.price != item.price) {
                                 is_update = true;
+                                updated_attrs += "price,";
                             }
                             if (selected_product.special_price != item.special_price) {
                                 is_update = true;
+                                updated_attrs += "special_price,";
                             }
                             #endregion
 
                             #region Name
                             if (string.IsNullOrWhiteSpace(selected_product.name)) {
                                 is_update = true;
+                                updated_attrs += "name,";
                             }
                             else if (!selected_product.name.Equals(item.name, StringComparison.CurrentCulture)) {
                                 is_update = true;
+                                updated_attrs += "name,";
                             }
                             #endregion
 
                             #region Is Enabled
                             if (selected_product.extension.is_enabled != item.extension.is_enabled) {
                                 is_update = true;
+                                updated_attrs += "is_enabled,";
                             }
                             #endregion
 
@@ -1748,9 +1754,11 @@ internal class MainLoop {
                             if (selected_product.extension.brand != null) {
                                 if (!selected_product.extension.brand.brand_name.Equals(item.extension.brand?.brand_name)) {
                                     is_update = true;
+                                    updated_attrs += "brand,";
                                 }
                                 if (selected_product.extension.brand_id != item.extension.brand_id) {
                                     is_update = true;
+                                    updated_attrs += "brand_id,";
                                 }
                             }
                             #endregion
@@ -1758,6 +1766,7 @@ internal class MainLoop {
                             #region Category
                             if (selected_product.extension.category_ids != item.extension.category_ids) {
                                 is_update = true;
+                                updated_attrs += "category_ids,";
                             }
                             #endregion
                         }
@@ -1799,16 +1808,12 @@ internal class MainLoop {
                             is_insert = true;
                         }
 
-                        bool is_processed = false; int idea_product_id = 0;
                         if (is_update) item.id = selected_product != null ? selected_product.id : 0;  //important early arrangement
                         if (is_update || is_insert) {
                             var selected_live_idea_product = Helper.GetIdeaProduct(item.sku);
-                            //var relation = product_target_relation.FirstOrDefault(x => x.product_id == item.id);
-                            //if (relation != null && relation.target_id > 0) { //update ideasoft product
                             if (selected_live_idea_product != null) { //update ideasoft product
                                 idea_product_id = selected_live_idea_product.id;
                                 //idea_product_id = relation.target_id;
-                                //if (selected_live_idea_product.price1 != item.price || selected_live_idea_product.stockAmount != item.total_qty) {
                                 #region Ideasoft Category and Brand Sync
                                 List<int> idea_category_ids = Helper.GetIdeaCategoryIds(thread_id, db_helper, customer, ref live_idea_categories,
                                     category_target_relation, item.extension.categories);
@@ -1817,11 +1822,12 @@ internal class MainLoop {
                                 idea_product_id = Helper.UpdateIdeaProduct(idea_product_id, item, idea_brand_id, idea_category_ids);
                                 if (idea_product_id > 0) {
                                     is_processed = true;
-                                    PrintConsole("Sku:" + item.sku + " updated and sync to Id:" + idea_product_id.ToString() + " ," + Constants.IDEASOFT);
+                                    PrintConsole("Sku:" + item.sku + " updated and sync to Id:" + idea_product_id.ToString() + " ," + Constants.IDEASOFT, ConsoleColor.Green);
                                     db_helper.LogToServer(thread_id, "product_updated", Helper.global.settings.company_name + " Sku:" + item.sku + ", " + Constants.IDEASOFT, customer.customer_id, "product");
                                 }
                                 else {
                                     notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_UPDATE_ERROR, product_sku = item.sku, notification_content = Constants.IDEASOFT });
+                                    PrintConsole("Sku:" + item.sku + " update error" + " ," + Constants.IDEASOFT, ConsoleColor.Red);
                                     db_helper.LogToServer(thread_id, "product_update_error", Helper.global.settings.company_name + " Sku:" + item.sku, customer.customer_id, "product");
                                 }
                                 //}
@@ -1877,10 +1883,10 @@ internal class MainLoop {
                                         });
                                     }
                                 }
-                                PrintConsole("Sku:" + item.sku + " updated on MerchanterDB.");
+                                PrintConsole("Sku:" + item.sku + " updated on MerchanterDB. " + (updated_attrs.Length > 0 ? ("-" + updated_attrs[..^1]) : ""));
                             }
                             else {
-                                PrintConsole("Sku:" + item.sku + " " + "update error" + ", " + Constants.IDEASOFT);
+                                PrintConsole("Sku:" + item.sku + " " + "update error on MerchanterDB. " + (updated_attrs.Length > 0 ? ("-" + updated_attrs[..^1]) : ""));
                             }
                         }
 
@@ -1898,8 +1904,27 @@ internal class MainLoop {
                                 db_helper.LogToServer(thread_id, "new_product", Helper.global.settings.company_name + " Sku:" + item.sku, customer.customer_id, "product");
                             }
                             else {
-                                PrintConsole("Sku:" + item.sku + " " + "insert error" + ", " + Constants.IDEASOFT);
+                                PrintConsole("Sku:" + item.sku + " " + "insert error on MerchanterDB.");
                             }
+                        }
+                        else {
+                            PrintConsole("Insert error" + ", " + Constants.IDEASOFT);
+                        }
+                    }
+
+                    foreach (var item in products) {
+                        var deleted_product = live_products.FirstOrDefault(x => x.sku == item.sku);
+                        if (deleted_product == null && item.extension.is_enabled) {
+                            item.extension.is_enabled = false;
+                            if (db_helper.UpdateProducts(customer.customer_id, [item])) {
+                                PrintConsole("Sku:" + item.sku + " updated on MerchanterDB. -disabled");
+                            }
+                            else {
+                                PrintConsole("Sku:" + item.sku + " " + "update error on MerchanterDB. -disabled");
+                            }
+                        }
+                        if (deleted_product != null && !item.extension.is_enabled) {
+                            //TODO: Disable product on ideasoft
                         }
                     }
 
@@ -2270,8 +2295,8 @@ internal class MainLoop {
                                                                     Soyadi = order_item.shipping_address.lastname.Trim().ToUpper(),
                                                                     Unvani = order_item.shipping_address.firstname.Trim().ToUpper() + " " + order_item.shipping_address.lastname.Trim().ToUpper(),
 
-                                                                    Adres1 = order_item.shipping_address.street.Length > 50 ? string.Join(" ", order_item. shipping_address.street.Split(' ').TakeWhile((s, i) => string.Join(" ", order_item.shipping_address.street.Split(' ').Take(i + 1)).Length <= 50)).Trim().ToUpper() : order_item.shipping_address.street.Trim().ToUpper(),
-                                                                    Adres2 = order_item.shipping_address.street.Length > 50 ? string.Join(" ", order_item. shipping_address.street.Split(' ').SkipWhile((s, i) => string.Join(" ", order_item.shipping_address.street.Split(' ').Take(i + 1)).Length <= 50).TakeWhile((s, i) => string.Join(" ", order_item.shipping_address.street.Split(' ').SkipWhile((s, j) => string.Join(" ", order_item.shipping_address.street.Split(' ').Take(j + 1)).Length <= 50).Take(i + 1)).Length <= 50)).Trim().ToUpper() : string.Empty,
+                                                                    Adres1 = order_item.shipping_address.street.Length > 50 ? string.Join(" ", order_item.shipping_address.street.Split(' ').TakeWhile((s, i) => string.Join(" ", order_item.shipping_address.street.Split(' ').Take(i + 1)).Length <= 50)).Trim().ToUpper() : order_item.shipping_address.street.Trim().ToUpper(),
+                                                                    Adres2 = order_item.shipping_address.street.Length > 50 ? string.Join(" ", order_item.shipping_address.street.Split(' ').SkipWhile((s, i) => string.Join(" ", order_item.shipping_address.street.Split(' ').Take(i + 1)).Length <= 50).TakeWhile((s, i) => string.Join(" ", order_item.shipping_address.street.Split(' ').SkipWhile((s, j) => string.Join(" ", order_item.shipping_address.street.Split(' ').Take(j + 1)).Length <= 50).Take(i + 1)).Length <= 50)).Trim().ToUpper() : string.Empty,
                                                                     Adres3 = order_item.shipping_address.street.Length > 100 ? string.Join(" ", order_item.shipping_address.street.Split(' ').SkipWhile((s, i) => string.Join(" ", order_item.shipping_address.street.Split(' ').Take(i + 1)).Length <= 100)).Trim().ToUpper() : string.Empty,
                                                                     Ilce = order_item.shipping_address.region.Trim().ToUpper(),
                                                                     Sehir = order_item.shipping_address.city.Trim().ToUpper(),

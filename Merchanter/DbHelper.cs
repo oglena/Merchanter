@@ -620,6 +620,9 @@ namespace Merchanter {
                 DbSettings = this.GetSettings(_customer_id);
                 Helper.global = new SettingsMerchanter(_customer_id);
                 Helper.global.customer_id = _customer_id;
+                var customer = GetCustomer(_customer_id);
+                if(customer != null) { Helper.global.customer = customer; }
+                else { PrintConsole("Customer not found!", ConsoleColor.Red); return null; }
 
                 #region Core Settings
                 Helper.global.platforms = LoadPlatforms();
@@ -3749,7 +3752,7 @@ namespace Merchanter {
                             cmd.Parameters.Add(new MySqlParameter("type", item.type));
                             cmd.Parameters.Add(new MySqlParameter("image_name", item.image_name));
                             cmd.Parameters.Add(new MySqlParameter("image_url", item.image_url));
-                            //cmd.Parameters.Add(new MySqlParameter("image_base64", item.image_base64));
+                            cmd.Parameters.Add(new MySqlParameter("image_base64", item.image_base64));
                             cmd.Parameters.Add(new MySqlParameter("is_default", item.is_default));
                             cmd.Parameters.Add(new MySqlParameter("update_date", DateTime.Now));
                             if (state != System.Data.ConnectionState.Open) connection.Open();
@@ -4856,7 +4859,6 @@ namespace Merchanter {
                 dataReader.Close();
 
                 if (state == System.Data.ConnectionState.Open) connection.Close();
-
                 return categories;
             }
             catch (Exception ex) {
@@ -4894,7 +4896,6 @@ namespace Merchanter {
                 dataReader.Close();
 
                 if (state == System.Data.ConnectionState.Open) connection.Close();
-
                 return c;
             }
             catch (Exception ex) {
@@ -4931,7 +4932,6 @@ namespace Merchanter {
                 dataReader.Close();
 
                 if (state == System.Data.ConnectionState.Open) connection.Close();
-
                 return c;
             }
             catch (Exception ex) {
@@ -4983,8 +4983,7 @@ namespace Merchanter {
         /// <returns>[No change] or [Error] returns 'null'</returns>
         public bool UpdateCategory(int _customer_id, Category _category) {
             try {
-                if (state != System.Data.ConnectionState.Open)
-                    connection.Open();
+                if (state != System.Data.ConnectionState.Open) connection.Open();
 
                 int val = 0;
                 string _query = "UPDATE categories SET category_name=@category_name,is_active=@is_active,parent_id=@parent_id,source_category_id=@source_category_id " +
@@ -4998,8 +4997,7 @@ namespace Merchanter {
                 cmd.Parameters.Add(new MySqlParameter("source_category_id", _category.source_category_id));
                 val = cmd.ExecuteNonQuery();
 
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
 
                 if (val > 0)
                     return true;

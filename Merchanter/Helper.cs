@@ -114,6 +114,31 @@ namespace Merchanter {
             }
             return string.Empty;
         }
+
+        /// <summary>
+        /// Converts image file to Base64 string
+        /// </summary>
+        /// <param name="folderUrl">Image Folder</param>
+        /// <param name="imageName">Image Name</param>
+        /// <returns>Base64 string</returns>
+        /// <exception cref="FileNotFoundException"></exception>
+        public static string? GetImageAsBase64(string folderUrl, string imageName) {
+            try {
+                var filePath = Path.Combine(folderUrl, imageName);
+                if (File.Exists(filePath)) {
+                    byte[] imageBytes = File.ReadAllBytes(filePath);
+                    return Convert.ToBase64String(imageBytes);
+                }
+                else {
+                    //throw new FileNotFoundException("Image not found at the specified path.");
+                    return null;
+                }
+            }
+            catch (Exception ex) {
+                Console.WriteLine($"Error: {ex.Message}");
+                return null;
+            }
+        }
         #endregion
     }
 }

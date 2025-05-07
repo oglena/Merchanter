@@ -7,4 +7,8 @@ builder.AddProject<Projects.MerchanterApp_CMS>( "MerchanterCMS" )
     .WaitFor( server_service );
 
 
+builder.AddProject<Projects.MerchanterFrontend>("MerchanterFrontend")
+    .WithReference(merchanter_api)
+    .WaitFor(merchanter_api);
+
 builder.Build().Run();
