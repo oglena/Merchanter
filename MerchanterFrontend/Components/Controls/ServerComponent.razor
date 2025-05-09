@@ -1,0 +1,160 @@
+﻿@rendermode InteractiveServer
+@using System.Text.Json.Serialization
+@using Newtonsoft.Json
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@inject NavigationManager navigationManager
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IConfiguration configuration
+@inject IPostHelper PostHelper
+@inject IToastService ToastService
+
+@if (customer != null) {
+    @if (server != null && server.PID > 0) {
+        <div class="card shadow float-end">
+            <div class="card-body text-center">
+                <h2 class="card-title text-success">Server Çalışıyor</h2>
+                <p class="card-text text-muted"><AlertComponent page_message="@page_message" /></p>
+                <h3><span class="badge text-bg-success">@server.customer?.user_name&nbsp;&nbsp;<a class="btn btn btn-primary btn-sm" href="Account/Settings/General" title="Genel Ayarlar"><i class="bi bi-gear"></i></a></span></h3>
+                <hr />
+                <p class="card-text" style="font-size:15pt;">İşlem No:&nbsp; @server.PID</p>
+                <hr />
+                <h3>Çalışma Durumları</h3>
+                <p class='card-text @(!customer.product_sync_status ? "text-muted" : "")'>Ürün Senkronizasyonu:&nbsp; @(!customer.product_sync_status ? (MarkupString)"<i class='bi bi-x-circle-fill text-danger'></i>" : customer.is_productsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+                <p class='card-text @(!customer.order_sync_status ? "text-muted" : "")'>Sipariş Senkronizasyonu:&nbsp; @(!customer.order_sync_status ? (MarkupString)"<i class='bi bi-x-circle-fill text-danger'></i>" : customer.is_ordersync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+                <p class='card-text @(!customer.notification_sync_status ? "text-muted" : "")'>Bildirim Senkronizasyonu:&nbsp; @(!customer.notification_sync_status ? (MarkupString)"<i class='bi bi-x-circle-fill text-danger'></i>" : customer.is_notificationsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+                <p class='card-text @(!customer.invoice_sync_status ? "text-muted" : "")'>Fatura Senkronizasyonu:&nbsp; @(!customer.invoice_sync_status ? (MarkupString)"<i class='bi bi-x-circle-fill text-danger'></i>" : customer.is_invoicesync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+                <p class='card-text @(!customer.xml_sync_status ? "text-muted" : "")'>XML Senkronizasyonu:&nbsp; @(!customer.xml_sync_status ? (MarkupString)"<i class='bi bi-x-circle-fill text-danger'></i>" : customer.is_xmlsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+                <p class="card-footer">
+                    <a href="@("Account/Logs")" class="btn btn-sm btn-outline-primary shadow" title="Olay Günlükleri"><i class="bi bi-journal-text"></i></a>
+                    <button type="button" class="btn btn-sm btn-outline-primary shadow" @onclick="RefreshServers" disabled="@is_refreshing" title="Yenile"><i class='bi bi-arrow-clockwise @(is_refreshing ? "d-none" : "")'></i><span class="spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")" aria-hidden="true"></span></button>
+                    <button type="button" class="btn btn-sm btn-outline-danger shadow" @onclick="( () => StopServer(server.customer_id))">
+                        Merchanter'ı Durdur
+                    </button>
+                </p>
+            </div>
+        </div>
+    }
+    else {
+        <div class="card shadow float-end">
+            <div class="card-body text-center">
+                <h2 class="card-title text-muted">Server Beklemede</h2>
+                <p class="card-text text-muted"><AlertComponent page_message="@page_message" /></p>
+                <h2><span class="badge text-bg-danger">@customer.user_name&nbsp;&nbsp;<a class="btn btn btn-primary btn-sm" href="Account/Settings/General" title="Genel Ayarlar"><i class="bi bi-gear"></i></a></span></h2>
+                <hr />
+                <p class="card-text" style="font-size:15pt;">İşlem No:&nbsp; 0</p>
+                <hr />
+                <h3>Çalışma Durumları</h3>
+                <p class='card-text @(!customer.product_sync_status ? "text-muted" : "")'>Ürün Senkronizasyonu:&nbsp; @(!customer.product_sync_status ? (MarkupString)"<i class='bi bi-x-circle-fill text-danger'></i>" : customer.is_productsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+                <p class='card-text @(!customer.order_sync_status ? "text-muted" : "")'>Sipariş Senkronizasyonu:&nbsp; @(!customer.order_sync_status ? (MarkupString)"<i class='bi bi-x-circle-fill text-danger'></i>" : customer.is_ordersync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+                <p class='card-text @(!customer.notification_sync_status ? "text-muted" : "")'>Bildirim Senkronizasyonu:&nbsp; @(!customer.notification_sync_status ? (MarkupString)"<i class='bi bi-x-circle-fill text-danger'></i>" : customer.is_notificationsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+                <p class='card-text @(!customer.invoice_sync_status ? "text-muted" : "")'>Fatura Senkronizasyonu:&nbsp; @(!customer.invoice_sync_status ? (MarkupString)"<i class='bi bi-x-circle-fill text-danger'></i>" : customer.is_invoicesync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+                <p class='card-text @(!customer.xml_sync_status ? "text-muted" : "")'>XML Senkronizasyonu:&nbsp; @(!customer.xml_sync_status ? (MarkupString)"<i class='bi bi-x-circle-fill text-danger'></i>" : customer.is_xmlsync_working ? (MarkupString)"<i class='bi bi-check-circle-fill text-success'></i>" : (MarkupString)"<i class='bi bi-dash-circle text-danger'></i>")</p>
+                <p class="card-footer">
+                    <a href="@("Account/Logs")" class="btn btn-sm btn-outline-primary shadow" title="Olay Günlükleri"><i class="bi bi-journal-text"></i></a>
+                    <button type="button" class="btn btn-sm btn-outline-primary shadow" @onclick="RefreshServers" disabled="@is_refreshing" title="Yenile"><i class='bi bi-arrow-clockwise @(is_refreshing ? "d-none" : "")'></i><span class="spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")" aria-hidden="true"></span></button>
+                    <button type="button" class="btn btn-sm btn-outline-success shadow" @onclick="( () => StartServer(customer.customer_id))">
+                        Merchanter'ı Başlat
+                    </button>
+                </p>
+            </div>
+        </div>
+    }
+}
+else {
+    <FluentCard class="card-padding" Style="max-width:380px;">
+        <FluentSkeleton Style="margin-top: 20px;margin-bottom: 10px;" Width="330px" Height="50px"></FluentSkeleton>
+        <FluentSkeleton Style="margin-top: 10px;" Width="330px" Height="30px"></FluentSkeleton>
+        <FluentSkeleton Style="margin-top: 10px;" Width="330px" Height="20px"></FluentSkeleton>
+        <FluentSkeleton Style="margin-top: 10px;" Width="330px" Height="10px"></FluentSkeleton>
+        <FluentSkeleton Style="margin-top: 10px;" Width="330px" Height="10px"></FluentSkeleton>
+        <FluentSkeleton Style="margin-top: 10px;" Width="330px" Height="10px"></FluentSkeleton>
+        <FluentSkeleton Style="margin-top: 10px;" Width="330px" Height="10px"></FluentSkeleton>
+        <FluentSkeleton Style="margin-top: 10px;" Width="330px" Height="10px"></FluentSkeleton>
+        <FluentSkeleton Style="margin-top: 20px;margin-bottom: 10px;" Width="330px" Height="200px"></FluentSkeleton>
+    </FluentCard>
+}
+
+@code {
+    [Parameter]
+    public int customer_id { get; set; }
+    private MerchanterServer? server { get; set; }
+    public Customer? customer { get; set; }
+    private string page_message = "";
+    public bool is_refreshing { get; set; } = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender) {
+        if (firstRender && HttpContextAccessor.HttpContext != null) {
+            await RefreshServers();
+            var response = await PostHelper.Request<Customer>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                        Classes.PostHelper.PostMethod.Get, Classes.PostHelper.PostDestination.Server,
+                        "api/Customer/" + customer_id.ToString() + "/GetCustomer");
+            if (response != null && response.Success && response.Data != null) {
+                customer = response.Data;
+            }
+            StateHasChanged();
+        }
+    }
+
+    private async Task RefreshServers() {
+        is_refreshing = true;
+        var response = await PostHelper.Request<List<MerchanterServer>>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                        Classes.PostHelper.PostMethod.Get, Classes.PostHelper.PostDestination.Server,
+                        "api/Server/GetServers");
+        if (response != null && response.Success && response.Data != null) {
+            server = response.Data.FirstOrDefault(x => x.customer_id == customer_id);
+            if (server == null) {
+                page_message = "Merchanter Server çalışmıyor.";
+            }
+            else {
+                page_message = string.Empty;
+                customer = server.customer;
+            }
+            is_refreshing = false;
+            StateHasChanged();
+        }
+        else {
+            is_refreshing = false;
+            page_message = "Merchanter Server ServiceAPI veri alınamadı.";
+        }
+    }
+
+    private async Task StartServer(int _customer_id) {
+        var response = await PostHelper.Request<MerchanterServer>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                        Classes.PostHelper.PostMethod.Get, Classes.PostHelper.PostDestination.Server,
+                        "api/Server/" + _customer_id.ToString() + "/StartServer");
+        if (response != null && response.Success && response.Data != null) {
+            var started_server = response.Data;
+            if (started_server != null) {
+                if (server == null) {
+                    server = started_server;
+                    customer = server.customer;
+                    page_message = "Merchanter Server başlatıldı. " + DateTime.Now.ToString();
+                }
+                else {
+                    page_message = "Merchanter Server başlatılamıyor.";
+                }
+            }
+            else {
+                page_message = "Merchanter Server ServiceAPI veri alınamadı.";
+            }
+        }
+    }
+
+    private async Task StopServer(int _customer_id) {
+        var response = await PostHelper.Request<MerchanterServer>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                            Classes.PostHelper.PostMethod.Get, Classes.PostHelper.PostDestination.Server,
+                            "api/Server/" + _customer_id.ToString() + "/StopServer");
+
+        if (response != null && response.Success && response.Data != null) {
+            var stopped_server = response.Data;
+            if (stopped_server != null) {
+                server = null;
+                customer = stopped_server.customer;
+                page_message = "Merchanter Server durduruldu. " + DateTime.Now.ToString();
+            }
+            else {
+                page_message = "Merchanter Server ServiceAPI veri alınamadı.";
+            }
+        }
+    }
+}

@@ -1,4 +1,6 @@
-﻿namespace Merchanter.Classes.Settings {
+﻿using System.Text.Json.Serialization;
+
+namespace Merchanter.Classes.Settings {
     public class SettingsMerchanter {
         public int customer_id { get; set; }
         public Customer customer { get; set; }
@@ -41,5 +43,8 @@
         public SettingsMerchanter(int _customer_id) {
             customer_id = _customer_id;
         }
+
+        [JsonConstructor]
+        public SettingsMerchanter() { }
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace Merchanter.Classes {
+﻿using System.Text.Json.Serialization;
+
+namespace Merchanter.Classes {
     public class PaymentMethod {
         public int id { get; set; }
         public int customer_id { get; set; }
@@ -15,6 +17,9 @@
             platform = _platform;
             platform_payment_code = _platform_payment_code;
         }
+
+        [JsonConstructor]
+        public PaymentMethod() { }
 
         public static string GetPaymentMethodOf(string _code, string _platform = "") {
             if (Helper.global.payment_methods == null) return string.Empty;

@@ -1,4 +1,6 @@
-﻿namespace Merchanter.Classes {
+﻿using System.Text.Json.Serialization;
+
+namespace Merchanter.Classes {
     public class ShipmentMethod {
         public int id { get; set; }
         public int customer_id { get; set; }
@@ -15,6 +17,9 @@
             platform = _platform;
             platform_shipment_code = _platform_shipment_code;
         }
+
+        [JsonConstructor]
+        public ShipmentMethod() { }
 
         public static string GetShipmentMethodOf(string _code, string _platform = "") {
             if (Helper.global.shipment_methods == null) return string.Empty;

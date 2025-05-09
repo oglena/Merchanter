@@ -1,5 +1,6 @@
 ﻿@page "/Account/Login"
 @layout LoginLayout
+@rendermode InteractiveWebAssembly
 
 @using System.Text.Json.Serialization
 @using Microsoft.AspNetCore.Http.Extensions
@@ -8,7 +9,6 @@
 
 @inject NavigationManager navigationManager
 @inject IHttpContextAccessor HttpContextAccessor
-@inject IConfiguration configuration
 @inject IPostHelper PostHelper
 
 <PageTitle>Giriş | Merchanter</PageTitle>
@@ -51,7 +51,7 @@
     [SupplyParameterFromForm(FormName = "LoginForm")]
     private CustomerLogin customer { get; set; } = new CustomerLogin();
 
-    public bool remember_me { get; set; }
+    public bool remember_me { get; set; } = false;
 
     private class CustomerLogin {
         [Required]
@@ -66,7 +66,7 @@
         if (HttpContextAccessor != null && HttpContextAccessor.HttpContext != null) {
             if (customer != null && !string.IsNullOrWhiteSpace(customer.Email) && !string.IsNullOrEmpty(customer.Password)) {
                 var response = await PostHelper.Request<UserLoginResponseModel>(null,
-                        Classes.PostHelper.PostMethod.Login,
+                        Classes.PostHelper.PostMethod.Login, Classes.PostHelper.PostDestination.Api,
                         "api/Auth/Login",
                         new StringContent(JsonConvert.SerializeObject(customer), Encoding.UTF8, "application/json")
                     );
@@ -74,25 +74,32 @@
                 if (response != null && response.Success && response.Data != null) {
                     var login = response.Data;
                     if (login != null && login.AuthenticateResult) {
-                        login_message = "Giriş yapılıyor";
-                        await HttpContextAccessor.HttpContext.SignInAsync(Variables.auth_cookie,
-                            new ClaimsPrincipal(
-                                new ClaimsIdentity(
-                                    new List<Claim>() {
-                                            new Claim(Variables.customer_id, login.CustomerInformation.customer_id.ToString()),
-                                            new Claim(ClaimTypes.Name , login.CustomerInformation.user_name),
-                                            new Claim(ClaimTypes.Email, login.CustomerInformation.email),
+                        if (login.Settings != null) {
+                            login_message = "Giriş yapılıyor";
+                            await HttpContextAccessor.HttpContext.SignInAsync(Variables.auth_cookie,
+                                new ClaimsPrincipal(
+                                    new ClaimsIdentity(
+                                        new List<Claim>() {
+                                            new Claim(Variables.customer_id, login.Settings.customer.customer_id.ToString()),
+                                            new Claim(ClaimTypes.Name , login.Settings.customer.user_name),
+                                            new Claim(ClaimTypes.Email, login.Settings.customer.email),
                                             new Claim(ClaimTypes.Role, Variables.customer_role/* TODO: add admin role*/),
                                             new Claim(Variables.remember_me, remember_me.ToString()),
-                                            new Claim(Variables.auth_token, login.AuthToken)
-                                                },
-                                Variables.auth_cookie)),
-                                new AuthenticationProperties {
-                                        IsPersistent = remember_me,
-                                        RedirectUri = UriHelper.Encode(new Uri(navigationManager.BaseUri)),
-                                        ExpiresUtc = login.AccessTokenExpireDate.ToUniversalTime(),
-                                        AllowRefresh = true
+                                            new Claim(Variables.auth_token, login.AuthToken),
+                                            new Claim(Variables.person_name, login.Settings.customer.person_name ?? ""),
+                                            new Claim(Variables.company_name, login.Settings.settings.company_name),
+                                         },
+                                    Variables.auth_cookie)),
+                                    new AuthenticationProperties {
+                                            IsPersistent = remember_me,
+                                            RedirectUri = UriHelper.Encode(new Uri(navigationManager.BaseUri)),
+                                            ExpiresUtc = login.AccessTokenExpireDate.ToUniversalTime(),
+                                            AllowRefresh = true
                                     });
+                        }
+                        else {
+                            login_message = "Kullanıcının ayarları alınamadı.";
+                        }
                     }
                     else {
                         login_message = string.Empty;

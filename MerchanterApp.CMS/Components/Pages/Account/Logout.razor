@@ -5,37 +5,31 @@
 <PageTitle>Logout | Merchanter</PageTitle>
 
 <div class="container">
-	<div class="row">
-		<div class="col-12">
-			<h1>Logout success.</h1>
-		</div>
-	</div>
+    <div class="row">
+        <div class="col-12">
+            <h1>Çıkış başarılı.</h1>
+        </div>
+    </div>
 </div>
 
 @code {
-	[Inject]
-	protected NavigationManager navigationManager { get; set; }
-	[Inject]
-	IHttpContextAccessor HttpContextAccessor { get; set; }
+    [Inject]
+    protected NavigationManager navigationManager { get; set; }
+    [Inject]
+    IHttpContextAccessor HttpContextAccessor { get; set; }
 
-	protected override async Task OnInitializedAsync()
-	{
-		if (HttpContextAccessor != null && HttpContextAccessor.HttpContext != null && HttpContextAccessor.HttpContext.User.Identity != null)
-		{
-			if (HttpContextAccessor.HttpContext.User.Identity.IsAuthenticated)
-			{
-				await HttpContextAccessor.HttpContext.SignOutAsync(Variables.auth_cookie,
-								new AuthenticationProperties
-									{
-										RedirectUri = UriHelper.Encode(new Uri(navigationManager.BaseUri))
-									}
-				);
-
-			}
-			else
-			{
-				HttpContextAccessor.HttpContext.Response.Redirect("/");
-			}
-		}
-	}
+    protected override async Task OnInitializedAsync() {
+        if (HttpContextAccessor != null && HttpContextAccessor.HttpContext != null && HttpContextAccessor.HttpContext.User.Identity != null) {
+            if (HttpContextAccessor.HttpContext.User.Identity.IsAuthenticated) {
+                await HttpContextAccessor.HttpContext.SignOutAsync(Variables.auth_cookie,
+                                new AuthenticationProperties {
+                                        RedirectUri = UriHelper.Encode(new Uri(navigationManager.BaseUri))
+                                    }
+                );
+            }
+            else {
+                HttpContextAccessor.HttpContext.Response.Redirect("/");
+            }
+        }
+    }
 }

@@ -1,4 +1,6 @@
-﻿namespace Merchanter.Classes {
+﻿using System.Text.Json.Serialization;
+
+namespace Merchanter.Classes {
     public class OrderStatus {
         public int id { get; set; }
         public int customer_id { get; set; }
@@ -19,6 +21,9 @@
             sync_status = _sync_status;
             process_status = _process_status;
         }
+
+        [JsonConstructor]
+        public OrderStatus() { }
 
         public static string[] GetSyncEnabledCodes(string _platform = "") {
             if (Helper.global.order_statuses == null) return [];

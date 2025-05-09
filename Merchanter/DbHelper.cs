@@ -133,8 +133,10 @@ namespace Merchanter {
                     c = new Customer {
                         customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
                         user_name = dataReader["user_name"].ToString(),
+                        person_name = dataReader["person_name"].ToString(),
                         email = dataReader["email"].ToString(),
                         password = dataReader["password"].ToString(),
+                        role = (Customer.Role)Convert.ToInt32(dataReader["role"].ToString()),
                         status = Convert.ToBoolean(Convert.ToInt32(dataReader["status"]?.ToString())),
                         product_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["product_sync_status"].ToString())),
                         order_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["order_sync_status"].ToString())),
@@ -187,8 +189,10 @@ namespace Merchanter {
                     c = new Customer {
                         customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
                         user_name = dataReader["user_name"].ToString(),
+                        person_name = dataReader["person_name"].ToString(),
                         email = dataReader["email"].ToString(),
                         password = dataReader["password"].ToString(),
+                        role = (Customer.Role)Convert.ToInt32(dataReader["role"].ToString()),
                         status = Convert.ToBoolean(Convert.ToInt32(dataReader["status"].ToString())),
                         product_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["product_sync_status"].ToString())),
                         order_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["order_sync_status"].ToString())),
@@ -241,8 +245,10 @@ namespace Merchanter {
                     c = new Customer {
                         customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
                         user_name = dataReader["user_name"].ToString(),
+                        person_name = dataReader["person_name"].ToString(),
                         email = dataReader["email"].ToString(),
                         password = dataReader["password"].ToString(),
+                        role = (Customer.Role)Convert.ToInt32(dataReader["role"].ToString()),
                         status = Convert.ToBoolean(Convert.ToInt32(dataReader["status"].ToString())),
                         product_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["product_sync_status"].ToString())),
                         order_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["order_sync_status"].ToString())),
@@ -291,8 +297,10 @@ namespace Merchanter {
                     customers.Add(new Customer {
                         customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
                         user_name = dataReader["user_name"].ToString(),
+                        person_name = dataReader["person_name"].ToString(),
                         email = dataReader["email"].ToString(),
                         password = dataReader["password"].ToString(),
+                        role = (Customer.Role)Convert.ToInt32(dataReader["role"].ToString()),
                         status = Convert.ToBoolean(Convert.ToInt32(dataReader["status"].ToString())),
                         product_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["product_sync_status"].ToString())),
                         order_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["order_sync_status"].ToString())),
@@ -338,7 +346,7 @@ namespace Merchanter {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
                 object val; int inserted_id;
                 string _query = "START TRANSACTION;" +
-                    "UPDATE customer SET customer_id=LAST_INSERT_ID(@customer_id),user_name=@user_name,email=@email,status=@status,product_sync_status=@product_sync_status,order_sync_status=@order_sync_status,xml_sync_status=@xml_sync_status,invoice_sync_status=@invoice_sync_status,notification_sync_status=@notification_sync_status" +
+                    "UPDATE customer SET customer_id=LAST_INSERT_ID(@customer_id),user_name=@user_name,person_name=@person_name,email=@email,role=@role,status=@status,product_sync_status=@product_sync_status,order_sync_status=@order_sync_status,xml_sync_status=@xml_sync_status,invoice_sync_status=@invoice_sync_status,notification_sync_status=@notification_sync_status" +
                     ",product_sync_timer=@product_sync_timer,order_sync_timer=@order_sync_timer,xml_sync_timer=@xml_sync_timer,invoice_sync_timer=@invoice_sync_timer,notification_sync_timer=@notification_sync_timer" +
                     (_with_working_parameters ? ",password=@password,is_productsync_working=@is_productsync_working,is_ordersync_working=@is_ordersync_working,is_xmlsync_working=@is_xmlsync_working,is_invoicesync_working=@is_invoicesync_working,is_notificationsync_working=@is_notificationsync_working" : "") + " WHERE customer_id=@customer_id;" +
                     "SELECT LAST_INSERT_ID();" +
@@ -346,7 +354,9 @@ namespace Merchanter {
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("user_name", _customer.user_name));
+                cmd.Parameters.Add(new MySqlParameter("person_name", _customer.person_name));
                 cmd.Parameters.Add(new MySqlParameter("email", _customer.email));
+                cmd.Parameters.Add(new MySqlParameter("role", (int)_customer.role));
                 cmd.Parameters.Add(new MySqlParameter("status", _customer.status));
                 cmd.Parameters.Add(new MySqlParameter("product_sync_status", _customer.product_sync_status));
                 cmd.Parameters.Add(new MySqlParameter("order_sync_status", _customer.order_sync_status));

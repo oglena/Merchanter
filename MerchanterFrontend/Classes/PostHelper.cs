@@ -7,7 +7,7 @@ using static MerchanterFrontend.Classes.PostHelper;
 
 namespace MerchanterFrontend.Classes {
     public interface IPostHelper {
-        public Task<BaseResponseModel<T>?> Request<T>(string? _token, PostMethod _method, string _url, StringContent? _body = null);
+        public Task<BaseResponseModel<T>?> Request<T>(string? _token, PostMethod _method, PostDestination _destination, string _url, StringContent? _body = null);
     }
 
     public class PostHelper : IPostHelper {
@@ -18,9 +18,14 @@ namespace MerchanterFrontend.Classes {
             configuration = _configuration;
             logger = _logger;
         }
-        public async Task<BaseResponseModel<T>?> Request<T>(string? _token, PostMethod _method, string _url, StringContent? _body = null) {
+        public async Task<BaseResponseModel<T>?> Request<T>(string? _token, PostMethod _method, PostDestination _destination, string _url, StringContent? _body = null) {
             BaseResponseModel<T>? model = null;
             var baseAddress = configuration?.GetSection("AppSettings:MerchanterApiUrl")?.Value;
+            switch (_destination) {
+                case PostDestination.Server:
+                    baseAddress = configuration?.GetSection("AppSettings:MerchanterServerUrl")?.Value;
+                    break;
+            }
 
             if (string.IsNullOrWhiteSpace(baseAddress)) {
                 logger.LogError("Base address is not configured.");
@@ -34,13 +39,13 @@ namespace MerchanterFrontend.Classes {
                         using HttpResponseMessage response = await httpClient.PostAsync(_url, _body);
                         if (response.IsSuccessStatusCode) {
                             var login_response = JsonConvert.DeserializeObject<UserLoginResponseModel>(response.Content.ReadAsStringAsync().Result);
-                            if (login_response != null && login_response.AuthenticateResult && !string.IsNullOrWhiteSpace(login_response.AuthToken) && login_response.CustomerInformation != null) {
+                            if (login_response != null && login_response.AuthenticateResult && !string.IsNullOrWhiteSpace(login_response.AuthToken) && login_response.Settings != null && login_response.Settings.customer != null) {
                                 model = new BaseResponseModel<T>() {
                                     Success = true,
                                     ErrorMessage = "",
                                     Data = (T)(object)login_response
                                 };
-                                logger.LogInformation("LOGIN[" + response.StatusCode.ToString() + " " + login_response.CustomerInformation.user_name + "]: " + _url, DateTime.UtcNow.ToLongTimeString());
+                                logger.LogInformation("LOGIN[" + response.StatusCode.ToString() + " " + login_response.Settings.customer.user_name + "]: " + _url, DateTime.UtcNow.ToLongTimeString());
                             }
                             else {
                                 logger.LogInformation("LOGIN[FAIL]: " + response.StatusCode.ToString() + " " + _url, DateTime.UtcNow.ToLongTimeString());
@@ -101,6 +106,11 @@ namespace MerchanterFrontend.Classes {
             Put = 2,
             Delete = 3,
             Login = 4
+        }
+
+        public enum PostDestination {
+            Api = 0,
+            Server = 1
         }
     }
 }

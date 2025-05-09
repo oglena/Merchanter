@@ -1,4 +1,6 @@
-﻿namespace Merchanter.Classes {
+﻿using System.Text.Json.Serialization;
+
+namespace Merchanter.Classes {
     public class Integration {
         public int id { get; set; }
         public int customer_id { get; set; }
@@ -11,5 +13,8 @@
 			is_active = _is_active;
 			work = _work;
         }
+
+        [JsonConstructor]
+        public Integration() { }
     }
 }

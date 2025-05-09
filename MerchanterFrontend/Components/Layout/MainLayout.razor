@@ -1,28 +1,28 @@
 ﻿@inherits LayoutComponentBase
+@inject IHttpContextAccessor HttpContextAccessor
+@inject NavigationManager NavigationManager
 
-<FluentDesignTheme StorageName="theme" Mode="DesignThemeModes.System" OfficeColor="OfficeColor.Windows" />
+<FluentDesignTheme StorageName="theme" Mode="DesignThemeModes.Dark" OfficeColor="OfficeColor.Default" />
 <FluentLayout>
-    <FluentHeader>
-        <FluentStack VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Center">
-            <a href="/" class="text-dark"><span class="title">MERCHANTER</span></a>
+    <FluentHeader Height="55">
+        <FluentStack VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.SpaceBetween">
+            <FluentStack HorizontalAlignment="@HorizontalAlignment.Start">
+                <a href="/" class="title text-dark" style="text-decoration:none;"><span class="title" style="font-size:20pt;">MERCHANTER</span></a>
+            </FluentStack>
             <FluentSpacer />
-            <div class="dropdown">
-                <a class="btn btn-primary dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-person-fill"></i>&nbsp;
-                    @if (HttpContext != null && HttpContext.User.Identity != null && HttpContext.User.Identity.IsAuthenticated) {
-                        <span class="fs-6">@HttpContext.User.Identity.Name</span>
-                    }
-                    else {
-                        <span><span class="fs-6">Hatalı Giriş</span></span>
-                    }
-                </a>
-
-                <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="/Account/Profile">Hesabım</a></li>
-                    <li><a class="dropdown-item" href="/Account/Logs">Olay Günlükleri</a></li>
-                    <li><a class="dropdown-item" href="/Account/Logout">Güvenli Çıkış Yap</a></li>
-                </ul>
-            </div>
+            @if (HttpContextAccessor != null && HttpContextAccessor.HttpContext != null && HttpContextAccessor.HttpContext?.User.Identity != null && HttpContextAccessor.HttpContext.User.Identity.IsAuthenticated) {
+                <FluentStack HorizontalAlignment="@HorizontalAlignment.End"
+                             VerticalAlignment="@VerticalAlignment.Center">
+                    <FluentProfileMenu Status="@PresenceStatus.Available" HeaderLabel="@HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == Variables.company_name)?.Value"
+                                       Initials="@string.Join("", HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == Variables.person_name)?.Value.Split(" ").Select(x=>x.Substring(0,1)))"
+                                       ButtonSize="45px" FullName="@HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == Variables.person_name)?.Value" EMail="@HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value"
+                                       PopoverStyle="min-width: 400px;" FooterLink="Hesabım" OnFooterLinkClick="GotoAccount"
+                                       HeaderButton="Çıkış Yap" OnHeaderButtonClick="Logout" />
+                </FluentStack>
+            }
+            else {
+                <span><span class="text-danger">Hatalı Giriş</span></span>
+            }
         </FluentStack>
     </FluentHeader>
     <FluentStack Class="main" Orientation="Orientation.Horizontal" Width="100%">
@@ -33,7 +33,7 @@
             </div>
         </FluentBodyContent>
     </FluentStack>
-    <FluentFooter>
+    <FluentFooter Class="fixed-bottom">
         <span class="copyright">©2024-2025 CERES Yazılım & Danışmanlık, Tüm hakları saklıdır.</span>
         <FluentSpacer />
         <a href="#" target="_blank">Merchanter Hakkında</a>
@@ -47,8 +47,13 @@
 </div>
 
 @code {
-    [CascadingParameter]
-    protected HttpContext? HttpContext { get; set; }
-
     bool open = false;
+
+    private void GotoAccount() {
+        NavigationManager.NavigateTo("/Account/Profile");
+    }
+
+    private void Logout() {
+        NavigationManager.NavigateTo("/Account/Logout", true);
+    }
 }

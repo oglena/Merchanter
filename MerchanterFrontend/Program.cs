@@ -13,6 +13,8 @@ builder.Services.AddDataProtection()
 // Add services to the container.
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddFluentUIComponents();
+//builder.Services.AddDataGridEntityFrameworkAdapter();
+//builder.Services.AddDataGridODataAdapter();
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
@@ -39,7 +41,6 @@ builder.Services.AddAuthorization(x => {
 });
 builder.Services.AddCascadingAuthenticationState();
 
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -57,5 +58,4 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseAntiforgery();
-
 app.Run();

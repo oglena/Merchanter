@@ -7,9 +7,11 @@ namespace Merchanter.Classes {
         public int customer_id { get; set; }
         [Required]
         public string user_name { get; set; }
+        public string? person_name { get; set; } = null;
         public string email { get; set; }
         //[JsonIgnore]
         public string? password { get; set; }
+        public Role role { get; set; } = Role.Admin;
         public bool status { get; set; } = true;
         public bool product_sync_status { get; set; } = false;
         public bool order_sync_status { get; set; } = false;
@@ -31,5 +33,10 @@ namespace Merchanter.Classes {
         public bool is_xmlsync_working { get; set; } = false;
         public bool is_invoicesync_working { get; set; } = false;
         public bool is_notificationsync_working { get; set; } = false;
+
+        public enum Role {
+            Admin = 0,
+            User = 1
+        }
     }
 }

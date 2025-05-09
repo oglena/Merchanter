@@ -1,15 +1,27 @@
-﻿@page "/"
-@attribute [Authorize]
+﻿@attribute [Authorize]
+@page "/"
+@inject IHttpContextAccessor HttpContextAccessor
 
 <PageTitle>Giriş | Merchanter</PageTitle>
-
-@if (HttpContext != null && HttpContext.User.Identity != null && HttpContext.User.Identity.IsAuthenticated) {
-    <h1>Merhaba, @HttpContext.User.Identity.Name!</h1>
-}
-
-<span>Merchanter'a hoşgeldiniz.</span>
+<FluentLayout Orientation="Orientation.Horizontal" Width="100%">
+    @if (HttpContextAccessor.HttpContext != null && HttpContextAccessor.HttpContext.User.Identity != null && HttpContextAccessor.HttpContext.User.Identity.IsAuthenticated) {
+        <FluentLayout Style="max-width:380px;">
+            @if (customer_id > 0) {
+                <ServerComponent customer_id="@customer_id" />
+            }
+        </FluentLayout>
+        <FluentSpacer />
+        <FluentLayout>
+        </FluentLayout>
+    }
+</FluentLayout>
 
 @code {
-    [CascadingParameter]
-    protected HttpContext? HttpContext { get; set; }
+    public int customer_id { get; set; } = 0;
+
+    protected override void OnInitialized() {
+        if (int.TryParse(HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == Variables.customer_id)?.Value, out int CID)) {
+            customer_id = CID;
+        }
+    }
 }

@@ -1,4 +1,5 @@
 ﻿@rendermode InteractiveServer
+@inject NavigationManager NavigationManager
 
 <div class="navmenu">
     <input type="checkbox" title="Menu expand/collapse toggle" id="navmenu-toggle" class="navmenu-icon" />
@@ -6,25 +7,32 @@
     <nav class="sitenav" aria-labelledby="main-menu">
         <FluentNavMenu Id="main-menu" Collapsible="true" Width="250" Title="Ana Menü" @bind-Expanded="expanded" CustomToggle="true">
             <FluentNavLink Href="/" Match="NavLinkMatch.All" Icon="@(new Icons.Regular.Size20.Home())" IconColor="Color.Accent">Giriş</FluentNavLink>
-            <FluentNavGroup Title="Katalog" Icon="@(new Icons.Regular.Size20.EarthLeaf())" Expanded="true">
+            <FluentNavGroup Title="Katalog" Icon="@(new Icons.Regular.Size20.Production())" Expanded="true">
                 <ChildContent>
-                    <FluentNavLink Href="Catalog/Product/Products" Icon="@(new Icons.Regular.Size20.NumberSymbolSquare())" IconColor="Color.Accent">Ürünler</FluentNavLink>
-                    <FluentNavLink Href="Catalog/Category/Categories" Icon="@(new Icons.Regular.Size20.NumberSymbolSquare())" IconColor="Color.Accent">Kategoriler</FluentNavLink>
-                    <FluentNavLink Href="Catalog/Brand/Brands" Icon="@(new Icons.Regular.Size20.NumberSymbolSquare())" IconColor="Color.Accent">Markalar</FluentNavLink>
+                    <FluentNavLink Href="Catalog/Product/Products" Icon="@(new Icons.Regular.Size20.TetrisApp())" IconColor="Color.Accent">Ürünler</FluentNavLink>
+                    <FluentNavLink Href="Catalog/Category/Categories" Icon="@(new Icons.Regular.Size20.AppsList())" IconColor="Color.Accent">Kategoriler</FluentNavLink>
+                    <FluentNavLink Href="Catalog/Brand/Brands" Icon="@(new Icons.Regular.Size20.Apps())" IconColor="Color.Accent">Markalar</FluentNavLink>
                 </ChildContent>
             </FluentNavGroup>
-            <FluentNavGroup Title="Satış" Icon="@(new Icons.Regular.Size20.EarthLeaf())" Expanded="true">
+            <FluentNavGroup Title="Satış" Icon="@(new Icons.Regular.Size20.ShoppingBag())" Expanded="true">
                 <ChildContent>
-                    <FluentNavLink Href="Order/Orders" Icon="@(new Icons.Regular.Size20.NumberSymbolSquare())" IconColor="Color.Accent">Siparişler</FluentNavLink>
-                    <FluentNavLink Href="Order/Shipments" Icon="@(new Icons.Regular.Size20.NumberSymbolSquare())" IconColor="Color.Accent">Gönderiler</FluentNavLink>
-                    <FluentNavLink Href="Invoice/Invoices" Icon="@(new Icons.Regular.Size20.NumberSymbolSquare())" IconColor="Color.Accent">Faturalar</FluentNavLink>
+                    <FluentNavLink Href="Order/Orders" Icon="@(new Icons.Regular.Size20.ShoppingBagPlay())" IconColor="Color.Accent">Siparişler</FluentNavLink>
+                    <FluentNavLink Href="Order/Shipments" Icon="@(new Icons.Regular.Size20.VehicleShip())" IconColor="Color.Accent">Gönderiler</FluentNavLink>
+                    <FluentNavLink Href="Invoice/Invoices" Icon="@(new Icons.Regular.Size20.DocumentBriefcase())" IconColor="Color.Accent">Faturalar</FluentNavLink>
                 </ChildContent>
             </FluentNavGroup>
-            <FluentNavGroup Title="Senkronizasyon Ayarları" Icon="@(new Icons.Regular.Size20.EarthLeaf())" Expanded="true">
+            <FluentNavGroup Title="Senkronizasyon Ayarları" Icon="@(new Icons.Regular.Size20.SaveSync())" Expanded="false">
                 <ChildContent>
                     <FluentNavLink Href="Account/Settings/General" Icon="@(new Icons.Regular.Size20.NumberSymbolSquare())" IconColor="Color.Accent">Genel Ayarlar</FluentNavLink>
                     <FluentNavLink Href="Account/Settings/Product" Icon="@(new Icons.Regular.Size20.NumberSymbolSquare())" IconColor="Color.Accent">Ürün Ayarları</FluentNavLink>
                     <FluentNavLink Href="Account/Settings/Order" Icon="@(new Icons.Regular.Size20.NumberSymbolSquare())" IconColor="Color.Accent">Sipariş Ayarları</FluentNavLink>
+                </ChildContent>
+            </FluentNavGroup>
+            <FluentNavGroup Title="Hesap" Icon="@(new Icons.Regular.Size20.PersonAccounts())" Expanded="true">
+                <ChildContent>
+                    <FluentNavLink Href="Account/Profile" Icon="@(new Icons.Regular.Size20.Person())" IconColor="Color.Accent">Profil</FluentNavLink>
+                    <FluentNavLink Href="Account/Logs" Icon="@(new Icons.Regular.Size20.ReadingList())" IconColor="Color.Accent">Olay Günlükleri</FluentNavLink>
+                    <FluentNavLink OnClick="Logout" Icon="@(new Icons.Regular.Size20.ArrowRight())" IconColor="Color.Accent">Çıkış Yap</FluentNavLink>
                 </ChildContent>
             </FluentNavGroup>
         </FluentNavMenu>
@@ -33,4 +41,8 @@
 
 @code {
     private bool expanded = true;
+
+    private void Logout() {
+        NavigationManager.NavigateTo("/Account/Logout", true);
+    }
 }

@@ -1,0 +1,21 @@
+﻿@if (!string.IsNullOrWhiteSpace(@page_message))
+{
+	<div class="alert alert-@(message_status != null ? message_status : "dark") alert-dismissible fade show" role="alert" style="padding: 16px !important;">
+		@page_message
+		<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" @onclick="CloseButton"></button>
+	</div>
+	<hr />
+}
+
+@code {
+	[Parameter]
+	public string? message_status { get; set; }
+	[Parameter]
+	public string? page_message { get; set; }
+
+	private async void CloseButton()
+	{
+		page_message = string.Empty;
+		await Task.CompletedTask;
+	}
+}

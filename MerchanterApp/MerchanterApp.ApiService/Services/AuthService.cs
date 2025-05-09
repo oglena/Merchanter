@@ -27,17 +27,23 @@ namespace MerchanterApp.ApiService.Services {
             }
 
             var customer = merchanterService.helper.GetCustomerByMail(request.Email, request.Password);
-            if (customer != null) {
-                var generatedTokenInformation = await tokenService.GenerateToken(
-                    new GenerateTokenRequest {
-                        CustomerID = customer.customer_id,
-                        Email = request.Email
-                    });
 
-                response.AuthenticateResult = true;
-                response.AuthToken = generatedTokenInformation.Token;
-                response.AccessTokenExpireDate = generatedTokenInformation.TokenExpireDate;
-                response.CustomerInformation = customer;
+            if (customer != null) {
+                if (int.TryParse(customer.customer_id.ToString(), out int customer_id)) {
+                    var settings = merchanterService.helper.LoadSettings(customer_id);
+                    var generatedTokenInformation = await tokenService.GenerateToken(
+                        new GenerateTokenRequest {
+                            CustomerID = customer_id,
+                            Email = customer.email
+                        });
+                    customer.password = null;
+                    response.AuthenticateResult = true;
+                    response.AuthToken = generatedTokenInformation.Token;
+                    response.AccessTokenExpireDate = generatedTokenInformation.TokenExpireDate;
+                    //response.CustomerInformation = customer;
+                    response.Settings = settings;
+                    response.Settings.customer.password = null;
+                }
             }
 
             return response;

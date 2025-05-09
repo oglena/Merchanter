@@ -1,4 +1,6 @@
-﻿namespace Merchanter.Classes {
+﻿using System.Text.Json.Serialization;
+
+namespace Merchanter.Classes {
     public class Work {
         public int id { get; set; }
         public Platform platform { get; set; }
@@ -37,5 +39,8 @@
             status = _status;
             version = _version;
         }
+
+        [JsonConstructor]
+        public Work() { }
     }
 }
