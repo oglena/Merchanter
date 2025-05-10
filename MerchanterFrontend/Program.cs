@@ -12,6 +12,7 @@ builder.Services.AddDataProtection()
 
 // Add services to the container.
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
+builder.Services.AddScoped<DialogService>();
 builder.Services.AddFluentUIComponents();
 //builder.Services.AddDataGridEntityFrameworkAdapter();
 //builder.Services.AddDataGridODataAdapter();

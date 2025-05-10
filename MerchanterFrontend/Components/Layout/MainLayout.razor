@@ -1,13 +1,14 @@
 ﻿@inherits LayoutComponentBase
 @inject IHttpContextAccessor HttpContextAccessor
 @inject NavigationManager NavigationManager
+@inject IConfiguration configuration
 
 <FluentDesignTheme StorageName="theme" Mode="DesignThemeModes.Dark" OfficeColor="OfficeColor.Default" />
 <FluentLayout>
     <FluentHeader Height="55">
         <FluentStack VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.SpaceBetween">
             <FluentStack HorizontalAlignment="@HorizontalAlignment.Start">
-                <a href="/" class="title text-dark" style="text-decoration:none;"><span class="title" style="font-size:20pt;">MERCHANTER</span></a>
+                <a href="/" style="text-decoration:none;color:black;"><span class="title" style="font-size:20pt;">MERCHANTER</span></a>
             </FluentStack>
             <FluentSpacer />
             @if (HttpContextAccessor != null && HttpContextAccessor.HttpContext != null && HttpContextAccessor.HttpContext?.User.Identity != null && HttpContextAccessor.HttpContext.User.Identity.IsAuthenticated) {
@@ -34,8 +35,13 @@
         </FluentBodyContent>
     </FluentStack>
     <FluentFooter Class="fixed-bottom">
-        <span class="copyright">©2024-2025 CERES Yazılım & Danışmanlık, Tüm hakları saklıdır.</span>
-        <FluentSpacer />
+        <span class="copyright">©2024-2025 CERES Yazılım & Danışmanlık, Tüm hakları saklıdır.</span><FluentSpacer />
+        <AuthorizeView>
+            <Authorized>
+                <span>@((MarkupString)("[Merchanter Api Url: <a target='_blank' class='text-decoration-none text-light' href='" + configuration["AppSettings:MerchanterApiUrl"] + "'>" + configuration["AppSettings:MerchanterApiUrl"] + "</a>]"))</span>&nbsp;-&nbsp;
+                <span>@((MarkupString)("[Merchanter Server Api Url: <a target='_blank' class='text-decoration-none text-light' href='" + configuration["AppSettings:MerchanterServerUrl"] + "'>" + configuration["AppSettings:MerchanterServerUrl"] + "</a>]"))</span>&nbsp;-&nbsp;
+            </Authorized>
+        </AuthorizeView>
         <a href="#" target="_blank">Merchanter Hakkında</a>
     </FluentFooter>
 </FluentLayout>
