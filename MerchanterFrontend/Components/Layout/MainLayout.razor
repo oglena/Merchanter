@@ -8,21 +8,18 @@
     <FluentHeader Height="55">
         <FluentStack VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.SpaceBetween">
             <FluentStack HorizontalAlignment="@HorizontalAlignment.Start">
-                <a href="/" style="text-decoration:none;color:black;"><span class="title" style="font-size:20pt;">MERCHANTER</span></a>
+                <a href="/" style="text-decoration:none;color:black;"><span class="title" style="font-size:20pt;align-content:center;">MERCHANTER</span></a>
             </FluentStack>
             <FluentSpacer />
-            @if (HttpContextAccessor != null && HttpContextAccessor.HttpContext != null && HttpContextAccessor.HttpContext?.User.Identity != null && HttpContextAccessor.HttpContext.User.Identity.IsAuthenticated) {
+            @if (HttpContextAccessor.HttpContext != null && HttpContextAccessor.HttpContext?.User.Identity != null && HttpContextAccessor.HttpContext.User.Identity.IsAuthenticated) {
                 <FluentStack HorizontalAlignment="@HorizontalAlignment.End"
                              VerticalAlignment="@VerticalAlignment.Center">
                     <FluentProfileMenu Status="@PresenceStatus.Available" HeaderLabel="@HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == Variables.company_name)?.Value"
-                                       Initials="@string.Join("", HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == Variables.person_name)?.Value.Split(" ").Select(x=>x.Substring(0,1)))"
+                                       Initials="@string.Join("", HttpContextAccessor.HttpContext.User.Claims.FirstOrDefault(x => x.Type == Variables.person_name).Value.Split(" ").Select(x=>x.Substring(0,1)))"
                                        ButtonSize="45px" FullName="@(HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == Variables.person_name)?.Value + " (" + HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Role)?.Value + ")")" EMail="@HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value"
                                        PopoverStyle="min-width: 400px;" FooterLink="Hesabım" OnFooterLinkClick="GotoAccount"
                                        HeaderButton="Çıkış Yap" OnHeaderButtonClick="Logout" />
                 </FluentStack>
-            }
-            else {
-                <span><span class="text-danger">Hatalı Giriş</span></span>
             }
         </FluentStack>
     </FluentHeader>
@@ -36,12 +33,6 @@
     </FluentStack>
     <FluentFooter Class="fixed-bottom">
         <span class="copyright">©2024-2025 CERES Yazılım & Danışmanlık, Tüm hakları saklıdır.</span><FluentSpacer />
-        @* <AuthorizeView>
-            <Authorized>
-                <span>@((MarkupString)("[Merchanter Api Url: <a target='_blank' class='text-decoration-none text-light' href='" + configuration["AppSettings:MerchanterApiUrl"] + "'>" + configuration["AppSettings:MerchanterApiUrl"] + "</a>]"))</span>&nbsp;-&nbsp;
-                <span>@((MarkupString)("[Merchanter Server Api Url: <a target='_blank' class='text-decoration-none text-light' href='" + configuration["AppSettings:MerchanterServerUrl"] + "'>" + configuration["AppSettings:MerchanterServerUrl"] + "</a>]"))</span>&nbsp;-&nbsp;
-            </Authorized>
-        </AuthorizeView> *@
         <a href="#" target="_blank">Merchanter Hakkında</a>
     </FluentFooter>
 </FluentLayout>

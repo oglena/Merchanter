@@ -1,5 +1,5 @@
 ﻿@if (!string.IsNullOrWhiteSpace(@page_message)) {
-    <FluentLayout Orientation="Orientation.Vertical" Class="alert" role="alert">
+    <FluentLayout Orientation="Orientation.Vertical" Class="alert" role="alert" Style="max-height:44px;">
         <FluentGrid Justify="JustifyContent.SpaceBetween">
             <FluentGridItem Justify="JustifyContent.FlexStart">
                 <FluentLabel Typo="Typography.Body" Style="align-content:center;">@(!string.IsNullOrWhiteSpace(message_status) ? page_message + " (" + message_status + ")" : page_message)</FluentLabel>

@@ -12,7 +12,7 @@
     <FluentCard Style="text-align:center;">
         <FluentLabel Typo="Typography.H2" Color="@(server != null ? Color.Success : Color.Error)">@(server != null ? "Server Çalışıyor" : "Server Beklemede")</FluentLabel>
         <AlertComponent page_message="@page_message" message_status="@message_status" />
-        <FluentLabel Typo="Typography.Body" Color="Color.Info">@(customer.status ? "[LİSANSLI KULLANICI]" : "[LİSANS BULUNAMADI]")</FluentLabel>
+        <FluentLabel Typo="Typography.Body" Color="Color.Accent">@(customer.status ? "[LİSANSLI KULLANICI]" : "[LİSANS BULUNAMADI]")</FluentLabel>
         <FluentBadge Appearance="Appearance.Lightweight" Width="250px" Style="padding:5px;">
             <FluentButton Type="ButtonType.Button" Appearance="Appearance.Neutral" OnClick="GotoProfile" IconStart="@(new Icons.Regular.Size28.Person())" title="Profil"></FluentButton>&nbsp;&nbsp;
             <FluentButton Type="ButtonType.Button" Appearance="Appearance.Neutral" OnClick="GotoSettings" IconStart="@(new Icons.Regular.Size28.Settings())" title="Genel Ayarlar"></FluentButton>&nbsp;&nbsp;
@@ -139,7 +139,7 @@
                 <FluentButton Type="ButtonType.Button" Appearance="Appearance.Neutral" OnClick="@( () => StopServer(server.customer_id))" Loading="@is_refreshing"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.Stop())" Slot="start" Color="@Color.Error" />Merchanter'ı Durdur</FluentButton>
             }
             else {
-                <FluentButton Type="ButtonType.Button" Appearance="Appearance.Neutral" OnClick="@( () => StartServer(customer.customer_id))" Loading="@is_refreshing"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.Play())" Slot="start" Color="@Color.Success" />Merchanter'ı Başlat</FluentButton>
+                <FluentButton Type="ButtonType.Button" Appearance="Appearance.Accent" OnClick="@( () => StartServer(customer.customer_id))" Loading="@is_refreshing"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.Play())" Slot="start" Color="@Color.Success" />Merchanter'ı Başlat</FluentButton>
             }
         }
     </FluentCard>
@@ -265,7 +265,7 @@ else {
     }
 
     private void GotoSettings() {
-        NavigationManager.NavigateTo("Account/Settings/General");
+        NavigationManager.NavigateTo("Account/Profile?ActiveTab=settings");
     }
 
     private void GotoProfile() {
