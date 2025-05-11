@@ -1,8 +1,14 @@
 ﻿@if (!string.IsNullOrWhiteSpace(@page_message)) {
-    <div class="alert" role="alert" style="padding: 16px !important;">
-        @page_message
-        <FluentButton Type="ButtonType.Button" OnClick="CloseButton" Appearance="Appearance.Neutral" IconStart="@(new Icons.Regular.Size16.Dismiss())"></FluentButton>
-    </div>
+    <FluentLayout Orientation="Orientation.Vertical" Class="alert" role="alert">
+        <FluentGrid Justify="JustifyContent.SpaceBetween">
+            <FluentGridItem Justify="JustifyContent.FlexStart">
+                <FluentLabel Typo="Typography.Body" Style="align-content:center;">@(!string.IsNullOrWhiteSpace(message_status) ? page_message + " (" + message_status + ")" : page_message)</FluentLabel>
+            </FluentGridItem>
+            <FluentGridItem Justify="JustifyContent.FlexEnd">
+                <FluentButton Type="ButtonType.Button" OnClick="CloseButton" Appearance="Appearance.Neutral" IconStart="@(new Icons.Regular.Size16.Dismiss())"></FluentButton>
+            </FluentGridItem>
+        </FluentGrid>
+    </FluentLayout>
 }
 @code {
     [Parameter]

@@ -16,7 +16,7 @@
                              VerticalAlignment="@VerticalAlignment.Center">
                     <FluentProfileMenu Status="@PresenceStatus.Available" HeaderLabel="@HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == Variables.company_name)?.Value"
                                        Initials="@string.Join("", HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == Variables.person_name)?.Value.Split(" ").Select(x=>x.Substring(0,1)))"
-                                       ButtonSize="45px" FullName="@HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == Variables.person_name)?.Value" EMail="@HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value"
+                                       ButtonSize="45px" FullName="@(HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == Variables.person_name)?.Value + " (" + HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Role)?.Value + ")")" EMail="@HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value"
                                        PopoverStyle="min-width: 400px;" FooterLink="Hesabım" OnFooterLinkClick="GotoAccount"
                                        HeaderButton="Çıkış Yap" OnHeaderButtonClick="Logout" />
                 </FluentStack>
@@ -36,12 +36,12 @@
     </FluentStack>
     <FluentFooter Class="fixed-bottom">
         <span class="copyright">©2024-2025 CERES Yazılım & Danışmanlık, Tüm hakları saklıdır.</span><FluentSpacer />
-        <AuthorizeView>
+        @* <AuthorizeView>
             <Authorized>
                 <span>@((MarkupString)("[Merchanter Api Url: <a target='_blank' class='text-decoration-none text-light' href='" + configuration["AppSettings:MerchanterApiUrl"] + "'>" + configuration["AppSettings:MerchanterApiUrl"] + "</a>]"))</span>&nbsp;-&nbsp;
                 <span>@((MarkupString)("[Merchanter Server Api Url: <a target='_blank' class='text-decoration-none text-light' href='" + configuration["AppSettings:MerchanterServerUrl"] + "'>" + configuration["AppSettings:MerchanterServerUrl"] + "</a>]"))</span>&nbsp;-&nbsp;
             </Authorized>
-        </AuthorizeView>
+        </AuthorizeView> *@
         <a href="#" target="_blank">Merchanter Hakkında</a>
     </FluentFooter>
 </FluentLayout>

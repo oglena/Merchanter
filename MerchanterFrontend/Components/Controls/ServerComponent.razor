@@ -11,15 +11,15 @@
 @if (customer != null) {
     <FluentCard Style="text-align:center;">
         <FluentLabel Typo="Typography.H2" Color="@(server != null ? Color.Success : Color.Error)">@(server != null ? "Server Çalışıyor" : "Server Beklemede")</FluentLabel>
-        <AlertComponent page_message="@page_message" />
-
+        <AlertComponent page_message="@page_message" message_status="@message_status" />
+        <FluentLabel Typo="Typography.Body" Color="Color.Info">@(customer.status ? "[LİSANSLI KULLANICI]" : "[LİSANS BULUNAMADI]")</FluentLabel>
         <FluentBadge Appearance="Appearance.Lightweight" Width="250px" Style="padding:5px;">
-            <FluentLabel Typo="Typography.Header">@customer.user_name</FluentLabel>&nbsp;&nbsp;&nbsp;&nbsp;
-            <FluentButton Type="ButtonType.Button" Appearance="Appearance.Neutral" OnClick="GotoSettings" Loading="@is_refreshing" IconStart="@(new Icons.Regular.Size28.Settings())" title="Genel Ayarlar"></FluentButton>&nbsp;&nbsp;
+            <FluentButton Type="ButtonType.Button" Appearance="Appearance.Neutral" OnClick="GotoProfile" IconStart="@(new Icons.Regular.Size28.Person())" title="Profil"></FluentButton>&nbsp;&nbsp;
+            <FluentButton Type="ButtonType.Button" Appearance="Appearance.Neutral" OnClick="GotoSettings" IconStart="@(new Icons.Regular.Size28.Settings())" title="Genel Ayarlar"></FluentButton>&nbsp;&nbsp;
             <FluentButton Type="ButtonType.Button" Appearance="Appearance.Neutral" OnClick="RefreshServers" Loading="@is_refreshing" IconStart="@(new Icons.Regular.Size28.ArrowClockwise())" title="Çalışma Durumlarını Yenile"></FluentButton>
         </FluentBadge>
         <FluentDivider Style="width: 100%;margin:10px 0 10px 0;" Orientation=Orientation.Horizontal Role="DividerRole.Separator" />
-        <FluentLabel Typo="Typography.Subject" Color="@(server != null && server.PID > 0 ? Color.Success : Color.Error)">İşlem No:&nbsp;<strong>@(server != null ? server.PID.ToString() : "0")</strong></FluentLabel>
+        <FluentLabel Typo="Typography.Subject" Color="@(server != null && server.PID > 0 ? Color.Success : Color.Error)">İşlem No:&nbsp;[<strong>@(server != null ? server.PID.ToString() : "0")</strong>]</FluentLabel>
         <FluentDivider Style="width: 100%;margin:10px 0 10px 0;" Orientation=Orientation.Horizontal Role="DividerRole.Separator" />
         <!-- #Çalışma Durumları -->
         <FluentGrid Id="sync-statuses-grid-yes" Spacing="2" Justify="JustifyContent.FlexStart">
@@ -134,11 +134,13 @@
         <!-- #endregion -->
         <FluentDivider Style="width: 100%;margin:10px 0 10px 0;" Orientation=Orientation.Horizontal Role="DividerRole.Separator" />
         <FluentButton Type="ButtonType.Button" Appearance="Appearance.Neutral" OnClick="GotoLogs" title="Olay Günlükleri"><FluentIcon Value="@(new Icons.Regular.Size24.ReadingList())" Slot="start" /></FluentButton>&nbsp;&nbsp;
-        @if (server != null) {
-            <FluentButton Type="ButtonType.Button" Appearance="Appearance.Neutral" OnClick="@( () => StopServer(server.customer_id))" Loading="@is_refreshing"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.Stop())" Slot="start" Color="@Color.Error" />Merchanter'ı Durdur</FluentButton>
-        }
-        else {
-            <FluentButton Type="ButtonType.Button" Appearance="Appearance.Neutral" OnClick="@( () => StartServer(customer.customer_id))" Loading="@is_refreshing"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.Play())" Slot="start" Color="@Color.Success" />Merchanter'ı Başlat</FluentButton>
+        @if (HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Role)?.Value == "Admin" && customer.status) {
+            @if (server != null) {
+                <FluentButton Type="ButtonType.Button" Appearance="Appearance.Neutral" OnClick="@( () => StopServer(server.customer_id))" Loading="@is_refreshing"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.Stop())" Slot="start" Color="@Color.Error" />Merchanter'ı Durdur</FluentButton>
+            }
+            else {
+                <FluentButton Type="ButtonType.Button" Appearance="Appearance.Neutral" OnClick="@( () => StartServer(customer.customer_id))" Loading="@is_refreshing"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.Play())" Slot="start" Color="@Color.Success" />Merchanter'ı Başlat</FluentButton>
+            }
         }
     </FluentCard>
 }
@@ -167,6 +169,7 @@ else {
     private MerchanterServer? server { get; set; }
     public Customer? customer { get; set; }
     private string page_message = "";
+    private string? message_status = null;
     public bool is_refreshing { get; set; } = false;
 
     protected override async Task OnAfterRenderAsync(bool firstRender) {
@@ -263,6 +266,10 @@ else {
 
     private void GotoSettings() {
         NavigationManager.NavigateTo("Account/Settings/General");
+    }
+
+    private void GotoProfile() {
+        NavigationManager.NavigateTo("Account/Profile");
     }
 
     private void GotoNotifications() {

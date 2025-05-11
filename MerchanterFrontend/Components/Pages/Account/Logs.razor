@@ -9,84 +9,85 @@
 
 <h1>Olay Günlükleri</h1>
 
-<FluentAccordion>
-    <FluentAccordionItem Heading="Filtre(ler)" Expanded="true">
-        <FluentIcon Value="@(new Icons.Regular.Size20.FilterAdd())" Color="@Color.Neutral" Slot="start" />
-        <FluentGrid Spacing="1" Justify="JustifyContent.FlexStart" Style="padding: 5px;">
-            <FluentGridItem xs="12" sm="4" md="2">
-                <FluentTextField @bind-Value=workerFilter Label="Bölüm"></FluentTextField>
-            </FluentGridItem>
-            <FluentGridItem xs="12" sm="4" md="2">
-                <FluentTextField @bind-Value=titleFilter Label="Olay Adı"></FluentTextField>
-            </FluentGridItem>
-            <FluentGridItem xs="12" sm="4" md="2">
-                <FluentTextField @bind-Value=messageFilter Label="Olay İçeriği"></FluentTextField>
-            </FluentGridItem>
-            <FluentGridItem xs="12" sm="4" md="2">
-                <FluentDatePicker @bind-Value=dateFilter Label="Gün Filtresi" Placeholder="dd.MM.yyyy" DayFormat="DayFormat.TwoDigit" Culture="@(System.Globalization.CultureInfo.GetCultureInfo("tr-TR"))" ></FluentDatePicker>
-            </FluentGridItem>
-        </FluentGrid>
-        <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.End">
-            <FluentButton IconStart="@(new Icons.Regular.Size16.Broom())"
-                          Disabled="loading"
-                          OnClick="ClearFilters">
-                Temizle
-            </FluentButton>
-            <FluentButton IconStart="@(new Icons.Regular.Size16.ArrowClockwise())"
-                          Appearance="Appearance.Accent"
-                          Loading="loading"
-                          OnClick="LoadCustomerLogs">
-                Filtreyi Uygula
-            </FluentButton>
-        </FluentStack>
-    </FluentAccordionItem>
-</FluentAccordion>
-<hr />
-<FluentPaginator State="@pagination">
-    <SummaryTemplate>
-        Toplam: <strong>@(pagination.TotalItemCount ?? 0)</strong> girdi
-    </SummaryTemplate>
-    <PaginationTextTemplate>
-        <strong>@(pagination.CurrentPageIndex + 1)</strong> / <strong>@(pagination.LastPageIndex + 1)</strong> sayfa
-    </PaginationTextTemplate>
-</FluentPaginator>
+@if (HttpContextAccessor?.HttpContext?.User.Identity != null && HttpContextAccessor.HttpContext.User.Identity.IsAuthenticated) {
+    <FluentAccordion>
+        <FluentAccordionItem Heading="Filtre(ler)" Expanded="true">
+            <FluentIcon Value="@(new Icons.Regular.Size20.FilterAdd())" Color="@Color.Neutral" Slot="start" />
+            <FluentGrid Spacing="1" Justify="JustifyContent.FlexStart" Style="padding: 5px;">
+                <FluentGridItem xs="12" sm="4" md="2">
+                    <FluentTextField @bind-Value=workerFilter Label="Bölüm"></FluentTextField>
+                </FluentGridItem>
+                <FluentGridItem xs="12" sm="4" md="2">
+                    <FluentTextField @bind-Value=titleFilter Label="Olay Adı"></FluentTextField>
+                </FluentGridItem>
+                <FluentGridItem xs="12" sm="4" md="2">
+                    <FluentTextField @bind-Value=messageFilter Label="Olay İçeriği"></FluentTextField>
+                </FluentGridItem>
+                <FluentGridItem xs="12" sm="4" md="2">
+                    <FluentDatePicker @bind-Value=dateFilter Label="Gün Filtresi" Placeholder="dd.MM.yyyy" DayFormat="DayFormat.TwoDigit" Culture="@(System.Globalization.CultureInfo.GetCultureInfo("tr-TR"))"></FluentDatePicker>
+                </FluentGridItem>
+            </FluentGrid>
+            <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.End">
+                <FluentButton IconStart="@(new Icons.Regular.Size16.Broom())"
+                              Disabled="loading"
+                              OnClick="ClearFilters">
+                    Temizle
+                </FluentButton>
+                <FluentButton IconStart="@(new Icons.Regular.Size16.ArrowClockwise())"
+                              Appearance="Appearance.Accent"
+                              Loading="loading"
+                              OnClick="LoadCustomerLogs">
+                    Filtreyi Uygula
+                </FluentButton>
+            </FluentStack>
+        </FluentAccordionItem>
+    </FluentAccordion>
+    <hr />
+    <FluentPaginator State="@pagination">
+        <SummaryTemplate>
+            Toplam: <strong>@(pagination.TotalItemCount ?? 0)</strong> girdi
+        </SummaryTemplate>
+        <PaginationTextTemplate>
+            <strong>@(pagination.CurrentPageIndex + 1)</strong> / <strong>@(pagination.LastPageIndex + 1)</strong> sayfa
+        </PaginationTextTemplate>
+    </FluentPaginator>
 
-<div style="overflow:auto;" tabindex="-1">
-    <FluentDataGrid ItemsProvider="GetDataAsync" RowSize="DataGridRowSize.Medium" GenerateHeader="GenerateHeaderOption.Sticky"
-                    TGridItem="Log" Loading="loading" Pagination="pagination" DisplayMode="DataGridDisplayMode.Grid" ShowHover="true">
-        <ChildContent>
-            <PropertyColumn Title="ID" Property="@(l => l.id)" Width="100px" TooltipText="@(l => l.thread_id)" Tooltip="true" Align="Align.End" />
-            <PropertyColumn Title="Bölüm" Property="@(l => l.worker)" Width="150px" Align="Align.Center" />
-            <PropertyColumn Title="Olay Adı" Property="@(l => l.title)" TooltipText="@(l => l.title)" Tooltip="true" Width="200px" Align="Align.Center" />
-            <PropertyColumn Title="Olay İçeriği" Property="@(l => l.message)" TooltipText="@(l => l.message)" Tooltip="true" Align=" Align.Baseline" />
-            <PropertyColumn Title="Tarih" Property="@(l => l.update_date)" Width="200px" Format="dd.MM.yyyy HH:mm:ss" Align="Align.Center" />
-        </ChildContent>
-        <EmptyContent>
-            <FluentLayout>
-                <ChildContent>
-                    <span style="color: #9f9f9f;font-weight: bold"><i>Veri Yok.</i></span>
-                </ChildContent>
-            </FluentLayout>
-        </EmptyContent>
-        <LoadingContent>
-            <FluentLayout Width="100%" Orientation="Orientation.Horizontal">
-                <ChildContent>
-                    <FluentProgressRing />
-                </ChildContent>
-            </FluentLayout>
-        </LoadingContent>
-    </FluentDataGrid>
-</div>
+    <div style="overflow:auto;" tabindex="-1">
+        <FluentDataGrid ItemsProvider="GetDataAsync" RowSize="DataGridRowSize.Medium" GenerateHeader="GenerateHeaderOption.Sticky"
+                        TGridItem="Log" Loading="loading" Pagination="pagination" DisplayMode="DataGridDisplayMode.Grid" ShowHover="true">
+            <ChildContent>
+                <PropertyColumn Title="ID" Property="@(l => l.id)" Width="100px" TooltipText="@(l => l.thread_id)" Tooltip="true" Align="Align.End" />
+                <PropertyColumn Title="Bölüm" Property="@(l => l.worker)" Width="150px" Align="Align.Center" />
+                <PropertyColumn Title="Olay Adı" Property="@(l => l.title)" TooltipText="@(l => l.title)" Tooltip="true" Width="200px" Align="Align.Center" />
+                <PropertyColumn Title="Olay İçeriği" Property="@(l => l.message)" TooltipText="@(l => l.message)" Tooltip="true" Align=" Align.Baseline" />
+                <PropertyColumn Title="Tarih" Property="@(l => l.update_date)" Width="200px" Format="dd.MM.yyyy HH:mm:ss" Align="Align.Center" />
+            </ChildContent>
+            <EmptyContent>
+                <FluentLayout>
+                    <ChildContent>
+                        <span style="color: #9f9f9f;font-weight: bold"><i>Veri Yok.</i></span>
+                    </ChildContent>
+                </FluentLayout>
+            </EmptyContent>
+            <LoadingContent>
+                <FluentLayout Width="100%" Orientation="Orientation.Horizontal">
+                    <ChildContent>
+                        <FluentProgressRing />
+                    </ChildContent>
+                </FluentLayout>
+            </LoadingContent>
+        </FluentDataGrid>
+    </div>
 
-<FluentPaginator State="@pagination">
-    <SummaryTemplate>
-        Toplam: <strong>@(pagination.TotalItemCount ?? 0)</strong> girdi
-    </SummaryTemplate>
-    <PaginationTextTemplate>
-        <strong>@(pagination.CurrentPageIndex + 1)</strong> / <strong>@(pagination.LastPageIndex + 1)</strong> sayfa
-    </PaginationTextTemplate>
-</FluentPaginator>
-
+    <FluentPaginator State="@pagination">
+        <SummaryTemplate>
+            Toplam: <strong>@(pagination.TotalItemCount ?? 0)</strong> girdi
+        </SummaryTemplate>
+        <PaginationTextTemplate>
+            <strong>@(pagination.CurrentPageIndex + 1)</strong> / <strong>@(pagination.LastPageIndex + 1)</strong> sayfa
+        </PaginationTextTemplate>
+    </FluentPaginator>
+}
 @code {
     public int customer_id { get; set; } = 0;
     bool loading = true;
