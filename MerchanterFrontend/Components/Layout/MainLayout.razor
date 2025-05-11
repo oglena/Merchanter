@@ -4,6 +4,7 @@
 @inject IConfiguration configuration
 
 <FluentDesignTheme StorageName="theme" Mode="DesignThemeModes.Dark" OfficeColor="OfficeColor.Default" />
+<FluentMenuProvider @rendermode="InteractiveAuto"></FluentMenuProvider>
 <FluentLayout>
     <FluentHeader Height="55">
         <FluentStack VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.SpaceBetween">
@@ -31,9 +32,9 @@
             </div>
         </FluentBodyContent>
     </FluentStack>
-    <FluentFooter Class="fixed-bottom">
+    <FluentFooter>
         <span class="copyright">©2024-2025 CERES Yazılım & Danışmanlık, Tüm hakları saklıdır.</span><FluentSpacer />
-        <a href="#" target="_blank">Merchanter Hakkında</a>
+        <a href="About">Merchanter Hakkında</a>
     </FluentFooter>
 </FluentLayout>
 

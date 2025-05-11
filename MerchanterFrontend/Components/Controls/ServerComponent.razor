@@ -16,6 +16,8 @@
         <FluentBadge Appearance="Appearance.Lightweight" Width="250px" Style="padding:5px;">
             <FluentButton Type="ButtonType.Button" Appearance="Appearance.Neutral" OnClick="GotoProfile" IconStart="@(new Icons.Regular.Size28.Person())" title="Profil"></FluentButton>&nbsp;&nbsp;
             <FluentButton Type="ButtonType.Button" Appearance="Appearance.Neutral" OnClick="GotoSettings" IconStart="@(new Icons.Regular.Size28.Settings())" title="Genel Ayarlar"></FluentButton>&nbsp;&nbsp;
+            <FluentButton Type="ButtonType.Button" Appearance="Appearance.Neutral" OnClick="GotoPlatforms" IconStart="@(new Icons.Regular.Size28.Apps())" title="Platformlar"></FluentButton>&nbsp;&nbsp;
+            <FluentButton Type="ButtonType.Button" Appearance="Appearance.Neutral" OnClick="GotoIntegrations" IconStart="@(new Icons.Regular.Size28.AppFolder())" title="Entegrasyonlar"></FluentButton>&nbsp;&nbsp;
             <FluentButton Type="ButtonType.Button" Appearance="Appearance.Neutral" OnClick="RefreshServers" Loading="@is_refreshing" IconStart="@(new Icons.Regular.Size28.ArrowClockwise())" title="Çalışma Durumlarını Yenile"></FluentButton>
         </FluentBadge>
         <FluentDivider Style="width: 100%;margin:10px 0 10px 0;" Orientation=Orientation.Horizontal Role="DividerRole.Separator" />
@@ -266,6 +268,14 @@ else {
 
     private void GotoSettings() {
         NavigationManager.NavigateTo("Account/Profile?ActiveTab=settings");
+    }
+
+    private void GotoPlatforms() {
+        NavigationManager.NavigateTo("Account/Profile?ActiveTab=platforms");
+    }
+
+    private void GotoIntegrations() {
+        NavigationManager.NavigateTo("Account/Profile?ActiveTab=integrations");
     }
 
     private void GotoProfile() {

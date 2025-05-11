@@ -1,0 +1,238 @@
+﻿@rendermode InteractiveServer
+@using System.Text.Json.Serialization
+@using Newtonsoft.Json
+@using System.Text
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IPostHelper PostHelper
+
+@if (customer != null) {
+    <FluentEditForm Model="customer" OnValidSubmit="@(() => SaveCustomer(customer))">
+        <FluentGrid Justify="JustifyContent.FlexStart" Spacing="2">
+            @if (!string.IsNullOrWhiteSpace(page_message)) {
+                <FluentGridItem xs="12">
+                    <AlertComponent page_message="@page_message" message_status="@message_status" />
+                </FluentGridItem>
+            }
+            <FluentGridItem xs="12">
+                <FluentToolbar style="width:100%;border-radius:5px;padding:5px !important;" Orientation="Orientation.Horizontal">
+                    <FluentIcon Value="@(new Icons.Filled.Size20.Person())" Slot="start" Color="Color.Accent" />
+                    <FluentButton Appearance="Appearance.Neutral" OnClick="@(() => LoadCustomer() )" Loading="@is_refreshing" IconStart="@(new Icons.Regular.Size20.ArrowClockwise())">Yenile</FluentButton>
+                    <FluentBadge>Lisans bitimine <strong>&nbsp;999&nbsp;</strong> gün kaldı.</FluentBadge>
+                    <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Outline" Loading="@is_refreshing" IconStart="@(new Icons.Regular.Size20.Save())" Slot="end">Kaydet</FluentButton>
+                </FluentToolbar>
+            </FluentGridItem>
+            <FluentGridItem xs="12">
+                <FluentTextField @bind-Value="@customer.email" Width="100%" Label="Email" Required="true">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Mail())" Slot="start" Color="Color.Neutral" />
+                </FluentTextField>
+            </FluentGridItem>
+            <FluentGridItem xs="12">
+                <FluentTextField @bind-Value="@customer.password" TextFieldType="TextFieldType.Password" Width="100%" Label="Şifre" Required="true" Placeholder="Şifre boş olamaz!">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Password())" Slot="start" Color="Color.Neutral" />
+                </FluentTextField>
+            </FluentGridItem>
+            <FluentGridItem xs="12">
+                <FluentTextField @bind-Value="@customer.user_name" TextFieldType="TextFieldType.Text" Width="100%" Label="Kullanıcı Adı" Required="true" Placeholder="Kullanıcı adı boş olamaz!">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.EditPerson())" Slot="start" Color="Color.Neutral" />
+                </FluentTextField>
+            </FluentGridItem>
+            <FluentGridItem xs="12">
+                <FluentTextField @bind-Value="@customer.person_name" Width="100%" Label="Sorumlu" Required="true">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.CommunicationPerson())" Slot="start" Color="Color.Neutral" />
+                </FluentTextField>
+            </FluentGridItem>
+            <FluentDivider Style="width: 100%;" Orientation=Orientation.Horizontal Role="DividerRole.Separator" />
+            <FluentDivider Style="width: 100%;margin:5px 0 5px 0;" Orientation=Orientation.Horizontal Role="DividerRole.Separator" />
+            <FluentGridItem md="3" Justify="JustifyContent.FlexStart">
+                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.TetrisApp())" />&nbsp;&nbsp;
+                <FluentSwitch @bind-Value="@customer.product_sync_status" Label="Ürün Senk.">
+                    <span slot="checked-message">Açık</span>
+                    <span slot="unchecked-message">Kapalı</span>
+                </FluentSwitch>
+            </FluentGridItem>
+            <FluentGridItem md="3">
+                <FluentNumberField @bind-Value="@customer.product_sync_timer" Label="Senk. Sıklığı (sn)" Required="true">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Timer())" Color="@Color.Neutral" Slot="start" />
+                </FluentNumberField>
+            </FluentGridItem>
+            <FluentGridItem md="2">
+                <FluentDatePicker @bind-Value="@customer.last_product_sync_date" Label="Son Senk. Tarihi" Placeholder="dd.MM.yyyy" Disabled="true">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Calendar())" Slot="start" Color="Color.Neutral" />
+                </FluentDatePicker>
+            </FluentGridItem>
+            <FluentGridItem md="2">
+                <FluentTimePicker @bind-Value="@customer.last_product_sync_date" Label="Saati" Placeholder="HH:mm:ss" Disabled="true">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.TimePicker())" Slot="start" Color="Color.Neutral" />
+                </FluentTimePicker>
+            </FluentGridItem>
+            <FluentGridItem md="2">
+            </FluentGridItem>
+            <FluentDivider Style="width: 100%;margin:5px 0 5px 0;" Orientation=Orientation.Horizontal Role="DividerRole.Separator" />
+            <FluentGridItem md="3" Justify="JustifyContent.FlexStart">
+                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.ShoppingBag())" />&nbsp;&nbsp;
+                <FluentSwitch @bind-Value="@customer.order_sync_status" Label="Sipariş Senk.">
+                    <span slot="checked-message">Açık</span>
+                    <span slot="unchecked-message">Kapalı</span>
+                </FluentSwitch>
+            </FluentGridItem>
+            <FluentGridItem md="3">
+                <FluentNumberField @bind-Value="@customer.order_sync_timer" Label="Senk. Sıklığı (sn)" Required="true">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Timer())" Color="@Color.Neutral" Slot="start" />
+                </FluentNumberField>
+            </FluentGridItem>
+            <FluentGridItem md="2">
+                <FluentDatePicker @bind-Value="@customer.last_order_sync_date" Label="Son Senk. Tarihi" Placeholder="dd.MM.yyyy" Disabled="true">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Calendar())" Slot="start" Color="Color.Neutral" />
+                </FluentDatePicker>
+            </FluentGridItem>
+            <FluentGridItem md="2">
+                <FluentTimePicker @bind-Value="@customer.last_order_sync_date" Label="Saati" Placeholder="HH:mm:ss" Disabled="true">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.TimePicker())" Slot="start" Color="Color.Neutral" />
+                </FluentTimePicker>
+            </FluentGridItem>
+            <FluentGridItem md="2">
+            </FluentGridItem>
+            <FluentDivider Style="width: 100%;margin:5px 0 5px 0;" Orientation=Orientation.Horizontal Role="DividerRole.Separator" />
+            <FluentGridItem md="3" Justify="JustifyContent.FlexStart">
+                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.AlertUrgent())" />&nbsp;&nbsp;
+                <FluentSwitch @bind-Value="@customer.notification_sync_status" Label="Bildirim Senk.">
+                    <span slot="checked-message">Açık</span>
+                    <span slot="unchecked-message">Kapalı</span>
+                </FluentSwitch>
+            </FluentGridItem>
+            <FluentGridItem md="3">
+                <FluentNumberField @bind-Value="@customer.notification_sync_timer" Label="Senk. Sıklığı (sn)" Required="true">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Timer())" Color="@Color.Neutral" Slot="start" />
+                </FluentNumberField>
+            </FluentGridItem>
+            <FluentGridItem md="2">
+                <FluentDatePicker @bind-Value="@customer.last_notification_sync_date" Label="Son Senk. Tarihi" Placeholder="dd.MM.yyyy" Disabled="true">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Calendar())" Slot="start" Color="Color.Neutral" />
+                </FluentDatePicker>
+            </FluentGridItem>
+            <FluentGridItem md="2">
+                <FluentTimePicker @bind-Value="@customer.last_notification_sync_date" Label="Saati" Placeholder="HH:mm:ss" Disabled="true">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.TimePicker())" Slot="start" Color="Color.Neutral" />
+                </FluentTimePicker>
+            </FluentGridItem>
+            <FluentGridItem md="2">
+            </FluentGridItem>
+            <FluentDivider Style="width: 100%;margin:5px 0 5px 0;" Orientation=Orientation.Horizontal Role="DividerRole.Separator" />
+            <FluentGridItem md="3" Justify="JustifyContent.FlexStart">
+                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.DocumentOnePage())" />&nbsp;&nbsp;
+                <FluentSwitch @bind-Value="@customer.invoice_sync_status" Label="Fatura Senk.">
+                    <span slot="checked-message">Açık</span>
+                    <span slot="unchecked-message">Kapalı</span>
+                </FluentSwitch>
+            </FluentGridItem>
+            <FluentGridItem md="3">
+                <FluentNumberField @bind-Value="@customer.invoice_sync_timer" Label="Senk. Sıklığı(sn)" Required="true">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Timer())" Color="@Color.Neutral" Slot="start" />
+                </FluentNumberField>
+            </FluentGridItem>
+            <FluentGridItem md="2">
+                <FluentDatePicker @bind-Value="@customer.last_invoice_sync_date" Label="Son Senk. Tarihi" Placeholder="dd.MM.yyyy" Disabled="true">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Calendar())" Slot="start" Color="Color.Neutral" />
+                </FluentDatePicker>
+            </FluentGridItem>
+            <FluentGridItem md="2">
+                <FluentTimePicker @bind-Value="@customer.last_invoice_sync_date" Label="Saati" Placeholder="HH:mm:ss" Disabled="true">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.TimePicker())" Slot="start" Color="Color.Neutral" />
+                </FluentTimePicker>
+            </FluentGridItem>
+            <FluentGridItem md="2">
+            </FluentGridItem>
+            <FluentDivider Style="width: 100%;margin:5px 0 5px 0;" Orientation=Orientation.Horizontal Role="DividerRole.Separator" />
+            <FluentGridItem md="3" Justify="JustifyContent.FlexStart">
+                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.AppsList())" />&nbsp;&nbsp;
+                <FluentSwitch @bind-Value="@customer.xml_sync_status" Label="XML Senk.">
+                    <span slot="checked-message">Açık</span>
+                    <span slot="unchecked-message">Kapalı</span>
+                </FluentSwitch>
+            </FluentGridItem>
+            <FluentGridItem md="3">
+                <FluentNumberField @bind-Value="@customer.xml_sync_timer" Label="Senk. Sıklığı(sn)" Required="true">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Timer())" Color="@Color.Neutral" Slot="start" />
+                </FluentNumberField>
+            </FluentGridItem>
+            <FluentGridItem md="2">
+                <FluentDatePicker @bind-Value="@customer.last_xml_sync_date" Label="Son Senk. Tarihi" Placeholder="dd.MM.yyyy" Disabled="true">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Calendar())" Slot="start" Color="Color.Neutral" />
+                </FluentDatePicker>
+            </FluentGridItem>
+            <FluentGridItem md="2">
+                <FluentTimePicker @bind-Value="@customer.last_xml_sync_date" Label="Saati" Placeholder="HH:mm:ss" Disabled="true">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.TimePicker())" Slot="start" Color="Color.Neutral" />
+                </FluentTimePicker>
+            </FluentGridItem>
+            <FluentGridItem md="2">
+            </FluentGridItem>
+        </FluentGrid>
+    </FluentEditForm>
+}
+else {
+    <FluentLayout Orientation="Orientation.Vertical" Style="padding-top:10px;">
+        <FluentProgressRing Size="ProgressRingSize.Large" />
+    </FluentLayout>
+}
+
+@code {
+    [Parameter]
+    public int customer_id { get; set; }
+    public Customer? customer { get; set; }
+    private string page_message = string.Empty;
+    private string? message_status = null;
+    public bool is_refreshing { get; set; } = false;
+
+    protected override async Task OnParametersSetAsync() {
+        await LoadCustomer();
+    }
+
+    protected async Task LoadCustomer() {
+        is_refreshing = true;
+        var response = await PostHelper.Request<Customer>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                    Classes.PostHelper.PostMethod.Get, Classes.PostHelper.PostDestination.Server,
+                    "api/Customer/" + customer_id.ToString() + "/GetCustomer");
+
+        if (response != null && response.Success && response.Data != null) {
+            customer = response.Data;
+            if (customer != null) {
+                page_message = string.Empty;
+            }
+            else {
+                message_status = "işlem başarısız";
+                page_message = "[" + DateTime.Now.ToString() + "]" + " Müşteri bulunamadı.";
+            }
+        }
+        else {
+            message_status = "işlem uygulanamadı";
+            page_message = "[" + DateTime.Now.ToString() + "]" + " Merchanter Server ServiceAPI yanıt vermiyor.";
+        }
+        is_refreshing = false;
+    }
+
+    private async Task SaveCustomer(Customer _customer) {
+        is_refreshing = true;
+        string json = JsonConvert.SerializeObject(_customer);
+        var response = await PostHelper.Request<Merchanter.Classes.Customer>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+        Classes.PostHelper.PostMethod.Put, Classes.PostHelper.PostDestination.Server,
+        "api/Customer/" + _customer.customer_id.ToString() + "/SaveCustomer", new StringContent(json, Encoding.UTF8, "application/json"));
+
+        if (response != null && response.Success && response.Data != null) {
+            customer = response.Data;
+            if (customer != null) {
+                message_status = "işlem başarılı";
+                page_message = "[" + DateTime.Now.ToString() + "]" + " Güncelleme başarılı.";
+            }
+            else {
+                message_status = "işlem başarısız";
+                page_message = "[" + DateTime.Now.ToString() + "]" + " Güncelleme yapılamadı.";
+            }
+        }
+        else {
+            message_status = "işlem uygulanamadı";
+            page_message = "[" + DateTime.Now.ToString() + "]" + " Merchanter Server ServiceAPI yanıt vermiyor.";
+        }
+        is_refreshing = false;
+    }
+}

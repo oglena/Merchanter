@@ -5,466 +5,397 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IPostHelper PostHelper
 
-<div class="container-fluid bg-rebeccapurple bg-gradient text-light rounded-2 p-3">
-    <div class="row mt-3">
-        <div class="col-12 ps-2">
-            <h2>
-                <i class="bi bi-gear bi-lg"></i>&nbsp;Settings
-            </h2>
-        </div>
-    </div>
-</div>
-
-<div class="row mt-3 p-2">
-    <AlertComponent page_message="@page_message" message_status="@message_status" />
-    @if (settings != null) {
-        <ul class="nav nav-tabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <a class="big-text nav-link active" id="tab-general" data-bs-toggle="tab" href="#tab-general-panel" role="tab" aria-controls="tab-general-panel" aria-selected="true"><i class="bi bi-gear-wide"></i>&nbsp;General</a>
-            </li>
-            <li class="nav-item" role="presentation">
-                <a class="big-text nav-link" id="tab-product" data-bs-toggle="tab" href="#tab-product-panel" role="tab" aria-controls="tab-product-panel" aria-selected="false"><i class="bi bi-upc-scan"></i>&nbsp;Product</a>
-            </li>
-            <li class="nav-item" role="presentation">
-                <a class="big-text nav-link" id="tab-order" data-bs-toggle="tab" href="#tab-order-panel" role="tab" aria-controls="tab-order-panel" aria-selected="false"><i class="bi bi-basket3"></i>&nbsp;Order</a>
-            </li>
-            <li class="nav-item" role="presentation">
-                <a class="big-text nav-link" id="tab-invoice" data-bs-toggle="tab" href="#tab-invoice-panel" role="tab" aria-controls="tab-invoice-panel" aria-selected="false"><i class="bi bi-receipt"></i>&nbsp;Invoice</a>
-            </li>
-            <li class="nav-item" role="presentation">
-                <a class="big-text nav-link" id="tab-google" data-bs-toggle="tab" href="#tab-google-panel" role="tab" aria-controls="tab-google-panel" aria-selected="false"><i class="bi bi-google"></i>&nbsp;Google</a>
-            </li>
-        </ul>
-
-        <div class="tab-content">
-            <div class="tab-pane active" id="tab-general-panel" role="tabpanel" aria-labelledby="tab-general">
-                @if (settings != null && settings.settings != null) {
-                    <div class="container-fluid">
-                        <div class="row">
-                            <div class="col-md-12 p-2">
-                                <EditForm Model="settings.settings" class="container-fluid">
-                                    <div class="row mt-3">
-                                        <div class="col-12 ps-2 mb-3">
-                                            <div class="form-floating">
-                                                <InputText type="text" class="form-control" DisplayName="user_name" @bind-Value="settings.settings.company_name" style="font-size:1.3rem;" />
-                                                <label for="user_name" class="form-label">Company Name</label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-12 p-3 bg-light rounded-3 border">
-                                        <h5>
-                                            Currency Rates
-                                        </h5>
-                                        <div class="row mt-3">
-                                            <div class="col-4 ps-2 mb-3">
-                                                <div class="input-group mb-3">
-                                                    <span class="input-group-text">TL</span>
-                                                    <InputNumber type="text" class="form-control" DisplayName="TL_rate" @bind-Value="settings.settings.rate_TL" placeholder="Uneditable" disabled="true" />
-                                                </div>
-                                            </div>
-                                            <div class="col-4 ps-2 mb-3">
-                                                <div class="input-group mb-3">
-                                                    <span class="input-group-text">USD</span>
-                                                    <InputNumber type="text" class="form-control" DisplayName="USD_rate" @bind-Value="settings.settings.rate_USD" />
-                                                </div>
-                                            </div>
-                                            <div class="col-4 ps-2 mb-3">
-                                                <div class="input-group mb-3">
-                                                    <span class="input-group-text">EUR</span>
-                                                    <InputNumber type="text" class="form-control" DisplayName="EUR_rate" @bind-Value="settings.settings.rate_EUR" />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row mt-3 bg-light rounded-2">
-                                        <div class="col-12 pt-3 ps-2 mb-3">
-                                            <button type="submit" class="btn btn-success float-end @(!is_refreshing ? "shadow" : "")" @onclick="@(() => SaveGeneralSettings(settings.settings))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
-                                        </div>
-                                    </div>
-                                </EditForm>
-                            </div>
-                        </div>
-                    </div>
-                }
-            </div>
-
-            <div class="tab-pane" id="tab-product-panel" role="tabpanel" aria-labelledby="tab-product">
-                @if (settings != null && settings.product != null) {
-                    <div class="container-fluid">
-                        <div class="row">
-                            <div class="col-md-12 p-2">
-                                <EditForm Model="settings.product" class="container-fluid">
-                                    <div class="row mt-3">
-                                        <div class="col-4 ps-2 mb-3">
-                                            <div class="form-floating">
-                                                <InputNumber type="text" class="form-control" DisplayName="customer_root_category_id" @bind-Value="settings.product.customer_root_category_id" placeholder="Uneditable" disabled="true" />
-                                                <label for="customer_root_category_id" class="form-label">Root Category Id</label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row mt-3">
-                                        <div class="form-check form-switch mt-2 ms-3">
-                                            <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="settings.product.product_list_filter_source_products"></InputCheckbox>
-                                            <label class="form-check-label">&nbsp;<abbr title="This option will decrease load time for larger product count." class="initialism">Product list matches main source.</abbr></label>
-                                        </div>
-                                    </div>
-                                    <div class="row mt-3">
-                                        <div class="form-check form-switch mt-2 ms-3">
-                                            <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="settings.product.xml_qty_addictive_enable"></InputCheckbox>
-                                            <label class="form-check-label">&nbsp;<abbr title="If main source have positive stock, this disables qty increment from other sources." class="initialism">Qty Additive Status</abbr></label>
-                                        </div>
-                                    </div>
-                                    <div class="row mt-3">
-                                        <div class="form-check form-switch mt-2 ms-3">
-                                            <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="settings.product.is_barcode_required"></InputCheckbox>
-                                            <label class="form-check-label">&nbsp;Is Barcode Required</label>
-                                        </div>
-                                    </div>
-                                    <div class="row mt-3 bg-light rounded-2">
-                                        <div class="col-12 pt-3 ps-2 mb-3">
-                                            <button type="submit" class="btn btn-success float-end @(!is_refreshing ? "shadow" : "")" @onclick="@(() => SaveProductSettings(settings.product))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
-                                        </div>
-                                    </div>
-                                </EditForm>
-                            </div>
-                        </div>
-                    </div>
-                }
-
-            </div>
-
-            <div class="tab-pane" id="tab-order-panel" role="tabpanel" aria-labelledby="tab-order">
-                @if (settings != null && settings.order != null) {
-                    <div class="container-fluid">
-                        <div class="row">
-                            <div class="col-md-12 p-2">
-                                <EditForm Model="settings.order" class="container-fluid">
-                                    <div class="row mt-3">
-                                        <div class="col-12 ps-2 mb-3">
-                                            <div class="form-floating">
-                                                <InputNumber type="text" class="form-control" DisplayName="daysto_ordersync" @bind-Value="settings.order.daysto_ordersync" />
-                                                <label for="daysto_ordersync" class="form-label">Days to Order Sync</label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row mt-3">
-                                        <div class="col-6 ps-2 mb-3">
-                                            <div class="form-floating">
-                                                <InputText type="text" class="form-control" DisplayName="siparis_kargo_sku" @bind-Value="settings.order.siparis_kargo_sku" />
-                                                <label for="siparis_kargo_sku" class="form-label">Order Shipment SKU</label>
-                                            </div>
-                                        </div>
-                                        <div class="col-6 ps-2 mb-3">
-                                            <div class="form-floating">
-                                                <InputText type="text" class="form-control" DisplayName="siparis_taksitkomisyon_sku" @bind-Value="settings.order.siparis_taksitkomisyon_sku" />
-                                                <label for="siparis_taksitkomisyon_sku" class="form-label">Order Installation SKU</label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row mt-3">
-                                        <div class="form-check form-switch mt-2 ms-3">
-                                            <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="settings.order.siparis_kdvdahilmi"></InputCheckbox>
-                                            <label class="form-check-label">&nbsp;Order Tax Included ?</label>
-                                        </div>
-                                    </div>
-                                    <div class="row mt-3">
-                                        <div class="form-check form-switch mt-2 ms-3">
-                                            <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="settings.order.is_rewrite_siparis"></InputCheckbox>
-                                            <label class="form-check-label">&nbsp;Can Rewrite Order ?</label>
-                                        </div>
-                                    </div>
-                                    <div class="row mt-3 bg-light rounded-2">
-                                        <div class="col-12 pt-3 ps-2 mb-3">
-                                            <button type="submit" class="btn btn-success float-end @(!is_refreshing ? "shadow" : "")" @onclick="@(() => SaveOrderSettings(settings.order))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
-                                        </div>
-                                    </div>
-                                </EditForm>
-                            </div>
-                        </div>
-                    </div>
-                }
-
-            </div>
-
-            <div class="tab-pane" id="tab-invoice-panel" role="tabpanel" aria-labelledby="tab-invoice">
-                @if (settings != null && settings.invoice != null) {
-                    <div class="container-fluid">
-                        <div class="row">
-                            <div class="col-md-12 p-2">
-                                <EditForm Model="settings.invoice" class="container-fluid">
-                                    <div class="row mt-3">
-                                        <div class="col-12 ps-2 mb-3">
-                                            <div class="form-floating">
-                                                <InputNumber type="text" class="form-control" DisplayName="daysto_invoicesync" @bind-Value="settings.invoice.daysto_invoicesync" />
-                                                <label for="daysto_invoicesync" class="form-label">Days to Invoice Sync</label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-12 p-3 bg-light rounded-3 border">
-                                        <h5>
-                                            Invoice FTP
-                                        </h5>
-                                        <div class="row mt-3">
-                                            <div class="col-12 ps-2 mb-3">
-                                                <div class="form-floating">
-                                                    <InputText type="text" class="form-control" DisplayName="erp_invoice_ftp_url" @bind-Value="settings.invoice.erp_invoice_ftp_url" />
-                                                    <label for="erp_invoice_ftp_url" class="form-label">Url</label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="row mt-3">
-                                            <div class="col-6 ps-2 mb-3">
-                                                <div class="form-floating">
-                                                    <InputText type="text" class="form-control" DisplayName="erp_invoice_ftp_username" @bind-Value="settings.invoice.erp_invoice_ftp_username" />
-                                                    <label for="erp_invoice_ftp_username" class="form-label">FTP User Name</label>
-                                                </div>
-                                            </div>
-                                            <div class="col-6 ps-2 mb-3">
-                                                <div class="form-floating">
-                                                    <InputText autocomplete="new-password" type="password" class="form-control" DisplayName="erp_invoice_ftp_password" @bind-Value="settings.invoice.erp_invoice_ftp_password" />
-                                                    <label for="erp_invoice_ftp_password" class="form-label">FTP Password</label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row mt-3 bg-light rounded-2">
-                                        <div class="col-12 pt-3 ps-2 mb-3">
-                                            <button type="submit" class="btn btn-success float-end @(!is_refreshing ? "shadow" : "")" @onclick="@(() => SaveInvoiceSettings(settings.invoice))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
-                                        </div>
-                                    </div>
-                                </EditForm>
-                            </div>
-                        </div>
-                    </div>
-                }
-            </div>
-
-            <div class="tab-pane" id="tab-google-panel" role="tabpanel" aria-labelledby="tab-google">
-                @if (settings != null && settings.google != null) {
-                    <div class="container-fluid">
-                        <div class="row">
-                            <div class="col-md-12 p-2">
-                                <EditForm Model="settings.google" class="container-fluid">
-                                    <div class="row mt-3">
-                                        <div class="col-12 ps-2 mb-3">
-                                            <div class="form-floating">
-                                                <InputText type="text" class="form-control" DisplayName="sender_name" @bind-Value="settings.google.sender_name" />
-                                                <label for="sender_name" class="form-label">Sender Name</label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row mt-3">
-                                        <div class="col-12 ps-2 mb-3">
-                                            <div class="form-floating">
-                                                <InputText type="text" class="form-control" DisplayName="email" @bind-Value="settings.google.email" />
-                                                <label for="email" class="form-label">E-mail Adres</label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-12 p-3 bg-light rounded-3 border">
-                                        <h5>
-                                            oAuth Credentials
-                                        </h5>
-                                        <div class="row mt-3">
-                                            <div class="col-12 ps-2 mb-3">
-                                                <div class="form-floating">
-                                                    <InputText type="text" class="form-control" DisplayName="oauth2_clientid" @bind-Value="settings.google.oauth2_clientid" />
-                                                    <label for="oauth2_clientid" class="form-label">oAuth2 Client Id</label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="row mt-3">
-                                            <div class="col-12 ps-2 mb-3">
-                                                <div class="form-floating">
-                                                    <InputText type="password" class="form-control" DisplayName="oauth2_clientsecret" @bind-Value="settings.google.oauth2_clientsecret" />
-                                                    <label for="oauth2_clientsecret" class="form-label">oAuth2 Client Secret</label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row mt-3">
-                                        <div class="row mt-3">
-                                            <div class="form-check form-switch mt-2 ms-3">
-                                                <InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="settings.google.is_enabled"></InputCheckbox>
-                                                <label class="form-check-label">&nbsp;Is Enabled ?</label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row mt-3">
-                                        <div class="row mt-3 bg-light rounded-2">
-                                            <div class="col-12 pt-3 ps-2 mb-3">
-                                                <button type="submit" class="btn btn-success float-end @(!is_refreshing ? "shadow" : "")" @onclick="@(() => SaveGoogleSettings(settings.google))" disabled="@(is_refreshing)"><i class="bi bi-floppy"></i>&nbsp;Save These Settings&nbsp;&nbsp;<span class='spinner-border spinner-border-sm border-1 @(is_refreshing ? "" : "d-none")' aria-hidden="true"></span></button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </EditForm>
-                            </div>
-                        </div>
-                    </div>
-                }
-
-            </div>
-        </div>
-    }
-</div>
+@if (settings != null) {
+    <FluentGrid Justify="JustifyContent.SpaceBetween" Spacing="2">
+        @if (!string.IsNullOrWhiteSpace(page_message)) {
+            <FluentGridItem xs="12">
+                <AlertComponent page_message="@page_message" message_status="@message_status" />
+            </FluentGridItem>
+        }
+        <FluentGridItem xs="12">
+            <FluentToolbar style="width:100%;border-radius:5px;padding:5px !important;" Orientation="Orientation.Horizontal">
+                <FluentIcon Value="@(new Icons.Filled.Size20.Settings())" Slot="start" Color="Color.Accent" />
+                <FluentBadge>Lisans bitimine <strong>&nbsp;999&nbsp;</strong> gün kaldı.</FluentBadge>
+                <FluentButton Appearance="Appearance.Outline" Loading="@is_refreshing" OnClick="SaveSettings" IconStart="@(new Icons.Regular.Size20.Save())" Slot="end">Kaydet</FluentButton>
+            </FluentToolbar>
+        </FluentGridItem>
+        <FluentTabs @bind-ActiveTabId="@activeid" OnTabChange="HandleOnTabChange" Width="100%" Style="padding-top:0 !important;">
+            <FluentTab Overflow="false" Label="Genel Ayarlar" Icon="@(new Icons.Regular.Size24.Settings())" Id="general-settings">
+                <FluentEditForm Model="settings.settings" Style="margin-top:15px;">
+                    <FluentGrid Justify="JustifyContent.FlexStart">
+                        <FluentGridItem xs="12">
+                            <FluentTextField Label="Firma İsmi" @bind-Value="settings.settings.company_name" Required="true">
+                                <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+                            </FluentTextField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="12">
+                            <FluentNumberField @bind-Value="settings.settings.rate_TL" Label="TL (Türk Lirası)" TValue="decimal" Step="0.1" Disabled="true">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Money())" Color="@Color.Neutral" Slot="end" />
+                            </FluentNumberField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="12">
+                            <FluentNumberField @bind-Value="settings.settings.rate_USD" Label="USD (Amerikan Doları)" TValue="decimal" Step="0.1">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.CurrencyDollarEuro())" Color="@Color.Neutral" Slot="end" />
+                            </FluentNumberField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="12">
+                            <FluentNumberField @bind-Value="settings.settings.rate_EUR" Label="EUR (Euro)" TValue="decimal" Step="0.1">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.CurrencyDollarEuro())" Color="@Color.Neutral" Slot="end" />
+                            </FluentNumberField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="12">
+                        </FluentGridItem>
+                    </FluentGrid>
+                </FluentEditForm>
+            </FluentTab>
+            <FluentTab Overflow="false" Label="Ürün Ayarları" Icon="@(new Icons.Regular.Size24.TetrisApp())" Id="product-settings">
+                <FluentEditForm Model="settings.product" Style="margin-top:15px;">
+                    <FluentGrid Justify="JustifyContent.FlexStart">
+                        <FluentGridItem xs="12">
+                            <FluentNumberField Label="Kök Kategori Id" @bind-Value="settings.product.customer_root_category_id" Disabled="true">
+                                <FluentIcon Value="@(new Icons.Regular.Size20.Timer())" Color="@Color.Neutral" Slot="start" />
+                            </FluentNumberField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="12" Justify="JustifyContent.FlexStart">
+                            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.TetrisApp())" />&nbsp;&nbsp;
+                            <FluentSwitch @bind-Value="@settings.product.product_list_filter_source_products" Label="Kaynak Bazlı Karşılaştırma">
+                                <span slot="checked-message">Açık</span>
+                                <span slot="unchecked-message">Kapalı</span>
+                            </FluentSwitch>
+                        </FluentGridItem>
+                        <FluentGridItem xs="12" Justify="JustifyContent.FlexStart">
+                            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.TetrisApp())" />&nbsp;&nbsp;
+                            <FluentSwitch @bind-Value="@settings.product.xml_qty_addictive_enable" Label="XML Kaynak Adetleri Toplansın">
+                                <span slot="checked-message">Aktif</span>
+                                <span slot="unchecked-message">Pasif</span>
+                            </FluentSwitch>
+                        </FluentGridItem>
+                        <FluentGridItem xs="12" Justify="JustifyContent.FlexStart">
+                            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.BarcodeScanner())" />&nbsp;&nbsp;
+                            <FluentSwitch @bind-Value="@settings.product.is_barcode_required" Label="Barkod Gerekli Mi ?">
+                                <span slot="checked-message">Evet</span>
+                                <span slot="unchecked-message">Hayır</span>
+                            </FluentSwitch>
+                        </FluentGridItem>
+                    </FluentGrid>
+                </FluentEditForm>
+            </FluentTab>
+            <FluentTab Overflow="false" Label="Sipariş Ayarları" Icon="@(new Icons.Regular.Size24.ShoppingBag())" Id="order-settings">
+                <FluentEditForm Model="settings.order" Style="margin-top:15px;">
+                    <FluentGrid Justify="JustifyContent.FlexStart">
+                        <FluentGridItem xs="6">
+                            <FluentTextField Label="Kargo Stok Kodu" @bind-Value="settings.order.siparis_kargo_sku" Required="true">
+                                <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+                            </FluentTextField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="6">
+                            <FluentTextField Label="Sipariş Taksit Komisyon Stok Kodu" @bind-Value="settings.order.siparis_taksitkomisyon_sku" Required="true">
+                                <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+                            </FluentTextField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="12">
+                            <FluentSlider @bind-Value="settings.order.daysto_ordersync" TValue="int" Label="Geriye Dönük Günlük Sipariş Kontrol" Min="3" Max="14" Step="1" ShowValue="true">
+                                <FluentSliderLabel Position="3">3</FluentSliderLabel>
+                                <FluentSliderLabel Position="7">7</FluentSliderLabel>
+                                <FluentSliderLabel Position="10">10</FluentSliderLabel>
+                                <FluentSliderLabel Position="14">14</FluentSliderLabel>
+                            </FluentSlider>
+                        </FluentGridItem>
+                        <FluentGridItem xs="12" Justify="JustifyContent.FlexStart">
+                            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.ShoppingBag())" />&nbsp;&nbsp;
+                            <FluentSwitch @bind-Value="@settings.order.siparis_kdvdahilmi" Label="Sipariş KDV">
+                                <span slot="checked-message">Dahil</span>
+                                <span slot="unchecked-message">Hariç</span>
+                            </FluentSwitch>
+                        </FluentGridItem>
+                        <FluentGridItem xs="12" Justify="JustifyContent.FlexStart">
+                            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.ShoppingBag())" />&nbsp;&nbsp;
+                            <FluentSwitch @bind-Value="@settings.order.is_rewrite_siparis" Label="Sipariş Üzerine Yazılsın Mı ?">
+                                <span slot="checked-message">Evet</span>
+                                <span slot="unchecked-message">Hayır</span>
+                            </FluentSwitch>
+                        </FluentGridItem>
+                    </FluentGrid>
+                </FluentEditForm>
+            </FluentTab>
+            <FluentTab Overflow="false" Label="Fatura Ayarları" Icon="@(new Icons.Regular.Size24.DocumentOnePage())" Id="invoice-settings">
+                <FluentEditForm Model="settings.invoice" Style="margin-top:15px;">
+                    <FluentGrid Justify="JustifyContent.FlexStart">
+                        <FluentGridItem xs="12">
+                            <FluentSlider @bind-Value="settings.invoice.daysto_invoicesync" TValue="int" Label="Geriye Dönük Günlük Fatura Kontrol" Min="3" Max="14" Step="1" ShowValue="true">
+                                <FluentSliderLabel Position="3">3</FluentSliderLabel>
+                                <FluentSliderLabel Position="7">7</FluentSliderLabel>
+                                <FluentSliderLabel Position="10">10</FluentSliderLabel>
+                                <FluentSliderLabel Position="14">14</FluentSliderLabel>
+                            </FluentSlider>
+                        </FluentGridItem>
+                        <FluentGridItem xs="12">
+                            <FluentTextField TextFieldType="TextFieldType.Url" Label="Fatura FTP Url (eski değişecek)" @bind-Value="settings.invoice.erp_invoice_ftp_url" Required="true">
+                                <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+                            </FluentTextField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="6">
+                            <FluentTextField Label="Fatura FTP Kullanıcı Adı (eski değişecek)" @bind-Value="settings.invoice.erp_invoice_ftp_username" Required="true">
+                                <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+                            </FluentTextField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="6">
+                            <FluentTextField TextFieldType="TextFieldType.Password" Label="Fatura FTP Şifre (eski değişecek)" @bind-Value="settings.invoice.erp_invoice_ftp_password" Required="true">
+                                <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+                            </FluentTextField>
+                        </FluentGridItem>
+                    </FluentGrid>
+                </FluentEditForm>
+            </FluentTab>
+            <FluentTab Overflow="false" Label="Google Ayarları" Icon="@(new Icons.Regular.Size24.Settings())" Id="google-settings">
+                <FluentEditForm Model="settings.google" Style="margin-top:15px;">
+                    <FluentGrid Justify="JustifyContent.FlexStart">
+                        <FluentGridItem xs="12" Justify="JustifyContent.FlexStart">
+                            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Mail())" />&nbsp;&nbsp;
+                            <FluentSwitch @bind-Value="@settings.google.is_enabled" Label="Mail Sistemi">
+                                <span slot="checked-message">Aktif</span>
+                                <span slot="unchecked-message">Pasif</span>
+                            </FluentSwitch>
+                        </FluentGridItem>
+                        <FluentGridItem xs="12">
+                            <FluentTextField Label="Gönderen İsmi" @bind-Value="settings.google.sender_name" Required="true">
+                                <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+                            </FluentTextField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="12">
+                            <FluentTextField TextFieldType="TextFieldType.Email" Label="Email Adres" @bind-Value="settings.google.email" Required="true">
+                                <FluentIcon Value="@(new Icons.Regular.Size20.MailEdit())" Color="@Color.Neutral" Slot="start" />
+                            </FluentTextField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="12">
+                            <FluentTextField Label="oAuth2 Client Id" @bind-Value="settings.google.oauth2_clientid" Required="true">
+                                <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+                            </FluentTextField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="12">
+                            <FluentTextField TextFieldType="TextFieldType.Password" Label="oAuth2 Client Secret" @bind-Value="settings.google.oauth2_clientsecret" Required="true">
+                                <FluentIcon Value="@(new Icons.Regular.Size20.Password())" Color="@Color.Neutral" Slot="start" />
+                            </FluentTextField>
+                        </FluentGridItem>
+                    </FluentGrid>
+                </FluentEditForm>
+            </FluentTab>
+        </FluentTabs>
+    </FluentGrid>
+}
+else {
+    <FluentLayout Orientation="Orientation.Vertical" Style="padding-top:10px;">
+        <FluentProgressRing Size="ProgressRingSize.Large" />
+    </FluentLayout>
+}
 
 @code {
     [Parameter]
-    public string? CID { get; set; }
+    public int customer_id { get; set; }
     private bool is_refreshing = false;
     private string loading = "Loading...";
-    private string page_message = "Settings Loading...";
-    private string message_status = "dark";
+    private string? page_message = "";
+    private string? message_status = "";
     Customer? customer { get; set; }
     SettingsMerchanter? settings { get; set; }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender) {
-        if (firstRender) {
-            int customer_id = 0;
-            if (!string.IsNullOrWhiteSpace(CID) && int.TryParse(CID, out customer_id)) {
-                //await LoadCustomer(customer_id);
-                await LoadCustomerSettings(customer_id);
-            }
+    string? activeid = "general-settings";
+    FluentTab? changedto;
+
+    protected override void OnInitialized() {
+        if (int.TryParse(HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == Variables.customer_id)?.Value, out int CID)) {
+            customer_id = CID;
         }
     }
 
-    public async Task LoadCustomerSettings(int _customer_id) {
-        if (_customer_id > 0) {
-            var response = await PostHelper.Request<SettingsMerchanter>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
-                Classes.PostHelper.PostMethod.Get, Classes.PostHelper.PostDestination.Server,
-                "api/Settings/" + _customer_id.ToString() + "/GetCustomerSettings");
+    protected override async Task OnParametersSetAsync() {
+        if (changedto != null) {
+            activeid = changedto.Id;
+            changedto = null;
+        }
+        await LoadCustomerSettings();
+    }
 
-            if (response != null && response.Success && response.Data != null) {
-                settings = response.Data;
-                page_message = string.Empty;
-                StateHasChanged();
-            }
-            else {
-                page_message = "Merchanter Server ServiceAPI data response empty.";
-            }
+    protected async Task LoadCustomerSettings() {
+        var response = await PostHelper.Request<SettingsMerchanter>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+            Classes.PostHelper.PostMethod.Get, Classes.PostHelper.PostDestination.Server,
+        "api/Settings/" + customer_id.ToString() + "/GetCustomerSettings");
+
+        if (response != null && response.Success && response.Data != null) {
+            settings = response.Data;
+            page_message = string.Empty;
+            StateHasChanged();
+        }
+        else {
+            page_message = "Merchanter Server ServiceAPI yanıt vermiyor.";
+            message_status = "dev";
         }
     }
 
-    public async Task LoadCustomer(int _customer_id) {
-        if (_customer_id > 0) {
-            customer = null;
-            var response = await PostHelper.Request<Customer>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
-                Classes.PostHelper.PostMethod.Get, Classes.PostHelper.PostDestination.Server,
-                "api/Customer/" + _customer_id.ToString() + "/GetCustomer");
+    protected async Task LoadCustomer() {
+        customer = null;
+        var response = await PostHelper.Request<Customer>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+            Classes.PostHelper.PostMethod.Get, Classes.PostHelper.PostDestination.Server,
+        "api/Customer/" + customer_id.ToString() + "/GetCustomer");
 
-            if (response != null && response.Success && response.Data != null) {
-                customer = response.Data;
-                StateHasChanged();
-            }
-            else {
-                page_message = "Merchanter Server ServiceAPI data response empty.";
-            }
+        if (response != null && response.Success && response.Data != null) {
+            customer = response.Data;
+            StateHasChanged();
+        }
+        else {
+            page_message = "Merchanter Server ServiceAPI yanıt vermiyor.";
+            message_status = "dev";
         }
     }
 
-    public async Task SaveGeneralSettings(SettingsGeneral _settings) {
-        if (settings != null && int.TryParse(CID, out int customer_id)) {
+    protected async Task SaveSettings() {
+        if (activeid == "general-settings") {
+            page_message = "Genel ayarlar kaydediliyor...";
+            message_status = "dev";
+            if (settings != null && settings.settings != null) {
+                await SaveGeneralSettings(settings.settings);
+            }
+        }
+        if (activeid == "product-settings") {
+            page_message = "Ürün ayarları kaydediliyor...";
+            message_status = "dev";
+            if (settings != null && settings.product != null) {
+                await SaveProductSettings(settings.product);
+            }
+        }
+        if (activeid == "order-settings") {
+            page_message = "Sipariş ayarları kaydediliyor...";
+            message_status = "dev";
+            if (settings != null && settings.order != null) {
+                await SaveOrderSettings(settings.order);
+            }
+        }
+        if (activeid == "invoice-settings") {
+            page_message = "Fatura ayarları kaydediliyor...";
+            message_status = "dev";
+            if (settings != null && settings.invoice != null) {
+                await SaveInvoiceSettings(settings.invoice);
+            }
+        }
+        if (activeid == "google-settings") {
+            page_message = "Google ayarları kaydediliyor...";
+            message_status = "dev";
+            if (settings != null && settings.google != null) {
+                await SaveGoogleSettings(settings.google);
+            }
+        }
+        await Task.CompletedTask;
+    }
+
+    protected async Task SaveGeneralSettings(SettingsGeneral _settings) {
+        if (settings != null && settings.settings != null) {
             is_refreshing = true;
             string json = JsonConvert.SerializeObject(_settings);
             var response = await PostHelper.Request<SettingsGeneral>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
                 Classes.PostHelper.PostMethod.Put, Classes.PostHelper.PostDestination.Server,
-                "api/Settings/" + CID + "/SaveGeneralSettings",
+                "api/Settings/" + customer_id + "/SaveGeneralSettings",
                 new StringContent(json, Encoding.UTF8, "application/json"));
 
             if (response != null && response.Success && response.Data != null) {
                 settings.settings = response.Data;
-                page_message = "General settings saved. [" + DateTime.Now.ToString() + "]";
-                message_status = "success";
+                page_message = "[" + DateTime.Now.ToString() + "] Genel ayarlar kaydedildi.";
+                message_status = "işlem başarılı";
             }
             else {
-                page_message = "General settings save failed. [" + DateTime.Now.ToString() + "]";
-                message_status = "danger";
+                page_message = "[" + DateTime.Now.ToString() + "] Genel ayarlar kaydedilemedi. ";
+                message_status = "işlem başarısız";
             }
             is_refreshing = false;
         }
     }
 
-    public async Task SaveOrderSettings(SettingsOrder _settings) {
-        if (settings != null && int.TryParse(CID, out int customer_id)) {
+    protected async Task SaveOrderSettings(SettingsOrder _settings) {
+        if (settings != null && settings.order != null) {
             is_refreshing = true;
             string json = JsonConvert.SerializeObject(_settings);
             var response = await PostHelper.Request<SettingsOrder>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
                 Classes.PostHelper.PostMethod.Put, Classes.PostHelper.PostDestination.Server,
-                "api/Settings/" + CID + "/SaveOrderSettings",
+                "api/Settings/" + customer_id + "/SaveOrderSettings",
                 new StringContent(json, Encoding.UTF8, "application/json"));
             if (response != null && response.Success && response.Data != null) {
                 settings.order = response.Data;
-                page_message = "Order settings saved. [" + DateTime.Now.ToString() + "]";
-                message_status = "success";
+                page_message = "[" + DateTime.Now.ToString() + "] Sipariş ayarları kaydedildi.";
+                message_status = "işlem başarılı";
             }
             else {
-                page_message = "Order settings save failed. [" + DateTime.Now.ToString() + "]";
-                message_status = "danger";
+                page_message = "[" + DateTime.Now.ToString() + "] Sipariş ayarları kaydedilemedi. ";
+                message_status = "işlem başarısız";
             }
             is_refreshing = false;
         }
     }
 
-    public async Task SaveProductSettings(SettingsProduct _settings) {
-        if (settings != null && int.TryParse(CID, out int customer_id)) {
+    protected async Task SaveProductSettings(SettingsProduct _settings) {
+        if (settings != null && settings.product != null) {
             is_refreshing = true;
             string json = JsonConvert.SerializeObject(_settings);
             var response = await PostHelper.Request<SettingsProduct>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
                 Classes.PostHelper.PostMethod.Put, Classes.PostHelper.PostDestination.Server,
-                "api/Settings/" + CID + "/SaveProductSettings",
+                "api/Settings/" + customer_id + "/SaveProductSettings",
                 new StringContent(json, Encoding.UTF8, "application/json"));
             if (response != null && response.Success && response.Data != null) {
                 settings.product = response.Data;
-                page_message = "Product settings saved. [" + DateTime.Now.ToString() + "]";
-                message_status = "success";
+                page_message = "[" + DateTime.Now.ToString() + "] Ürün ayarları kaydedildi.";
+                message_status = "işlem başarılı";
             }
             else {
-                page_message = "Product settings save failed. [" + DateTime.Now.ToString() + "]";
-                message_status = "danger";
+                page_message = "[" + DateTime.Now.ToString() + "] Ürün ayarları kaydedilemedi. ";
+                message_status = "işlem başarısız";
             }
             is_refreshing = false;
         }
     }
 
-    public async Task SaveInvoiceSettings(SettingsInvoice _settings) {
-        if (settings != null && int.TryParse(CID, out int customer_id)) {
+    protected async Task SaveInvoiceSettings(SettingsInvoice _settings) {
+        if (settings != null && settings.invoice != null) {
             is_refreshing = true;
             string json = JsonConvert.SerializeObject(_settings);
             var response = await PostHelper.Request<SettingsInvoice>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
                 Classes.PostHelper.PostMethod.Put, Classes.PostHelper.PostDestination.Server,
-                "api/Settings/" + CID + "/SaveInvoiceSettings",
+                "api/Settings/" + customer_id + "/SaveInvoiceSettings",
                 new StringContent(json, Encoding.UTF8, "application/json"));
             if (response != null && response.Success && response.Data != null) {
                 settings.invoice = response.Data;
-                page_message = "Invoice settings saved. [" + DateTime.Now.ToString() + "]";
-                message_status = "success";
+                page_message = "[" + DateTime.Now.ToString() + "] Fatura ayarları kaydedildi.";
+                message_status = "işlem başarılı";
             }
             else {
-                page_message = "Invoice settings save failed. [" + DateTime.Now.ToString() + "]";
-                message_status = "danger";
+                page_message = "[" + DateTime.Now.ToString() + "] Fatura ayarları kaydedilemedi. ";
+                message_status = "işlem başarısız";
             }
             is_refreshing = false;
         }
     }
 
-    public async Task SaveGoogleSettings(SettingsGoogle _settings) {
-        if (settings != null && int.TryParse(CID, out int customer_id)) {
+    protected async Task SaveGoogleSettings(SettingsGoogle _settings) {
+        if (settings != null && settings.google != null) {
             is_refreshing = true;
             string json = JsonConvert.SerializeObject(_settings);
             var response = await PostHelper.Request<SettingsGoogle>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
                 Classes.PostHelper.PostMethod.Put, Classes.PostHelper.PostDestination.Server,
-                "api/Settings/" + CID + "/SaveGoogleSettings",
+                "api/Settings/" + customer_id + "/SaveGoogleSettings",
                 new StringContent(json, Encoding.UTF8, "application/json"));
             if (response != null && response.Success && response.Data != null) {
                 settings.google = response.Data;
-                page_message = "Google settings saved. [" + DateTime.Now.ToString() + "]";
-                message_status = "success";
+                page_message = "[" + DateTime.Now.ToString() + "] Google ayarları kaydedildi.";
+                message_status = "işlem başarılı";
             }
             else {
-                page_message = "Google settings save failed. [" + DateTime.Now.ToString() + "]";
-                message_status = "danger";
+                page_message = "[" + DateTime.Now.ToString() + "] Google ayarları kaydedilemedi. ";
+                message_status = "işlem başarısız";
             }
             is_refreshing = false;
         }
+    }
+
+    private void HandleOnTabChange(FluentTab tab) {
+        changedto = tab;
+        // page_message = tab.Id;
+        // message_status = "dev_message";
     }
 }
