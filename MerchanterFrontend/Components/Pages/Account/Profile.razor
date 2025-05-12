@@ -16,12 +16,12 @@
             <FluentGrid>
                 <FluentGridItem md="2" Justify="JustifyContent.FlexStart" HiddenWhen="GridItemHidden.MdAndDown">
                     <FluentToolbar id="nav-toolbar" style="width:100%;border-radius:5px;padding:5px !important;" Orientation="Orientation.Vertical">
-                        <FluentButton Appearance="Appearance.Neutral" OnClick="@(() => SetActiveTab("customer") )" Disabled="@(customer_active)" IconStart="@(new Icons.Regular.Size20.Person())">Kullanıcı Profili</FluentButton>
-                        <FluentButton Appearance="Appearance.Neutral" OnClick="@(() => SetActiveTab("syncs") )" Disabled="@(syncs_active)" IconStart="@(new Icons.Regular.Size20.ArrowSync())">Senk. Durumları</FluentButton>
-                        <FluentButton Appearance="Appearance.Neutral" OnClick="@(() => SetActiveTab("settings") )" Disabled="@(settings_active)" IconStart="@(new Icons.Regular.Size20.Settings())">Ayarlar</FluentButton>
-                        <FluentButton Appearance="Appearance.Neutral" OnClick="@(() => SetActiveTab("platforms") )" Disabled="@(platforms_active)" IconStart="@(new Icons.Regular.Size20.Apps())">Plarformlar</FluentButton>
-                        <FluentButton Appearance="Appearance.Neutral" OnClick="@(() => SetActiveTab("integrations") )" Disabled="@(integrations_active)" IconStart="@(new Icons.Regular.Size20.AppFolder())">Entegrasyonlar</FluentButton>
-                        <FluentButton Appearance="Appearance.Neutral" OnClick="@(() => SetActiveTab("logs") )" Disabled="@(logs_active)" IconStart="@(new Icons.Regular.Size20.ReadingList())">Olay Günlükleri</FluentButton>
+                        <FluentButton Appearance="Appearance.Neutral" OnClick="@(() => SetActiveTab("customer") )" Disabled="@customer_active" IconStart="@(new Icons.Regular.Size20.Person())">Kullanıcı Profili</FluentButton>
+                        <FluentButton Appearance="Appearance.Neutral" OnClick="@(() => SetActiveTab("syncs") )" Disabled="@syncs_active" IconStart="@(new Icons.Regular.Size20.ArrowSync())">Senk. Durumları</FluentButton>
+                        <FluentButton Appearance="Appearance.Neutral" OnClick="@(() => SetActiveTab("settings") )" Disabled="@settings_active" IconStart="@(new Icons.Regular.Size20.Settings())">Ayarlar</FluentButton>
+                        <FluentButton Appearance="Appearance.Neutral" OnClick="@(() => SetActiveTab("platforms") )" Disabled="@platforms_active" IconStart="@(new Icons.Regular.Size20.Apps())">Plarformlar</FluentButton>
+                        <FluentButton Appearance="Appearance.Neutral" OnClick="@(() => SetActiveTab("integrations") )" Disabled="@integrations_active" IconStart="@(new Icons.Regular.Size20.AppFolder())">Entegrasyonlar</FluentButton>
+                        <FluentButton Appearance="Appearance.Neutral" OnClick="@(() => SetActiveTab("logs") )" Disabled="@logs_active" IconStart="@(new Icons.Regular.Size20.ReadingList())">Olay Günlükleri</FluentButton>
                     </FluentToolbar>
                 </FluentGridItem>
                 @if (customer_active) {

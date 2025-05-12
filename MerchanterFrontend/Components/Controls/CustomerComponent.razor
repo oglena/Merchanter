@@ -16,8 +16,8 @@
             <FluentGridItem xs="12">
                 <FluentToolbar style="width:100%;border-radius:5px;padding:5px !important;" Orientation="Orientation.Horizontal">
                     <FluentIcon Value="@(new Icons.Filled.Size20.Person())" Slot="start" Color="Color.Accent" />
-                    <FluentButton Appearance="Appearance.Neutral" OnClick="@(() => LoadCustomer() )" Loading="@is_refreshing" IconStart="@(new Icons.Regular.Size20.ArrowClockwise())">Yenile</FluentButton>
-                    <FluentBadge>Lisans bitimine <strong>&nbsp;999&nbsp;</strong> gün kaldı.</FluentBadge>
+                    <FluentBadge>Kullanıcı Profili</FluentBadge>
+                    <FluentButton Appearance="Appearance.Neutral" OnClick="@(() => LoadCustomer() )" Loading="@is_refreshing" IconStart="@(new Icons.Regular.Size20.ArrowClockwise())" Style="margin-right:10px;" Slot="end">Yenile</FluentButton>
                     <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Outline" Loading="@is_refreshing" IconStart="@(new Icons.Regular.Size20.Save())" Slot="end">Kaydet</FluentButton>
                 </FluentToolbar>
             </FluentGridItem>

@@ -5,6 +5,8 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IPostHelper PostHelper
 
+@* <PageTitle>Hesap > Profil > Olay Günlükleri | Merchanter</PageTitle> *@
+
 @if (customer_logs != null) {
     <FluentGrid Justify="JustifyContent.SpaceBetween" Spacing="2">
         <FluentGridItem xs="12">
@@ -12,7 +14,8 @@
                 <FluentIcon Value="@(new Icons.Filled.Size20.ReadingList())" Slot="start" Color="Color.Accent" />
                 @* <FluentSelect Items="@notification_types_list" TOption="@(Notification.NotificationTypes)" Label="Bölüm Seç:">
                 </FluentSelect> *@
-                <FluentSelect ValueChanged="@(e => workerFilter = e)" Value="@workerFilter" TOption="string">
+                <FluentBadge>Olay Günlükleri</FluentBadge>
+                <FluentSelect ValueChanged="@(e => workerFilter = e)" Value="@workerFilter" TOption="string" Style="margin-right:10px;" slot="end">
                     <FluentIcon Value="@(new Icons.Regular.Size16.Globe())" Color="@Color.Neutral" Slot="indicator" />
                     <FluentOption Value="" Selected="true">Tüm Bölümler</FluentOption>
                     <FluentOption Value="product">Ürün</FluentOption>
@@ -41,7 +44,7 @@
             </PaginationTextTemplate>
         </FluentPaginator>
 
-        <FluentDataGrid ItemsProvider="GetDataAsync" RowSize="DataGridRowSize.Medium" GenerateHeader="GenerateHeaderOption.Sticky"
+        <FluentDataGrid ItemsProvider="GetDataAsync" RowSize="DataGridRowSize.Small" GenerateHeader="GenerateHeaderOption.Sticky"
                         TGridItem="Log" Loading="loading" Pagination="pagination" DisplayMode="DataGridDisplayMode.Grid" ShowHover="true">
             <ChildContent>
                 <PropertyColumn Title="ID" Property="@(l => l.id)" Width="100px" TooltipText="@(l => l.thread_id)" Tooltip="true" Align="Align.End" />
@@ -92,6 +95,14 @@ else {
         .Cast<Notification.NotificationTypes>()
         .ToList();
 
+    protected override async Task OnParametersSetAsync() {
+        await GetDataAsync(new GridItemsProviderRequest<Log>());
+    }
+
+    protected async Task LoadCustomerLogs() {
+        await GetDataAsync(new GridItemsProviderRequest<Log>());
+    }
+
     private async ValueTask<GridItemsProviderResult<Log>> GetDataAsync(GridItemsProviderRequest<Log> request) {
         try {
             loading = true;
@@ -132,10 +143,6 @@ else {
         }
     }
 
-    protected override async Task OnParametersSetAsync() {
-        await GetDataAsync(new GridItemsProviderRequest<Log>());
-    }
-
     public async void ClearFilters() {
         messageFilter = "";
         workerFilter = "";
@@ -143,44 +150,5 @@ else {
         dateFilter = null;
         await pagination.SetCurrentPageIndexAsync(0);
         StateHasChanged();
-    }
-
-    protected async Task LoadCustomerLogs() {
-        try {
-            loading = true;
-            string json = JsonConvert.SerializeObject(
-                new ApiFilter() {
-                        Pager = new Pager() {
-                            ItemsPerPage = pagination.ItemsPerPage,
-                            CurrentPageIndex = pagination.CurrentPageIndex
-                        },
-                        Filters = new List<Filter<dynamic>>() {
-                        new Filter<dynamic> { Field = "worker", Value = workerFilter },
-                        new Filter<dynamic> { Field = "title", Value = titleFilter },
-                        new Filter<dynamic> { Field = "message", Value = messageFilter },
-                        new Filter<dynamic> { Field = "date", Value = dateFilter } },
-                    });
-            var response = await PostHelper.Request<List<Log>>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
-                Classes.PostHelper.PostMethod.Post, Classes.PostHelper.PostDestination.Server,
-                "api/Customer/" + customer_id.ToString() + "/GetCustomerLogs",
-                new StringContent(json, Encoding.UTF8, "application/json")
-                );
-
-            if (response != null && response.Success && response.Data != null) {
-                customer_logs = response.Data;
-                if (response.ApiFilter != null) {
-                    pagination.SetTotalItemCountAsync(response.ApiFilter.TotalCount.GetValueOrDefault()).Wait();
-                }
-            }
-        }
-        catch (Exception ex) {
-            Console.WriteLine(ex.Message);
-            customer_logs = null;
-            pagination.SetTotalItemCountAsync(0).Wait();
-        }
-        finally {
-            loading = false;
-            StateHasChanged();
-        }
     }
 }

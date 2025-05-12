@@ -2621,9 +2621,9 @@ internal class MainLoop {
     /// <param name="message">Message</param>
     /// <param name="color">Color</param>
     private static void PrintConsole(string message, ConsoleColor color) {
-        Console.BackgroundColor = color;
+        Console.ForegroundColor = color;
         Console.WriteLine("#" + DateTime.Now.ToString("dd.MM.yy HH:mm:ss") + "," + Helper.global.settings.company_name + ", " + message);
-        Console.BackgroundColor = ConsoleColor.White;
+        Console.ForegroundColor = ConsoleColor.White;
     }
     #endregion
 }

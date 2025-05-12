@@ -5,6 +5,8 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IPostHelper PostHelper
 
+<PageTitle>Hesap > Profil > Ayarlar | Merchanter</PageTitle>
+
 @if (settings != null) {
     <FluentGrid Justify="JustifyContent.SpaceBetween" Spacing="2">
         @if (!string.IsNullOrWhiteSpace(page_message)) {
@@ -15,7 +17,7 @@
         <FluentGridItem xs="12">
             <FluentToolbar style="width:100%;border-radius:5px;padding:5px !important;" Orientation="Orientation.Horizontal">
                 <FluentIcon Value="@(new Icons.Filled.Size20.Settings())" Slot="start" Color="Color.Accent" />
-                <FluentBadge>Lisans bitimine <strong>&nbsp;999&nbsp;</strong> gün kaldı.</FluentBadge>
+                <FluentBadge>Ayarlar</FluentBadge>
                 <FluentButton Appearance="Appearance.Outline" Loading="@is_refreshing" OnClick="SaveSettings" IconStart="@(new Icons.Regular.Size20.Save())" Slot="end">Kaydet</FluentButton>
             </FluentToolbar>
         </FluentGridItem>

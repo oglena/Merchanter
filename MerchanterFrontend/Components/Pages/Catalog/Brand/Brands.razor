@@ -1,10 +1,132 @@
 ﻿@attribute [Authorize]
 @page "/Catalog/Brand/Brands"
+@using Newtonsoft.Json
+@using System.Text
+@inject IPostHelper PostHelper
+@inject IHttpContextAccessor HttpContextAccessor
+@inject NavigationManager navigationManager
 
 <PageTitle>Katalog > Marka > Markalar | Merchanter</PageTitle>
 
-<h1>Markalar</h1>
+
+@if (customer_id > 0) {
+    @if (HttpContextAccessor?.HttpContext?.User.Identity != null && HttpContextAccessor.HttpContext.User.Identity.IsAuthenticated) {
+        <FluentLabel Typo="Typography.H1"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size28.Apps())" />&nbsp;Markalar</FluentLabel>
+        <FluentLayout Orientation="Orientation.Vertical" Style="padding-top:10px;">
+            <FluentGrid Justify="JustifyContent.SpaceBetween" Spacing="2">
+                <FluentGridItem xs="12">
+                    <FluentToolbar style="width:100%;border-radius:5px;padding:5px !important;" Orientation="Orientation.Horizontal">
+                        <FluentIcon Value="@(new Icons.Filled.Size20.Apps())" Slot="start" Color="Color.Accent" />
+                        <FluentBadge>Toplam <strong>&nbsp;999&nbsp;</strong> marka bulundu.</FluentBadge>
+                        <FluentTextField @bind-Value="@brandFilter" Placeholder="Marka ismi ara" Style="margin-right:10px;" slot="end"></FluentTextField>
+                        <FluentButton Appearance="Appearance.Outline" Loading="@loading" Disabled="loading" IconStart="@(new Icons.Regular.Size20.Filter())" Style="margin-right:10px;" Slot="end">Filtrele</FluentButton>
+                        <FluentButton Appearance="Appearance.Outline" OnClick="ClearFilters" Disabled="loading" Loading="@loading" IconStart="@(new Icons.Regular.Size20.Broom())" Slot="end">Temizle</FluentButton>
+                    </FluentToolbar>
+                </FluentGridItem>
+
+                <FluentGridItem xs="12">
+                    <FluentPaginator State="@pagination">
+                        <SummaryTemplate>
+                            Toplam: <strong>@(pagination.TotalItemCount ?? 0)</strong> girdi
+                        </SummaryTemplate>
+                        <PaginationTextTemplate>
+                            <strong>@(pagination.CurrentPageIndex + 1)</strong> / <strong>@(pagination.LastPageIndex + 1)</strong> sayfa
+                        </PaginationTextTemplate>
+                    </FluentPaginator>
+
+                    <FluentDataGrid ItemsProvider="GetDataAsync" RowSize="DataGridRowSize.Large" GenerateHeader="GenerateHeaderOption.Sticky"
+                                    TGridItem="Brand" Loading="loading" Pagination="pagination" DisplayMode="DataGridDisplayMode.Table" ShowHover="true">
+                        <ChildContent>
+                            <PropertyColumn Title="ID" Property="@(b => b.id)" Width="100px" Align="Align.End" />
+                            <PropertyColumn Title="Marka Adı" Property="@(b => b.brand_name)" Align="Align.Center" />
+                            <PropertyColumn Title="Durum" Property="@(b => b.status ? "Aktif" : "Pasif")" Align="Align.Center" />
+                            <TemplateColumn Title="" Width="250px">
+                                <FluentButton Appearance="Appearance.Outline" IconStart="@(new Icons.Regular.Size20.Delete())">Sil</FluentButton>
+                                <FluentButton Appearance="Appearance.Outline" IconStart="@(new Icons.Regular.Size20.Edit())">Düzenle</FluentButton>
+                            </TemplateColumn>
+                        </ChildContent>
+                        <EmptyContent>
+                            <FluentLayout>
+                                <ChildContent>
+                                    <span style="color: #9f9f9f;font-weight: bold"><i>Veri Yok.</i></span>
+                                </ChildContent>
+                            </FluentLayout>
+                        </EmptyContent>
+                        <LoadingContent>
+                            <FluentLayout Orientation="Orientation.Horizontal">
+                                <ChildContent>
+                                    <FluentProgressRing />
+                                </ChildContent>
+                            </FluentLayout>
+                        </LoadingContent>
+                    </FluentDataGrid>
+
+                    <FluentPaginator State="@pagination">
+                        <SummaryTemplate>
+                            Toplam: <strong>@(pagination.TotalItemCount ?? 0)</strong> girdi
+                        </SummaryTemplate>
+                        <PaginationTextTemplate>
+                            <strong>@(pagination.CurrentPageIndex + 1)</strong> / <strong>@(pagination.LastPageIndex + 1)</strong> sayfa
+                        </PaginationTextTemplate>
+                    </FluentPaginator>
+                </FluentGridItem>
+            </FluentGrid>
+        </FluentLayout>
+    }
+}
 
 @code {
+    [Parameter]
+    public int customer_id { get; set; }
+    List<Brand>? brands { get; set; } = null;
+    bool loading = false;
+    private string? brandFilter = null;
+    PaginationState pagination = new PaginationState() { ItemsPerPage = 1 };
 
+    protected override void OnInitialized() {
+        if (int.TryParse(HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == Variables.customer_id)?.Value, out int CID)) {
+            customer_id = CID;
+        }
+    }
+
+    private async ValueTask<GridItemsProviderResult<Brand>> GetDataAsync(GridItemsProviderRequest<Brand> request) {
+        try {
+            loading = true;
+            brands = new List<Brand>() { new Brand() {
+                customer_id = 0, id = 1, brand_name = "TEST1", status = true
+            }, new Brand() {
+                customer_id = 0, id = 2, brand_name = "TEST2", status = true
+            }, new Brand() {
+                customer_id = 0, id = 3, brand_name = "TEST3", status = false
+            }, new Brand() {
+                customer_id = 0, id = 4, brand_name = "TEST4", status = true
+            }, new Brand() {
+                customer_id = 0, id = 5, brand_name = "TEST5", status = true
+            } };
+            await Task.CompletedTask;
+            return GridItemsProviderResult.From<Brand>(brands, 1);
+        }
+        catch (Exception ex) {
+            Console.WriteLine(ex.Message);
+            brands = null;
+            return GridItemsProviderResult.From<Brand>(new List<Brand>(), 0);
+        }
+        finally {
+            loading = false;
+        }
+    }
+
+    protected override async Task OnParametersSetAsync() {
+        await GetDataAsync(new GridItemsProviderRequest<Brand>());
+    }
+
+    protected async Task LoadBrands() {
+        await GetDataAsync(new GridItemsProviderRequest<Brand>());
+    }
+
+    public async void ClearFilters() {
+        brandFilter = "";
+        await pagination.SetCurrentPageIndexAsync(0);
+        StateHasChanged();
+    }
 }
