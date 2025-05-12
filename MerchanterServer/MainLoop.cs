@@ -1682,8 +1682,23 @@ internal class MainLoop {
                     }
                     #endregion
 
-                    foreach (var item in products) {
 
+                    if (Helper.global.product.product_list_filter_source_products) {
+                        //foreach (var item in products) {
+                        //    var deleted_product = live_products.FirstOrDefault(x => x.sku == item.sku);
+                        //    if (deleted_product == null && item.extension.is_enabled) {
+                        //        item.extension.is_enabled = false;
+                        //        if (db_helper.UpdateProducts(customer.customer_id, [item])) {
+                        //            PrintConsole("Sku:" + item.sku + " updated on MerchanterDB. -disabled");
+                        //        }
+                        //        else {
+                        //            PrintConsole("Sku:" + item.sku + " " + "update error on MerchanterDB. -disabled");
+                        //        }
+                        //    }
+                        //    if (deleted_product != null && !item.extension.is_enabled) {
+                        //        //TODO: Disable product on TARGET
+                        //    }
+                        //}
                     }
 
                     if (notifications.Count > 0) {
@@ -1906,25 +1921,6 @@ internal class MainLoop {
                             else {
                                 PrintConsole("Sku:" + item.sku + " " + "insert error on MerchanterDB.");
                             }
-                        }
-                        else {
-                            PrintConsole("Insert error" + ", " + Constants.IDEASOFT);
-                        }
-                    }
-
-                    foreach (var item in products) {
-                        var deleted_product = live_products.FirstOrDefault(x => x.sku == item.sku);
-                        if (deleted_product == null && item.extension.is_enabled) {
-                            item.extension.is_enabled = false;
-                            if (db_helper.UpdateProducts(customer.customer_id, [item])) {
-                                PrintConsole("Sku:" + item.sku + " updated on MerchanterDB. -disabled");
-                            }
-                            else {
-                                PrintConsole("Sku:" + item.sku + " " + "update error on MerchanterDB. -disabled");
-                            }
-                        }
-                        if (deleted_product != null && !item.extension.is_enabled) {
-                            //TODO: Disable product on ideasoft
                         }
                     }
 

@@ -16,11 +16,12 @@
             <FluentGrid>
                 <FluentGridItem md="2" Justify="JustifyContent.FlexStart" HiddenWhen="GridItemHidden.MdAndDown">
                     <FluentToolbar id="nav-toolbar" style="width:100%;border-radius:5px;padding:5px !important;" Orientation="Orientation.Vertical">
-                        <FluentButton Appearance="Appearance.Neutral" OnClick="@(() => SetActiveTab("customer") )" Disabled="@(customer_active)" IconStart="@(new Icons.Regular.Size20.Person())" Style="width: 100%;">Kullanıcı Profili</FluentButton>
-                        <FluentButton Appearance="Appearance.Neutral" OnClick="@(() => SetActiveTab("settings") )" Disabled="@(settings_active)" IconStart="@(new Icons.Regular.Size20.Settings())" Style="width: 100%;">Ayarlar</FluentButton>
-                        <FluentButton Appearance="Appearance.Neutral" OnClick="@(() => SetActiveTab("platforms") )" Disabled="@(platforms_active)" IconStart="@(new Icons.Regular.Size20.Apps())" Style="width: 100%;">Plarformlar</FluentButton>
-                        <FluentButton Appearance="Appearance.Neutral" OnClick="@(() => SetActiveTab("integrations") )" Disabled="@(integrations_active)" IconStart="@(new Icons.Regular.Size20.AppFolder())" Style="width: 100%;">Entegrasyonlar</FluentButton>
-                        <FluentButton Appearance="Appearance.Neutral" OnClick="@(() => SetActiveTab("logs") )" Disabled="@(logs_active)" IconStart="@(new Icons.Regular.Size20.ReadingList())" Style="width: 100%;">Olay Günlükleri</FluentButton>
+                        <FluentButton Appearance="Appearance.Neutral" OnClick="@(() => SetActiveTab("customer") )" Disabled="@(customer_active)" IconStart="@(new Icons.Regular.Size20.Person())">Kullanıcı Profili</FluentButton>
+                        <FluentButton Appearance="Appearance.Neutral" OnClick="@(() => SetActiveTab("syncs") )" Disabled="@(syncs_active)" IconStart="@(new Icons.Regular.Size20.ArrowSync())">Senk. Durumları</FluentButton>
+                        <FluentButton Appearance="Appearance.Neutral" OnClick="@(() => SetActiveTab("settings") )" Disabled="@(settings_active)" IconStart="@(new Icons.Regular.Size20.Settings())">Ayarlar</FluentButton>
+                        <FluentButton Appearance="Appearance.Neutral" OnClick="@(() => SetActiveTab("platforms") )" Disabled="@(platforms_active)" IconStart="@(new Icons.Regular.Size20.Apps())">Plarformlar</FluentButton>
+                        <FluentButton Appearance="Appearance.Neutral" OnClick="@(() => SetActiveTab("integrations") )" Disabled="@(integrations_active)" IconStart="@(new Icons.Regular.Size20.AppFolder())">Entegrasyonlar</FluentButton>
+                        <FluentButton Appearance="Appearance.Neutral" OnClick="@(() => SetActiveTab("logs") )" Disabled="@(logs_active)" IconStart="@(new Icons.Regular.Size20.ReadingList())">Olay Günlükleri</FluentButton>
                     </FluentToolbar>
                 </FluentGridItem>
                 @if (customer_active) {
@@ -39,8 +40,15 @@
                     </FluentGridItem>
                 }
                 else if (integrations_active) {
+
                 }
                 else if (platforms_active) {
+
+                }
+                else if (syncs_active) {
+                    <FluentGridItem md="10" xs="12">
+                        <SyncStatusesComponent customer_id="@customer_id" />
+                    </FluentGridItem>
                 }
 
             </FluentGrid>
@@ -61,6 +69,7 @@
     public bool integrations_active = false;
     public bool platforms_active = false;
     public bool customer_active = true;
+    public bool syncs_active = false;
 
     protected override void OnInitialized() {
         if (int.TryParse(HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == Variables.customer_id)?.Value, out int CID)) {
@@ -82,6 +91,7 @@
             integrations_active = false;
             platforms_active = false;
             customer_active = false;
+            syncs_active = false;
             ActiveTab = "logs";
             navigationManager.NavigateTo("/Account/Profile?ActiveTab=logs");
         }
@@ -91,6 +101,7 @@
             integrations_active = false;
             platforms_active = false;
             customer_active = false;
+            syncs_active = false;
             ActiveTab = "settings";
             navigationManager.NavigateTo("/Account/Profile?ActiveTab=settings");
         }
@@ -100,6 +111,7 @@
             integrations_active = true;
             platforms_active = false;
             customer_active = false;
+            syncs_active = false;
             ActiveTab = "integrations";
             navigationManager.NavigateTo("/Account/Profile?ActiveTab=integrations");
         }
@@ -109,6 +121,7 @@
             integrations_active = false;
             platforms_active = true;
             customer_active = false;
+            syncs_active = false;
             ActiveTab = "platforms";
             navigationManager.NavigateTo("/Account/Profile?ActiveTab=platforms");
         }
@@ -118,8 +131,19 @@
             integrations_active = false;
             platforms_active = false;
             customer_active = true;
+            syncs_active = false;
             ActiveTab = "customer";
             navigationManager.NavigateTo("/Account/Profile?ActiveTab=customer");
+        }
+        else if (tab == "syncs") {
+            logs_active = false;
+            settings_active = false;
+            integrations_active = false;
+            platforms_active = false;
+            customer_active = false;
+            syncs_active = true;
+            ActiveTab = "syncs";
+            navigationManager.NavigateTo("/Account/Profile?ActiveTab=syncs");
         }
         await Task.CompletedTask;
     }
