@@ -17,7 +17,7 @@
         <FluentGridItem xs="12">
             <FluentToolbar style="width:100%;border-radius:5px;padding:5px !important;" Orientation="Orientation.Horizontal">
                 <FluentIcon Value="@(new Icons.Filled.Size20.Settings())" Slot="start" Color="Color.Accent" />
-                <FluentBadge>Ayarlar</FluentBadge>
+                <FluentBadge>@section_name</FluentBadge>
                 <FluentButton Appearance="Appearance.Outline" Loading="@is_refreshing" OnClick="SaveSettings" IconStart="@(new Icons.Regular.Size20.Save())" Slot="end">Kaydet</FluentButton>
             </FluentToolbar>
         </FluentGridItem>
@@ -31,17 +31,17 @@
                             </FluentTextField>
                         </FluentGridItem>
                         <FluentGridItem xs="12">
-                            <FluentNumberField @bind-Value="settings.settings.rate_TL" Label="TL (Türk Lirası)" TValue="decimal" Step="0.1" Disabled="true">
+                            <FluentNumberField @bind-Value="settings.settings.rate_TL" Label="TL (Türk Lirası)" TValue="decimal" Step="0.1" Disabled="true" Required="true">
                                 <FluentIcon Value="@(new Icons.Regular.Size16.Money())" Color="@Color.Neutral" Slot="end" />
                             </FluentNumberField>
                         </FluentGridItem>
                         <FluentGridItem xs="12">
-                            <FluentNumberField @bind-Value="settings.settings.rate_USD" Label="USD (Amerikan Doları)" TValue="decimal" Step="0.1">
+                            <FluentNumberField @bind-Value="settings.settings.rate_USD" Label="USD (Amerikan Doları)" TValue="decimal" Step="0.1" Required="true">
                                 <FluentIcon Value="@(new Icons.Regular.Size16.CurrencyDollarEuro())" Color="@Color.Neutral" Slot="end" />
                             </FluentNumberField>
                         </FluentGridItem>
                         <FluentGridItem xs="12">
-                            <FluentNumberField @bind-Value="settings.settings.rate_EUR" Label="EUR (Euro)" TValue="decimal" Step="0.1">
+                            <FluentNumberField @bind-Value="settings.settings.rate_EUR" Label="EUR (Euro)" TValue="decimal" Step="0.1" Required="true">
                                 <FluentIcon Value="@(new Icons.Regular.Size16.CurrencyDollarEuro())" Color="@Color.Neutral" Slot="end" />
                             </FluentNumberField>
                         </FluentGridItem>
@@ -54,9 +54,14 @@
                 <FluentEditForm Model="settings.product" Style="margin-top:15px;">
                     <FluentGrid Justify="JustifyContent.FlexStart">
                         <FluentGridItem xs="12">
-                            <FluentNumberField Label="Kök Kategori Id" @bind-Value="settings.product.customer_root_category_id" Disabled="true">
-                                <FluentIcon Value="@(new Icons.Regular.Size20.Timer())" Color="@Color.Neutral" Slot="start" />
+                            <FluentNumberField Label="Kök Kategori Id" @bind-Value="settings.product.customer_root_category_id" Required="true" Disabled="true">
+                                <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
                             </FluentNumberField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="12">
+                            <FluentTextField Label="Varsayılan Marka" @bind-Value="settings.product.default_brand" Required="true" Disabled="true">
+                                <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+                            </FluentTextField>
                         </FluentGridItem>
                         <FluentGridItem xs="12" Justify="JustifyContent.FlexStart">
                             <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.TetrisApp())" />&nbsp;&nbsp;
@@ -121,66 +126,70 @@
                 </FluentEditForm>
             </FluentTab>
             <FluentTab Overflow="false" Label="Fatura Ayarları" Icon="@(new Icons.Regular.Size24.DocumentOnePage())" Id="invoice-settings">
-                <FluentEditForm Model="settings.invoice" Style="margin-top:15px;">
-                    <FluentGrid Justify="JustifyContent.FlexStart">
-                        <FluentGridItem xs="12">
-                            <FluentSlider @bind-Value="settings.invoice.daysto_invoicesync" TValue="int" Label="Geriye Dönük Günlük Fatura Kontrol" Min="3" Max="14" Step="1" ShowValue="true">
-                                <FluentSliderLabel Position="3">3</FluentSliderLabel>
-                                <FluentSliderLabel Position="7">7</FluentSliderLabel>
-                                <FluentSliderLabel Position="10">10</FluentSliderLabel>
-                                <FluentSliderLabel Position="14">14</FluentSliderLabel>
-                            </FluentSlider>
-                        </FluentGridItem>
-                        <FluentGridItem xs="12">
-                            <FluentTextField TextFieldType="TextFieldType.Url" Label="Fatura FTP Url (eski değişecek)" @bind-Value="settings.invoice.erp_invoice_ftp_url" Required="true">
-                                <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
-                            </FluentTextField>
-                        </FluentGridItem>
-                        <FluentGridItem xs="6">
-                            <FluentTextField Label="Fatura FTP Kullanıcı Adı (eski değişecek)" @bind-Value="settings.invoice.erp_invoice_ftp_username" Required="true">
-                                <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
-                            </FluentTextField>
-                        </FluentGridItem>
-                        <FluentGridItem xs="6">
-                            <FluentTextField TextFieldType="TextFieldType.Password" Label="Fatura FTP Şifre (eski değişecek)" @bind-Value="settings.invoice.erp_invoice_ftp_password" Required="true">
-                                <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
-                            </FluentTextField>
-                        </FluentGridItem>
-                    </FluentGrid>
-                </FluentEditForm>
+                @if (settings.invoice != null) {
+                    <FluentEditForm Model="settings.invoice" Style="margin-top:15px;">
+                        <FluentGrid Justify="JustifyContent.FlexStart">
+                            <FluentGridItem xs="12">
+                                <FluentSlider @bind-Value="settings.invoice.daysto_invoicesync" TValue="int" Label="Geriye Dönük Günlük Fatura Kontrol" Min="3" Max="14" Step="1" ShowValue="true">
+                                    <FluentSliderLabel Position="3">3</FluentSliderLabel>
+                                    <FluentSliderLabel Position="7">7</FluentSliderLabel>
+                                    <FluentSliderLabel Position="10">10</FluentSliderLabel>
+                                    <FluentSliderLabel Position="14">14</FluentSliderLabel>
+                                </FluentSlider>
+                            </FluentGridItem>
+                            <FluentGridItem xs="12">
+                                <FluentTextField TextFieldType="TextFieldType.Url" Label="Fatura FTP Url (eski değişecek)" @bind-Value="settings.invoice.erp_invoice_ftp_url" Required="true">
+                                    <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+                                </FluentTextField>
+                            </FluentGridItem>
+                            <FluentGridItem xs="6">
+                                <FluentTextField Label="Fatura FTP Kullanıcı Adı (eski değişecek)" @bind-Value="settings.invoice.erp_invoice_ftp_username" Required="true">
+                                    <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+                                </FluentTextField>
+                            </FluentGridItem>
+                            <FluentGridItem xs="6">
+                                <FluentTextField TextFieldType="TextFieldType.Password" Label="Fatura FTP Şifre (eski değişecek)" @bind-Value="settings.invoice.erp_invoice_ftp_password" Required="true">
+                                    <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+                                </FluentTextField>
+                            </FluentGridItem>
+                        </FluentGrid>
+                    </FluentEditForm>
+                }
             </FluentTab>
-            <FluentTab Overflow="false" Label="Google Ayarları" Icon="@(new Icons.Regular.Size24.Settings())" Id="google-settings">
-                <FluentEditForm Model="settings.google" Style="margin-top:15px;">
-                    <FluentGrid Justify="JustifyContent.FlexStart">
-                        <FluentGridItem xs="12" Justify="JustifyContent.FlexStart">
-                            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Mail())" />&nbsp;&nbsp;
-                            <FluentSwitch @bind-Value="@settings.google.is_enabled" Label="Mail Sistemi">
-                                <span slot="checked-message">Aktif</span>
-                                <span slot="unchecked-message">Pasif</span>
-                            </FluentSwitch>
-                        </FluentGridItem>
-                        <FluentGridItem xs="12">
-                            <FluentTextField Label="Gönderen İsmi" @bind-Value="settings.google.sender_name" Required="true">
-                                <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
-                            </FluentTextField>
-                        </FluentGridItem>
-                        <FluentGridItem xs="12">
-                            <FluentTextField TextFieldType="TextFieldType.Email" Label="Email Adres" @bind-Value="settings.google.email" Required="true">
-                                <FluentIcon Value="@(new Icons.Regular.Size20.MailEdit())" Color="@Color.Neutral" Slot="start" />
-                            </FluentTextField>
-                        </FluentGridItem>
-                        <FluentGridItem xs="12">
-                            <FluentTextField Label="oAuth2 Client Id" @bind-Value="settings.google.oauth2_clientid" Required="true">
-                                <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
-                            </FluentTextField>
-                        </FluentGridItem>
-                        <FluentGridItem xs="12">
-                            <FluentTextField TextFieldType="TextFieldType.Password" Label="oAuth2 Client Secret" @bind-Value="settings.google.oauth2_clientsecret" Required="true">
-                                <FluentIcon Value="@(new Icons.Regular.Size20.Password())" Color="@Color.Neutral" Slot="start" />
-                            </FluentTextField>
-                        </FluentGridItem>
-                    </FluentGrid>
-                </FluentEditForm>
+            <FluentTab Overflow="false" Label="Mail Ayarları (google)" Icon="@(new Icons.Regular.Size24.Settings())" Id="google-settings">
+                @if (settings.google != null) {
+                    <FluentEditForm Model="settings.google" Style="margin-top:15px;">
+                        <FluentGrid Justify="JustifyContent.FlexStart">
+                            <FluentGridItem xs="12" Justify="JustifyContent.FlexStart">
+                                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Mail())" />&nbsp;&nbsp;
+                                <FluentSwitch @bind-Value="@settings.google.is_enabled" Label="Mail Sistemi">
+                                    <span slot="checked-message">Aktif</span>
+                                    <span slot="unchecked-message">Pasif</span>
+                                </FluentSwitch>
+                            </FluentGridItem>
+                            <FluentGridItem xs="12">
+                                <FluentTextField Label="Gönderen İsmi" @bind-Value="settings.google.sender_name" Required="true">
+                                    <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+                                </FluentTextField>
+                            </FluentGridItem>
+                            <FluentGridItem xs="12">
+                                <FluentTextField TextFieldType="TextFieldType.Email" Label="Email Adres" @bind-Value="settings.google.email" Required="true">
+                                    <FluentIcon Value="@(new Icons.Regular.Size20.MailEdit())" Color="@Color.Neutral" Slot="start" />
+                                </FluentTextField>
+                            </FluentGridItem>
+                            <FluentGridItem xs="12">
+                                <FluentTextField Label="oAuth2 Client Id" @bind-Value="settings.google.oauth2_clientid" Required="true">
+                                    <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+                                </FluentTextField>
+                            </FluentGridItem>
+                            <FluentGridItem xs="12">
+                                <FluentTextField TextFieldType="TextFieldType.Password" Label="oAuth2 Client Secret" @bind-Value="settings.google.oauth2_clientsecret" Required="true">
+                                    <FluentIcon Value="@(new Icons.Regular.Size20.Password())" Color="@Color.Neutral" Slot="start" />
+                                </FluentTextField>
+                            </FluentGridItem>
+                        </FluentGrid>
+                    </FluentEditForm>
+                }
             </FluentTab>
         </FluentTabs>
     </FluentGrid>
@@ -198,6 +207,7 @@ else {
     private string loading = "Loading...";
     private string? page_message = "";
     private string? message_status = "";
+    private string section_name = "Ayarlar";
     Customer? customer { get; set; }
     SettingsMerchanter? settings { get; set; }
 
@@ -397,6 +407,23 @@ else {
 
     private void HandleOnTabChange(FluentTab tab) {
         changedto = tab;
+        if (tab != null) {
+            if (tab.Id == "general-settings") {
+                section_name = "Ayarlar";
+            }
+            if (tab.Id == "product-settings") {
+                section_name = "Ürün Ayarları";
+            }
+            if (tab.Id == "order-settings") {
+                section_name = "Sipariş Ayarları";
+            }
+            if (tab.Id == "invoice-settings") {
+                section_name = "Fatura Ayarları";
+            }
+            if (tab.Id == "google-settings") {
+                section_name = "Mail Ayarları (google)";
+            }
+        }
         // page_message = tab.Id;
         // message_status = "dev_message";
     }

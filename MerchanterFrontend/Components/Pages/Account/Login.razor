@@ -88,6 +88,7 @@
                                             new Claim(Variables.auth_token, login.AuthToken),
                                             new Claim(Variables.person_name, login.Settings.customer.person_name ?? ""),
                                             new Claim(Variables.company_name, login.Settings.settings.company_name),
+                                            new Claim(Variables.default_brand, login.Settings.product.default_brand)
                                          },
                                     Variables.auth_cookie)),
                                     new AuthenticationProperties {
