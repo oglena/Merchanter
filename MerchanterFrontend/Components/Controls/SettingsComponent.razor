@@ -90,16 +90,6 @@
             <FluentTab Overflow="false" Label="Sipariş Ayarları" Icon="@(new Icons.Regular.Size24.ShoppingBag())" Id="order-settings">
                 <FluentEditForm Model="settings.order" Style="margin-top:15px;">
                     <FluentGrid Justify="JustifyContent.FlexStart">
-                        <FluentGridItem xs="6">
-                            <FluentTextField Label="Kargo Stok Kodu" @bind-Value="settings.order.siparis_kargo_sku" Required="true">
-                                <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
-                            </FluentTextField>
-                        </FluentGridItem>
-                        <FluentGridItem xs="6">
-                            <FluentTextField Label="Sipariş Taksit Komisyon Stok Kodu" @bind-Value="settings.order.siparis_taksitkomisyon_sku" Required="true">
-                                <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
-                            </FluentTextField>
-                        </FluentGridItem>
                         <FluentGridItem xs="12">
                             <FluentSlider @bind-Value="settings.order.daysto_ordersync" TValue="int" Label="Geriye Dönük Günlük Sipariş Kontrol" Min="3" Max="14" Step="1" ShowValue="true">
                                 <FluentSliderLabel Position="3">3</FluentSliderLabel>
@@ -107,6 +97,16 @@
                                 <FluentSliderLabel Position="10">10</FluentSliderLabel>
                                 <FluentSliderLabel Position="14">14</FluentSliderLabel>
                             </FluentSlider>
+                        </FluentGridItem>
+                        <FluentGridItem xs="12">
+                            <FluentTextField Label="Kargo Stok Kodu" @bind-Value="settings.order.siparis_kargo_sku" Required="true">
+                                <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+                            </FluentTextField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="12">
+                            <FluentTextField Label="Sipariş Taksit Komisyon Stok Kodu" @bind-Value="settings.order.siparis_taksitkomisyon_sku" Required="true">
+                                <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+                            </FluentTextField>
                         </FluentGridItem>
                         <FluentGridItem xs="12" Justify="JustifyContent.FlexStart">
                             <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.ShoppingBag())" />&nbsp;&nbsp;
@@ -142,12 +142,12 @@
                                     <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
                                 </FluentTextField>
                             </FluentGridItem>
-                            <FluentGridItem xs="6">
+                            <FluentGridItem xs="12">
                                 <FluentTextField Label="Fatura FTP Kullanıcı Adı (eski değişecek)" @bind-Value="settings.invoice.erp_invoice_ftp_username" Required="true">
                                     <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
                                 </FluentTextField>
                             </FluentGridItem>
-                            <FluentGridItem xs="6">
+                            <FluentGridItem xs="12">
                                 <FluentTextField TextFieldType="TextFieldType.Password" Label="Fatura FTP Şifre (eski değişecek)" @bind-Value="settings.invoice.erp_invoice_ftp_password" Required="true">
                                     <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
                                 </FluentTextField>
@@ -207,7 +207,7 @@ else {
     private string loading = "Loading...";
     private string? page_message = "";
     private string? message_status = "";
-    private string section_name = "Ayarlar";
+    private string section_name = "Genel Ayarlar";
     Customer? customer { get; set; }
     SettingsMerchanter? settings { get; set; }
 
@@ -409,7 +409,7 @@ else {
         changedto = tab;
         if (tab != null) {
             if (tab.Id == "general-settings") {
-                section_name = "Ayarlar";
+                section_name = "Genel Ayarlar";
             }
             if (tab.Id == "product-settings") {
                 section_name = "Ürün Ayarları";

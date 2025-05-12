@@ -37,7 +37,14 @@
     <FluentGridItem xs="12">
         <FluentPaginator State="@pagination">
             <SummaryTemplate>
-                Toplam: <strong>@(pagination.TotalItemCount ?? 0)</strong> girdi
+                <div style="display:flex;align-items:center;">
+                    <FluentSelect TOption="int" Width="120px" ValueChanged="@(async (e) => await OnItemsPerPageChanged(e))" Multiple="false">
+                        <FluentOption Value="10" Selected="@(pagination.ItemsPerPage == 10)">10 adet</FluentOption>
+                        <FluentOption Value="20" Selected="@(pagination.ItemsPerPage == 20)">25 adet</FluentOption>
+                        <FluentOption Value="50" Selected="@(pagination.ItemsPerPage == 50)">50 adet</FluentOption>
+                    </FluentSelect>
+                    <FluentLabel Typo="Typography.Body">&nbsp;&nbsp;Toplam: <strong>@(pagination.TotalItemCount ?? 0)</strong> girdi</FluentLabel>
+                </div>
             </SummaryTemplate>
             <PaginationTextTemplate>
                 <strong>@(pagination.CurrentPageIndex + 1)</strong> / <strong>@(pagination.LastPageIndex + 1)</strong> sayfa
@@ -71,7 +78,14 @@
 
         <FluentPaginator State="@pagination">
             <SummaryTemplate>
-                Toplam: <strong>@(pagination.TotalItemCount ?? 0)</strong> girdi
+                <div style="display:flex;align-items:center;">
+                    <FluentSelect TOption="int" Width="120px" ValueChanged="@(async (e) => await OnItemsPerPageChanged(e))" Multiple="false">
+                        <FluentOption Value="10" Selected="@(pagination.ItemsPerPage == 10)">10 adet</FluentOption>
+                        <FluentOption Value="20" Selected="@(pagination.ItemsPerPage == 20)">25 adet</FluentOption>
+                        <FluentOption Value="50" Selected="@(pagination.ItemsPerPage == 50)">50 adet</FluentOption>
+                    </FluentSelect>
+                    <FluentLabel Typo="Typography.Body">&nbsp;&nbsp;Toplam: <strong>@(pagination.TotalItemCount ?? 0)</strong> girdi</FluentLabel>
+                </div>
             </SummaryTemplate>
             <PaginationTextTemplate>
                 <strong>@(pagination.CurrentPageIndex + 1)</strong> / <strong>@(pagination.LastPageIndex + 1)</strong> sayfa
@@ -89,7 +103,7 @@ else {
     bool loading = false;
     List<Log>? customer_logs { get; set; } = null;
     string messageFilter = ""; string workerFilter = ""; string titleFilter = ""; DateTime? dateFilter = null;
-    PaginationState pagination = new PaginationState() { ItemsPerPage = 50 };
+    PaginationState pagination = new PaginationState() { ItemsPerPage = 10 };
 
     private List<Notification.NotificationTypes> notification_types_list = Enum.GetValues(typeof(Notification.NotificationTypes))
         .Cast<Notification.NotificationTypes>()
@@ -141,6 +155,12 @@ else {
         finally {
             loading = false;
         }
+    }
+
+    private async Task OnItemsPerPageChanged(string newItemsPerPage) {
+        pagination.ItemsPerPage = int.Parse(newItemsPerPage);
+        await pagination.SetCurrentPageIndexAsync(0); // Reset to the first page
+        await LoadCustomerLogs(); // Reload data with the new pagination settings
     }
 
     public async void ClearFilters() {
