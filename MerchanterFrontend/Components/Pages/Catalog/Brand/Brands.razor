@@ -18,22 +18,30 @@
                     <FluentToolbar style="width:100%;border-radius:5px;padding:5px !important;" Orientation="Orientation.Horizontal">
                         <FluentIcon Value="@(new Icons.Filled.Size20.Apps())" Slot="start" Color="Color.Accent" />
                         <FluentBadge>Toplam <strong>&nbsp;999&nbsp;</strong> marka bulundu.</FluentBadge>
-                        <FluentTextField @bind-Value="@brandFilter" Placeholder="Marka ismi ara" Style="margin-right:10px;" slot="end"></FluentTextField>
+                        <FluentTextField @bind-Value="@brandFilter" Placeholder="Ara" Style="margin-right:10px;" slot="end"></FluentTextField>
                         <FluentButton Appearance="Appearance.Outline" Loading="@loading" Disabled="loading" IconStart="@(new Icons.Regular.Size20.Filter())" Style="margin-right:10px;" Slot="end">Filtrele</FluentButton>
                         <FluentButton Appearance="Appearance.Outline" OnClick="ClearFilters" Disabled="loading" Loading="@loading" IconStart="@(new Icons.Regular.Size20.Broom())" Slot="end">Temizle</FluentButton>
                     </FluentToolbar>
                 </FluentGridItem>
-
                 <FluentGridItem xs="12">
                     <FluentPaginator State="@pagination">
                         <SummaryTemplate>
-                            Toplam: <strong>@(pagination.TotalItemCount ?? 0)</strong> girdi
+                            <div style="display:flex;align-items:center;">
+                                <FluentSelect TOption="int" Width="100px">
+                                    <FluentOption Value="10" Selected="@(pagination.ItemsPerPage == 10)">10 adet</FluentOption>
+                                    <FluentOption Value="20" Selected="@(pagination.ItemsPerPage == 20)">20 adet</FluentOption>
+                                    <FluentOption Value="50" Selected="@(pagination.ItemsPerPage == 50)">50 adet</FluentOption>
+                                    <FluentOption Value="100" Selected="@(pagination.ItemsPerPage == 100)">100 adet</FluentOption>
+                                </FluentSelect>
+                                <FluentLabel Typo="Typography.Body">&nbsp;&nbsp;Toplam: <strong>@(pagination.TotalItemCount ?? 0)</strong> girdi</FluentLabel>
+                            </div>
                         </SummaryTemplate>
                         <PaginationTextTemplate>
                             <strong>@(pagination.CurrentPageIndex + 1)</strong> / <strong>@(pagination.LastPageIndex + 1)</strong> sayfa
                         </PaginationTextTemplate>
                     </FluentPaginator>
-
+                </FluentGridItem>
+                <FluentGridItem xs="12">
                     <FluentDataGrid ItemsProvider="GetDataAsync" RowSize="DataGridRowSize.Large" GenerateHeader="GenerateHeaderOption.Sticky"
                                     TGridItem="Brand" Loading="loading" Pagination="pagination" DisplayMode="DataGridDisplayMode.Table" ShowHover="true">
                         <ChildContent>
@@ -60,15 +68,24 @@
                             </FluentLayout>
                         </LoadingContent>
                     </FluentDataGrid>
-
-                    <FluentPaginator State="@pagination">
-                        <SummaryTemplate>
-                            Toplam: <strong>@(pagination.TotalItemCount ?? 0)</strong> girdi
-                        </SummaryTemplate>
-                        <PaginationTextTemplate>
-                            <strong>@(pagination.CurrentPageIndex + 1)</strong> / <strong>@(pagination.LastPageIndex + 1)</strong> sayfa
-                        </PaginationTextTemplate>
-                    </FluentPaginator>
+                    <FluentGridItem xs="12">
+                        <FluentPaginator State="@pagination">
+                            <SummaryTemplate>
+                                <div style="display:flex;align-items:center;">
+                                    <FluentSelect TOption="int" Width="100px">
+                                        <FluentOption Value="10" Selected="@(pagination.ItemsPerPage == 10)">10 adet</FluentOption>
+                                        <FluentOption Value="20" Selected="@(pagination.ItemsPerPage == 20)">20 adet</FluentOption>
+                                        <FluentOption Value="50" Selected="@(pagination.ItemsPerPage == 50)">50 adet</FluentOption>
+                                        <FluentOption Value="100" Selected="@(pagination.ItemsPerPage == 100)">100 adet</FluentOption>
+                                    </FluentSelect>
+                                    <FluentLabel Typo="Typography.Body">&nbsp;&nbsp;Toplam: <strong>@(pagination.TotalItemCount ?? 0)</strong> girdi</FluentLabel>
+                                </div>
+                            </SummaryTemplate>
+                            <PaginationTextTemplate>
+                                <strong>@(pagination.CurrentPageIndex + 1)</strong> / <strong>@(pagination.LastPageIndex + 1)</strong> sayfa
+                            </PaginationTextTemplate>
+                        </FluentPaginator>
+                    </FluentGridItem>
                 </FluentGridItem>
             </FluentGrid>
         </FluentLayout>
@@ -81,7 +98,7 @@
     List<Brand>? brands { get; set; } = null;
     bool loading = false;
     private string? brandFilter = null;
-    PaginationState pagination = new PaginationState() { ItemsPerPage = 1 };
+    PaginationState pagination = new PaginationState() { ItemsPerPage = 20 };
 
     protected override void OnInitialized() {
         if (int.TryParse(HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == Variables.customer_id)?.Value, out int CID)) {
@@ -104,7 +121,7 @@
                 customer_id = 0, id = 5, brand_name = "TEST5", status = true
             } };
             await Task.CompletedTask;
-            return GridItemsProviderResult.From<Brand>(brands, 1);
+            return GridItemsProviderResult.From<Brand>(brands, 5);
         }
         catch (Exception ex) {
             Console.WriteLine(ex.Message);

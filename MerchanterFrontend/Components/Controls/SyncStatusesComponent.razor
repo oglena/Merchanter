@@ -30,7 +30,7 @@
                     <span slot="unchecked-message">Kapalı</span>
                 </FluentSwitch>
             </FluentGridItem>
-            <FluentGridItem md="3">
+            <FluentGridItem md="2">
                 <FluentNumberField @bind-Value="@customer.product_sync_timer" Label="Senk. Sıklığı (sn)" Required="true">
                     <FluentIcon Value="@(new Icons.Regular.Size20.Timer())" Color="@Color.Neutral" Slot="start" />
                 </FluentNumberField>
@@ -45,7 +45,10 @@
                     <FluentIcon Value="@(new Icons.Regular.Size20.TimePicker())" Slot="start" Color="Color.Neutral" />
                 </FluentTimePicker>
             </FluentGridItem>
-            <FluentGridItem md="2">
+            <FluentGridItem md="3">
+                <FluentNumberField Label="Sonraki senk. (sn sonra)" Value="@(customer.product_sync_status ? (customer.last_product_sync_date.HasValue ? (int)(customer.last_product_sync_date.Value.AddSeconds(customer.product_sync_timer) - DateTime.Now).TotalSeconds : 0): 0)" TValue="int" Disabled="true">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Timer())" Color="@(customer.product_sync_status ? (customer.is_productsync_working ? Color.Success : @Color.Accent) : Color.Error)" Slot="start" />
+                </FluentNumberField>
             </FluentGridItem>
             <FluentDivider Style="width: 100%;margin:5px 0 5px 0;" Orientation=Orientation.Horizontal Role="DividerRole.Separator" />
             <FluentGridItem md="3" Justify="JustifyContent.FlexStart">
@@ -55,7 +58,7 @@
                     <span slot="unchecked-message">Kapalı</span>
                 </FluentSwitch>
             </FluentGridItem>
-            <FluentGridItem md="3">
+            <FluentGridItem md="2">
                 <FluentNumberField @bind-Value="@customer.order_sync_timer" Label="Senk. Sıklığı (sn)" Required="true">
                     <FluentIcon Value="@(new Icons.Regular.Size20.Timer())" Color="@Color.Neutral" Slot="start" />
                 </FluentNumberField>
@@ -70,7 +73,10 @@
                     <FluentIcon Value="@(new Icons.Regular.Size20.TimePicker())" Slot="start" Color="Color.Neutral" />
                 </FluentTimePicker>
             </FluentGridItem>
-            <FluentGridItem md="2">
+            <FluentGridItem md="3">
+                <FluentNumberField Label="Sonraki senk. (sn sonra)" Value="@(customer.order_sync_status ? (customer.last_order_sync_date.HasValue ? (int)(customer.last_order_sync_date.Value.AddSeconds(customer.order_sync_timer) - DateTime.Now).TotalSeconds : 0): 0)" TValue="int" Disabled="true">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Timer())" Color="@(customer.order_sync_status ? (customer.is_ordersync_working ? Color.Success : @Color.Accent) : Color.Error)" Slot="start" />
+                </FluentNumberField>
             </FluentGridItem>
             <FluentDivider Style="width: 100%;margin:5px 0 5px 0;" Orientation=Orientation.Horizontal Role="DividerRole.Separator" />
             <FluentGridItem md="3" Justify="JustifyContent.FlexStart">
@@ -80,7 +86,7 @@
                     <span slot="unchecked-message">Kapalı</span>
                 </FluentSwitch>
             </FluentGridItem>
-            <FluentGridItem md="3">
+            <FluentGridItem md="2">
                 <FluentNumberField @bind-Value="@customer.notification_sync_timer" Label="Senk. Sıklığı (sn)" Required="true">
                     <FluentIcon Value="@(new Icons.Regular.Size20.Timer())" Color="@Color.Neutral" Slot="start" />
                 </FluentNumberField>
@@ -95,7 +101,10 @@
                     <FluentIcon Value="@(new Icons.Regular.Size20.TimePicker())" Slot="start" Color="Color.Neutral" />
                 </FluentTimePicker>
             </FluentGridItem>
-            <FluentGridItem md="2">
+            <FluentGridItem md="3">
+                <FluentNumberField Label="Sonraki senk. (sn sonra)" Value="@(customer.notification_sync_status ? (customer.last_notification_sync_date.HasValue ? (int)(customer.last_notification_sync_date.Value.AddSeconds(customer.notification_sync_timer) - DateTime.Now).TotalSeconds : 0): 0)" TValue="int" Disabled="true">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Timer())" Color="@(customer.notification_sync_status ? (customer.is_notificationsync_working ? Color.Success : @Color.Accent) : Color.Error)" Slot="start" />
+                </FluentNumberField>
             </FluentGridItem>
             <FluentDivider Style="width: 100%;margin:5px 0 5px 0;" Orientation=Orientation.Horizontal Role="DividerRole.Separator" />
             <FluentGridItem md="3" Justify="JustifyContent.FlexStart">
@@ -105,7 +114,7 @@
                     <span slot="unchecked-message">Kapalı</span>
                 </FluentSwitch>
             </FluentGridItem>
-            <FluentGridItem md="3">
+            <FluentGridItem md="2">
                 <FluentNumberField @bind-Value="@customer.invoice_sync_timer" Label="Senk. Sıklığı(sn)" Required="true">
                     <FluentIcon Value="@(new Icons.Regular.Size20.Timer())" Color="@Color.Neutral" Slot="start" />
                 </FluentNumberField>
@@ -120,7 +129,10 @@
                     <FluentIcon Value="@(new Icons.Regular.Size20.TimePicker())" Slot="start" Color="Color.Neutral" />
                 </FluentTimePicker>
             </FluentGridItem>
-            <FluentGridItem md="2">
+            <FluentGridItem md="3">
+                <FluentNumberField Label="Sonraki senk. (sn sonra)" Value="@(customer.invoice_sync_status ? (customer.last_invoice_sync_date.HasValue ? (int)(customer.last_invoice_sync_date.Value.AddSeconds(customer.invoice_sync_timer) - DateTime.Now).TotalSeconds : 0) : 0)" TValue="int" Disabled="true">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Timer())" Color="@(customer.invoice_sync_status ? (customer.is_invoicesync_working ? Color.Success : @Color.Accent) : Color.Error)" Slot="start" />
+                </FluentNumberField>
             </FluentGridItem>
             <FluentDivider Style="width: 100%;margin:5px 0 5px 0;" Orientation=Orientation.Horizontal Role="DividerRole.Separator" />
             <FluentGridItem md="3" Justify="JustifyContent.FlexStart">
@@ -130,7 +142,7 @@
                     <span slot="unchecked-message">Kapalı</span>
                 </FluentSwitch>
             </FluentGridItem>
-            <FluentGridItem md="3">
+            <FluentGridItem md="2">
                 <FluentNumberField @bind-Value="@customer.xml_sync_timer" Label="Senk. Sıklığı(sn)" Required="true">
                     <FluentIcon Value="@(new Icons.Regular.Size20.Timer())" Color="@Color.Neutral" Slot="start" />
                 </FluentNumberField>
@@ -145,7 +157,10 @@
                     <FluentIcon Value="@(new Icons.Regular.Size20.TimePicker())" Slot="start" Color="Color.Neutral" />
                 </FluentTimePicker>
             </FluentGridItem>
-            <FluentGridItem md="2">
+            <FluentGridItem md="3">
+                <FluentNumberField Label="Sonraki senk. (sn sonra)" Value="@(customer.xml_sync_status ? (customer.last_xml_sync_date.HasValue ? (int)(customer.last_xml_sync_date.Value.AddSeconds(customer.xml_sync_timer) - DateTime.Now).TotalSeconds : 0) : 0)" TValue="int" Disabled="true">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Timer())" Color="@(customer.xml_sync_status ? (customer.is_xmlsync_working ? Color.Success : @Color.Accent) : Color.Error)" Slot="start" />
+                </FluentNumberField>
             </FluentGridItem>
         </FluentGrid>
     </FluentEditForm>
@@ -159,6 +174,8 @@ else {
 @code {
     [Parameter]
     public int customer_id { get; set; }
+    [Parameter]
+    public Func<Task> OnRefresh { get; set; } = default!;
     public Customer? customer { get; set; }
     private string page_message = string.Empty;
     private string? message_status = null;
@@ -178,6 +195,9 @@ else {
             customer = response.Data;
             if (customer != null) {
                 page_message = string.Empty;
+                if (OnRefresh != null) {
+                    await OnRefresh.Invoke();
+                }
             }
             else {
                 message_status = "işlem başarısız";

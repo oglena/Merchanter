@@ -18,7 +18,7 @@
             <FluentButton Type="ButtonType.Button" Appearance="Appearance.Neutral" OnClick="GotoSettings" IconStart="@(new Icons.Regular.Size28.Settings())" title="Genel Ayarlar"></FluentButton>&nbsp;&nbsp;
             <FluentButton Type="ButtonType.Button" Appearance="Appearance.Neutral" OnClick="GotoPlatforms" IconStart="@(new Icons.Regular.Size28.Apps())" title="Platformlar"></FluentButton>&nbsp;&nbsp;
             <FluentButton Type="ButtonType.Button" Appearance="Appearance.Neutral" OnClick="GotoIntegrations" IconStart="@(new Icons.Regular.Size28.AppFolder())" title="Entegrasyonlar"></FluentButton>&nbsp;&nbsp;
-            <FluentButton Type="ButtonType.Button" Appearance="Appearance.Neutral" OnClick="RefreshServers" Loading="@is_refreshing" IconStart="@(new Icons.Regular.Size28.ArrowClockwise())" title="Çalışma Durumlarını Yenile"></FluentButton>
+            @* <FluentButton Type="ButtonType.Button" Appearance="Appearance.Neutral" OnClick="RefreshServers" Loading="@is_refreshing" IconStart="@(new Icons.Regular.Size28.ArrowClockwise())" title="Çalışma Durumlarını Yenile"></FluentButton> *@
         </FluentBadge>
         <FluentDivider Style="width: 100%;margin:10px 0 10px 0;" Orientation=Orientation.Horizontal Role="DividerRole.Separator" />
         <FluentLabel Typo="Typography.Subject" Color="@(server != null && server.PID > 0 ? Color.Success : Color.Error)">İşlem No:&nbsp;[<strong>@(server != null ? server.PID.ToString() : "0")</strong>]</FluentLabel>
@@ -185,6 +185,12 @@ else {
             }
             StateHasChanged();
         }
+    }
+
+    public async Task Refresh() {
+        is_refreshing = true;
+        StateHasChanged();
+        await RefreshServers();
     }
 
     private async Task RefreshServers() {
