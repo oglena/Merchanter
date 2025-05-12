@@ -5,8 +5,6 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IPostHelper PostHelper
 
-<PageTitle>Hesap > Profil > Senkronizasyon Durumları | Merchanter</PageTitle>
-
 @if (customer != null) {
     <FluentEditForm Model="customer" OnValidSubmit="@(() => SaveCustomer(customer))">
         <FluentGrid Justify="JustifyContent.FlexStart" Spacing="2">

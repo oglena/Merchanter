@@ -18,7 +18,7 @@
                         <FluentIcon Value="@(new Icons.Filled.Size20.Apps())" Slot="start" Color="Color.Accent" />
                         <FluentButton Appearance="Appearance.Outline" IconStart="@(new Icons.Regular.Size20.New())">Yeni Marka</FluentButton>
                         <FluentTextField @bind-Value="@brand_name_filter" Placeholder="Ara" Style="margin-right:10px;" slot="end"></FluentTextField>
-                        <FluentSelect @bind-Value="@brand_is_active_filter" TOption="int" Width="150px" Appearance="Appearance.Neutral">
+                        <FluentSelect @bind-Value="@brand_is_active_filter" TOption="int" Width="150px" Appearance="Appearance.Stealth" Style="margin-right:10px;" slot="end">
                             <FluentOption Value="0" Selected="@(brand_is_active_filter == "0")">Tüm Durumlar</FluentOption>
                             <FluentOption Value="1" Selected="@(brand_is_active_filter == "1")">Aktif Markalar</FluentOption>
                             <FluentOption Value="2" Selected="@(brand_is_active_filter == "2")">Pasif Markalar</FluentOption>
