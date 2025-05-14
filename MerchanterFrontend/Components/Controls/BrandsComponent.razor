@@ -225,20 +225,34 @@ else {
     }
 
     private async Task DeleteBrand(Brand? _brand) {
-        if (_brand != null) {
-            var response = await PostHelper.Request<bool>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
-                Classes.PostHelper.PostMethod.Delete, Classes.PostHelper.PostDestination.Api,
-                "api/Brand/DeleteBrand",
-                new StringContent(JsonConvert.SerializeObject(_brand), Encoding.UTF8, "application/json")
-                );
-            if (response != null && response.Success && response.Data == true) {
-                await Refresh();
-                page_message = "[" + DateTime.Now.ToString() + "] Marka silindi.";
-                message_status = "işlem başarılı";
-            }
-            else {
-                page_message = "[" + DateTime.Now.ToString() + "] Marka silinemedi.";
-                message_status = "işlem başarısız";
+        var dialog = await DialogService.ShowMessageBoxAsync(new DialogParameters<MessageBoxContent>() {
+                Content = new() {
+                    Title = "Emin Misiniz ?",
+                    MarkupMessage = new MarkupString("Seçtiğiniz <strong>marka</strong> siliniyor."),
+                    Icon = new Icons.Regular.Size24.Delete(),
+                    IconColor = Color.Error,
+                },
+                PrimaryAction = "Sil",
+                SecondaryAction = "İptal",
+                Width = "250px",
+            });
+        var result = await dialog.Result;
+        if (!result.Cancelled) {
+            if (_brand != null) {
+                var response = await PostHelper.Request<bool>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                    Classes.PostHelper.PostMethod.Delete, Classes.PostHelper.PostDestination.Api,
+                    "api/Brand/DeleteBrand",
+                    new StringContent(JsonConvert.SerializeObject(_brand), Encoding.UTF8, "application/json")
+                    );
+                if (response != null && response.Success && response.Data == true) {
+                    await Refresh();
+                    page_message = "[" + DateTime.Now.ToString() + "] Marka silindi.";
+                    message_status = "işlem başarılı";
+                }
+                else {
+                    page_message = "[" + DateTime.Now.ToString() + "] Marka silinemedi.";
+                    message_status = "işlem başarısız";
+                }
             }
         }
     }
@@ -260,6 +274,9 @@ else {
         else {
             brand_is_active_filter = BrandStatus.All;
         }
+    }
+
+    private async Task ShowMessageBoxAsync() {
     }
 
     public async void ClearFilters() {
