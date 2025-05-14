@@ -52,13 +52,13 @@
         </FluentGridItem>
         <FluentGridItem xs="12">
             <FluentDataGrid Id="brands-grid" Items="@brands" RowSize="DataGridRowSize.Large" GenerateHeader="GenerateHeaderOption.Sticky"
-            TGridItem="Brand" Loading="loading" DisplayMode="DataGridDisplayMode.Grid" ShowHover="true">
+                            TGridItem="Brand" Loading="loading" DisplayMode="DataGridDisplayMode.Grid" ShowHover="true">
                 <ChildContent>
                     <PropertyColumn Title="ID" Property="@(b => b.id)" Width="100px" Align="Align.End" />
                     <PropertyColumn Title="Marka Adı" Property="@(b => b.brand_name)" Align="Align.Center" />
                     <PropertyColumn Title="Durum" Property="@(b => b.status ? "Aktif" : "Pasif")" Align="Align.Center" />
                     <TemplateColumn Title="" Width="250px">
-                        <FluentButton Appearance="Appearance.Outline" IconStart="@(new Icons.Regular.Size20.Delete())">Sil</FluentButton>
+                        <FluentButton OnClick="() => DeleteBrand(context)" Appearance="Appearance.Outline" IconStart="@(new Icons.Regular.Size20.Delete())">Sil</FluentButton>
                         <FluentButton OnClick="() => OpenPanelRightAsync(context)" Appearance="Appearance.Outline" IconStart="@(new Icons.Regular.Size20.Edit())">Düzenle</FluentButton>
                     </TemplateColumn>
                 </ChildContent>
@@ -136,17 +136,17 @@ else {
                 PrimaryAction = "Kaydet",
                 SecondaryAction = "İptal",
                 DismissTitle = "Kapat",
-                PreventDismissOnOverlayClick = true,
+                PreventDismissOnOverlayClick = false,
                 PrimaryActionEnabled = true,
                 DialogType = DialogType.Panel
             };
         _dialog = await DialogService.ShowPanelAsync<BrandPanel>(_brand == null ? new Brand() { customer_id = customer_id } : _brand, dialog_parameters);
 
         DialogResult result = await _dialog.Result;
-        HandlePanel(result);
+        await HandlePanel(result);
     }
 
-    private void HandlePanel(DialogResult result) {
+    private async Task HandlePanel(DialogResult result) {
         if (result.Cancelled) {
             page_message = "";
             message_status = "";
@@ -156,15 +156,20 @@ else {
         if (result.Data is not null) {
             var new_brand = (Brand)result.Data;
             if (new_brand.customer_id > 0) {
-                if (new_brand.id > 0) {
-                    // Update existing brand
+                // Update or insert existing brand
+                var response = await PostHelper.Request<Brand>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                    Classes.PostHelper.PostMethod.Put, Classes.PostHelper.PostDestination.Api,
+                    "api/Brand/SaveBrand",
+                    new StringContent(JsonConvert.SerializeObject(new_brand), Encoding.UTF8, "application/json")
+                    );
+                if (response != null && response.Success && response.Data != null) {
+                    await Refresh();
                     page_message = "[" + DateTime.Now.ToString() + "] Marka güncellendi.";
                     message_status = "işlem başarılı";
                 }
                 else {
-                    // Add new brand
-                    page_message = "[" + DateTime.Now.ToString() + "] Yeni marka eklendi.";
-                    message_status = "işlem başarılı";
+                    page_message = "[" + DateTime.Now.ToString() + "] Marka güncellenemedi.";
+                    message_status = "işlem başarısız";
                 }
             }
         }
@@ -212,8 +217,29 @@ else {
             brands = null;
         }
         finally {
+            page_message = "";
+            message_status = "";
             loading = false;
             StateHasChanged();
+        }
+    }
+
+    private async Task DeleteBrand(Brand? _brand) {
+        if (_brand != null) {
+            var response = await PostHelper.Request<bool>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                Classes.PostHelper.PostMethod.Delete, Classes.PostHelper.PostDestination.Api,
+                "api/Brand/DeleteBrand",
+                new StringContent(JsonConvert.SerializeObject(_brand), Encoding.UTF8, "application/json")
+                );
+            if (response != null && response.Success && response.Data == true) {
+                await Refresh();
+                page_message = "[" + DateTime.Now.ToString() + "] Marka silindi.";
+                message_status = "işlem başarılı";
+            }
+            else {
+                page_message = "[" + DateTime.Now.ToString() + "] Marka silinemedi.";
+                message_status = "işlem başarısız";
+            }
         }
     }
 

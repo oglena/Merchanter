@@ -4874,14 +4874,12 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_brand">Brand</param>
         /// <returns>[No change] or [Error] returns 'null'</returns>
-        public bool UpdateBrand(int _customer_id, Brand _brand) {
+        public Brand? UpdateBrand(int _customer_id, Brand _brand) {
             try {
-                if (state != System.Data.ConnectionState.Open)
-                    connection.Open();
-
+                if (state != System.Data.ConnectionState.Open) connection.Open();
                 int val = 0;
                 string _query = "UPDATE brands SET brand_name=@brand_name,status=@status " +
-                    "WHERE id=@id AND customer_id=@customer_id";
+                    "WHERE id=@id AND customer_id=@customer_id;";
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("id", _brand.id));
@@ -4889,9 +4887,27 @@ namespace Merchanter {
                 cmd.Parameters.Add(new MySqlParameter("status", _brand.status));
                 val = cmd.ExecuteNonQuery();
 
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
+                if (val > 0)
+                    return _brand;
+                else return null;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return null;
+            }
+        }
 
+        public bool DeleteBrand(int _customer_id, int _brand_id) {
+            try {
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                int val = 0;
+                string _query = "DELETE FROM brands WHERE id=@id AND customer_id=@customer_id;";
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                cmd.Parameters.Add(new MySqlParameter("id", _brand_id));
+                val = cmd.ExecuteNonQuery();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
                 if (val > 0)
                     return true;
                 else return false;

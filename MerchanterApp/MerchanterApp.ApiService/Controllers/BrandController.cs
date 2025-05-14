@@ -30,5 +30,32 @@ namespace MerchanterApp.ApiService.Controllers {
             }
             return BadRequest();
         }
+
+        [HttpPut("SaveBrand")]
+        [Authorize]
+        public async Task<ActionResult<BaseResponseModel<Brand?>>> SaveBrand([FromBody] Brand _brand) {
+            int customer_id;
+            if (int.TryParse(_brand.customer_id.ToString(), out customer_id) && customer_id > 0) {
+                Brand? brand = await brandService.SaveBrand(customer_id, _brand);
+                if (brand != null) {
+                    return Ok(new BaseResponseModel<Brand>() { Success = true, Data = brand, ErrorMessage = "" });
+                }
+                else {
+                    return Ok(new BaseResponseModel<Brand>() { Success = false, Data = null, ErrorMessage = "Error save brand" });
+                }
+            }
+            return BadRequest("Invalid customer ID.");
+        }
+
+        [HttpDelete("DeleteBrand")]
+        [Authorize]
+        public async Task<ActionResult<BaseResponseModel<bool>>> DeleteBrand([FromBody] Brand _brand) {
+            int customer_id;
+            if (int.TryParse(_brand.customer_id.ToString(), out customer_id) && customer_id > 0) {
+                bool result = await brandService.DeleteBrand(customer_id, _brand);
+                return Ok(new BaseResponseModel<bool>() { Success = result, Data = result, ErrorMessage = result ? "" : "Error delete brand" });
+            }
+            return BadRequest("Invalid customer ID.");
+        }
     }
 }

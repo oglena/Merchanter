@@ -109,7 +109,7 @@ namespace MerchanterFrontend.Classes {
                                 var bodyContent = await _body.ReadAsStringAsync();
                                 request.AddStringBody(bodyContent, DataFormat.Json);
                             }
-                            var response = client.ExecutePost<T>(request);
+                            var response = await client.ExecutePostAsync<T>(request);
                             if (response.IsSuccessStatusCode) {
                                 model = JsonConvert.DeserializeObject<BaseResponseModel<T>>(response.Content);
                                 logger.LogInformation("POST: " + response.StatusCode.ToString() + " " + _url, DateTime.UtcNow.ToLongTimeString());
@@ -134,24 +134,73 @@ namespace MerchanterFrontend.Classes {
                     break;
                 case PostMethod.Put:
                     if (!string.IsNullOrWhiteSpace(_token)) {
-                        using HttpClient httpClient = new();
-                        httpClient.BaseAddress = new Uri(baseAddress);
-                        httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + _token);
-                        using HttpResponseMessage response = await httpClient.PutAsync(_url, _body);
-                        if (response.IsSuccessStatusCode) {
-                            model = JsonConvert.DeserializeObject<BaseResponseModel<T>>(await response.Content.ReadAsStringAsync());
-                            logger.LogInformation("PUT: " + response.StatusCode.ToString() + " " + _url, DateTime.UtcNow.ToLongTimeString());
+                        try {
+                            var client = new RestClient(baseAddress);
+                            var request = new RestRequest(_url, Method.Put) {
+                                Timeout = TimeSpan.FromSeconds(10)
+                            };
+                            request.AddHeader("Authorization", "Bearer " + _token);
+                            if (_body != null) {
+                                var bodyContent = await _body.ReadAsStringAsync();
+                                request.AddStringBody(bodyContent, DataFormat.Json);
+                            }
+                            var response = await client.ExecutePutAsync<T>(request);
+                            if (response.IsSuccessStatusCode) {
+                                model = JsonConvert.DeserializeObject<BaseResponseModel<T>>(response.Content);
+                                logger.LogInformation("PUT: " + response.StatusCode.ToString() + " " + _url, DateTime.UtcNow.ToLongTimeString());
+                            }
+                            else {
+                                model = new BaseResponseModel<T>() {
+                                    Success = false,
+                                    ErrorMessage = response.StatusCode.ToString(),
+                                    Data = default
+                                };
+                            }
                         }
-                        else {
+                        catch (Exception ex) {
+                            logger.LogError("PUT: " + ex.Message + " " + _url, DateTime.UtcNow.ToLongTimeString());
                             model = new BaseResponseModel<T>() {
                                 Success = false,
-                                ErrorMessage = response.StatusCode.ToString(),
+                                ErrorMessage = ex.Message,
                                 Data = default
                             };
                         }
                     }
                     break;
                 case PostMethod.Delete:
+                    if (!string.IsNullOrWhiteSpace(_token)) {
+                        try {
+                            var client = new RestClient(baseAddress);
+                            var request = new RestRequest(_url, Method.Delete) {
+                                Timeout = TimeSpan.FromSeconds(10)
+                            };
+                            request.AddHeader("Authorization", "Bearer " + _token);
+                            if (_body != null) {
+                                var bodyContent = await _body.ReadAsStringAsync();
+                                request.AddStringBody(bodyContent, DataFormat.Json);
+                            }
+                            var response = await client.ExecuteDeleteAsync<T>(request);
+                            if (response.IsSuccessStatusCode) {
+                                model = JsonConvert.DeserializeObject<BaseResponseModel<T>>(response.Content);
+                                logger.LogInformation("DELETE: " + response.StatusCode.ToString() + " " + _url, DateTime.UtcNow.ToLongTimeString());
+                            }
+                            else {
+                                model = new BaseResponseModel<T>() {
+                                    Success = false,
+                                    ErrorMessage = response.StatusCode.ToString(),
+                                    Data = default
+                                };
+                            }
+                        }
+                        catch (Exception ex) {
+                            logger.LogError("DELETE: " + ex.Message + " " + _url, DateTime.UtcNow.ToLongTimeString());
+                            model = new BaseResponseModel<T>() {
+                                Success = false,
+                                ErrorMessage = ex.Message,
+                                Data = default
+                            };
+                        }
+                    }
                     break;
             }
             return model;

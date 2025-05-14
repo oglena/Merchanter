@@ -5,6 +5,8 @@ namespace MerchanterApp.ApiService.Services {
     public interface IBrandService {
         Task<List<Brand>> GetBrands(int _customer_id, ApiFilter _filters);
         Task<int> GetBrandsCount(int _customer_id, ApiFilter _filters);
+        Task<Brand?> SaveBrand(int _customer_id, Brand _brand);
+        Task<bool> DeleteBrand(int _customer_id, Brand _brand);
     }
 
     public class BrandService(IBrandRepository brandRepository) : IBrandService {
@@ -14,6 +16,23 @@ namespace MerchanterApp.ApiService.Services {
 
         public Task<int> GetBrandsCount(int _customer_id, ApiFilter _filters) {
             return brandRepository.GetBrandsCount(_customer_id, _filters);
+        }
+        public async Task<Brand?> SaveBrand(int _customer_id, Brand _brand) {
+            if (_brand != null) {
+                if (_brand.id > 0) {
+                    return await brandRepository.UpdateBrand(_customer_id, _brand);
+                }
+                else {
+                    return await brandRepository.CreateBrand(_customer_id, _brand);
+                }
+            }
+            return null;
+        }
+        public async Task<bool> DeleteBrand(int _customer_id, Brand _brand) {
+            if (_brand != null && _brand.id > 0) {
+                return await brandRepository.DeleteBrand(_customer_id, _brand);
+            }
+            return false;
         }
     }
 }
