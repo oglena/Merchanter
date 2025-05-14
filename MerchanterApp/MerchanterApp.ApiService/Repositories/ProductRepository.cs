@@ -21,17 +21,14 @@ namespace MerchanterApp.ApiService.Repositories {
         }
 
         private async Task<Product?> GetProductAsync(int _customer_id, int _product_id) {
-            await Task.Run(() => merchanterService.global = merchanterService.helper.LoadSettings(_customer_id));
             return await Task.Run(() => merchanterService.helper.GetProduct(_customer_id, _product_id));
         }
 
         private async Task<List<Product>> GetProductsAsync(int _customer_id, ApiFilter _filters) {
-            await Task.Run(() => merchanterService.global = merchanterService.helper.LoadSettings(_customer_id));
             return await Task.Run(() => merchanterService.helper.GetProducts(_customer_id, _filters));
         }
 
         private async Task<int> GetProductsCountAsync(int _customer_id, ApiFilter _filters) {
-            await Task.Run(() => merchanterService.global = merchanterService.helper.LoadSettings(_customer_id));
             return await Task.Run(() => merchanterService.helper.GetProductsCount(_customer_id, _filters));
         }
     }

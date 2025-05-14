@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-
-namespace Merchanter.Classes {
+﻿namespace Merchanter.Classes {
     public class Log {
         public int id { get; set; }
         public int customer_id { get; set; }

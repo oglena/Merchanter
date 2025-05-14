@@ -8,7 +8,7 @@
 @inject IPostHelper PostHelper
 @inject IToastService ToastService
 
-@if (customer != null) {
+@if (customer_id > 0 && customer != null) {
     <FluentCard Style="text-align:center;">
         <FluentLabel Typo="Typography.H2" Color="@(server != null ? Color.Success : Color.Error)">@(server != null ? "Server Çalışıyor" : "Server Beklemede")</FluentLabel>
         <AlertComponent page_message="@page_message" message_status="@message_status" />
@@ -178,7 +178,7 @@ else {
         if (firstRender && HttpContextAccessor.HttpContext != null) {
             await RefreshServers();
             var response = await PostHelper.Request<Customer>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
-                        Classes.PostHelper.PostMethod.Get, Classes.PostHelper.PostDestination.Server,
+                        Classes.PostHelper.PostMethod.Get, Classes.PostHelper.PostDestination.Api,
                         "api/Customer/" + customer_id.ToString() + "/GetCustomer");
             if (response != null && response.Success && response.Data != null) {
                 customer = response.Data;
@@ -194,25 +194,34 @@ else {
     }
 
     private async Task RefreshServers() {
-        is_refreshing = true;
-        var response = await PostHelper.Request<List<MerchanterServer>>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
-                    Classes.PostHelper.PostMethod.Get, Classes.PostHelper.PostDestination.Server,
-                    "api/Server/GetServers");
-        if (response != null && response.Success && response.Data != null) {
-            server = response.Data.FirstOrDefault(x => x.customer_id == customer_id);
-            if (server == null) {
-                page_message = "Merchanter Server çalışmıyor.";
+        try {
+            is_refreshing = true;
+            var response = await PostHelper.Request<List<MerchanterServer>>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                        Classes.PostHelper.PostMethod.Get, Classes.PostHelper.PostDestination.Server,
+                        "api/Server/GetServers");
+            if (response != null && response.Success && response.Data != null) {
+                server = response.Data.FirstOrDefault(x => x.customer_id == customer_id);
+                if (server == null) {
+                    page_message = "Merchanter Server çalışmıyor.";
+                }
+                else {
+                    page_message = string.Empty;
+                    customer = server.customer;
+                }
+                StateHasChanged();
             }
             else {
-                page_message = string.Empty;
-                customer = server.customer;
+                page_message = "Merchanter Server ServiceAPI veri alınamadı.";
             }
+        }
+        catch (Exception ex) {
+            Console.WriteLine(ex.Message);
+            server = null;
+            is_refreshing = false;
+        }
+        finally {
             is_refreshing = false;
             StateHasChanged();
-        }
-        else {
-            is_refreshing = false;
-            page_message = "Merchanter Server ServiceAPI veri alınamadı.";
         }
     }
 
@@ -272,6 +281,7 @@ else {
         }
     }
 
+    #region Navigate
     private void GotoSettings() {
         NavigationManager.NavigateTo("Account/Profile?ActiveTab=settings");
     }
@@ -295,4 +305,5 @@ else {
     private void GotoLogs() {
         NavigationManager.NavigateTo("Account/Logs");
     }
+    #endregion
 }

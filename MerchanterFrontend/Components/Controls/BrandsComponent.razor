@@ -1,0 +1,188 @@
+﻿@rendermode InteractiveServer
+@using System.Text.Json.Serialization
+@using Newtonsoft.Json
+@using System.Text
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IPostHelper PostHelper
+@inject NavigationManager NavigationManager
+
+@if (customer_id > 0 && brands != null) {
+    <FluentGrid Justify="JustifyContent.SpaceBetween" Spacing="2">
+        <FluentGridItem xs="12">
+            <FluentToolbar style="width:100%;border-radius:5px;padding:5px !important;" Orientation="Orientation.Horizontal">
+                <FluentIcon Value="@(new Icons.Filled.Size20.Apps())" Slot="start" Color="Color.Accent" />
+                <FluentButton Appearance="Appearance.Outline" IconStart="@(new Icons.Regular.Size20.New())">Yeni Marka</FluentButton>
+                <FluentTextField @bind-Value="@brand_name_filter" Placeholder="Ara" Style="margin-right:10px;" slot="end"></FluentTextField>
+                <FluentSelect Data="@brand_is_active_filter" TOption="BrandStatus" ValueChanged="@((e) => OnBrandActiveFilterChanged(e))" Width="150px" Appearance="Appearance.Stealth" Style="margin-right:10px;" slot="end">
+                    <FluentOption Value="0" Selected="@(brand_is_active_filter == BrandStatus.All)">Tüm Durumlar</FluentOption>
+                    <FluentOption Value="1" Selected="@(brand_is_active_filter == BrandStatus.Active)">Aktif Markalar</FluentOption>
+                    <FluentOption Value="2" Selected="@(brand_is_active_filter == BrandStatus.Passive)">Pasif Markalar</FluentOption>
+                </FluentSelect>
+                <FluentButton Appearance="Appearance.Outline" OnClick="Refresh" Disabled="loading" Loading="@loading" IconStart="@(new Icons.Regular.Size20.Filter())" Style="margin-right:10px;" Slot="end">Filtrele</FluentButton>
+                <FluentButton Appearance="Appearance.Outline" OnClick="ClearFilters" Disabled="loading" Loading="@loading" IconStart="@(new Icons.Regular.Size20.Broom())" Slot="end">Temizle</FluentButton>
+            </FluentToolbar>
+        </FluentGridItem>
+        <FluentGridItem xs="12">
+            <FluentPaginator State="@pagination" CurrentPageIndexChanged="Refresh">
+                <SummaryTemplate>
+                    <div style="display:flex;align-items:center;">
+                        <FluentSelect TOption="int" Width="100px" ValueChanged="@(async (e) => await OnItemsPerPageChanged(e))">
+                            <FluentOption Value="5" Selected="@(pagination.ItemsPerPage == 5)">5 adet</FluentOption>
+                            <FluentOption Value="10" Selected="@(pagination.ItemsPerPage == 10)">10 adet</FluentOption>
+                            <FluentOption Value="20" Selected="@(pagination.ItemsPerPage == 20)">20 adet</FluentOption>
+                            <FluentOption Value="50" Selected="@(pagination.ItemsPerPage == 50)">50 adet</FluentOption>
+                        </FluentSelect>
+                        <FluentLabel Typo="Typography.Body">&nbsp;&nbsp;Toplam: <strong>@(pagination.TotalItemCount ?? 0)</strong> girdi</FluentLabel>
+                    </div>
+                </SummaryTemplate>
+                <PaginationTextTemplate>
+                    <strong>@(pagination.CurrentPageIndex + 1)</strong> / <strong>@(pagination.LastPageIndex + 1)</strong> sayfa
+                </PaginationTextTemplate>
+            </FluentPaginator>
+        </FluentGridItem>
+        <FluentGridItem xs="12">
+            <FluentDataGrid Id="brands-grid" Items="@brands" RowSize="DataGridRowSize.Large" GenerateHeader="GenerateHeaderOption.Sticky"
+                            TGridItem="@(Merchanter.Classes.Brand)" Loading="loading" DisplayMode="DataGridDisplayMode.Grid" ShowHover="true">
+                <ChildContent>
+                    <PropertyColumn Title="ID" Property="@(b => b.id)" Width="100px" Align="Align.End" />
+                    <PropertyColumn Title="Marka Adı" Property="@(b => b.brand_name)" Align="Align.Center" />
+                    <PropertyColumn Title="Durum" Property="@(b => b.status ? "Aktif" : "Pasif")" Align="Align.Center" />
+                    <TemplateColumn Title="" Width="250px">
+                        <FluentButton Appearance="Appearance.Outline" IconStart="@(new Icons.Regular.Size20.Delete())">Sil</FluentButton>
+                        <FluentButton Appearance="Appearance.Outline" IconStart="@(new Icons.Regular.Size20.Edit())">Düzenle</FluentButton>
+                    </TemplateColumn>
+                </ChildContent>
+                <EmptyContent>
+                    <FluentLayout>
+                        <ChildContent>
+                            <span style="color: #9f9f9f;font-weight: bold"><i>Veri Yok.</i></span>
+                        </ChildContent>
+                    </FluentLayout>
+                </EmptyContent>
+                <LoadingContent>
+                    <FluentLayout Orientation="Orientation.Horizontal">
+                        <ChildContent>
+                            <FluentProgressRing />
+                        </ChildContent>
+                    </FluentLayout>
+                </LoadingContent>
+            </FluentDataGrid>
+            <FluentGridItem xs="12">
+                <FluentPaginator State="@pagination" CurrentPageIndexChanged="Refresh">
+                    <SummaryTemplate>
+                        <div style="display:flex;align-items:center;">
+                            <FluentSelect TOption="int" Width="100px" ValueChanged="@(async (e) => await OnItemsPerPageChanged(e))">
+                                <FluentOption Value="5" Selected="@(pagination.ItemsPerPage == 5)">5 adet</FluentOption>
+                                <FluentOption Value="10" Selected="@(pagination.ItemsPerPage == 10)">10 adet</FluentOption>
+                                <FluentOption Value="20" Selected="@(pagination.ItemsPerPage == 20)">20 adet</FluentOption>
+                                <FluentOption Value="50" Selected="@(pagination.ItemsPerPage == 50)">50 adet</FluentOption>
+                            </FluentSelect>
+                            <FluentLabel Typo="Typography.Body">&nbsp;&nbsp;Toplam: <strong>@(pagination.TotalItemCount ?? 0)</strong> girdi</FluentLabel>
+                        </div>
+                    </SummaryTemplate>
+                    <PaginationTextTemplate>
+                        <strong>@(pagination.CurrentPageIndex + 1)</strong> / <strong>@(pagination.LastPageIndex + 1)</strong> sayfa
+                    </PaginationTextTemplate>
+                </FluentPaginator>
+            </FluentGridItem>
+        </FluentGridItem>
+    </FluentGrid>
+}
+else {
+    <FluentProgressRing Size="ProgressRingSize.Large" />
+}
+
+@code {
+    [Parameter]
+    public int customer_id { get; set; } = 0;
+    IQueryable<Brand>? brands { get; set; } = null;
+    bool loading = false;
+    private string? brand_name_filter = null;
+    private BrandStatus brand_is_active_filter { get; set; } = BrandStatus.All;
+    PaginationState pagination = new PaginationState() { ItemsPerPage = 10 };
+    public enum BrandStatus { All = 0, Active = 1, Passive = 2 }
+
+    protected override async Task OnParametersSetAsync() {
+        if (int.TryParse(HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == Variables.customer_id)?.Value, out int CID)) {
+            customer_id = CID;
+            await Refresh();
+        }
+    }
+
+    protected async Task Refresh() {
+        await LoadBrands();
+    }
+
+    private async Task LoadBrands() {
+        try {
+            loading = true;
+            var apifilter = new ApiFilter() {
+                    Pager = new Pager() {
+                        ItemsPerPage = pagination.ItemsPerPage,
+                        CurrentPageIndex = pagination.CurrentPageIndex
+                    },
+                    Filters = new List<Filter<dynamic>>(),
+                };
+            if (!string.IsNullOrWhiteSpace(brand_name_filter)) {
+                apifilter.Filters.Add(new Filter<dynamic>() {
+                        Field = "brand_name",
+                        Operator = "LIKE",
+                        Value = "%" + brand_name_filter + "%"
+                    });
+            }
+            if (brand_is_active_filter != BrandStatus.All) {
+                apifilter.Filters.Add(new Filter<dynamic>() {
+                        Field = "status",
+                        Value = brand_is_active_filter == BrandStatus.Active ? 1 : 0
+                    });
+            }
+            string json = JsonConvert.SerializeObject(apifilter);
+            var response = await PostHelper.Request<List<Brand>>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                Classes.PostHelper.PostMethod.Post, Classes.PostHelper.PostDestination.Api,
+                "api/Brand/GetBrands",
+                new StringContent(json, Encoding.UTF8, "application/json")
+                );
+
+            if (response != null && response.Success && response.Data != null) {
+                brands = response.Data.AsQueryable();
+                if (response.ApiFilter != null) {
+                    await pagination.SetTotalItemCountAsync(response.ApiFilter.TotalCount.GetValueOrDefault());
+                }
+            }
+        }
+        catch (Exception ex) {
+            Console.WriteLine(ex.Message);
+            brands = null;
+        }
+        finally {
+            loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnItemsPerPageChanged(string _items_per_page) {
+        pagination.ItemsPerPage = int.Parse(_items_per_page);
+        await pagination.SetCurrentPageIndexAsync(0); // Reset to the first page
+        await Refresh();
+    }
+
+    private void OnBrandActiveFilterChanged(string? _status) {
+        if (string.IsNullOrWhiteSpace(_status)) {
+            brand_is_active_filter = BrandStatus.All;
+            return;
+        }
+        if (int.TryParse(_status, out int status)) {
+            brand_is_active_filter = (BrandStatus)status;
+        }
+        else {
+            brand_is_active_filter = BrandStatus.All;
+        }
+    }
+
+    public async void ClearFilters() {
+        brand_name_filter = null;
+        brand_is_active_filter = BrandStatus.All;
+        await pagination.SetCurrentPageIndexAsync(0);
+        await Refresh();
+    }
+}

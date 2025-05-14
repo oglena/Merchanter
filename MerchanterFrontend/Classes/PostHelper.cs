@@ -1,8 +1,7 @@
-﻿using Merchanter.Classes;
-using MerchanterFrontend.Models;
+﻿using MerchanterFrontend.Models;
 using Microsoft.AspNetCore.Components;
 using Newtonsoft.Json;
-using System.Text;
+using RestSharp;
 using static MerchanterFrontend.Classes.PostHelper;
 
 namespace MerchanterFrontend.Classes {
@@ -38,7 +37,7 @@ namespace MerchanterFrontend.Classes {
                         httpClient.BaseAddress = new Uri(baseAddress);
                         using HttpResponseMessage response = await httpClient.PostAsync(_url, _body);
                         if (response.IsSuccessStatusCode) {
-                            var login_response = JsonConvert.DeserializeObject<UserLoginResponseModel>(response.Content.ReadAsStringAsync().Result);
+                            var login_response = JsonConvert.DeserializeObject<UserLoginResponseModel>(await response.Content.ReadAsStringAsync());
                             if (login_response != null && login_response.AuthenticateResult && !string.IsNullOrWhiteSpace(login_response.AuthToken) && login_response.Settings != null && login_response.Settings.customer != null) {
                                 model = new BaseResponseModel<T>() {
                                     Success = true,
@@ -60,38 +59,72 @@ namespace MerchanterFrontend.Classes {
                             httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + _token);
                             using HttpResponseMessage response = await httpClient.GetAsync(_url);
                             if (response.IsSuccessStatusCode) {
-                                var response_json = response.Content.ReadAsStringAsync().Result;
+                                var response_json = await response.Content.ReadAsStringAsync();
                                 model = JsonConvert.DeserializeObject<BaseResponseModel<T>>(response_json);
                                 logger.LogInformation("GET: " + response.StatusCode.ToString() + " " + _url, DateTime.UtcNow.ToLongTimeString());
+                            }
+                            else {
+                                model = new BaseResponseModel<T>() {
+                                    Success = false,
+                                    ErrorMessage = response.StatusCode.ToString(),
+                                    Data = default
+                                };
                             }
                         }
                     }
                     break;
                 case PostMethod.Post:
                     if (!string.IsNullOrWhiteSpace(_token)) {
-                        using HttpClient httpClient = new();
-                        httpClient.BaseAddress = new Uri(baseAddress);
-                        httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + _token);
-                        using HttpResponseMessage response = await httpClient.PostAsync(_url, _body);
-                        if (response.IsSuccessStatusCode) {
-                            model = JsonConvert.DeserializeObject<BaseResponseModel<T>>(response.Content.ReadAsStringAsync().Result);
-                            logger.LogInformation("POST: " + response.StatusCode.ToString() + " " + _url, DateTime.UtcNow.ToLongTimeString());
+                        try {
+                            var client = new RestClient(baseAddress);
+                            var request = new RestRequest(_url, Method.Post) {
+                                Timeout = TimeSpan.FromSeconds(5)
+                            };
+                            request.AddHeader("Authorization", "Bearer " + _token);
+                            if (_body != null) {
+                                var bodyContent = await _body.ReadAsStringAsync();
+                                request.AddStringBody(bodyContent, DataFormat.Json);
+                            }
+                            var response = client.ExecutePost<T>(request);
+                            if (response.IsSuccessStatusCode) {
+                                model = JsonConvert.DeserializeObject<BaseResponseModel<T>>(response.Content);
+                                logger.LogInformation("POST: " + response.StatusCode.ToString() + " " + _url, DateTime.UtcNow.ToLongTimeString());
+                            }
+                            else {
+                                model = new BaseResponseModel<T>() {
+                                    Success = false,
+                                    ErrorMessage = response.StatusCode.ToString(),
+                                    Data = default
+                                };
+                            }
                         }
-
+                        catch (Exception ex) {
+                            logger.LogError("POST: " + ex.Message + " " + _url, DateTime.UtcNow.ToLongTimeString());
+                            model = new BaseResponseModel<T>() {
+                                Success = false,
+                                ErrorMessage = ex.Message,
+                                Data = default
+                            };
+                        }
                     }
                     break;
                 case PostMethod.Put:
                     if (!string.IsNullOrWhiteSpace(_token)) {
-                        using (HttpClient httpClient = new()) {
-                            httpClient.BaseAddress = new Uri(baseAddress);
-                            httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + _token);
-                            using HttpResponseMessage response = await httpClient.PutAsync(_url, _body);
-                            if (response.IsSuccessStatusCode) {
-                                model = JsonConvert.DeserializeObject<BaseResponseModel<T>>(response.Content.ReadAsStringAsync().Result);
-                                logger.LogInformation("PUT: " + response.StatusCode.ToString() + " " + _url, DateTime.UtcNow.ToLongTimeString());
-                            }
+                        using HttpClient httpClient = new();
+                        httpClient.BaseAddress = new Uri(baseAddress);
+                        httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + _token);
+                        using HttpResponseMessage response = await httpClient.PutAsync(_url, _body);
+                        if (response.IsSuccessStatusCode) {
+                            model = JsonConvert.DeserializeObject<BaseResponseModel<T>>(await response.Content.ReadAsStringAsync());
+                            logger.LogInformation("PUT: " + response.StatusCode.ToString() + " " + _url, DateTime.UtcNow.ToLongTimeString());
                         }
-
+                        else {
+                            model = new BaseResponseModel<T>() {
+                                Success = false,
+                                ErrorMessage = response.StatusCode.ToString(),
+                                Data = default
+                            };
+                        }
                     }
                     break;
                 case PostMethod.Delete:

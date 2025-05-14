@@ -1,6 +1,4 @@
-﻿using Merchanter;
-using Merchanter.Classes.Settings;
-using System.Diagnostics.Eventing.Reader;
+﻿using Merchanter.Classes.Settings;
 
 namespace Merchanter.ServerService.Services {
     public interface IMerchanterService {
@@ -20,7 +18,7 @@ namespace Merchanter.ServerService.Services {
 
         public bool ChangeCustomer( int _customer_id ) {
             if( _customer_id > 0 ) {
-                this.global = this.helper.LoadSettings( _customer_id );
+                this.global ??= this.helper.LoadSettings( _customer_id );
                 return true;
             }
             else

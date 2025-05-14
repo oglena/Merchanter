@@ -15,7 +15,7 @@ namespace MerchanterApp.ApiService.Controllers {
             int.TryParse(HttpContext.User.FindFirst("customerId")?.Value, out int customer_id);
             if (customer_id > 0) {
                 var products = await productService.GetProducts(customer_id, _filters);
-                _filters.TotalCount = productService.GetProductsCount(customer_id, _filters).Result;
+                _filters.TotalCount = await productService.GetProductsCount(customer_id, _filters);
                 return Ok(new BaseResponseModel<List<Product>>() { Success = products != null, Data = products ?? [], ApiFilter = _filters, ErrorMessage = products != null ? "" : "Error -1" });
             }
             return BadRequest();

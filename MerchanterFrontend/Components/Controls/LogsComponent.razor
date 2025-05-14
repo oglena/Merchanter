@@ -4,16 +4,13 @@
 @using System.Text
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IPostHelper PostHelper
+@inject NavigationManager NavigationManager
 
-@* <PageTitle>Hesap > Profil > Olay Günlükleri | Merchanter</PageTitle> *@
-
-@if (customer_logs != null) {
+@if (customer_id > 0 && customer_logs != null) {
     <FluentGrid Justify="JustifyContent.SpaceBetween" Spacing="2">
         <FluentGridItem xs="12">
             <FluentToolbar style="width:100%;border-radius:5px;padding:5px !important;" Orientation="Orientation.Horizontal">
                 <FluentIcon Value="@(new Icons.Filled.Size20.ReadingList())" Slot="start" Color="Color.Accent" />
-                @* <FluentSelect Items="@notification_types_list" TOption="@(Notification.NotificationTypes)" Label="Bölüm Seç:">
-                </FluentSelect> *@
                 <FluentBadge>Olay Günlükleri</FluentBadge>
                 <FluentSelect ValueChanged="@(e => workerFilter = e)" Value="@workerFilter" TOption="string" Style="margin-right:10px;" slot="end">
                     <FluentIcon Value="@(new Icons.Regular.Size16.Globe())" Color="@Color.Neutral" Slot="indicator" />
@@ -27,18 +24,18 @@
                     <FluentOption Value="helper_instance">Yardımcı Program</FluentOption>
                     <FluentOption Value="xml">XML</FluentOption>
                 </FluentSelect>
-                <FluentTextField @bind-Value=messageFilter Placeholder="Olay günlüğünde ara" Style="margin-right:10px;" slot="end"></FluentTextField>
-                <FluentButton Appearance="Appearance.Outline" OnClick="LoadCustomerLogs" Loading="@loading" Disabled="loading" IconStart="@(new Icons.Regular.Size20.Filter())" Style="margin-right:10px;" Slot="end">Filtrele</FluentButton>
-                <FluentButton Appearance="Appearance.Outline" OnClick="ClearFilters" Disabled="loading" Loading="@loading" IconStart="@(new Icons.Regular.Size20.Broom())" Slot="end">Temizle</FluentButton>
+                <FluentTextField @bind-Value="@messageFilter" Placeholder="Olay günlüğünde ara" Style="margin-right:10px;" slot="end"></FluentTextField>
+                <FluentButton Appearance="Appearance.Outline" OnClick="Refresh" Loading="@loading" Disabled="@loading" IconStart="@(new Icons.Regular.Size20.Filter())" Style="margin-right:10px;" Slot="end">Filtrele</FluentButton>
+                <FluentButton Appearance="Appearance.Outline" OnClick="ClearFilters" Loading="@loading" Disabled="@loading" IconStart="@(new Icons.Regular.Size20.Broom())" Slot="end">Temizle</FluentButton>
             </FluentToolbar>
         </FluentGridItem>
     </FluentGrid>
 
     <FluentGridItem xs="12">
-        <FluentPaginator State="@pagination">
+        <FluentPaginator State="@pagination" CurrentPageIndexChanged="Refresh">
             <SummaryTemplate>
                 <div style="display:flex;align-items:center;">
-                    <FluentSelect TOption="int" Width="120px" ValueChanged="@(async (e) => await OnItemsPerPageChanged(e))" Multiple="false">
+                    <FluentSelect TOption="int" Width="120px" ValueChanged="@(async (e) => await OnItemsPerPageChanged(e))">
                         <FluentOption Value="10" Selected="@(pagination.ItemsPerPage == 10)">10 adet</FluentOption>
                         <FluentOption Value="20" Selected="@(pagination.ItemsPerPage == 20)">25 adet</FluentOption>
                         <FluentOption Value="50" Selected="@(pagination.ItemsPerPage == 50)">50 adet</FluentOption>
@@ -51,10 +48,10 @@
             </PaginationTextTemplate>
         </FluentPaginator>
 
-        <FluentDataGrid ItemsProvider="GetDataAsync" RowSize="DataGridRowSize.Small" GenerateHeader="GenerateHeaderOption.Sticky"
-                        TGridItem="Log" Loading="loading" Pagination="pagination" DisplayMode="DataGridDisplayMode.Grid" ShowHover="true">
+        <FluentDataGrid Id="logs-grid" Items="@customer_logs" RowSize="DataGridRowSize.Small" GenerateHeader="GenerateHeaderOption.Sticky"
+                        TGridItem="@(Merchanter.Classes.Log)" Virtualize="true" Loading="loading" DisplayMode="DataGridDisplayMode.Grid" ShowHover="true">
             <ChildContent>
-                <PropertyColumn Title="ID" Property="@(l => l.id)" Width="100px" TooltipText="@(l => l.thread_id)" Tooltip="true" Align="Align.End" />
+                <PropertyColumn Title="ID" Property="@(l => l.id)" Width="100px" TooltipText="@(l => l.thread_id)" Tooltip="true" Align="Align.End" Sortable="true" />
                 <PropertyColumn Title="Bölüm" Property="@(l => l.worker)" Width="150px" Align="Align.Center" />
                 <PropertyColumn Title="Olay Adı" Property="@(l => l.title)" TooltipText="@(l => l.title)" Tooltip="true" Width="200px" Align="Align.Center" />
                 <PropertyColumn Title="Olay İçeriği" Property="@(l => l.message)" TooltipText="@(l => l.message)" Tooltip="true" Align=" Align.Baseline" />
@@ -76,12 +73,12 @@
             </LoadingContent>
         </FluentDataGrid>
 
-        <FluentPaginator State="@pagination">
+        <FluentPaginator State="@pagination" CurrentPageIndexChanged="Refresh">
             <SummaryTemplate>
                 <div style="display:flex;align-items:center;">
-                    <FluentSelect TOption="int" Width="120px" ValueChanged="@(async (e) => await OnItemsPerPageChanged(e))" Multiple="false">
+                    <FluentSelect TOption="int" Width="120px" ValueChanged="@(async (e) => await OnItemsPerPageChanged(e))">
                         <FluentOption Value="10" Selected="@(pagination.ItemsPerPage == 10)">10 adet</FluentOption>
-                        <FluentOption Value="20" Selected="@(pagination.ItemsPerPage == 20)">25 adet</FluentOption>
+                        <FluentOption Value="20" Selected="@(pagination.ItemsPerPage == 20)">20 adet</FluentOption>
                         <FluentOption Value="50" Selected="@(pagination.ItemsPerPage == 50)">50 adet</FluentOption>
                     </FluentSelect>
                     <FluentLabel Typo="Typography.Body">&nbsp;&nbsp;Toplam: <strong>@(pagination.TotalItemCount ?? 0)</strong> girdi</FluentLabel>
@@ -99,68 +96,94 @@ else {
 
 @code {
     [Parameter]
-    public int customer_id { get; set; }
+    public int customer_id { get; set; } = 0;
     bool loading = false;
-    List<Log>? customer_logs { get; set; } = null;
+    IQueryable<Log>? customer_logs { get; set; } = null;
     string messageFilter = ""; string workerFilter = ""; string titleFilter = ""; DateTime? dateFilter = null;
-    PaginationState pagination = new PaginationState() { ItemsPerPage = 10 };
-
-    private List<Notification.NotificationTypes> notification_types_list = Enum.GetValues(typeof(Notification.NotificationTypes))
-        .Cast<Notification.NotificationTypes>()
-        .ToList();
+    public PaginationState pagination = new PaginationState() { ItemsPerPage = 10 };
 
     protected override async Task OnParametersSetAsync() {
-        await GetDataAsync(new GridItemsProviderRequest<Log>());
+        if (int.TryParse(HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == Variables.customer_id)?.Value, out int CID)) {
+            customer_id = CID;
+            await Refresh();
+        }
     }
 
-    protected async Task LoadCustomerLogs() {
-        await GetDataAsync(new GridItemsProviderRequest<Log>());
+    protected async Task Refresh() {
+        await LoadLogs();
     }
 
-    private async ValueTask<GridItemsProviderResult<Log>> GetDataAsync(GridItemsProviderRequest<Log> request) {
+    private async Task LoadLogs() {
         try {
             loading = true;
-            string json = JsonConvert.SerializeObject(
-                new ApiFilter() {
-                        Pager = new Pager() {
-                            ItemsPerPage = pagination.ItemsPerPage,
-                            CurrentPageIndex = pagination.CurrentPageIndex
-                        },
-                        Filters = new List<Filter<dynamic>>() {
-                        new Filter<dynamic> { Field = "worker", Value = workerFilter },
-                        new Filter<dynamic> { Field = "title", Value = titleFilter },
-                        new Filter<dynamic> { Field = "message", Value = messageFilter },
-                        new Filter<dynamic> { Field = "date", Value = dateFilter } },
+            var apifilter = new ApiFilter() {
+                    Pager = new Pager() {
+                        ItemsPerPage = pagination.ItemsPerPage,
+                        CurrentPageIndex = pagination.CurrentPageIndex
+                    },
+                    Filters = new List<Filter<dynamic>>(),
+                };
+            if (!string.IsNullOrWhiteSpace(messageFilter)) {
+                apifilter.Filters.Add(new Filter<dynamic>() {
+                        Field = "message",
+                        Operator = "LIKE",
+                        Value = "%" + messageFilter + "%"
                     });
+            }
+            if (!string.IsNullOrWhiteSpace(titleFilter)) {
+                apifilter.Filters.Add(new Filter<dynamic>() {
+                        Field = "title",
+                        Operator = "LIKE",
+                        Value = "%" + titleFilter + "%"
+                    });
+            }
+            if (!string.IsNullOrWhiteSpace(workerFilter)) {
+                apifilter.Filters.Add(new Filter<dynamic>() {
+                        Field = "worker",
+                        Operator = "LIKE",
+                        Value = "%" + workerFilter + "%"
+                    });
+            }
+            if (dateFilter != null) {
+                apifilter.Filters.Add(new Filter<dynamic>() {
+                        Field = "date",
+                        Operator = "=",
+                        Value = dateFilter
+                    });
+            }
+            string json = JsonConvert.SerializeObject(apifilter);
             var response = await PostHelper.Request<List<Log>>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
-                Classes.PostHelper.PostMethod.Post, Classes.PostHelper.PostDestination.Server,
+                Classes.PostHelper.PostMethod.Post, Classes.PostHelper.PostDestination.Api,
                 "api/Customer/" + customer_id.ToString() + "/GetCustomerLogs",
                 new StringContent(json, Encoding.UTF8, "application/json")
                 );
 
             if (response != null && response.Success && response.Data != null) {
-                customer_logs = response.Data;
+                customer_logs = response.Data.AsQueryable();
                 if (response.ApiFilter != null) {
-                    // Map the data pipeline result to the UI GridItemsProviderResult
-                    return GridItemsProviderResult.From<Log>(customer_logs, response.ApiFilter.TotalCount.GetValueOrDefault());
+                    await pagination.SetTotalItemCountAsync(response.ApiFilter.TotalCount.GetValueOrDefault());
                 }
             }
-            return GridItemsProviderResult.From<Log>(new List<Log>(), 0);
+            else {
+                //TODO: Inform customer api returns error
+                customer_logs = new List<Log>().AsQueryable();
+                await pagination.SetTotalItemCountAsync(0);
+            }
         }
         catch (Exception ex) {
             Console.WriteLine(ex.Message);
             customer_logs = null;
-            return GridItemsProviderResult.From<Log>(new List<Log>(), 0);
         }
         finally {
             loading = false;
+            StateHasChanged();
         }
     }
 
     private async Task OnItemsPerPageChanged(string newItemsPerPage) {
         pagination.ItemsPerPage = int.Parse(newItemsPerPage);
         await pagination.SetCurrentPageIndexAsync(0); // Reset to the first page
-        await LoadCustomerLogs(); // Reload data with the new pagination settings
+        await Refresh();
     }
 
     public async void ClearFilters() {
@@ -169,6 +192,6 @@ else {
         titleFilter = "";
         dateFilter = null;
         await pagination.SetCurrentPageIndexAsync(0);
-        StateHasChanged();
+        await Refresh();
     }
 }

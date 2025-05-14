@@ -19,11 +19,11 @@ namespace Merchanter.Classes {
     public class Filter<T> {
         public string Field { get; set; }
         public T? Value { get; set; } = default;
-        public string Operator { get; set; } = "equal"; // equal, like, in, greater, less, greaterorequal, lessorequal
+        public string Operator { get; set; } = "="; // =, LIKE, IN etc..
     }
 
     public class Sort {
         public string Field { get; set; }
-        public string Direction { get; set; } = "desc";
+        public string Direction { get; set; } = "DESC";
     }
 }

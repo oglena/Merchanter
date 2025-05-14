@@ -211,7 +211,6 @@ namespace Merchanter {
             else {
                 return selected_cari_kodu;
             }
-
         }
 
         public static string? InsertNetsisMusSiparis(Order _order, string _cari_kodu, string? _order_shipping_barcode) {

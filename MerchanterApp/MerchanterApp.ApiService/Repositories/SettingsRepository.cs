@@ -1,8 +1,7 @@
 ﻿using Merchanter.Classes.Settings;
-using Merchanter.CustomerService.Repositories;
-using Merchanter.ServerService.Services;
+using MerchanterApp.ApiService.Services;
 
-namespace Merchanter.ServerService.Repositories {
+namespace MerchanterApp.ApiService.Repositories {
     public interface ISettingsRepository {
         Task<SettingsMerchanter> GetSettings(int _customer_id);
         Task<bool> SaveGeneralSettings(int _customer_id, SettingsGeneral _settings);

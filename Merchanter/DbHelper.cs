@@ -563,6 +563,64 @@ namespace Merchanter {
         }
 
         /// <summary>
+        /// Gets the last logs from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_filters">Api Filters</param>
+        /// <returns>[Error] returns 'null'</returns>
+        public List<Log> GetLastLogs(int _customer_id, ApiFilter _filters) {
+            try {
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                _filters.Pager ??= new Pager() { ItemsPerPage = 10, CurrentPageIndex = 0 };
+                string _query = "SELECT * FROM log WHERE customer_id=@customer_id";
+                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                    foreach (var filter in _filters.Filters) {
+                        if (filter.Value is null)
+                            _query += $" AND {filter.Field} {filter.Operator} NULL";
+                        else
+                            _query += $" AND {filter.Field} {filter.Operator} @{filter.Field}";
+                    }
+                }
+                if (_filters.Sort != null)
+                    _query += " ORDER BY " + _filters.Sort.Field + " " + _filters.Sort.Direction + " LIMIT @start,@end;";
+                else {
+                    _filters.Sort = new Sort() { Field = "update_date", Direction = "DESC" };
+                    _query += " ORDER BY update_date DESC LIMIT @start,@end;";
+                }
+                List<Log> list = [];
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                cmd.Parameters.Add(new MySqlParameter("start", _filters.Pager.ItemsPerPage * _filters.Pager.CurrentPageIndex));
+                cmd.Parameters.Add(new MySqlParameter("end", _filters.Pager.ItemsPerPage));
+                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                    foreach (var filter in _filters.Filters) {
+                        if (filter.Value is not null)
+                            cmd.Parameters.Add(new MySqlParameter(filter.Field, filter.Value));
+                    }
+                }
+                MySqlDataReader dataReader = cmd.ExecuteReader();
+                while (dataReader.Read()) {
+                    Log l = new() {
+                        id = Convert.ToInt32(dataReader["id"].ToString()),
+                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                        worker = dataReader["worker"]?.ToString() ?? string.Empty,
+                        title = dataReader["title"].ToString() ?? string.Empty,
+                        message = dataReader["message"]?.ToString() ?? string.Empty,
+                        thread_id = dataReader["thread_id"]?.ToString(),
+                        update_date = Convert.ToDateTime(dataReader["update_date"].ToString()),
+                    };
+                    list.Add(l);
+                }
+                dataReader.Close();
+                return list;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return null;
+            }
+        }
+
+        /// <summary>
         /// Gets log count from the database
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
@@ -617,6 +675,44 @@ namespace Merchanter {
                 return -1;
             }
         }
+
+        /// <summary>
+        /// Gets log count from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_filters">Api Filters</param>
+        /// <returns>Error returns 'int:-1'</returns>
+        public int GetLogsCount(int _customer_id, ApiFilter _filters) {
+            try {
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                _filters.Pager ??= new Pager() { ItemsPerPage = 10, CurrentPageIndex = 0 };
+                string _query = "SELECT COUNT(*) FROM log WHERE customer_id=@customer_id";
+                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                    foreach (var filter in _filters.Filters) {
+                        if (filter.Value is null)
+                            _query += $" AND {filter.Field} {filter.Operator} NULL";
+                        else
+                            _query += $" AND {filter.Field} {filter.Operator} @{filter.Field}";
+                    }
+                }
+                int total_count = 0;
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                    foreach (var filter in _filters.Filters) {
+                        if (filter.Value is not null)
+                            cmd.Parameters.Add(new MySqlParameter(filter.Field, filter.Value));
+                    }
+                }
+                int.TryParse(cmd.ExecuteScalar().ToString(), out total_count);
+                if (state == System.Data.ConnectionState.Open) connection.Close();
+                return total_count;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return -1;
+            }
+        }
         #endregion
 
         #region Settings
@@ -631,7 +727,7 @@ namespace Merchanter {
                 Helper.global = new SettingsMerchanter(_customer_id);
                 Helper.global.customer_id = _customer_id;
                 var customer = GetCustomer(_customer_id);
-                if(customer != null) { Helper.global.customer = customer; }
+                if (customer != null) { Helper.global.customer = customer; }
                 else { PrintConsole("Customer not found!", ConsoleColor.Red); return null; }
 
                 #region Core Settings
@@ -2504,7 +2600,7 @@ namespace Merchanter {
 
                 if (_filters.Filters != null && _filters.Filters.Count > 0) {
                     foreach (var filter in _filters.Filters) {
-                        if (filter.Value == null)
+                        if (filter.Value is null)
                             _query += $" AND {filter.Field} {filter.Operator} NULL";
                         else
                             _query += $" AND {filter.Field} {filter.Operator} @{filter.Field}";
@@ -2521,13 +2617,11 @@ namespace Merchanter {
                 List<Product> list = [];
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                //cmd.Parameters.Add(new MySqlParameter("start", _items_per_page * _current_page_index));
                 cmd.Parameters.Add(new MySqlParameter("start", _filters.Pager.ItemsPerPage * _filters.Pager.CurrentPageIndex));
-                //cmd.Parameters.Add(new MySqlParameter("end", _items_per_page));
                 cmd.Parameters.Add(new MySqlParameter("end", _filters.Pager.ItemsPerPage));
                 if (_filters.Filters != null && _filters.Filters.Count > 0) {
                     foreach (var filter in _filters.Filters) {
-                        if (filter.Value != null)
+                        if (filter.Value is not null)
                             cmd.Parameters.Add(new MySqlParameter(filter.Field, filter.Value));
                     }
                 }
@@ -3051,6 +3145,7 @@ namespace Merchanter {
         /// Gets product count from the database
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_filters">Api Filters</param>
         /// <returns>Error returns 'int:-1'</returns>
         public int GetProductsCount(int _customer_id, ApiFilter _filters) {
             try {
@@ -3061,7 +3156,7 @@ namespace Merchanter {
                     "WHERE p.customer_id=@customer_id";
                 if (_filters.Filters != null && _filters.Filters.Count > 0) {
                     foreach (var filter in _filters.Filters) {
-                        if (filter.Value == null) {
+                        if (filter.Value is null) {
                             _query += $" AND {filter.Field} {filter.Operator} NULL";
                         }
                         else {
@@ -3073,7 +3168,7 @@ namespace Merchanter {
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 if (_filters.Filters != null && _filters.Filters.Count > 0) {
                     foreach (var filter in _filters.Filters) {
-                        if (filter.Value != null)
+                        if (filter.Value is not null)
                             cmd.Parameters.Add(new MySqlParameter(filter.Field, filter.Value));
                     }
                 }
@@ -4576,6 +4671,62 @@ namespace Merchanter {
         }
 
         /// <summary>
+        /// Gets the brands from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_filters">Api Filters</param>
+        /// <returns>[Error] returns 'null'</returns>
+        public List<Brand> GetBrands(int _customer_id, ApiFilter _filters) {
+            try {
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                _filters.Pager ??= new Pager() { ItemsPerPage = 10, CurrentPageIndex = 0 };
+                string _query = "SELECT * FROM brands WHERE customer_id=@customer_id";
+                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                    foreach (var filter in _filters.Filters) {
+                        if (filter.Value is null)
+                            _query += $" AND {filter.Field} {filter.Operator} NULL";
+                        else
+                            _query += $" AND {filter.Field} {filter.Operator} @{filter.Field}";
+                    }
+                }
+                if (_filters.Sort != null)
+                    _query += " ORDER BY " + _filters.Sort.Field + " " + _filters.Sort.Direction + " LIMIT @start,@end;";
+                else {
+                    _filters.Sort = new Sort() { Field = "id", Direction = "DESC" };
+                    _query += " ORDER BY id DESC LIMIT @start,@end;";
+                }
+                List<Brand> list = new List<Brand>();
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                cmd.Parameters.Add(new MySqlParameter("start", _filters.Pager.ItemsPerPage * _filters.Pager.CurrentPageIndex));
+                cmd.Parameters.Add(new MySqlParameter("end", _filters.Pager.ItemsPerPage));
+                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                    foreach (var filter in _filters.Filters) {
+                        if (filter.Value is not null)
+                            cmd.Parameters.Add(new MySqlParameter(filter.Field, filter.Value));
+                    }
+                }
+                MySqlDataReader dataReader = cmd.ExecuteReader();
+                while (dataReader.Read()) {
+                    Brand b = new Brand {
+                        id = Convert.ToInt32(dataReader["id"].ToString()),
+                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                        brand_name = dataReader["brand_name"].ToString(),
+                        status = Convert.ToBoolean(Convert.ToInt32(dataReader["status"].ToString())),
+                    };
+                    list.Add(b);
+                }
+                dataReader.Close();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
+                return list;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return null;
+            }
+        }
+
+        /// <summary>
         /// Gets the brand from the database
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
@@ -4748,6 +4899,63 @@ namespace Merchanter {
             catch (Exception ex) {
                 OnError(ex.ToString());
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// Gets brand count from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <returns>Error returns 'int:-1'</returns>
+        public int GetBrandsCount(int _customer_id) {
+            try {
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                string _query = "SELECT COUNT(*) FROM brands WHERE customer_id=@customer_id";
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                int.TryParse(cmd.ExecuteScalar().ToString(), out int total_count);
+                if (state == System.Data.ConnectionState.Open) connection.Close();
+                return total_count;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return -1;
+            }
+        }
+
+        /// <summary>
+        /// Gets brand count from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_filters">Api Filters</param>
+        /// <returns>Error returns 'int:-1'</returns>
+        public int GetBrandsCount(int _customer_id, ApiFilter _filters) {
+            try {
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                string _query = "SELECT COUNT(*) FROM brands WHERE customer_id=@customer_id";
+                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                    foreach (var filter in _filters.Filters) {
+                        if (filter.Value is null)
+                            _query += $" AND {filter.Field} {filter.Operator} NULL";
+                        else
+                            _query += $" AND {filter.Field} {filter.Operator} @{filter.Field}";
+                    }
+                }
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                    foreach (var filter in _filters.Filters) {
+                        if (filter.Value is not null)
+                            cmd.Parameters.Add(new MySqlParameter(filter.Field, filter.Value));
+                    }
+                }
+                int.TryParse(cmd.ExecuteScalar().ToString(), out int total_count);
+                if (state == System.Data.ConnectionState.Open) connection.Close();
+                return total_count;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return -1;
             }
         }
         #endregion

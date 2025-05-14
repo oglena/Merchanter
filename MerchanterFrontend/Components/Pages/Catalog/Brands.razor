@@ -1,0 +1,22 @@
+﻿@attribute [Authorize]
+@page "/Catalog/Brands"
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>Katalog > Markalar | Merchanter</PageTitle>
+
+<FluentLabel Typo="Typography.H1"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size28.Apps())" />&nbsp;Markalar</FluentLabel>
+<FluentLayout Orientation="Orientation.Vertical" Style="padding-top:10px;">
+    @if (HttpContextAccessor?.HttpContext?.User.Identity != null && HttpContextAccessor.HttpContext.User.Identity.IsAuthenticated) {
+        <BrandsComponent customer_id="@customer_id" />
+    }
+</FluentLayout>
+
+@code {
+    public int customer_id { get; set; } = 0;
+
+    protected override void OnInitialized() {
+        if (int.TryParse(HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == Variables.customer_id)?.Value, out int CID)) {
+            customer_id = CID;
+        }
+    }
+}
