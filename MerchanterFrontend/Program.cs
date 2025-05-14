@@ -28,6 +28,7 @@ builder.Services.AddServerSideBlazor().AddCircuitOptions(x => {
 });
 
 builder.Services.AddTransient<IPostHelper, PostHelper>();
+builder.Services.AddSingleton<LibraryConfiguration>();
 
 builder.Services.AddAuthentication(Variables.auth_cookie).AddCookie(Variables.auth_cookie, x => {
     x.Cookie.Name = Variables.auth_cookie;

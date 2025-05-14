@@ -33,34 +33,50 @@ namespace MerchanterFrontend.Classes {
 
             switch (_method) {
                 case PostMethod.Login:
-                    using (HttpClient httpClient = new()) {
-                        httpClient.BaseAddress = new Uri(baseAddress);
-                        using HttpResponseMessage response = await httpClient.PostAsync(_url, _body);
-                        if (response.IsSuccessStatusCode) {
-                            var login_response = JsonConvert.DeserializeObject<UserLoginResponseModel>(await response.Content.ReadAsStringAsync());
-                            if (login_response != null && login_response.AuthenticateResult && !string.IsNullOrWhiteSpace(login_response.AuthToken) && login_response.Settings != null && login_response.Settings.customer != null) {
-                                model = new BaseResponseModel<T>() {
-                                    Success = true,
-                                    ErrorMessage = "",
-                                    Data = (T)(object)login_response
-                                };
-                                logger.LogInformation("LOGIN[" + response.StatusCode.ToString() + " " + login_response.Settings.customer.user_name + "]: " + _url, DateTime.UtcNow.ToLongTimeString());
-                            }
-                            else {
-                                logger.LogInformation("LOGIN[FAIL]: " + response.StatusCode.ToString() + " " + _url, DateTime.UtcNow.ToLongTimeString());
-                            }
+                    try {
+                        var client = new RestClient(baseAddress);
+                        var request = new RestRequest(_url, Method.Post) {
+                            Timeout = TimeSpan.FromSeconds(10)
+                        };
+                        request.AddHeader("Authorization", "Bearer " + _token);
+                        if (_body != null) {
+                            var bodyContent = await _body.ReadAsStringAsync();
+                            request.AddStringBody(bodyContent, DataFormat.Json);
                         }
+                        var response = client.ExecutePost<T>(request); var login_response = JsonConvert.DeserializeObject<UserLoginResponseModel>(response.Content);
+                        if (login_response != null && login_response.AuthenticateResult && !string.IsNullOrWhiteSpace(login_response.AuthToken) && 
+                            login_response.Settings != null && login_response.Settings.customer != null) {
+                            model = new BaseResponseModel<T>() {
+                                Success = true,
+                                ErrorMessage = "",
+                                Data = (T)(object)login_response
+                            };
+                            logger.LogInformation("LOGIN[" + response.StatusCode.ToString() + " " + login_response.Settings.customer.user_name + "]: " + _url, DateTime.UtcNow.ToLongTimeString());
+                        }
+                        else {
+                            logger.LogInformation("LOGIN[FAIL]: " + response.StatusCode.ToString() + " " + _url, DateTime.UtcNow.ToLongTimeString());
+                        }
+                    }
+                    catch (Exception ex) {
+                        logger.LogError("LOGIN: " + ex.Message + " " + _url, DateTime.UtcNow.ToLongTimeString());
+                        model = new BaseResponseModel<T>() {
+                            Success = false,
+                            ErrorMessage = ex.Message,
+                            Data = default
+                        };
                     }
                     break;
                 case PostMethod.Get:
                     if (!string.IsNullOrWhiteSpace(_token)) {
-                        using (HttpClient httpClient = new()) {
-                            httpClient.BaseAddress = new Uri(baseAddress);
-                            httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + _token);
-                            using HttpResponseMessage response = await httpClient.GetAsync(_url);
+                        try {
+                            var client = new RestClient(baseAddress);
+                            var request = new RestRequest(_url, Method.Get) {
+                                Timeout = TimeSpan.FromSeconds(10)
+                            };
+                            request.AddHeader("Authorization", "Bearer " + _token);
+                            var response = await client.ExecuteAsync<T>(request);
                             if (response.IsSuccessStatusCode) {
-                                var response_json = await response.Content.ReadAsStringAsync();
-                                model = JsonConvert.DeserializeObject<BaseResponseModel<T>>(response_json);
+                                model = JsonConvert.DeserializeObject<BaseResponseModel<T>>(response.Content);
                                 logger.LogInformation("GET: " + response.StatusCode.ToString() + " " + _url, DateTime.UtcNow.ToLongTimeString());
                             }
                             else {
@@ -71,6 +87,14 @@ namespace MerchanterFrontend.Classes {
                                 };
                             }
                         }
+                        catch (Exception ex) {
+                            logger.LogError("GET: " + ex.Message + " " + _url, DateTime.UtcNow.ToLongTimeString());
+                            model = new BaseResponseModel<T>() {
+                                Success = false,
+                                ErrorMessage = ex.Message,
+                                Data = default
+                            };
+                        }
                     }
                     break;
                 case PostMethod.Post:
@@ -78,7 +102,7 @@ namespace MerchanterFrontend.Classes {
                         try {
                             var client = new RestClient(baseAddress);
                             var request = new RestRequest(_url, Method.Post) {
-                                Timeout = TimeSpan.FromSeconds(5)
+                                Timeout = TimeSpan.FromSeconds(10)
                             };
                             request.AddHeader("Authorization", "Bearer " + _token);
                             if (_body != null) {

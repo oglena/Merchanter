@@ -1,17 +1,25 @@
 ﻿@rendermode InteractiveServer
 @using System.Text.Json.Serialization
+@using MerchanterFrontend.Components.Pages.Catalog
 @using Newtonsoft.Json
 @using System.Text
-@inject IHttpContextAccessor HttpContextAccessor
 @inject IPostHelper PostHelper
+@inject IHttpContextAccessor HttpContextAccessor
 @inject NavigationManager NavigationManager
+@inject IDialogService DialogService
+@inject IMessageService MessageService
 
 @if (customer_id > 0 && brands != null) {
     <FluentGrid Justify="JustifyContent.SpaceBetween" Spacing="2">
+        @if (!string.IsNullOrWhiteSpace(page_message)) {
+            <FluentGridItem xs="12">
+                <AlertComponent page_message="@page_message" message_status="@message_status" />
+            </FluentGridItem>
+        }
         <FluentGridItem xs="12">
             <FluentToolbar style="width:100%;border-radius:5px;padding:5px !important;" Orientation="Orientation.Horizontal">
                 <FluentIcon Value="@(new Icons.Filled.Size20.Apps())" Slot="start" Color="Color.Accent" />
-                <FluentButton Appearance="Appearance.Outline" IconStart="@(new Icons.Regular.Size20.New())">Yeni Marka</FluentButton>
+                <FluentButton Appearance="Appearance.Outline" OnClick="() => OpenPanelRightAsync(null)" IconStart="@(new Icons.Regular.Size20.New())">Yeni Marka</FluentButton>
                 <FluentSelect Data="@brand_is_active_filter" TOption="BrandStatus" ValueChanged="@((e) => OnBrandActiveFilterChanged(e))" Width="150px" Appearance="Appearance.Stealth" Style="margin-right:10px;" slot="end">
                     <FluentOption Value="0" Selected="@(brand_is_active_filter == BrandStatus.All)">Tüm Durumlar</FluentOption>
                     <FluentOption Value="1" Selected="@(brand_is_active_filter == BrandStatus.Active)">Aktif Markalar</FluentOption>
@@ -44,14 +52,14 @@
         </FluentGridItem>
         <FluentGridItem xs="12">
             <FluentDataGrid Id="brands-grid" Items="@brands" RowSize="DataGridRowSize.Large" GenerateHeader="GenerateHeaderOption.Sticky"
-                            TGridItem="@(Merchanter.Classes.Brand)" Loading="loading" DisplayMode="DataGridDisplayMode.Grid" ShowHover="true">
+            TGridItem="Brand" Loading="loading" DisplayMode="DataGridDisplayMode.Grid" ShowHover="true">
                 <ChildContent>
                     <PropertyColumn Title="ID" Property="@(b => b.id)" Width="100px" Align="Align.End" />
                     <PropertyColumn Title="Marka Adı" Property="@(b => b.brand_name)" Align="Align.Center" />
                     <PropertyColumn Title="Durum" Property="@(b => b.status ? "Aktif" : "Pasif")" Align="Align.Center" />
                     <TemplateColumn Title="" Width="250px">
                         <FluentButton Appearance="Appearance.Outline" IconStart="@(new Icons.Regular.Size20.Delete())">Sil</FluentButton>
-                        <FluentButton Appearance="Appearance.Outline" IconStart="@(new Icons.Regular.Size20.Edit())">Düzenle</FluentButton>
+                        <FluentButton OnClick="() => OpenPanelRightAsync(context)" Appearance="Appearance.Outline" IconStart="@(new Icons.Regular.Size20.Edit())">Düzenle</FluentButton>
                     </TemplateColumn>
                 </ChildContent>
                 <EmptyContent>
@@ -99,10 +107,14 @@ else {
     public int customer_id { get; set; } = 0;
     IQueryable<Brand>? brands { get; set; } = null;
     bool loading = false;
+    private string? page_message = "";
+    private string? message_status = "";
     private string? brand_name_filter = null;
     private BrandStatus brand_is_active_filter { get; set; } = BrandStatus.All;
-    PaginationState pagination = new PaginationState() { ItemsPerPage = 5 };
+    PaginationState pagination = new PaginationState() { ItemsPerPage = 20 };
     public enum BrandStatus { All = 0, Active = 1, Passive = 2 }
+
+    private IDialogReference? _dialog;
 
     protected override async Task OnParametersSetAsync() {
         if (int.TryParse(HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == Variables.customer_id)?.Value, out int CID)) {
@@ -113,6 +125,49 @@ else {
 
     protected async Task Refresh() {
         await LoadBrands();
+    }
+
+    private async Task OpenPanelRightAsync(Brand? _brand) {
+        MessageService.Clear();
+        var dialog_parameters = new DialogParameters<Brand>() {
+                Content = _brand == null ? default! : _brand,
+                Alignment = HorizontalAlignment.Right,
+                Title = _brand == null ? "Yeni Marka Ekle" : "Marka Düzenleniyor",
+                PrimaryAction = "Kaydet",
+                SecondaryAction = "İptal",
+                DismissTitle = "Kapat",
+                PreventDismissOnOverlayClick = true,
+                PrimaryActionEnabled = true,
+                DialogType = DialogType.Panel
+            };
+        _dialog = await DialogService.ShowPanelAsync<BrandPanel>(_brand == null ? new Brand() { customer_id = customer_id } : _brand, dialog_parameters);
+
+        DialogResult result = await _dialog.Result;
+        HandlePanel(result);
+    }
+
+    private void HandlePanel(DialogResult result) {
+        if (result.Cancelled) {
+            page_message = "";
+            message_status = "";
+            return;
+        }
+
+        if (result.Data is not null) {
+            var new_brand = (Brand)result.Data;
+            if (new_brand.customer_id > 0) {
+                if (new_brand.id > 0) {
+                    // Update existing brand
+                    page_message = "[" + DateTime.Now.ToString() + "] Marka güncellendi.";
+                    message_status = "işlem başarılı";
+                }
+                else {
+                    // Add new brand
+                    page_message = "[" + DateTime.Now.ToString() + "] Yeni marka eklendi.";
+                    message_status = "işlem başarılı";
+                }
+            }
+        }
     }
 
     private async Task LoadBrands() {

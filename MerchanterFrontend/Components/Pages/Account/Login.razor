@@ -1,15 +1,13 @@
 ﻿@page "/Account/Login"
 @layout LoginLayout
 @rendermode InteractiveWebAssembly
-
-@using System.Text.Json.Serialization
 @using Microsoft.AspNetCore.Http.Extensions
+@using System.Text.Json.Serialization
 @using Newtonsoft.Json
 @using System.Text
-
-@inject NavigationManager navigationManager
-@inject IHttpContextAccessor HttpContextAccessor
 @inject IPostHelper PostHelper
+@inject IHttpContextAccessor HttpContextAccessor
+@inject NavigationManager NavigationManager
 
 <PageTitle>Giriş | Merchanter</PageTitle>
 
@@ -93,7 +91,7 @@
                                     Variables.auth_cookie)),
                                     new AuthenticationProperties {
                                             IsPersistent = remember_me,
-                                            RedirectUri = UriHelper.Encode(new Uri(navigationManager.BaseUri)),
+                                            RedirectUri = UriHelper.Encode(new Uri(NavigationManager.BaseUri)),
                                             ExpiresUtc = login.AccessTokenExpireDate.ToUniversalTime(),
                                             AllowRefresh = true
                                     });

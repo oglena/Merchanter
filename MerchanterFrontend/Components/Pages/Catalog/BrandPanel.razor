@@ -1,0 +1,32 @@
+﻿@rendermode InteractiveServer
+@using System.Text.Json.Serialization
+@using Newtonsoft.Json
+@using System.Text
+@inject IPostHelper PostHelper
+@inject IHttpContextAccessor HttpContextAccessor
+@inject NavigationManager NavigationManager
+@implements IDialogContentComponent<Brand>
+
+<FluentLayout Orientation="Orientation.Horizontal">
+    <FluentGrid Justify="JustifyContent.Center">
+        <FluentDialogBody>
+            <FluentGridItem xs="12">
+                <FluentTextField Label="Marka İsmi" @bind-Value="@Content.brand_name" Required="true">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+                </FluentTextField>
+            </FluentGridItem>
+            <br /><br />
+            <FluentGridItem xs="12">
+                <FluentSwitch @bind-Value="@Content.status" Label="Marka Durumu">
+                    <span slot="checked-message">Aktif</span>
+                    <span slot="unchecked-message">Pasif</span>
+                </FluentSwitch>
+            </FluentGridItem>
+        </FluentDialogBody>
+    </FluentGrid>
+</FluentLayout>
+
+@code {
+    [Parameter]
+    public Brand Content { get; set; } = default!;
+}

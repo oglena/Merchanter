@@ -2,8 +2,8 @@
 @using System.Text.Json.Serialization
 @using Newtonsoft.Json
 @using System.Text
-@inject IHttpContextAccessor HttpContextAccessor
 @inject IPostHelper PostHelper
+@inject IHttpContextAccessor HttpContextAccessor
 @inject NavigationManager NavigationManager
 
 @if (customer_id > 0 && customer_logs != null) {
@@ -50,7 +50,7 @@
         </FluentPaginator>
 
         <FluentDataGrid Id="logs-grid" Items="@customer_logs" RowSize="DataGridRowSize.Small" GenerateHeader="GenerateHeaderOption.Sticky"
-                        TGridItem="@(Merchanter.Classes.Log)" Virtualize="true" Loading="loading" DisplayMode="DataGridDisplayMode.Grid" ShowHover="true">
+                        TGridItem="Log" Virtualize="true" Loading="loading" DisplayMode="DataGridDisplayMode.Grid" ShowHover="true">
             <ChildContent>
                 <PropertyColumn Title="ID" Property="@(l => l.id)" Width="100px" TooltipText="@(l => l.thread_id)" Tooltip="true" Align="Align.End" Sortable="true" />
                 <PropertyColumn Title="Bölüm" Property="@(l => l.worker)" Width="150px" Align="Align.Center" />

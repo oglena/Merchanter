@@ -1,10 +1,12 @@
 ﻿@attribute [Authorize]
 @page "/Account/Profile"
+@rendermode InteractiveServer
+@using System.Text.Json.Serialization
 @using Newtonsoft.Json
 @using System.Text
 @inject IPostHelper PostHelper
 @inject IHttpContextAccessor HttpContextAccessor
-@inject NavigationManager navigationManager
+@inject NavigationManager NavigationManager
 
 <PageTitle>Hesap > Profil | Merchanter</PageTitle>
 
@@ -93,7 +95,7 @@
             customer_active = false;
             syncs_active = false;
             ActiveTab = "logs";
-            navigationManager.NavigateTo("/Account/Profile?ActiveTab=logs");
+            NavigationManager.NavigateTo("/Account/Profile?ActiveTab=logs");
         }
         else if (tab == "settings") {
             logs_active = false;
@@ -103,7 +105,7 @@
             customer_active = false;
             syncs_active = false;
             ActiveTab = "settings";
-            navigationManager.NavigateTo("/Account/Profile?ActiveTab=settings");
+            NavigationManager.NavigateTo("/Account/Profile?ActiveTab=settings");
         }
         else if (tab == "integrations") {
             logs_active = false;
@@ -113,7 +115,7 @@
             customer_active = false;
             syncs_active = false;
             ActiveTab = "integrations";
-            navigationManager.NavigateTo("/Account/Profile?ActiveTab=integrations");
+            NavigationManager.NavigateTo("/Account/Profile?ActiveTab=integrations");
         }
         else if (tab == "platforms") {
             logs_active = false;
@@ -123,7 +125,7 @@
             customer_active = false;
             syncs_active = false;
             ActiveTab = "platforms";
-            navigationManager.NavigateTo("/Account/Profile?ActiveTab=platforms");
+            NavigationManager.NavigateTo("/Account/Profile?ActiveTab=platforms");
         }
         else if (tab == "customer") {
             logs_active = false;
@@ -133,7 +135,7 @@
             customer_active = true;
             syncs_active = false;
             ActiveTab = "customer";
-            navigationManager.NavigateTo("/Account/Profile?ActiveTab=customer");
+            NavigationManager.NavigateTo("/Account/Profile?ActiveTab=customer");
         }
         else if (tab == "syncs") {
             logs_active = false;
@@ -143,7 +145,7 @@
             customer_active = false;
             syncs_active = true;
             ActiveTab = "syncs";
-            navigationManager.NavigateTo("/Account/Profile?ActiveTab=syncs");
+            NavigationManager.NavigateTo("/Account/Profile?ActiveTab=syncs");
         }
         await Task.CompletedTask;
     }

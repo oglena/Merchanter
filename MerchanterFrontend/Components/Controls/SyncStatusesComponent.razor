@@ -2,12 +2,15 @@
 @using System.Text.Json.Serialization
 @using Newtonsoft.Json
 @using System.Text
-@inject IHttpContextAccessor HttpContextAccessor
 @inject IPostHelper PostHelper
+@inject IHttpContextAccessor HttpContextAccessor
+@inject NavigationManager NavigationManager
 
 @if (customer_id > 0 && customer != null) {
     <FluentEditForm Model="customer" OnValidSubmit="@(() => SaveCustomer(customer))">
         <FluentGrid Justify="JustifyContent.FlexStart" Spacing="2">
+            <FluentGridItem xs="12">
+            </FluentGridItem>
             @if (!string.IsNullOrWhiteSpace(page_message)) {
                 <FluentGridItem xs="12">
                     <AlertComponent page_message="@page_message" message_status="@message_status" />
