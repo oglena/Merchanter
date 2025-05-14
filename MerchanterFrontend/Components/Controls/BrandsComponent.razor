@@ -12,12 +12,14 @@
             <FluentToolbar style="width:100%;border-radius:5px;padding:5px !important;" Orientation="Orientation.Horizontal">
                 <FluentIcon Value="@(new Icons.Filled.Size20.Apps())" Slot="start" Color="Color.Accent" />
                 <FluentButton Appearance="Appearance.Outline" IconStart="@(new Icons.Regular.Size20.New())">Yeni Marka</FluentButton>
-                <FluentTextField @bind-Value="@brand_name_filter" Placeholder="Ara" Style="margin-right:10px;" slot="end"></FluentTextField>
                 <FluentSelect Data="@brand_is_active_filter" TOption="BrandStatus" ValueChanged="@((e) => OnBrandActiveFilterChanged(e))" Width="150px" Appearance="Appearance.Stealth" Style="margin-right:10px;" slot="end">
                     <FluentOption Value="0" Selected="@(brand_is_active_filter == BrandStatus.All)">Tüm Durumlar</FluentOption>
                     <FluentOption Value="1" Selected="@(brand_is_active_filter == BrandStatus.Active)">Aktif Markalar</FluentOption>
                     <FluentOption Value="2" Selected="@(brand_is_active_filter == BrandStatus.Passive)">Pasif Markalar</FluentOption>
                 </FluentSelect>
+                <FluentTextField @bind-Value="@brand_name_filter" Placeholder="Ara" Style="margin-right:10px;" slot="end">
+                    <FluentIcon Value="@(new Icons.Regular.Size16.Search())" Color="@Color.Neutral" Slot="end" />
+                </FluentTextField>
                 <FluentButton Appearance="Appearance.Outline" OnClick="Refresh" Disabled="loading" Loading="@loading" IconStart="@(new Icons.Regular.Size20.Filter())" Style="margin-right:10px;" Slot="end">Filtrele</FluentButton>
                 <FluentButton Appearance="Appearance.Outline" OnClick="ClearFilters" Disabled="loading" Loading="@loading" IconStart="@(new Icons.Regular.Size20.Broom())" Slot="end">Temizle</FluentButton>
             </FluentToolbar>
@@ -99,7 +101,7 @@ else {
     bool loading = false;
     private string? brand_name_filter = null;
     private BrandStatus brand_is_active_filter { get; set; } = BrandStatus.All;
-    PaginationState pagination = new PaginationState() { ItemsPerPage = 10 };
+    PaginationState pagination = new PaginationState() { ItemsPerPage = 5 };
     public enum BrandStatus { All = 0, Active = 1, Passive = 2 }
 
     protected override async Task OnParametersSetAsync() {

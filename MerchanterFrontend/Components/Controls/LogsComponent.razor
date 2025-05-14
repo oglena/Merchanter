@@ -12,8 +12,7 @@
             <FluentToolbar style="width:100%;border-radius:5px;padding:5px !important;" Orientation="Orientation.Horizontal">
                 <FluentIcon Value="@(new Icons.Filled.Size20.ReadingList())" Slot="start" Color="Color.Accent" />
                 <FluentBadge>Olay Günlükleri</FluentBadge>
-                <FluentSelect ValueChanged="@(e => workerFilter = e)" Value="@workerFilter" TOption="string" Style="margin-right:10px;" slot="end">
-                    <FluentIcon Value="@(new Icons.Regular.Size16.Globe())" Color="@Color.Neutral" Slot="indicator" />
+                <FluentSelect ValueChanged="@(e => workerFilter = e)" Value="@workerFilter" TOption="string" Width="150px" Appearance="Appearance.Stealth" Style="margin-right:10px;" slot="end">
                     <FluentOption Value="" Selected="true">Tüm Bölümler</FluentOption>
                     <FluentOption Value="product">Ürün</FluentOption>
                     <FluentOption Value="notification">Bildirim</FluentOption>
@@ -24,7 +23,9 @@
                     <FluentOption Value="helper_instance">Yardımcı Program</FluentOption>
                     <FluentOption Value="xml">XML</FluentOption>
                 </FluentSelect>
-                <FluentTextField @bind-Value="@messageFilter" Placeholder="Olay günlüğünde ara" Style="margin-right:10px;" slot="end"></FluentTextField>
+                <FluentTextField @bind-Value="@messageFilter" Placeholder="Ara" Style="margin-right:10px;" slot="end">
+                    <FluentIcon Value="@(new Icons.Regular.Size16.Search())" Color="@Color.Neutral" Slot="end" />
+                </FluentTextField>
                 <FluentButton Appearance="Appearance.Outline" OnClick="Refresh" Loading="@loading" Disabled="@loading" IconStart="@(new Icons.Regular.Size20.Filter())" Style="margin-right:10px;" Slot="end">Filtrele</FluentButton>
                 <FluentButton Appearance="Appearance.Outline" OnClick="ClearFilters" Loading="@loading" Disabled="@loading" IconStart="@(new Icons.Regular.Size20.Broom())" Slot="end">Temizle</FluentButton>
             </FluentToolbar>
@@ -37,7 +38,7 @@
                 <div style="display:flex;align-items:center;">
                     <FluentSelect TOption="int" Width="120px" ValueChanged="@(async (e) => await OnItemsPerPageChanged(e))">
                         <FluentOption Value="10" Selected="@(pagination.ItemsPerPage == 10)">10 adet</FluentOption>
-                        <FluentOption Value="20" Selected="@(pagination.ItemsPerPage == 20)">25 adet</FluentOption>
+                        <FluentOption Value="20" Selected="@(pagination.ItemsPerPage == 20)">20 adet</FluentOption>
                         <FluentOption Value="50" Selected="@(pagination.ItemsPerPage == 50)">50 adet</FluentOption>
                     </FluentSelect>
                     <FluentLabel Typo="Typography.Body">&nbsp;&nbsp;Toplam: <strong>@(pagination.TotalItemCount ?? 0)</strong> girdi</FluentLabel>
@@ -100,7 +101,7 @@ else {
     bool loading = false;
     IQueryable<Log>? customer_logs { get; set; } = null;
     string messageFilter = ""; string workerFilter = ""; string titleFilter = ""; DateTime? dateFilter = null;
-    public PaginationState pagination = new PaginationState() { ItemsPerPage = 10 };
+    public PaginationState pagination = new PaginationState() { ItemsPerPage = 20 };
 
     protected override async Task OnParametersSetAsync() {
         if (int.TryParse(HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == Variables.customer_id)?.Value, out int CID)) {
