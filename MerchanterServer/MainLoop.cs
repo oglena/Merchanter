@@ -108,7 +108,7 @@ internal class MainLoop {
             default_brand = db_helper.GetDefaultBrand(customer.customer_id);
             root_category = db_helper.GetRootCategory(customer.customer_id);
             Console.WriteLine("DefaultBrand:" + default_brand.brand_name + ", RootCategory:" + root_category?.category_name);
-            if (default_brand == null || root_category == null) { health = false; }
+            if (default_brand is null || root_category is null) { health = false; }
 
             products = db_helper.GetProducts(customer.customer_id, out brands, out categories, out product_attributes, out product_images);
             Console.WriteLine("Products:" + products.Count + "; Brands:" + brands.Count + "; Categories:" + categories.Count);
@@ -117,7 +117,7 @@ internal class MainLoop {
             Console.Write("ProductTargets:" + product_target_relation.Count);
             category_target_relation = db_helper.GetCategoryTargets(customer.customer_id);
             Console.Write("; CategoryTargets:" + category_target_relation.Count + Environment.NewLine);
-            if (products == null) { health = false; }
+            if (products is null) { health = false; }
             #endregion
 
             if (health) { this.ProductLoop(out health); }
@@ -183,26 +183,26 @@ internal class MainLoop {
             string info;
 
             #region Inject XML Sources for QP Bilisim
-            if (customer.customer_id == 1 && xml_enabled_products != null) {
+            if (customer.customer_id == 1 && xml_enabled_products is not null) {
                 try {
                     PrintConsole("Injecting XML Sources for " + customer.user_name);
                     var xml_sources_1 = Helper.GetProductAttribute(_global.magento.xml_sources_attribute_code);
                     var xml_enabled_products_1 = Helper.SearchProductByAttribute(_global.magento.is_xml_enabled_attribute_code, "1");
-                    if (xml_enabled_products_1 != null) {
+                    if (xml_enabled_products_1 is not null) {
                         foreach (var item in xml_enabled_products_1) {
                             string? raw_sources_1 = item.custom_attributes.Where(x => x.attribute_code == _global.magento.xml_sources_attribute_code)?.First().value?.ToString();
-                            if (raw_sources_1 != null && raw_sources_1.Length > 0) {
+                            if (raw_sources_1 is not null && raw_sources_1.Length > 0) {
                                 var live_sources = xml_sources_1?.options.Where(x => raw_sources_1.Contains(x.value)).Where(x => !string.IsNullOrWhiteSpace(x.value)).ToList();
                                 if (live_sources?.Count > 0) {
                                     var selected_xml_source_barcode = item.custom_attributes.Where(x => x.attribute_code == _global.magento.barcode_attribute_code).FirstOrDefault();
-                                    if (selected_xml_source_barcode != null) {
-                                        if (selected_xml_source_barcode.value != null) {
+                                    if (selected_xml_source_barcode is not null) {
+                                        if (selected_xml_source_barcode.value is not null) {
                                             var x_enabled_product = xml_enabled_products.Where(x => x.barcode == selected_xml_source_barcode.value.ToString()).FirstOrDefault();
-                                            if (x_enabled_product == null) {
+                                            if (x_enabled_product is null) {
                                                 db_helper.xml_clone.UpdateXMLStatusByProductBarcode(customer.customer_id, selected_xml_source_barcode.value.ToString(), true, live_sources.Select(x => x.label).ToArray());
                                             }
                                             else {
-                                                if (x_enabled_product.extension != null && string.Join(",", live_sources.Select(x => x.label).ToArray()).Trim() != string.Join(",", x_enabled_product.extension.xml_sources).Trim()) {
+                                                if (x_enabled_product.extension is not null && string.Join(",", live_sources.Select(x => x.label).ToArray()).Trim() != string.Join(",", x_enabled_product.extension.xml_sources).Trim()) {
                                                     db_helper.xml_clone.UpdateXMLStatusByProductBarcode(customer.customer_id, selected_xml_source_barcode.value.ToString(), true, live_sources.Select(x => x.label).ToArray());
                                                 }
                                             }
@@ -214,7 +214,7 @@ internal class MainLoop {
 
                         foreach (var item in xml_enabled_products) {
                             var xproduct = xml_enabled_products.Where(x => x.barcode == item.barcode).FirstOrDefault();
-                            if (xproduct == null) {
+                            if (xproduct is null) {
                                 db_helper.xml_clone.UpdateXMLStatusByProductBarcode(customer.customer_id, item.barcode, false, null);
 
                                 #region Notification of XML_PRODUCT_REMOVED_BY_USER
@@ -239,7 +239,7 @@ internal class MainLoop {
                 FSP fsp = new(_global.xml_fsp_url);
                 var fsp_products = fsp.GetProducts(out info);
                 PrintConsole(info + " " + Constants.FSP);
-                if (fsp_products != null && fsp_products.Product.Length > 0) {
+                if (fsp_products is not null && fsp_products.Product.Length > 0) {
                     foreach (var item in fsp_products.Product) {
                         XProduct xp = new() {
                             customer_id = customer.customer_id,
@@ -248,18 +248,18 @@ internal class MainLoop {
                             source_brand = item.Brand.Trim(),
                             source_sku = item.Product_code.Trim(),
                             source_product_group = item.category,
-                            qty = item.Stock != null ? item.Stock.Value : 0,
+                            qty = item.Stock is not null ? item.Stock.Value : 0,
                             price1 = item.TESKfiyat,
                             price2 = item.BAYİfiyat,
                             currency = item.CurrencyType.Trim(),
                             is_active = false
                         };
                         if (!string.IsNullOrWhiteSpace(xp.barcode)) {
-                            if (xml_enabled_products?.Where(x => x.barcode == xp.barcode && x.extension.is_xml_enabled && x.extension.xml_sources.Contains(Constants.FSP)).FirstOrDefault() != null) {
+                            if (xml_enabled_products?.Where(x => x.barcode == xp.barcode && x.extension.is_xml_enabled && x.extension.xml_sources.Contains(Constants.FSP)).FirstOrDefault() is not null) {
                                 xp.is_active = true;
                             }
                             var tempx = live_xproducts.Where(x => x.xml_source == Constants.FSP).Where(x => x.barcode == xp.barcode).FirstOrDefault();
-                            if (tempx == null)
+                            if (tempx is null)
                                 live_xproducts.Add(xp);
                         }
                     }
@@ -280,7 +280,7 @@ internal class MainLoop {
                 PENTA penta = new(_global.xml_penta_base_url, _global.xml_penta_customerid);
                 var penta_products = penta.GetProducts(out info);
                 PrintConsole(info + " " + Constants.PENTA);
-                if (penta_products != null && penta_products.Stok != null && penta_products.Stok.Length > 0) {
+                if (penta_products is not null && penta_products.Stok is not null && penta_products.Stok.Length > 0) {
                     foreach (var item in penta_products.Stok) {
                         XProduct xp = new() {
                             customer_id = customer.customer_id,
@@ -289,7 +289,7 @@ internal class MainLoop {
                             source_brand = !string.IsNullOrWhiteSpace(item.MarkaIsim) ? item.MarkaIsim.Trim() : "MARKASIZ",
                             source_sku = item.Kod.ToString().Trim(),
                             source_product_group = item.AnaGrup_Ad,
-                            qty = item.Miktar != null ? ((item.Miktar != "Stoksuz") ? int.Parse(item.Miktar.Replace("+", string.Empty)) : 999) : 0,
+                            qty = item.Miktar is not null ? ((item.Miktar != "Stoksuz") ? int.Parse(item.Miktar.Replace("+", string.Empty)) : 999) : 0,
                             price1 = item.Fiyat_SKullanici,
                             price2 = item.Fiyat_Ozel,
                             currency = item.Doviz?.Trim() ?? string.Empty,
@@ -297,11 +297,11 @@ internal class MainLoop {
                         };
 
                         if (!string.IsNullOrWhiteSpace(xp.barcode)) {
-                            if (xml_enabled_products?.Where(x => x.barcode == xp.barcode && x.extension.is_xml_enabled && x.extension.xml_sources.Contains(Constants.PENTA)).FirstOrDefault() != null) {
+                            if (xml_enabled_products?.Where(x => x.barcode == xp.barcode && x.extension.is_xml_enabled && x.extension.xml_sources.Contains(Constants.PENTA)).FirstOrDefault() is not null) {
                                 xp.is_active = true;
                             }
                             var tempx = live_xproducts.Where(x => x.xml_source == Constants.PENTA).Where(x => x.barcode == xp.barcode).FirstOrDefault();
-                            if (tempx == null)
+                            if (tempx is null)
                                 live_xproducts.Add(xp);
                         }
                     }
@@ -322,7 +322,7 @@ internal class MainLoop {
                 KOYUNCU koyuncu = new(_global.xml_koyuncu_url);
                 var koyuncu_products = koyuncu.GetProducts(out info);
                 PrintConsole(info + " " + Constants.KOYUNCU);
-                if (koyuncu_products != null && koyuncu_products.ProductDto.Length > 0) {
+                if (koyuncu_products is not null && koyuncu_products.ProductDto.Length > 0) {
                     foreach (var item in koyuncu_products.ProductDto) {
                         XProduct xp = new() {
                             customer_id = customer.customer_id,
@@ -331,18 +331,18 @@ internal class MainLoop {
                             source_brand = item.BrandName.Trim(),
                             source_sku = item.ProductCode.Trim(),
                             source_product_group = item.CategoryCode.ToString(),
-                            qty = item.Stock != null ? int.Parse(item.Stock.Replace("+", string.Empty)) : 0,
+                            qty = item.Stock is not null ? int.Parse(item.Stock.Replace("+", string.Empty)) : 0,
                             price1 = item.DefaultPrice,
                             price2 = item.CustomerPrice,
                             currency = item.Currency.Trim(),
                             is_active = false
                         };
                         if (!string.IsNullOrWhiteSpace(xp.barcode)) {
-                            if (xml_enabled_products?.Where(x => x.barcode == xp.barcode && x.extension.is_xml_enabled && x.extension.xml_sources.Contains(Constants.KOYUNCU)).FirstOrDefault() != null) {
+                            if (xml_enabled_products?.Where(x => x.barcode == xp.barcode && x.extension.is_xml_enabled && x.extension.xml_sources.Contains(Constants.KOYUNCU)).FirstOrDefault() is not null) {
                                 xp.is_active = true;
                             }
                             var tempx = live_xproducts.Where(x => x.xml_source == Constants.KOYUNCU).Where(x => x.barcode == xp.barcode).FirstOrDefault();
-                            if (tempx == null)
+                            if (tempx is null)
                                 live_xproducts.Add(xp);
                         }
                     }
@@ -363,7 +363,7 @@ internal class MainLoop {
                 OKSID oksid = new(_global.xml_oksid_url);
                 var oksid_products = oksid.GetProducts(out info);
                 PrintConsole(info + " " + Constants.OKSID);
-                if (oksid_products != null && oksid_products.Stok.Length > 0) {
+                if (oksid_products is not null && oksid_products.Stok.Length > 0) {
                     foreach (var item in oksid_products.Stok) {
                         XProduct xp = new() {
                             customer_id = customer.customer_id,
@@ -379,11 +379,11 @@ internal class MainLoop {
                             is_active = false
                         };
                         if (!string.IsNullOrWhiteSpace(xp.barcode)) {
-                            if (xml_enabled_products?.Where(x => x.barcode == xp.barcode && x.extension.is_xml_enabled && x.extension.xml_sources.Contains(Constants.OKSID)).FirstOrDefault() != null) {
+                            if (xml_enabled_products?.Where(x => x.barcode == xp.barcode && x.extension.is_xml_enabled && x.extension.xml_sources.Contains(Constants.OKSID)).FirstOrDefault() is not null) {
                                 xp.is_active = true;
                             }
                             var tempx = live_xproducts.Where(x => x.xml_source == Constants.OKSID).Where(x => x.barcode == xp.barcode).FirstOrDefault();
-                            if (tempx == null)
+                            if (tempx is null)
                                 live_xproducts.Add(xp);
                         }
                     }
@@ -403,7 +403,7 @@ internal class MainLoop {
             if (other_product_sources.Contains(Constants.BOGAZICI)) {
                 BOGAZICI bogazici = new(_global.xml_bogazici_bayikodu, _global.xml_bogazici_email, _global.xml_bogazici_sifre);
                 var bogazici_products = bogazici.getBogaziciProducts();
-                if (bogazici_products != null && bogazici_products.Count > 0) {
+                if (bogazici_products is not null && bogazici_products.Count > 0) {
                     foreach (var item in bogazici_products) {
                         XProduct xp = new() {
                             customer_id = customer.customer_id,
@@ -412,18 +412,18 @@ internal class MainLoop {
                             source_brand = item.MARKA.Trim(),
                             source_sku = item.PRODUCERCODE.Trim(),
                             source_product_group = item.KATEGORI,
-                            qty = (item.STOK != null) ? int.Parse(item.STOK.Replace("+", string.Empty)) : 0,
+                            qty = (item.STOK is not null) ? int.Parse(item.STOK.Replace("+", string.Empty)) : 0,
                             price1 = Convert.ToDecimal(item.SKFIYAT),
                             price2 = Convert.ToDecimal(item.BIRIMFIYAT),
                             currency = item.BIRIMDOVIZ.Trim(),
                             is_active = false
                         };
                         if (!string.IsNullOrWhiteSpace(xp.barcode)) {
-                            if (xml_enabled_products?.Where(x => x.barcode == xp.barcode && x.extension.is_xml_enabled && x.extension.xml_sources.Contains(Constants.BOGAZICI)).FirstOrDefault() != null) {
+                            if (xml_enabled_products?.Where(x => x.barcode == xp.barcode && x.extension.is_xml_enabled && x.extension.xml_sources.Contains(Constants.BOGAZICI)).FirstOrDefault() is not null) {
                                 xp.is_active = true;
                             }
                             var tempx = live_xproducts.Where(x => x.xml_source == Constants.BOGAZICI).Where(x => x.barcode == xp.barcode).FirstOrDefault();
-                            if (tempx == null) {
+                            if (tempx is null) {
                                 live_xproducts.Add(xp);
                             }
                         }
@@ -444,10 +444,10 @@ internal class MainLoop {
 
             PrintConsole(live_xproducts.Count + " live xproducts loaded.");
 
-            if (xproducts != null) {
+            if (xproducts is not null) {
                 foreach (var item in xproducts) {
                     var need_to_delete_xp = live_xproducts.Where(x => x.xml_source == item.xml_source).Where(x => x.barcode == item.barcode).FirstOrDefault();
-                    if (need_to_delete_xp == null) {
+                    if (need_to_delete_xp is null) {
                         db_helper.xml_clone.DeleteXProduct(customer.customer_id, item.id);
                         PrintConsole(item.barcode + " source=" + item.xml_source + " " + " xproduct removed.");
 
@@ -462,7 +462,7 @@ internal class MainLoop {
 
                 foreach (var item in live_xproducts) {
                     var tempx = xproducts.Where(x => x.xml_source == item.xml_source).Where(x => x.barcode == item.barcode).FirstOrDefault();
-                    if (tempx != null) {
+                    if (tempx is not null) {
                         item.id = tempx.id;
                         item.is_active = tempx.is_active;
                         item.is_infosent = tempx.is_infosent;
@@ -540,13 +540,13 @@ internal class MainLoop {
     private void InvoiceLoop() {
         try {
             List<Notification> notifications = [];
-            if (order_main_target != null && order_main_target == Constants.NETSIS) {
+            if (order_main_target is not null && order_main_target == Constants.NETSIS) {
                 //var fats = NetOpenXHelper.GetNetsisFaturaCountByDate( 3 );
                 //var fat = NetOpenXHelper.GetNetsisFatura( "QPB024000004847" );
                 //var sip = NetOpenXHelper.GetNetsisSiparis( "000000099108639", false );
                 invoices = db_helper.invoice_clone.GetInvoices(customer.customer_id);
                 var live_faturas = NetOpenXHelper.GetNetsisFaturas(Helper.global.invoice.daysto_invoicesync, invoices);
-                if (invoices != null && live_faturas != null) {
+                if (invoices is not null && live_faturas is not null) {
                     foreach (var item in live_faturas) {
                         var selected_invoice = invoices.Where(x => x.invoice_no == item.FATURANO).FirstOrDefault();
                         Invoice invoice = new Invoice() {
@@ -558,7 +558,7 @@ internal class MainLoop {
                             erp_customer_code = item.CARIKODU,
                             erp_customer_group = item.CARIGRUP,
                             gib_fatura_no = item.GIB_FATIRS_NO,
-                            order_date = item.TARIH != null ? item.TARIH.Value : DateTime.MinValue,
+                            order_date = item.TARIH is not null ? item.TARIH.Value : DateTime.MinValue,
                             items = new List<InvoiceItem>()
                         };
                         foreach (var kalem in item.KALEMS) {
@@ -568,18 +568,18 @@ internal class MainLoop {
                                 customer_id = customer.customer_id,
                                 sku = kalem.STOKKODU,
                                 qty = kalem.MIKTAR,
-                                create_date = kalem.TARIH != null ? kalem.TARIH.Value : DateTime.MinValue,
+                                create_date = kalem.TARIH is not null ? kalem.TARIH.Value : DateTime.MinValue,
                                 serials = [.. kalem.SERILER]
                             });
                         }
-                        if (selected_invoice != null) {
+                        if (selected_invoice is not null) {
                             invoice.id = selected_invoice.id;
                             if (!selected_invoice.is_belge_created) {
                                 if (string.IsNullOrWhiteSpace(selected_invoice.gib_fatura_no)) continue;
                                 string? fullpath = NetOpenXHelper.GetEbelge(selected_invoice.gib_fatura_no);
                                 if (!string.IsNullOrWhiteSpace(fullpath)) {
                                     if (order_sources.Contains(Constants.MAGENTO2)) {
-                                        if (selected_invoice.order_label != null && selected_invoice.erp_customer_group != null &&
+                                        if (selected_invoice.order_label is not null && selected_invoice.erp_customer_group is not null &&
                                             Helper.global.netsis.fatura_cari_gruplari.Contains(selected_invoice.erp_customer_group.Trim())) {
                                             if (selected_invoice.erp_customer_group == "WEB" || selected_invoice.erp_customer_group == "WEBM2") {
                                                 Helper.UploadFileToFtp(Helper.global.erp_invoice_ftp_url, fullpath,
@@ -651,7 +651,7 @@ internal class MainLoop {
 
     private void NotificationLoop() {
         try {
-            if (notifications == null) return;
+            if (notifications is null) return;
             if (notifications.Count == 0) return;
             foreach (var item in notifications) {
                 Product? selected_product = null;
@@ -663,7 +663,7 @@ internal class MainLoop {
 
                     case Notification.NotificationTypes.NEW_ORDER:
                         selected_order = orders?.Where(x => x.order_label == item.order_label).FirstOrDefault();
-                        if (selected_order != null) {
+                        if (selected_order is not null) {
                             string mail_title = string.Format("NEW ORDER {0}", item.order_label);
                             string mail_body = string.Empty;
 
@@ -681,7 +681,7 @@ internal class MainLoop {
                         selected_xproducts = xproducts?.Where(x => x.barcode == item.xproduct_barcode).ToList();
                         selected_order = orders?.Where(x => x.order_label == item.order_label).FirstOrDefault();
 
-                        if (selected_product != null && selected_order != null) {
+                        if (selected_product is not null && selected_order is not null) {
                             string mail_title = string.Format("{0} - OUT OF STOCK PRODUCT SOLD", item.product_sku);
                             string mail_body = string.Format("<strong>Product:</strong> {0}<br>" +
                                    "<strong>Sku:</strong> {1}<br>" +
@@ -706,14 +706,14 @@ internal class MainLoop {
                                                 (x.name == product_main_source ? "Price: " +
                                                 (selected_product.special_price != 0 ? Math.Round(selected_product.special_price * (1 + (selected_product.tax / 100)),2,MidpointRounding.AwayFromZero) + selected_product.currency :
                                                 Math.Round(selected_product.price * (1m + (selected_product.tax / 100m)),2,MidpointRounding.AwayFromZero) + selected_product.currency) :
-                                                ((selected_xproducts != null && selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault() != null) ?
+                                                ((selected_xproducts is not null && selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault() is not null) ?
                                                 "Price: " + Math.Round(selected_xproducts.FirstOrDefault( xp => xp.xml_source == x.name ).price2,2,MidpointRounding.AwayFromZero) + selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault()?.currency + "<br>" +
                                                 "MSRP: " + Math.Round(selected_xproducts.FirstOrDefault( xp => xp.xml_source == x.name ).price1,2,MidpointRounding.AwayFromZero) + selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault()?.currency : string.Empty)) +
                                            "</td>" +
                                            "<td>" + (x.is_active ? "active" : "passive") + "</td>" +
                                            "</tr>"
                                    })));
-                            if (Helper.global.google == null) {
+                            if (Helper.global.google is null) {
                                 Helper.global.google = new SettingsGoogle {
                                     sender_name = Helper.global.settings.company_name,
                                     is_enabled = true
@@ -737,7 +737,7 @@ internal class MainLoop {
                         selected_product = products?.Where(x => x.sku == item.product_sku).FirstOrDefault();
                         selected_xproducts = xproducts?.Where(x => x.barcode == item.xproduct_barcode).ToList();
 
-                        if (selected_product != null) {
+                        if (selected_product is not null) {
                             string mail_title = string.Format("{0} - PRODUCT IN STOCK", item.product_sku);
                             string mail_body = string.Format("<strong>Product:</strong> {0}<br>" +
                                    (product_targets.Contains(Constants.MAGENTO2) && Helper.GetProductBySKU(selected_product.sku)?.status == 1 ? "<strong>Status:</strong> Enabled<br>" : "<strong>Status:</strong> Disabled<br>") +
@@ -760,14 +760,14 @@ internal class MainLoop {
                                                 (x.name == product_main_source ? "Price: " +
                                                 (selected_product.special_price != 0 ? Math.Round(selected_product.special_price * (1 + (selected_product.tax / 100)),2,MidpointRounding.AwayFromZero) + selected_product.currency :
                                                 Math.Round(selected_product.price * (1m + (selected_product.tax / 100m)),2,MidpointRounding.AwayFromZero) + selected_product.currency) :
-                                                ((selected_xproducts != null && selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault() != null) ?
+                                                ((selected_xproducts is not null && selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault() is not null) ?
                                                 "Price: " + Math.Round(selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault().price2,2,MidpointRounding.AwayFromZero) + selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault()?.currency + "<br>" +
                                                 "MSRP: " + Math.Round(selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault().price1,2,MidpointRounding.AwayFromZero) + selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault()?.currency : string.Empty)) +
                                            "</td>" +
                                            "<td>" + (x.is_active ? "active" : "passive") + "</td>" +
                                            "</tr>"
                                    })));
-                            if (Helper.global.google == null) {
+                            if (Helper.global.google is null) {
                                 Helper.global.google = new SettingsGoogle {
                                     sender_name = Helper.global.settings.company_name
                                 };
@@ -790,7 +790,7 @@ internal class MainLoop {
                         selected_product = products?.Where(x => x.sku == item.product_sku).FirstOrDefault();
                         selected_xproducts = xproducts?.Where(x => x.barcode == item.xproduct_barcode).ToList();
 
-                        if (selected_product != null) {
+                        if (selected_product is not null) {
                             string mail_title = string.Format("{0} - PRODUCT OUT OF STOCK", item.product_sku);
                             string mail_body = string.Format("<strong>Product:</strong> {0}<br>" +
                                    (product_targets.Contains(Constants.MAGENTO2) && Helper.GetProductBySKU(selected_product.sku)?.status == 1 ? "<strong>Status:</strong> Enabled<br>" : "<strong>Status:</strong> Disabled<br>") +
@@ -813,14 +813,14 @@ internal class MainLoop {
                                                 (x.name == product_main_source ? "Price: " +
                                                 (selected_product.special_price != 0 ? Math.Round(selected_product.special_price * (1 + (selected_product.tax / 100)),2,MidpointRounding.AwayFromZero) + selected_product.currency :
                                                 Math.Round(selected_product.price * (1m + (selected_product.tax / 100m)),2,MidpointRounding.AwayFromZero) + selected_product.currency) :
-                                                ((selected_xproducts != null && selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault() != null) ?
+                                                ((selected_xproducts is not null && selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault() is not null) ?
                                                 "Price: " + Math.Round(selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault().price2,2,MidpointRounding.AwayFromZero) + selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault()?.currency + "<br>" +
                                                 "MSRP: " + Math.Round(selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault().price1,2,MidpointRounding.AwayFromZero) + selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault()?.currency : string.Empty)) +
                                            "</td>" +
                                            "<td>" + (x.is_active ? "active" : "passive") + "</td>" +
                                            "</tr>"
                                    })));
-                            if (Helper.global.google == null) {
+                            if (Helper.global.google is null) {
                                 Helper.global.google = new SettingsGoogle {
                                     sender_name = Helper.global.settings.company_name
                                 };
@@ -866,7 +866,7 @@ internal class MainLoop {
                         string? xsource = item.notification_content?.Split("=")[0];
                         string? xprices = item.notification_content?.Split("=")[1];
 
-                        if (selected_product != null && xsource != null && xprices != null) {
+                        if (selected_product is not null && xsource is not null && xprices is not null) {
                             string mail_title = string.Format("{0} - XML PRICE CHANGED", selected_product.sku);
                             decimal.TryParse(xprices.Split("|")[0], out decimal new_price);
                             decimal.TryParse(xprices.Split("|")[1], out decimal old_price);
@@ -889,7 +889,7 @@ internal class MainLoop {
                                        selected_xproducts?.Where(x => x.xml_source == xsource).FirstOrDefault()?.qty,
                                        Math.Round(old_price, 2, MidpointRounding.AwayFromZero) + selected_xproducts?.Where(x => x.xml_source == xsource).FirstOrDefault()?.currency,
                                        Math.Round(new_price, 2, MidpointRounding.AwayFromZero) + selected_xproducts?.Where(x => x.xml_source == xsource).FirstOrDefault()?.currency);
-                                if (Helper.global.google == null) {
+                                if (Helper.global.google is null) {
                                     Helper.global.google = new SettingsGoogle {
                                         sender_name = Helper.global.settings.company_name
                                     };
@@ -1002,7 +1002,7 @@ internal class MainLoop {
                     case Notification.NotificationTypes.ORDER_COMPLETE:
                         selected_order = orders?.Where(x => x.order_label == item.order_label).FirstOrDefault();
 
-                        if (selected_order != null) {
+                        if (selected_order is not null) {
                             string mail_title = string.Format("ORDER COMPLETE {0}", item.order_label);
                             string mail_body = string.Empty;
 
@@ -1018,7 +1018,7 @@ internal class MainLoop {
                     case Notification.NotificationTypes.ORDER_PROCESS:
                         selected_order = orders?.Where(x => x.order_label == item.order_label).FirstOrDefault();
 
-                        if (selected_order != null) {
+                        if (selected_order is not null) {
                             string mail_title = string.Format("ORDER PROCESS {0}", item.order_label);
                             string mail_body = string.Empty;
 
@@ -1034,7 +1034,7 @@ internal class MainLoop {
                     case Notification.NotificationTypes.ORDER_SHIPPED:
                         selected_order = orders?.Where(x => x.order_label == item.order_label).FirstOrDefault();
 
-                        if (selected_order != null) {
+                        if (selected_order is not null) {
                             string mail_title = string.Format("ORDER SHIPPED {0}", item.order_label);
                             string mail_body = string.Empty;
 
@@ -1075,12 +1075,12 @@ internal class MainLoop {
         _health = true;
         try {
             #region Main Product Source
-            if (product_main_source != null && product_main_source == Constants.ENTEGRA) {
+            if (product_main_source is not null && product_main_source == Constants.ENTEGRA) {
                 PrintConsole("Started loading " + Constants.ENTEGRA + " sources.");
 
                 //TODO: main currency source check will be here
                 var source_currency_rates = Helper.GetENTCurrencyRates();
-                if (source_currency_rates != null) {
+                if (source_currency_rates is not null) {
                     rates.TL = source_currency_rates.TL;
                     rates.USD = source_currency_rates.USD;
                     rates.EUR = source_currency_rates.EUR;
@@ -1090,7 +1090,7 @@ internal class MainLoop {
                     PrintConsole("MAIN_SOURCE:" + Constants.ENTEGRA + " connection:currencies failed");
                 }
                 var ent_products = Helper.GetENTProducts();
-                if (ent_products != null && ent_products.Count > 0) {
+                if (ent_products is not null && ent_products.Count > 0) {
                     foreach (var item in ent_products) {
                         if (Helper.global.product.is_barcode_required) {
                             if (string.IsNullOrWhiteSpace(item.Barcode)) {
@@ -1104,9 +1104,9 @@ internal class MainLoop {
                             //Brand? existed_brand = brands.Where(x => x.brand_name.Trim().Equals(item.BrandName?.Trim().ToLower(), StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
                             Brand existed_brand = !string.IsNullOrWhiteSpace(item.BrandName?.Trim()) ? brands.FirstOrDefault(x => x.brand_name == item.BrandName.Trim()) ?? default_brand : default_brand;
                             ProductExtension? existed_p_ext = products.Where(x => x.sku == item.Sku).FirstOrDefault()?.extension;
-                            if (existed_p_ext != null) existed_p_ext.brand = existed_brand;
-                            List<Category>? existed_p_cats = existed_p_ext != null ? categories?.Where(x => existed_p_ext.category_ids.Split(",").Contains(x.id.ToString())).ToList() : null;
-                            if (existed_p_ext != null) existed_p_ext.categories = existed_p_cats;
+                            if (existed_p_ext is not null) existed_p_ext.brand = existed_brand;
+                            List<Category>? existed_p_cats = existed_p_ext is not null ? categories?.Where(x => existed_p_ext.category_ids.Split(",").Contains(x.id.ToString())).ToList() : null;
+                            if (existed_p_ext is not null) existed_p_ext.categories = existed_p_cats;
                             #endregion
 
                             //TODO: Product attribute source mapping condition will be here
@@ -1133,12 +1133,12 @@ internal class MainLoop {
                                     sku = item.Sku,
                                     barcode = item.Barcode,
                                     customer_id = customer.customer_id,
-                                    brand_id = existed_brand != null ? existed_brand.id : (string.IsNullOrEmpty(item.BrandName) ? default_brand.id : 0),
-                                    is_xml_enabled = existed_p_ext != null && existed_p_ext.is_xml_enabled,
-                                    xml_sources = existed_p_ext != null ? existed_p_ext.xml_sources : [],
-                                    category_ids = existed_p_ext != null ? existed_p_ext.category_ids : Helper.global.product.customer_root_category_id.ToString(),
+                                    brand_id = existed_brand is not null ? existed_brand.id : (string.IsNullOrEmpty(item.BrandName) ? default_brand.id : 0),
+                                    is_xml_enabled = existed_p_ext is not null && existed_p_ext.is_xml_enabled,
+                                    xml_sources = existed_p_ext is not null ? existed_p_ext.xml_sources : [],
+                                    category_ids = existed_p_ext is not null ? existed_p_ext.category_ids : Helper.global.product.customer_root_category_id.ToString(),
                                     categories = existed_p_cats ?? ([root_category]),
-                                    brand = existed_brand != null ? existed_brand : (string.IsNullOrEmpty(item.BrandName) ?
+                                    brand = existed_brand is not null ? existed_brand : (string.IsNullOrEmpty(item.BrandName) ?
                                     default_brand
                                     : new Brand() {
                                         customer_id = customer.customer_id,
@@ -1168,16 +1168,16 @@ internal class MainLoop {
                 }
             }
 
-            if (product_main_source != null && product_main_source == Constants.MERCHANTER) {
+            if (product_main_source is not null && product_main_source == Constants.MERCHANTER) {
                 live_products = products ?? [];
             }
 
-            if (product_main_source != null && product_main_source == Constants.NETSIS) {
+            if (product_main_source is not null && product_main_source == Constants.NETSIS) {
                 //TODO: NETSIS product main source will be here
             }
 
-            if (product_main_source != null && product_main_source == Constants.ANK_ERP) {
-                if (Helper.global.ank_erp != null && Helper.global.ank_erp.company_code != null && Helper.global.ank_erp.user_name != null && Helper.global.ank_erp.password != null && Helper.global.ank_erp.work_year != null && Helper.global.ank_erp.url != null) {
+            if (product_main_source is not null && product_main_source == Constants.ANK_ERP) {
+                if (Helper.global.ank_erp is not null && Helper.global.ank_erp.company_code is not null && Helper.global.ank_erp.user_name is not null && Helper.global.ank_erp.password is not null && Helper.global.ank_erp.work_year is not null && Helper.global.ank_erp.url is not null) {
                     ANKERP ank_erp = new(Helper.global.ank_erp.company_code, Helper.global.ank_erp.user_name, Helper.global.ank_erp.password, Helper.global.ank_erp.work_year, Helper.global.ank_erp.url,
                         """C:\MerchanterServer\ankaraerp""");
                     PrintConsole("Started loading " + Constants.ANK_ERP + " sources.");
@@ -1186,12 +1186,12 @@ internal class MainLoop {
                     //var ank_categories = ank_erp.GetCategoriesFromFolder("""C:\Users\caqn_\OneDrive\Masaüstü\otoahmet_categories""")?.DokumanPaketKategori.Eleman.ElemanListe.KategoriItem;
                     var ank_categories = ank_erp.GetCategories()?.Result?.DokumanPaketKategori.Eleman.ElemanListe.KategoriItem;
                     PrintConsole(Constants.ANK_ERP + " total " + ank_categories?.Count + " categories found.");
-                    if (ank_categories != null && ank_categories.Count > 0) {
+                    if (ank_categories is not null && ank_categories.Count > 0) {
                         foreach (var item in ank_categories) {
                             if (item.Kodu == "0" || !int.TryParse(item.Kodu, out int category_code) || !int.TryParse(item.UstBaslik, out int parent_code))
                                 continue;
                             var existed_category = categories?.FirstOrDefault(x => x.source_category_id == category_code);
-                            if (existed_category != null) {
+                            if (existed_category is not null) {
                                 bool need_update = false;
                                 if (existed_category.category_name != item.Adi) {
                                     existed_category.category_name = item.Adi;
@@ -1207,7 +1207,7 @@ internal class MainLoop {
                                 }
                                 else {
                                     var existed_parent_category = categories?.FirstOrDefault(x => x.source_category_id == parent_code);
-                                    if (existed_parent_category != null) {
+                                    if (existed_parent_category is not null) {
                                         if (existed_category.parent_id != existed_parent_category.id) {
                                             existed_category.parent_id = existed_parent_category.id;
                                             need_update = true;
@@ -1218,7 +1218,7 @@ internal class MainLoop {
                                     }
                                 }
                                 if (need_update) {
-                                    if (db_helper.UpdateCategory(customer.customer_id, existed_category)) {
+                                    if (db_helper.UpdateCategory(customer.customer_id, existed_category) is not null) {
                                         db_helper.LogToServer(thread_id, "product_category_updated", existed_category.category_name, customer.customer_id, "product");
                                         PrintConsole(Constants.ANK_ERP + " " + existed_category.category_name + " category updated.", false);
                                     }
@@ -1236,7 +1236,7 @@ internal class MainLoop {
                                     source_category_id = Convert.ToInt32(item.Kodu),
                                 };
                                 var inserted_category = db_helper.InsertCategory(customer.customer_id, c);
-                                if (inserted_category != null) {
+                                if (inserted_category is not null) {
                                     categories?.Add(inserted_category);
                                     db_helper.LogToServer(thread_id, "product_category_inserted", inserted_category.category_name, customer.customer_id, "product");
                                     PrintConsole(Constants.ANK_ERP + " " + inserted_category.category_name + " category inserted.", false);
@@ -1260,7 +1260,7 @@ internal class MainLoop {
                     var ank_products_zip = ank_erp.GetProducts().Result;
                     //var ank_products_zip = ank_erp.GetProductsFromFolder("""C:\Users\caqn_\OneDrive\Masaüstü\otoahmet_products_2""");
                     List<UrunSicil> ank_products = [];
-                    if (ank_products_zip != null && ank_products_zip.Count > 0) {
+                    if (ank_products_zip is not null && ank_products_zip.Count > 0) {
                         foreach (var zip_item in ank_products_zip) {
                             ank_products.AddRange([.. zip_item.DokumanPaketUrun.Eleman.ElemanListe.UrunSicil]);
                         }
@@ -1288,9 +1288,9 @@ internal class MainLoop {
                             Brand? existed_brand = !string.IsNullOrWhiteSpace(item.UrunTanim.UrAdi) ? brands.FirstOrDefault(x => x.brand_name == item.UrunTanim.UrAdi.Trim()) : default_brand;
                             List<Category> existed_p_cats = [root_category];
                             foreach (var citem in item.UrunTanim.KategoriKodu.Split(",")) {
-                                if (int.TryParse(citem, out int cat_code) && ank_categories != null) {
+                                if (int.TryParse(citem, out int cat_code) && ank_categories is not null) {
                                     var existed_cat = categories.FirstOrDefault(x => x.source_category_id == cat_code);
-                                    if (existed_cat != null) existed_p_cats.Add(existed_cat);
+                                    if (existed_cat is not null) existed_p_cats.Add(existed_cat);
                                     else {
                                         string? new_category = ank_categories.FirstOrDefault(x => x.Kodu == citem)?.Adi;
                                         if (!string.IsNullOrWhiteSpace(new_category))
@@ -1309,7 +1309,7 @@ internal class MainLoop {
                             var p = new Product() {
                                 customer_id = customer.customer_id,
                                 sku = item.UrunTanim.SicilKodu.Trim(),
-                                barcode = item.UrunTanim.BarkodKodu != null ? item.UrunTanim.BarkodKodu.Trim() : string.Empty,
+                                barcode = item.UrunTanim.BarkodKodu is not null ? item.UrunTanim.BarkodKodu.Trim() : string.Empty,
                                 name = !string.IsNullOrWhiteSpace(item.UrunTanim.SicilAdiy) ? item.UrunTanim.SicilAdiy.Trim() : item.UrunTanim.SicilAdi?.Trim(),
                                 type = Product.ProductTypes.SIMPLE,
                                 tax = item.UrunTanim.KdvOrani,
@@ -1319,12 +1319,12 @@ internal class MainLoop {
                                 tax_included = true,
                                 extension = new ProductExtension() {
                                     customer_id = customer.customer_id,
-                                    barcode = item.UrunTanim.BarkodKodu != null ? item.UrunTanim.BarkodKodu.Trim() : string.Empty,
+                                    barcode = item.UrunTanim.BarkodKodu is not null ? item.UrunTanim.BarkodKodu.Trim() : string.Empty,
                                     is_xml_enabled = false,
                                     xml_sources = [],
                                     sku = item.UrunTanim.SicilKodu.Trim(),
-                                    brand_id = existed_brand != null ? existed_brand.id : (string.IsNullOrWhiteSpace(item.UrunTanim.UrAdi?.Trim()) ? default_brand.id : 0),
-                                    brand = existed_brand != null ? existed_brand : (string.IsNullOrWhiteSpace(item.UrunTanim.UrAdi?.Trim()) ? default_brand :
+                                    brand_id = existed_brand is not null ? existed_brand.id : (string.IsNullOrWhiteSpace(item.UrunTanim.UrAdi?.Trim()) ? default_brand.id : 0),
+                                    brand = existed_brand is not null ? existed_brand : (string.IsNullOrWhiteSpace(item.UrunTanim.UrAdi?.Trim()) ? default_brand :
                                         new Brand() {
                                             customer_id = customer.customer_id,
                                             brand_name = item.UrunTanim.UrAdi.Trim(),
@@ -1341,7 +1341,7 @@ internal class MainLoop {
                                 sources = [ new ProductSource( customer.customer_id, 0,
                                     Constants.ANK_ERP,
                                     item.UrunTanim.SicilKodu.Trim(),
-                                    item.UrunTanim.BarkodKodu != null ? item.UrunTanim.BarkodKodu.Trim() : string.Empty,
+                                    item.UrunTanim.BarkodKodu is not null ? item.UrunTanim.BarkodKodu.Trim() : string.Empty,
                                     item.UrunTanim.StokMevcudu > 0 ? item.UrunTanim.StokMevcudu : 0,
                                     true, DateTime.Now) ],
                                 attributes = [],
@@ -1371,7 +1371,7 @@ internal class MainLoop {
                                             }
                                             p.images.Add(new ProductImage() {
                                                 customer_id = customer.customer_id,
-                                                product_id = existed_image != null ? existed_image.product_id : 0,
+                                                product_id = existed_image is not null ? existed_image.product_id : 0,
                                                 sku = item.UrunTanim.SicilKodu.Trim(),
                                                 image_name = image_name,
                                                 image_base64 = null,
@@ -1414,9 +1414,9 @@ internal class MainLoop {
             if (!string.IsNullOrWhiteSpace(product_main_source) && other_product_sources.Length > 0) {
                 PrintConsole(Helper.global.settings.company_name + " started loading other sources.", false);
                 foreach (var item in live_products) {
-                    if (item.sources != null && item.extension.xml_sources != null) {
+                    if (item.sources is not null && item.extension.xml_sources is not null) {
                         var selected_xproducts = xproducts.Where(x => x.barcode == item.barcode).ToList();
-                        if (selected_xproducts != null && selected_xproducts.Count > 0) {
+                        if (selected_xproducts is not null && selected_xproducts.Count > 0) {
                             foreach (var xitem in selected_xproducts) {
                                 item.sources.Add(new ProductSource(
                                     customer.customer_id,
@@ -1472,7 +1472,7 @@ internal class MainLoop {
     private void ProductSync(out bool _health) {
         _health = true;
         try {
-            if (products != null) {
+            if (products is not null) {
                 List<Notification> notifications = [];
                 if (product_targets.Contains(Constants.MAGENTO2)) {
                     bool is_need_indexer = false;
@@ -1481,7 +1481,7 @@ internal class MainLoop {
                         Product prepared_product = null;
                         var selected_product = products.FirstOrDefault(x => x.sku == item.sku);
 
-                        if (selected_product != null) { //existing product
+                        if (selected_product is not null) { //existing product
                             #region Name
                             if (selected_product.name?.ToString().Trim() != item.name?.ToString().Trim()) {
 
@@ -1492,9 +1492,9 @@ internal class MainLoop {
                             if (!selected_product.extension.brand.brand_name.Trim().Equals(item.extension.brand.brand_name?.Trim(), StringComparison.CurrentCultureIgnoreCase)) {
                                 var source_brands = Helper.GetProductAttribute(Helper.global.magento.brand_attribute_code);
                                 is_update = true; is_need_indexer = true;
-                                if (source_brands != null) {
+                                if (source_brands is not null) {
                                     var selected_source_brand = source_brands.options.Where(x => x.label.Equals(item.extension.brand.brand_name, StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
-                                    if (selected_source_brand != null) { //update
+                                    if (selected_source_brand is not null) { //update
                                         if (true || Helper.UpdateProductAttribute(item.sku, Helper.global.magento.brand_attribute_code, selected_source_brand.value)) {
                                             PrintConsole("Sku:" + item.sku + "Brand updated " + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString());
                                             db_helper.LogToServer(thread_id, "product_brand_updated", Helper.global.settings.company_name + " Sku:" + item.sku + selected_source_brand.label + " => " + item.extension.brand.brand_name, customer.customer_id, "product");
@@ -1506,7 +1506,7 @@ internal class MainLoop {
                                     }
                                     else { //insert
                                            //var inserted_id = Helper.InsertAttributeOption( Helper.global.magento.brand_attribute_code, item.brand.brand_name );
-                                        if (true /*inserted_id != null*/ ) {
+                                        if (true /*inserted_id is not null*/ ) {
                                             if (true /*|| Helper.UpdateProductAttribute( item.sku, Helper.global.magento.brand_attribute_code, inserted_id )*/ ) {
                                                 PrintConsole("Sku:" + item.sku + "Brand inserted " + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString());
                                                 db_helper.LogToServer(thread_id, "product_brand_inserted", Helper.global.settings.company_name + " Sku:" + item.sku + "= " + selected_product.extension.brand.brand_name + " => " + item.extension.brand.brand_name, customer.customer_id, "product");
@@ -1653,7 +1653,7 @@ internal class MainLoop {
                         }
 
                         if (is_update) {
-                            if (selected_product != null && selected_product.id > 0) {
+                            if (selected_product is not null && selected_product.id > 0) {
                                 item.id = selected_product.id;
                                 if (db_helper.UpdateProducts(customer.customer_id, [item])) {
                                     PrintConsole("Sku:" + item.sku + " " + "updated.");
@@ -1686,7 +1686,7 @@ internal class MainLoop {
                     if (Helper.global.product.product_list_filter_source_products) {
                         //foreach (var item in products) {
                         //    var deleted_product = live_products.FirstOrDefault(x => x.sku == item.sku);
-                        //    if (deleted_product == null && item.extension.is_enabled) {
+                        //    if (deleted_product is null && item.extension.is_enabled) {
                         //        item.extension.is_enabled = false;
                         //        if (db_helper.UpdateProducts(customer.customer_id, [item])) {
                         //            PrintConsole("Sku:" + item.sku + " updated on MerchanterDB. -disabled");
@@ -1695,7 +1695,7 @@ internal class MainLoop {
                         //            PrintConsole("Sku:" + item.sku + " " + "update error on MerchanterDB. -disabled");
                         //        }
                         //    }
-                        //    if (deleted_product != null && !item.extension.is_enabled) {
+                        //    if (deleted_product is not null && !item.extension.is_enabled) {
                         //        //TODO: Disable product on TARGET
                         //    }
                         //}
@@ -1718,11 +1718,11 @@ internal class MainLoop {
                         Product prepared_product = null;
                         var selected_product = products.FirstOrDefault(x => x.sku == item.sku);
 
-                        if (selected_product != null) { //existing product
+                        if (selected_product is not null) { //existing product
                             #region Image
-                            if (item.images != null && item.images.Count > 0) {
+                            if (item.images is not null && item.images.Count > 0) {
                                 foreach (var image_item in item.images) {
-                                    if (selected_product.images?.FirstOrDefault(x => x.image_name == image_item.image_name) == null) {
+                                    if (selected_product.images?.FirstOrDefault(x => x.image_name == image_item.image_name) is null) {
                                         is_update = true; updated_attrs += "image,";
                                     }
                                 }
@@ -1766,7 +1766,7 @@ internal class MainLoop {
                             #endregion
 
                             #region Brand
-                            if (selected_product.extension.brand != null) {
+                            if (selected_product.extension.brand is not null) {
                                 if (!selected_product.extension.brand.brand_name.Equals(item.extension.brand?.brand_name)) {
                                     is_update = true;
                                     updated_attrs += "brand,";
@@ -1823,10 +1823,10 @@ internal class MainLoop {
                             is_insert = true;
                         }
 
-                        if (is_update) item.id = selected_product != null ? selected_product.id : 0;  //important early arrangement
+                        if (is_update) item.id = selected_product is not null ? selected_product.id : 0;  //important early arrangement
                         if (is_update || is_insert) {
                             var selected_live_idea_product = Helper.GetIdeaProduct(item.sku);
-                            if (selected_live_idea_product != null) { //update ideasoft product
+                            if (selected_live_idea_product is not null) { //update ideasoft product
                                 idea_product_id = selected_live_idea_product.id;
                                 //idea_product_id = relation.target_id;
                                 #region Ideasoft Category and Brand Sync
@@ -1850,7 +1850,7 @@ internal class MainLoop {
                             else { //insert ideasoft product
                                 if (is_update) {  //insert ideasoft product and update product
                                     var product_relation = product_target_relation.FirstOrDefault(x => x.product_id == item.id && x.target_name == Constants.IDEASOFT);
-                                    if (product_relation != null) {
+                                    if (product_relation is not null) {
                                         is_processed = true;
                                         if (db_helper.DeleteProductTarget(customer.customer_id, item.id)) {
                                             PrintConsole("Product relation removed:" + item.sku + " deleted" + ", " + Constants.IDEASOFT);
@@ -1858,7 +1858,7 @@ internal class MainLoop {
                                         goto LEAP;
                                     }
                                 }
-                                if (prepared_product != null) {
+                                if (prepared_product is not null) {
                                     #region Ideasoft Category and Brand Sync
                                     List<int> idea_category_ids = Helper.GetIdeaCategoryIds(thread_id, db_helper, customer, ref live_idea_categories,
                                         category_target_relation, prepared_product.extension.categories);
@@ -1886,7 +1886,7 @@ internal class MainLoop {
                             if (db_helper.UpdateProducts(customer.customer_id, [item])) {
                                 if (idea_product_id > 0) {
                                     var product_relation = product_target_relation.FirstOrDefault(x => x.target_id == idea_product_id && x.target_name == Constants.IDEASOFT);
-                                    if (product_relation != null) {
+                                    if (product_relation is not null) {
                                         if (product_relation.product_id != item.id) {
                                             product_relation.product_id = item.id;
                                             db_helper.UpdateProductTarget(customer.customer_id, product_relation);
@@ -1905,7 +1905,7 @@ internal class MainLoop {
                             }
                         }
 
-                        if (is_processed && is_insert && prepared_product != null) {
+                        if (is_processed && is_insert && prepared_product is not null) {
                             int inserted_id = db_helper.InsertProducts(customer.customer_id, [prepared_product]);
                             if (inserted_id > 0) {
                                 if (idea_product_id > 0)
@@ -1943,7 +1943,7 @@ internal class MainLoop {
         try {
             if (order_sources.Contains(Constants.MAGENTO2)) {
                 var m2_orders = Helper.GetOrders(Helper.global.order.daysto_ordersync, OrderStatus.GetSyncEnabledCodes(Constants.MAGENTO2));
-                if (m2_orders != null && m2_orders.items.Length > 0) {
+                if (m2_orders is not null && m2_orders.items.Length > 0) {
                     foreach (var item in m2_orders.items) {
                         var o = new Order() {
                             order_id = item.entity_id,
@@ -1987,14 +1987,14 @@ internal class MainLoop {
                         #region OLD
                         //#region Corporate Info
                         //var corporate_info = Helper.GetCustomerCorporateInfo( item.customer_email, out bool is_corporate );
-                        //if( corporate_info != null && is_corporate ) {
+                        //if( corporate_info is not null && is_corporate ) {
                         //    o.billing_address.is_corporate = is_corporate;
                         //    o.billing_address.tc_no = corporate_info.GetValueOrDefault( Helper.global.magento.customer_tc_no_attribute_code ) ?? Constants.DUMMY_TCNO;
                         //    o.billing_address.firma_ismi = corporate_info.GetValueOrDefault( Helper.global.magento.customer_firma_ismi_attribute_code );
                         //    o.billing_address.firma_vergidairesi = corporate_info.GetValueOrDefault( Helper.global.magento.customer_firma_vergidairesi_attribute_code );
                         //    o.billing_address.firma_vergino = corporate_info.GetValueOrDefault( Helper.global.magento.customer_firma_vergino_attribute_code );
                         //}
-                        //else if( corporate_info != null && !is_corporate ) {
+                        //else if( corporate_info is not null && !is_corporate ) {
                         //    o.billing_address.tc_no = corporate_info.GetValueOrDefault( Helper.global.magento.customer_tc_no_attribute_code ) ?? Constants.DUMMY_TCNO;
                         //}
                         //#endregion 
@@ -2004,7 +2004,7 @@ internal class MainLoop {
                         foreach (var order_item in item.items) {
                             if (order_item.sku.Contains("secili") || order_item.sku.Contains("seçili")) continue;
                             if (order_item.product_type == "simple") {
-                                if (order_item.parent_item != null && order_item.parent_item.product_type == "configurable") {
+                                if (order_item.parent_item is not null && order_item.parent_item.product_type == "configurable") {
                                     if (order_item.parent_item.base_price_incl_tax <= 0) continue;
                                     o.order_items.Add(new OrderItem() {
                                         order_id = item.entity_id,
@@ -2055,7 +2055,7 @@ internal class MainLoop {
 
             if (order_sources.Contains(Constants.IDEASOFT)) {
                 var idea_orders = Helper.GetIdeaOrders(Helper.global.order.daysto_ordersync);
-                if (idea_orders != null && idea_orders.Count > 0) {
+                if (idea_orders is not null && idea_orders.Count > 0) {
                     foreach (var item in idea_orders) {
                         var o = new Order {
                             order_id = item.id,
@@ -2134,11 +2134,11 @@ internal class MainLoop {
     private void OrderSync(out bool _health) {
         _health = true;
         try {
-            if (orders != null) {
+            if (orders is not null) {
                 List<Notification> notifications = [];
                 foreach (var order_item in live_orders) {
                     var selected_order = orders.Where(x => x.order_id == order_item.order_id).FirstOrDefault();
-                    if (selected_order != null) {
+                    if (selected_order is not null) {
                         if (!string.IsNullOrWhiteSpace(selected_order.order_shipping_barcode)) {
                             if (!selected_order.is_erp_sent) {  //process
                                 string? inserted_musteri_siparis_no = null;
@@ -2146,23 +2146,23 @@ internal class MainLoop {
                                 if (order_sources.Contains(Constants.MAGENTO2)) {
                                     #region Fill Corporate Info for Order
                                     var corporate_info = Helper.GetCustomerCorporateInfo(order_item.email, out bool is_corporate);
-                                    if (corporate_info != null && is_corporate) {
+                                    if (corporate_info is not null && is_corporate) {
                                         order_item.billing_address.is_corporate = is_corporate;
                                         order_item.billing_address.tc_no = corporate_info.GetValueOrDefault(Helper.global.magento.customer_tc_no_attribute_code) ?? Constants.DUMMY_TCNO;
                                         order_item.billing_address.firma_ismi = corporate_info.GetValueOrDefault(Helper.global.magento.customer_firma_ismi_attribute_code);
                                         order_item.billing_address.firma_vergidairesi = corporate_info.GetValueOrDefault(Helper.global.magento.customer_firma_vergidairesi_attribute_code);
                                         order_item.billing_address.firma_vergino = corporate_info.GetValueOrDefault(Helper.global.magento.customer_firma_vergino_attribute_code);
                                     }
-                                    else if (corporate_info != null && !is_corporate) {
+                                    else if (corporate_info is not null && !is_corporate) {
                                         order_item.billing_address.tc_no = corporate_info.GetValueOrDefault(Helper.global.magento.customer_tc_no_attribute_code) ?? Constants.DUMMY_TCNO;
                                     }
                                     #endregion
                                 }
 
-                                if (order_main_target != null && order_main_target == Constants.NETSIS) {
-                                    if (Helper.global.netsis != null && Helper.global.netsis.netopenx_user != null && Helper.global.netsis.netopenx_password != null) {
+                                if (order_main_target is not null && order_main_target == Constants.NETSIS) {
+                                    if (Helper.global.netsis is not null && Helper.global.netsis.netopenx_user is not null && Helper.global.netsis.netopenx_password is not null) {
                                         string? inserted_cari_kodu = NetOpenXHelper.InsertNetsisCari(order_item.billing_address.billing_id.ToString(), order_item.email, order_item.billing_address, order_item.payment_method);
-                                        if (inserted_cari_kodu != null) {
+                                        if (inserted_cari_kodu is not null) {
                                             string? musteri_selected_siparis_no = NetOpenXHelper.GetNetsisSiparis(order_item.order_id.ToString());
                                             if (Helper.global.order.is_rewrite_siparis && !string.IsNullOrWhiteSpace(musteri_selected_siparis_no)) {
                                                 //TODO: rewrite ?
@@ -2196,9 +2196,9 @@ internal class MainLoop {
                                     }
                                 }
 
-                                if (order_main_target != null && order_main_target == Constants.ANK_ERP) {
+                                if (order_main_target is not null && order_main_target == Constants.ANK_ERP) {
                                     if (selected_order.order_status == "YENİ_SİPARİŞ") {
-                                        if (Helper.global.ank_erp != null && Helper.global.ank_erp.company_code != null && Helper.global.ank_erp.user_name != null && Helper.global.ank_erp.password != null && Helper.global.ank_erp.work_year != null && Helper.global.ank_erp.url != null) {
+                                        if (Helper.global.ank_erp is not null && Helper.global.ank_erp.company_code is not null && Helper.global.ank_erp.user_name is not null && Helper.global.ank_erp.password is not null && Helper.global.ank_erp.work_year is not null && Helper.global.ank_erp.url is not null) {
                                             ANKERP ank_erp = new(Helper.global.ank_erp.company_code, Helper.global.ank_erp.user_name, Helper.global.ank_erp.password, Helper.global.ank_erp.work_year, Helper.global.ank_erp.url,
                                             """C:\MerchanterServer\ankaraerp""");
                                             Guid guid = Guid.NewGuid(); bool health = true;
@@ -2323,7 +2323,7 @@ internal class MainLoop {
                                             #region ORDER ITEMS
                                             foreach (var item in order_item.order_items) {
                                                 var sold_product = db_helper.GetProductBySku(customer.customer_id, item.sku);
-                                                if (sold_product != null) {
+                                                if (sold_product is not null) {
                                                     dokuman.DokumanPaket.Eleman.ElemanListe.BelgeSicil.SatirDetay.Add(new SatirDetaySip() {
                                                         Items = new ItemsSip() {
                                                             BarkodKodu = sold_product.barcode,
@@ -2435,7 +2435,7 @@ internal class MainLoop {
                                     }
                                 }
 
-                                if (inserted_musteri_siparis_no != null) {
+                                if (inserted_musteri_siparis_no is not null) {
                                     if (order_sources.Contains(Constants.MAGENTO2) && order_item.order_status != "HAZIRLANIYOR") { //processed | do order status change => processing
                                         if (!string.IsNullOrWhiteSpace(Helper.CreateOrderInvoice(order_item))) {
                                             Helper.ChangeOrderStatus(order_item, Helper.global.order_statuses.Where(x => x.status_code == "HAZIRLANIYOR" && x.platform == Constants.MAGENTO2).FirstOrDefault()?.platform_status_code);
@@ -2462,11 +2462,11 @@ internal class MainLoop {
                                         foreach (var sold_item in order_item.order_items) {
                                             if (live_products.Count > 0) {
                                                 var sold_product = live_products.Where(x => x.sku == sold_item.sku).FirstOrDefault();
-                                                if (sold_product != null) {
+                                                if (sold_product is not null) {
                                                     var sold_product_sources = db_helper.GetProductSources(customer.customer_id, sold_product.sku);
-                                                    if (sold_product_sources != null) {
+                                                    if (sold_product_sources is not null) {
                                                         var sold_product_main_source = sold_product_sources.Where(x => x.name == product_main_source).FirstOrDefault();
-                                                        if (sold_product_main_source != null) {
+                                                        if (sold_product_main_source is not null) {
                                                             if (sold_product_main_source.qty <= 0) {
                                                                 db_helper.LogToServer(thread_id, "out_of_stock_product_sold", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + sold_product.sku, customer.customer_id, "product");
                                                                 notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.OUT_OF_STOCK_PRODUCT_SOLD, order_label = order_item.order_label, product_sku = sold_product.sku, xproduct_barcode = sold_product.barcode });
@@ -2484,10 +2484,10 @@ internal class MainLoop {
                                 if (order_item.order_shipping_barcode != not_available) {
                                     List<string> tracking_codes = [];
                                     if (Helper.global.shipment.yurtici_kargo && available_shipments.Contains(Constants.YURTICI)) {
-                                        if (Helper.global.shipment.yurtici_kargo_user_name != null && Helper.global.shipment.yurtici_kargo_password != null) {
+                                        if (Helper.global.shipment.yurtici_kargo_user_name is not null && Helper.global.shipment.yurtici_kargo_password is not null) {
                                             YK yk = new YK(Helper.global.shipment.yurtici_kargo_user_name, Helper.global.shipment.yurtici_kargo_password);
                                             List<string>? tk = yk.GetShipment(selected_order.order_shipping_barcode);
-                                            if (tk != null) {
+                                            if (tk is not null) {
                                                 tracking_codes.AddRange(tk);
                                                 //Debug.WriteLine( order_item.order_shipping_barcode + ":TK:" + string.Join( "|", tk ) );
                                             }
@@ -2498,7 +2498,7 @@ internal class MainLoop {
 
                                     if (tracking_codes.Count > 0) { //insert tracking code | order status change => complete
                                         Shipment? shipment = db_helper.GetShipment(customer.customer_id, order_item.order_id);
-                                        if (shipment != null) {
+                                        if (shipment is not null) {
                                             if (!shipment.is_shipped) {
                                                 if (order_sources.Contains(Constants.MAGENTO2) && order_item.order_status != "TAMAMLANDI") {
                                                     Helper.CreateOrderShipment(order_item.order_id, order_item.order_label, string.Join(",", tracking_codes),
@@ -2543,11 +2543,11 @@ internal class MainLoop {
                         }
                         else {  //insert shipment barcodes
                             if (Helper.global.shipment.yurtici_kargo && available_shipments.Contains(Constants.YURTICI)) {
-                                if (Helper.global.shipment.yurtici_kargo_user_name != null && Helper.global.shipment.yurtici_kargo_password != null) {
+                                if (Helper.global.shipment.yurtici_kargo_user_name is not null && Helper.global.shipment.yurtici_kargo_password is not null) {
                                     YK yk = new YK(Helper.global.shipment.yurtici_kargo_user_name, Helper.global.shipment.yurtici_kargo_password);
                                     order_item.order_shipping_barcode ??= yk.InsertShipment(order_item.order_source, order_item.order_label, order_item.shipping_address.firstname + " " + order_item.shipping_address.lastname, order_item.shipping_address.street, order_item.shipping_address.telephone, order_item.shipping_address.city, order_item.shipping_address.region);
                                 }
-                                if (order_item.order_shipping_barcode != null) {
+                                if (order_item.order_shipping_barcode is not null) {
                                     Shipment shipment = new() {
                                         order_id = order_item.order_id,
                                         order_label = order_item.order_label,
@@ -2577,7 +2577,7 @@ internal class MainLoop {
                     }
                     else {  //update
                         selected_order = db_helper.GetOrder(customer.customer_id, order_item.order_id);
-                        if (selected_order != null) {
+                        if (selected_order is not null) {
                             if (selected_order.order_status != order_item.order_status) {
                                 db_helper.UpdateOrders(customer.customer_id, [order_item]);
                                 //TODO: Can check need to delete processed order ?

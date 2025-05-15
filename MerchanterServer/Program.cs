@@ -17,13 +17,13 @@ if (args.Length == 0) {
 START:
     PrintConsole("Please provide Merchanter Customer ID:");
     string? CID = Console.ReadLine();
-    if (CID != null && CID != "0") {
+    if (CID is not null && CID != "0") {
         _ = int.TryParse(CID, out customer_id);
     }
     else goto START;
 }
 else {
-    if (args[0] != null) {
+    if (args[0] is not null) {
         _ = int.TryParse(args[0], out customer_id);
     }
     else {
@@ -43,7 +43,7 @@ if (customer_id <= 0) {
 #endregion
 
 #region Helper Instance
-if (Constants.Server == null || Constants.User == null || Constants.Password == null || Constants.Database == null || Constants.Port <= 0) {
+if (Constants.Server is null || Constants.User is null || Constants.Password is null || Constants.Database is null || Constants.Port <= 0) {
     PrintConsole("Database connection parameters are not properly set from App.config file.", ConsoleColor.Red);
     PrintConsole("-1 exited");
     Thread.Sleep(2000);
@@ -81,7 +81,7 @@ while (true) {
         #region Load Customer & Check License
         Customer? customer = db_helper.GetCustomer(customer_id);
 
-        if (customer == null) {
+        if (customer is null) {
             PrintConsole("Customer not found. Exiting.", ConsoleColor.Red);
             PrintConsole("Thread Ended." + thread_id, ConsoleColor.Red);
             db_helper.LogToServer(thread_id, "error", "user not found", customer_id, "customer");
@@ -106,7 +106,7 @@ while (true) {
         try {
             db_helper.LoadSettings(customer_id);
 
-            if (Helper.global == null) {
+            if (Helper.global is null) {
                 db_helper.LogToServer(thread_id, "friendly_error", "Settings could not load.", customer_id, "helper_settings");
                 PrintConsole("Settings could not load.", ConsoleColor.Red);
                 PrintConsole("Thread will sleep 10m!"); Thread.Sleep(1000 * 60 * 10); //10m
@@ -132,27 +132,27 @@ while (true) {
 
         #region Decision to Work
         if (customer.product_sync_status && !customer.is_productsync_working) {
-            if (customer.last_product_sync_date != null)
+            if (customer.last_product_sync_date is not null)
                 if (customer.last_product_sync_date > DateTime.Now.AddSeconds(customer.product_sync_timer * -1))
                     customer.product_sync_status = false;
         }
         if (customer.order_sync_status && !customer.is_ordersync_working) {
-            if (customer.last_order_sync_date != null)
+            if (customer.last_order_sync_date is not null)
                 if (customer.last_order_sync_date > DateTime.Now.AddSeconds(customer.order_sync_timer * -1))
                     customer.order_sync_status = false;
         }
         if (customer.xml_sync_status && !customer.is_xmlsync_working) {
-            if (customer.last_xml_sync_date != null)
+            if (customer.last_xml_sync_date is not null)
                 if (customer.last_xml_sync_date > DateTime.Now.AddSeconds(customer.xml_sync_timer * -1))
                     customer.xml_sync_status = false;
         }
         if (customer.invoice_sync_status && !customer.is_invoicesync_working) {
-            if (customer.last_invoice_sync_date != null)
+            if (customer.last_invoice_sync_date is not null)
                 if (customer.last_invoice_sync_date > DateTime.Now.AddSeconds(customer.invoice_sync_timer * -1))
                     customer.invoice_sync_status = false;
         }
         if (customer.notification_sync_status && !customer.is_notificationsync_working) {
-            if (customer.last_notification_sync_date != null)
+            if (customer.last_notification_sync_date is not null)
                 if (customer.last_notification_sync_date > DateTime.Now.AddSeconds(customer.notification_sync_timer * -1))
                     customer.notification_sync_status = false;
         }
@@ -164,7 +164,7 @@ while (true) {
         #endregion
 
         MainLoop main_loop = new(thread_id, customer, db_helper);
-        if (Helper.global != null && main_loop.DoWork()) {
+        if (Helper.global is not null && main_loop.DoWork()) {
             if (customer.product_sync_status && !customer.is_productsync_working) {
                 PrintConsole("Product sync ended.", ConsoleColor.Green);
             }

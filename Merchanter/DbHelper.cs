@@ -1,6 +1,7 @@
 ﻿using Merchanter.Classes;
 using Merchanter.Classes.Settings;
 using MySql.Data.MySqlClient;
+using static Org.BouncyCastle.Asn1.Cmp.Challenge;
 using Attribute = Merchanter.Classes.Attribute;
 
 namespace Merchanter {
@@ -4617,14 +4618,16 @@ namespace Merchanter {
         /// <returns>[Error] returns 'null'</returns>
         public Brand GetDefaultBrand(int _customer_id) {
             try {
+                if (Helper.global == null) return null;
                 var default_brand = GetBrandByName(_customer_id, Helper.global.product.default_brand);
                 if (default_brand == null) {
                     var inserted_default_brand = InsertBrand(_customer_id, new Brand() { customer_id = _customer_id, brand_name = Helper.global.product.default_brand, status = true });
                     if (inserted_default_brand != null) {
                         return inserted_default_brand;
                     }
-                    else
+                    else {
                         return new Brand() { customer_id = _customer_id, brand_name = Helper.global.product.default_brand, status = true };
+                    }
                 }
                 else {
                     return default_brand;
@@ -4876,6 +4879,10 @@ namespace Merchanter {
         /// <returns>[No change] or [Error] returns 'null'</returns>
         public Brand? UpdateBrand(int _customer_id, Brand _brand) {
             try {
+                var existed_brand = GetBrandByName(_customer_id, _brand.brand_name);
+                if (existed_brand != null && existed_brand.id != _brand.id) {
+                    return null;
+                }
                 if (state != System.Data.ConnectionState.Open) connection.Open();
                 int val = 0;
                 string _query = "UPDATE brands SET brand_name=@brand_name,status=@status " +
@@ -4898,6 +4905,12 @@ namespace Merchanter {
             }
         }
 
+        /// <summary>
+        /// Deletes the brand from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_brand_id">Brand ID</param>
+        /// <returns>[No change] or [Error] returns 'false'</returns>
         public bool DeleteBrand(int _customer_id, int _brand_id) {
             try {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
@@ -4983,16 +4996,15 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_parent_id">Send '1' for system_category_root_id</param>
         /// <returns>No data and Error returns 'null'</returns>
-        public Category? GetRootCategory(int _customer_id, int _parent_id = 1) {
+        public Category GetRootCategory(int _customer_id, int _parent_id = 1) {
             try {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM categories " +
-                    "WHERE parent_id=@parent_id AND customer_id=@customer_id";
+                string _query = "SELECT * FROM categories WHERE parent_id=@parent_id AND customer_id=@customer_id;";
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("parent_id", _parent_id));
                 MySqlDataReader dataReader = cmd.ExecuteReader();
-                Category? c = null;
+                Category c = null;
                 if (dataReader.Read()) {
                     c = new Category {
                         id = Convert.ToInt32(dataReader["id"].ToString()),
@@ -5005,7 +5017,7 @@ namespace Merchanter {
                 }
                 dataReader.Close();
                 if (state == System.Data.ConnectionState.Open) connection.Close();
-
+                //TODO: Check for want to insert a new root category
                 return c;
             }
             catch (Exception ex) {
@@ -5078,6 +5090,65 @@ namespace Merchanter {
                 List<Category> categories = [];
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                MySqlDataReader dataReader = cmd.ExecuteReader();
+                while (dataReader.Read()) {
+                    Category c = new() {
+                        id = Convert.ToInt32(dataReader["id"].ToString()),
+                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                        parent_id = Convert.ToInt32(dataReader["parent_id"].ToString()),
+                        category_name = dataReader["category_name"].ToString(),
+                        is_active = dataReader["is_active"] != null ? dataReader["is_active"].ToString() == "1" ? true : false : false,
+                        source_category_id = Convert.ToInt32(dataReader["source_category_id"].ToString())
+                    };
+                    categories.Add(c);
+                }
+                dataReader.Close();
+
+                if (state == System.Data.ConnectionState.Open) connection.Close();
+                return categories;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets the categories from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_filters">Api Filters</param>
+        /// <returns>[Error] returns 'null'</returns>
+        public List<Category> GetCategories(int _customer_id, ApiFilter _filters) {
+            try {
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                _filters.Pager ??= new Pager() { ItemsPerPage = 10, CurrentPageIndex = 0 };
+                string _query = "SELECT * FROM categories WHERE customer_id=@customer_id";
+                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                    foreach (var filter in _filters.Filters) {
+                        if (filter.Value is null)
+                            _query += $" AND {filter.Field} {filter.Operator} NULL";
+                        else
+                            _query += $" AND {filter.Field} {filter.Operator} @{filter.Field}";
+                    }
+                }
+                if (_filters.Sort != null)
+                    _query += " ORDER BY " + _filters.Sort.Field + " " + _filters.Sort.Direction + " LIMIT @start,@end;";
+                else {
+                    _filters.Sort = new Sort() { Field = "id", Direction = "DESC" };
+                    _query += " ORDER BY id DESC LIMIT @start,@end;";
+                }
+                List<Category> categories = [];
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                cmd.Parameters.Add(new MySqlParameter("start", _filters.Pager.ItemsPerPage * _filters.Pager.CurrentPageIndex));
+                cmd.Parameters.Add(new MySqlParameter("end", _filters.Pager.ItemsPerPage));
+                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                    foreach (var filter in _filters.Filters) {
+                        if (filter.Value is not null)
+                            cmd.Parameters.Add(new MySqlParameter(filter.Field, filter.Value));
+                    }
+                }
                 MySqlDataReader dataReader = cmd.ExecuteReader();
                 while (dataReader.Read()) {
                     Category c = new() {
@@ -5183,6 +5254,10 @@ namespace Merchanter {
         public Category? InsertCategory(int _customer_id, Category _category) {
             try {
                 object val; int inserted_id;
+                var existed_category = GetCategoryByName(_customer_id, _category.category_name);
+                if (existed_category != null && existed_category.parent_id == _category.parent_id) {
+                    return null;
+                }
                 string _query = "START TRANSACTION;" +
                     "INSERT INTO categories (customer_id,parent_id,category_name,is_active,source_category_id) VALUES (@customer_id,@parent_id,@category_name,@is_active,@source_category_id);" +
                     "SELECT LAST_INSERT_ID();" +
@@ -5215,10 +5290,13 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_category">Category</param>
         /// <returns>[No change] or [Error] returns 'null'</returns>
-        public bool UpdateCategory(int _customer_id, Category _category) {
+        public Category? UpdateCategory(int _customer_id, Category _category) {
             try {
+                var existed_category = GetCategoryByName(_customer_id, _category.category_name);
+                if (existed_category != null && existed_category.parent_id == _category.parent_id) {
+                    return null;
+                }
                 if (state != System.Data.ConnectionState.Open) connection.Open();
-
                 int val = 0;
                 string _query = "UPDATE categories SET category_name=@category_name,is_active=@is_active,parent_id=@parent_id,source_category_id=@source_category_id " +
                     "WHERE id=@id AND customer_id=@customer_id";
@@ -5232,7 +5310,32 @@ namespace Merchanter {
                 val = cmd.ExecuteNonQuery();
 
                 if (state == System.Data.ConnectionState.Open) connection.Close();
+                if (val > 0)
+                    return _category;
+                else return null;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return null;
+            }
+        }
 
+        /// <summary>
+        /// Deletes the category from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_category_id">Category ID</param>
+        /// <returns>[No change] or [Error] returns 'false'</returns>
+        public bool DeleteCategory(int _customer_id, int _category_id) {
+            try {
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                int val = 0;
+                string _query = "DELETE FROM categories WHERE id=@id AND customer_id=@customer_id;";
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                cmd.Parameters.Add(new MySqlParameter("id", _category_id));
+                val = cmd.ExecuteNonQuery();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
                 if (val > 0)
                     return true;
                 else return false;
@@ -5254,6 +5357,42 @@ namespace Merchanter {
                 string _query = "SELECT COUNT(*) FROM categories WHERE customer_id=@customer_id";
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                int.TryParse(cmd.ExecuteScalar().ToString(), out int total_count);
+                if (state == System.Data.ConnectionState.Open) connection.Close();
+                return total_count;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return -1;
+            }
+        }
+
+        /// <summary>
+        /// Gets category count from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_filters">Api Filters</param>
+        /// <returns>Error returns 'int:-1'</returns>
+        public int GetCategoryCount(int _customer_id, ApiFilter _filters) {
+            try {
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                string _query = "SELECT COUNT(*) FROM categories WHERE customer_id=@customer_id";
+                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                    foreach (var filter in _filters.Filters) {
+                        if (filter.Value is null)
+                            _query += $" AND {filter.Field} {filter.Operator} NULL";
+                        else
+                            _query += $" AND {filter.Field} {filter.Operator} @{filter.Field}";
+                    }
+                }
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                    foreach (var filter in _filters.Filters) {
+                        if (filter.Value is not null)
+                            cmd.Parameters.Add(new MySqlParameter(filter.Field, filter.Value));
+                    }
+                }
                 int.TryParse(cmd.ExecuteScalar().ToString(), out int total_count);
                 if (state == System.Data.ConnectionState.Open) connection.Close();
                 return total_count;

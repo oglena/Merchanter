@@ -1,0 +1,130 @@
+﻿@rendermode InteractiveServer
+@using System.Text.Json.Serialization
+@using MerchanterFrontend.Components.Pages.Catalog
+@using Newtonsoft.Json
+@using System.Text
+@inject IPostHelper PostHelper
+@inject IHttpContextAccessor HttpContextAccessor
+@inject NavigationManager NavigationManager
+@inject IDialogService DialogService
+@inject IMessageService MessageService
+
+@if (customer_id > 0 && categories != null) {
+    <FluentTreeView Items="@Items" @bind-SelectedItem="@SelectedCategory" LazyLoadItems="true">
+        <ItemTemplate>
+            @context.Text
+            <span style="color: var(--accent-fill-rest); margin: 0 4px;">
+                @(context.Items == null ? "" : $"[{context.Items.Count()}]")
+            </span>
+        </ItemTemplate>
+    </FluentTreeView>
+
+    <div>
+        <b>Total items:</b> @Count
+    </div>
+    <div>
+        <b>Selected item:</b> @SelectedCategory?.Text
+    </div>
+}
+else {
+    <FluentProgressRing Size="ProgressRingSize.Large" />
+}
+
+
+@code {
+    [Parameter]
+    public int customer_id { get; set; } = 0;
+    IQueryable<Category>? categories { get; set; } = null;
+    bool loading = false;
+    private string? page_message = "";
+    private string? message_status = "";
+    private string? category_name_filter = null;
+    private CategoryStatus category_is_active_filter { get; set; } = CategoryStatus.All;
+    PaginationState pagination = new PaginationState() { ItemsPerPage = 20 };
+    public enum CategoryStatus { All = 0, Active = 1, Passive = 2 }
+
+    private ITreeViewItem? SelectedCategory;
+    private Icon IconCollapsed = new Icons.Regular.Size20.Folder();
+    private Icon IconExpanded = new Icons.Regular.Size20.FolderOpen();
+    private int Count = -1;
+    private IEnumerable<ITreeViewItem>? Items = new List<ITreeViewItem>();
+
+    protected override void OnInitialized() {
+        Items = CreateTree(maxLevel: 4, maxItemsPerLevel: 6).Items;
+    }
+
+    // Recursive method to create tree
+    private TreeViewItem CreateTree(int maxLevel, int maxItemsPerLevel, int level = 0) {
+        Count++;
+        int nbItems = Random.Shared.Next(maxItemsPerLevel - 3, maxItemsPerLevel);
+        var treeItem = new TreeViewItem {
+                Text = $"Item Test Kırkiki {Count}",
+                IconCollapsed = IconCollapsed,
+                IconExpanded = IconExpanded,
+                Items = level == maxLevel ? null :
+                        new List<TreeViewItem>(Enumerable.Range(1, nbItems).
+                        Select(i => CreateTree(maxLevel, maxItemsPerLevel, level + 1))),
+            };
+        return treeItem;
+    }
+
+    protected override async Task OnParametersSetAsync() {
+        if (int.TryParse(HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == Variables.customer_id)?.Value, out int CID)) {
+            customer_id = CID;
+            await Refresh();
+        }
+    }
+
+    protected async Task Refresh() {
+        await LoadCategories();
+    }
+
+    private async Task LoadCategories() {
+        try {
+            loading = true;
+            var apifilter = new ApiFilter() {
+                    Pager = new Pager() {
+                        ItemsPerPage = pagination.ItemsPerPage,
+                        CurrentPageIndex = pagination.CurrentPageIndex
+                    },
+                    Filters = new List<Filter<dynamic>>(),
+                };
+            if (!string.IsNullOrWhiteSpace(category_name_filter)) {
+                apifilter.Filters.Add(new Filter<dynamic>() {
+                        Field = "category_name",
+                        Operator = "LIKE",
+                        Value = "%" + category_name_filter + "%"
+                    });
+            }
+            if (category_is_active_filter != CategoryStatus.All) {
+                apifilter.Filters.Add(new Filter<dynamic>() {
+                        Field = "is_active",
+                        Value = category_is_active_filter == CategoryStatus.Active ? 1 : 0
+                    });
+            }
+            string json = JsonConvert.SerializeObject(apifilter);
+            var response = await PostHelper.Request<List<Category>>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                Classes.PostHelper.PostMethod.Post, Classes.PostHelper.PostDestination.Api,
+                "api/Category/GetCategories",
+                new StringContent(json, Encoding.UTF8, "application/json")
+                );
+
+            if (response != null && response.Success && response.Data != null) {
+                categories = response.Data.AsQueryable();
+                if (response.ApiFilter != null) {
+                    await pagination.SetTotalItemCountAsync(response.ApiFilter.TotalCount.GetValueOrDefault());
+                }
+            }
+        }
+        catch (Exception ex) {
+            Console.WriteLine(ex.Message);
+            categories = null;
+        }
+        finally {
+            page_message = "";
+            message_status = "";
+            loading = false;
+            StateHasChanged();
+        }
+    }
+}

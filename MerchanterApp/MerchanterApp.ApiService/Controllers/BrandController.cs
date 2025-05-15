@@ -57,5 +57,16 @@ namespace MerchanterApp.ApiService.Controllers {
             }
             return BadRequest("Invalid customer ID.");
         }
+
+        [HttpGet("GetDefaultBrand")]
+        [Authorize]
+        public async Task<ActionResult<BaseResponseModel<Brand>>> GetDefaultBrand() {
+            int.TryParse(HttpContext.User.FindFirst("customerId")?.Value, out int customer_id);
+            if (customer_id > 0) {
+                var brand = await brandService.GetDefaultBrand(customer_id);
+                return Ok(new BaseResponseModel<Brand>() { Success = brand != null, Data = brand, ErrorMessage = brand != null ? "" : "Error -1" });
+            }
+            return BadRequest();
+        }
     }
 }
