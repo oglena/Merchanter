@@ -726,7 +726,6 @@ namespace Merchanter {
             try {
                 DbSettings = this.GetSettings(_customer_id);
                 Helper.global = new SettingsMerchanter(_customer_id);
-                Helper.global.customer_id = _customer_id;
                 var customer = GetCustomer(_customer_id);
                 if (customer != null) { Helper.global.customer = customer; }
                 else { PrintConsole("Customer not found!", ConsoleColor.Red); return null; }
@@ -830,6 +829,103 @@ namespace Merchanter {
                 Helper.global = null;
                 return null;
             }
+        }
+
+        public List<ActiveIntegration>? LoadActiveIntegrations(int _customer_id) {
+            try {
+                var integrations = LoadIntegrations(_customer_id);
+                var platforms = LoadPlatforms();
+                var works = LoadWorks();
+                if (this.state != System.Data.ConnectionState.Open)
+                    if (this.OpenConnection()) {
+                        string _query = "SELECT * FROM active_integrations WHERE customer_id=@customer_id";
+                        MySqlCommand cmd = new MySqlCommand(_query, Connection);
+                        cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id.ToString()));
+                        MySqlDataReader dataReader = cmd.ExecuteReader();
+                        List<ActiveIntegration> list = [];
+                        while (dataReader.Read()) {
+                            list.Add(new ActiveIntegration() {
+                                customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                                work = works.Where(x => x.id == Convert.ToInt32(dataReader["WID"].ToString())).FirstOrDefault(),
+                                platform = platforms.Where(x => x.id == Convert.ToInt32(dataReader["PID"].ToString())).FirstOrDefault(),
+                                integration = integrations.Where(x => x.id == Convert.ToInt32(dataReader["IID"].ToString())).FirstOrDefault(),
+                                platform_name = dataReader["platform_name"].ToString(),
+                                work_name = dataReader["work_name"].ToString(),
+                                platform_work_type = dataReader["platform_work_type"] is string workTypeStr && Enum.TryParse(workTypeStr, out Merchanter.Classes.Work.WorkType workType) ? workType : default,
+                                available_platform_types = dataReader["available_platform_types"] is string availableTypesStr ? [.. availableTypesStr.Split(',').Select(type => Enum.TryParse(type, out Merchanter.Classes.Platform.PlatformType platformType) ? platformType : default)] : [],
+                                platform_status = Convert.ToBoolean(Convert.ToInt32(dataReader["platform_status"].ToString())),
+                                work_type = dataReader["work_type"] is string workType1Str && Enum.TryParse(workType1Str, out Merchanter.Classes.Work.WorkType workType1) ? workType1 : default,
+                                work_direction = dataReader["work_direction"] is string workDirectionStr && Enum.TryParse(workDirectionStr, out Merchanter.Classes.Work.WorkDirection workDirection) ? workDirection : default,
+                                work_status = Convert.ToBoolean(Convert.ToInt32(dataReader["work_status"].ToString())),
+                                version = dataReader["version"].ToString(),
+                                integration_status = Convert.ToBoolean(Convert.ToInt32(dataReader["integration_status"].ToString())),
+                            });
+                        }
+                        dataReader.Close();
+                        if (state == System.Data.ConnectionState.Open) this.CloseConnection();
+                        return list;
+                    }
+
+                return null;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets DB settings from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <returns>[Error] returns 'null'</returns>
+        public List<DBSetting> GetSettings(int _customer_id) {
+            try {
+                if (this.state != System.Data.ConnectionState.Open)
+                    if (this.OpenConnection()) {
+                        string _query = "SELECT * FROM db_settings WHERE customer_id=@customer_id";
+                        MySqlCommand cmd = new MySqlCommand(_query, Connection);
+                        cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id.ToString()));
+                        MySqlDataReader dataReader = cmd.ExecuteReader();
+                        List<DBSetting> list = new List<DBSetting>();
+                        while (dataReader.Read()) {
+                            list.Add(new DBSetting() {
+                                id = Convert.ToInt32(dataReader["id"].ToString()),
+                                customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                                name = dataReader["name"].ToString(),
+                                value = dataReader["value"].ToString(),
+                                group_name = dataReader["group_name"].ToString(),
+                                description = dataReader["description"].ToString(),
+                                update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
+                            });
+                        }
+                        dataReader.Close();
+                        if (state == System.Data.ConnectionState.Open)
+                            this.CloseConnection();
+                        return list;
+                    }
+
+                return null;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets setting value from the database
+        /// </summary>
+        /// <param name="_setting">Setting</param>
+        /// <param name="_filter">Filter</param>
+        /// <returns>[No data] returns 'null'</returns>
+        public static string? GetSettingValue(string _setting, string _filter) {
+            var temp = _setting.Split('|');
+            foreach (var item in temp) {
+                if (item.Split('=')[0] == _filter)
+                    return item.Split('=')[1];
+            }
+            return temp[0].Split('=')[1];
         }
 
         #region Save Functions
@@ -1955,9 +2051,10 @@ namespace Merchanter {
         /// <returns>[Error] returns 'null'</returns>
         public List<Integration> LoadIntegrations(int _customer_id) {
             try {
+                var works = LoadWorks();
                 if (this.state != System.Data.ConnectionState.Open)
                     if (this.OpenConnection()) {
-                        string _query = "SELECT * FROM integrations WHERE customer_id=@customer_id";
+                        string _query = "SELECT * FROM integrations WHERE customer_id=@customer_id;";
                         MySqlCommand cmd = new MySqlCommand(_query, Connection);
                         cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id.ToString()));
                         MySqlDataReader dataReader = cmd.ExecuteReader();
@@ -1967,7 +2064,7 @@ namespace Merchanter {
                                 Convert.ToInt32(dataReader["id"].ToString()),
                                 Convert.ToInt32(dataReader["customer_id"].ToString()),
                                 Convert.ToBoolean(Convert.ToInt32(dataReader["is_active"].ToString())),
-                                Helper.global.works.FirstOrDefault(x => x.id == Convert.ToInt32(dataReader["work_id"].ToString()))
+                                works.FirstOrDefault(x => x.id == Convert.ToInt32(dataReader["work_id"].ToString()))
                             ));
                         }
                         dataReader.Close();
@@ -1992,7 +2089,7 @@ namespace Merchanter {
             try {
                 if (this.state != System.Data.ConnectionState.Open)
                     if (this.OpenConnection()) {
-                        string _query = "SELECT * FROM platforms";
+                        string _query = "SELECT * FROM platforms;";
                         MySqlCommand cmd = new MySqlCommand(_query, Connection);
                         MySqlDataReader dataReader = cmd.ExecuteReader();
                         List<Platform> list = [];
@@ -2001,7 +2098,7 @@ namespace Merchanter {
                                 Convert.ToInt32(dataReader["id"].ToString()),
                                 dataReader["name"].ToString(),
                                 dataReader["work_type"] is string workTypeStr && Enum.TryParse(workTypeStr, out Merchanter.Classes.Work.WorkType workType) ? workType : default,
-                                dataReader["available_types"] is string availableTypesStr ? availableTypesStr.Split(',').Select(type => Enum.TryParse(type, out Merchanter.Classes.Platform.PlatformType platformType) ? platformType : default).ToList() : [],
+                                dataReader["available_types"] is string availableTypesStr ? [.. availableTypesStr.Split(',').Select(type => Enum.TryParse(type, out Merchanter.Classes.Platform.PlatformType platformType) ? platformType : default)] : [],
                                 Convert.ToBoolean(Convert.ToInt32(dataReader["status"].ToString())),
                                 Convert.ToDateTime(dataReader["update_date"].ToString()),
                                 dataReader["image"].ToString()
@@ -2027,16 +2124,17 @@ namespace Merchanter {
         /// <returns>[Error] returns 'null'</returns>
         public List<Work> LoadWorks() {
             try {
+                var platforms = LoadPlatforms();
                 if (this.state != System.Data.ConnectionState.Open)
                     if (this.OpenConnection()) {
-                        string _query = "SELECT * FROM works";
+                        string _query = "SELECT * FROM works;";
                         MySqlCommand cmd = new MySqlCommand(_query, Connection);
                         MySqlDataReader dataReader = cmd.ExecuteReader();
                         List<Work> list = [];
                         while (dataReader.Read()) {
                             list.Add(new Work(
                                 Convert.ToInt32(dataReader["id"].ToString()),
-                                Helper.global.platforms.FirstOrDefault(x => x.id == Convert.ToInt32(dataReader["platform_id"].ToString())),
+                                platforms.FirstOrDefault(x => x.id == Convert.ToInt32(dataReader["platform_id"].ToString())),
                                 dataReader["name"].ToString(),
                                 dataReader["type"] is string workTypeStr && Enum.TryParse(workTypeStr, out Merchanter.Classes.Work.WorkType workType) ? workType : default,
                                 dataReader["direction"] is string workDirectionStr && Enum.TryParse(workDirectionStr, out Merchanter.Classes.Work.WorkDirection workDirection) ? workDirection : default,
@@ -2058,60 +2156,6 @@ namespace Merchanter {
             }
         }
         #endregion
-
-        /// <summary>
-        /// Gets DB settings from the database
-        /// </summary>
-        /// <param name="_customer_id">Customer ID</param>
-        /// <returns>[Error] returns 'null'</returns>
-        public List<DBSetting> GetSettings(int _customer_id) {
-            try {
-                if (this.state != System.Data.ConnectionState.Open)
-                    if (this.OpenConnection()) {
-                        string _query = "SELECT * FROM db_settings WHERE customer_id=@customer_id";
-                        MySqlCommand cmd = new MySqlCommand(_query, Connection);
-                        cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id.ToString()));
-                        MySqlDataReader dataReader = cmd.ExecuteReader();
-                        List<DBSetting> list = new List<DBSetting>();
-                        while (dataReader.Read()) {
-                            list.Add(new DBSetting() {
-                                id = Convert.ToInt32(dataReader["id"].ToString()),
-                                customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                                name = dataReader["name"].ToString(),
-                                value = dataReader["value"].ToString(),
-                                group_name = dataReader["group_name"].ToString(),
-                                description = dataReader["description"].ToString(),
-                                update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
-                            });
-                        }
-                        dataReader.Close();
-                        if (state == System.Data.ConnectionState.Open)
-                            this.CloseConnection();
-                        return list;
-                    }
-
-                return null;
-            }
-            catch (Exception ex) {
-                OnError(ex.ToString());
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Gets setting value from the database
-        /// </summary>
-        /// <param name="_setting">Setting</param>
-        /// <param name="_filter">Filter</param>
-        /// <returns>[No data] returns 'null'</returns>
-        public static string? GetSettingValue(string _setting, string _filter) {
-            var temp = _setting.Split('|');
-            foreach (var item in temp) {
-                if (item.Split('=')[0] == _filter)
-                    return item.Split('=')[1];
-            }
-            return temp[0].Split('=')[1];
-        }
         #endregion
 
         #region Notification
@@ -2540,12 +2584,15 @@ namespace Merchanter {
                         list[i].extension.categories = [.. _categories.Where(x => list[i].extension.category_ids.Split(",").Contains(x.id.ToString()))];
                 }
 
-                #region Attach other product sources
-                string? main_source = Helper.global.integrations.Where(x => x.work?.type == Work.WorkType.PRODUCT &&
-                                                                                    x.work?.direction == Work.WorkDirection.MAIN_SOURCE &&
-                                                                                    x.work.status && x.is_active).FirstOrDefault()?.work.name;
-                if (!string.IsNullOrWhiteSpace(main_source)) {
-                    _product_other_sources = GetProductOtherSources(_customer_id, main_source);
+                // Load other product sources
+                var ai = LoadActiveIntegrations(_customer_id);
+                if (ai is null || ai.Count == 0) {
+                    OnError("GetProducts: Active Integrations Not Found");
+                    return [];
+                }
+                var main_source = ai.FirstOrDefault(x => x.work_status && x.work_type == Work.WorkType.PRODUCT && x.work_direction == Work.WorkDirection.MAIN_SOURCE);
+                if (main_source is not null) {
+                    _product_other_sources = GetProductOtherSources(_customer_id, main_source.work_name);
                     if (_product_other_sources != null && _product_other_sources.Count > 0) {
                         foreach (var item in list) {
                             var selected_product_source = _product_other_sources?.FindAll(x => x.sku == item.sku);
@@ -2554,23 +2601,20 @@ namespace Merchanter {
                         }
                     }
                 }
-                #endregion
 
-                #region Attach product attributes
+                //Attach product attributes
                 if (_product_attributes != null && _product_attributes.Count > 0) {
                     foreach (var item in list) {
                         item.attributes = [.. _product_attributes.Where(x => x.product_id == item.id)];
                     }
                 }
-                #endregion
 
-                #region Attach product images
+                //Attach product images
                 if (_product_images != null && _product_images.Count > 0) {
                     foreach (var item in list) {
                         item.images = [.. _product_images.Where(x => x.product_id == item.id)];
                     }
                 }
-                #endregion
 
                 return list;
             }
@@ -2648,6 +2692,7 @@ namespace Merchanter {
                     p.extension = new ProductExtension() {
                         id = Convert.ToInt32(dataReader["pe_id"].ToString()),
                         customer_id = p.customer_id,
+                        is_enabled = dataReader["pe_is_enabled"].ToString() == "1",
                         sku = p.sku,
                         barcode = p.barcode,
                         brand_id = Convert.ToInt32(dataReader["pe_brand_id"].ToString()),
@@ -2665,6 +2710,7 @@ namespace Merchanter {
                         p.sku, p.barcode, Convert.ToInt32(dataReader["ps_qty"].ToString()),
                         Convert.ToBoolean(Convert.ToInt32(dataReader["ps_is_active"].ToString())),
                         Convert.ToDateTime(dataReader["ps_update_date"].ToString())
+
                     )];
                     list.Add(p);
                 }
@@ -2679,13 +2725,15 @@ namespace Merchanter {
                         list[i].extension.categories = categories?.Where(x => list[i].extension.category_ids.Split(",").Contains(x.id.ToString())).ToList();
                 }
 
-                // Get other product sources
-                string? main_source = Helper.global.integrations.Where(x =>
-                                        x.work?.type == Work.WorkType.PRODUCT &&
-                                        x.work?.direction == Work.WorkDirection.MAIN_SOURCE &&
-                                        x.work.status && x.is_active).FirstOrDefault()?.work.name;
-                if (!string.IsNullOrWhiteSpace(main_source))
-                    product_other_sources = GetProductOtherSources(_customer_id, main_source);
+                // Load other product sources
+                var ai = LoadActiveIntegrations(_customer_id);
+                if (ai == null || ai.Count == 0) {
+                    OnError("GetProducts: Active Integrations Not Found");
+                    return [];
+                }
+                var main_source = ai.FirstOrDefault(x => x.work_status && x.work_type == Work.WorkType.PRODUCT && x.work_direction == Work.WorkDirection.MAIN_SOURCE);
+                if (main_source != null)
+                    product_other_sources = GetProductOtherSources(_customer_id, main_source.work_name);
                 if (product_other_sources != null && product_other_sources.Count > 0) {
                     foreach (var item in list) {
                         var selected_product_source = product_other_sources?.FindAll(x => x.sku == item.sku);
@@ -3238,6 +3286,7 @@ namespace Merchanter {
                 return false;
             }
         }
+        #endregion
 
         #region Product Extension
         /// <summary>
@@ -4251,8 +4300,6 @@ namespace Merchanter {
                 return false;
             }
         }
-        #endregion
-
         #endregion
 
         #region Attribute
@@ -5292,10 +5339,10 @@ namespace Merchanter {
         /// <returns>[No change] or [Error] returns 'null'</returns>
         public Category? UpdateCategory(int _customer_id, Category _category) {
             try {
-                var existed_category = GetCategoryByName(_customer_id, _category.category_name);
-                if (existed_category != null && existed_category.parent_id == _category.parent_id) {
-                    return null;
-                }
+                //var existed_category = GetCategoryByName(_customer_id, _category.category_name);
+                //if (existed_category != null && existed_category.parent_id == _category.parent_id) {
+                //    return null;
+                //}
                 if (state != System.Data.ConnectionState.Open) connection.Open();
                 int val = 0;
                 string _query = "UPDATE categories SET category_name=@category_name,is_active=@is_active,parent_id=@parent_id,source_category_id=@source_category_id " +

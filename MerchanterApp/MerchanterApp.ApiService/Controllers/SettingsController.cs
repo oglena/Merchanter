@@ -1,4 +1,5 @@
-﻿using Merchanter.Classes.Settings;
+﻿using Merchanter.Classes;
+using Merchanter.Classes.Settings;
 using MerchanterApp.ApiService.Models;
 using MerchanterApp.ApiService.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -19,6 +20,22 @@ namespace MerchanterApp.ApiService.Controllers {
                 }
                 else {
                     return Ok(new BaseResponseModel<SettingsMerchanter>() { Success = false, Data = null, ErrorMessage = "Error getting settings." });
+                }
+            }
+            return BadRequest("Invalid customer ID.");
+        }
+
+        [HttpGet("{CID}/GetActiveIntegrations")]
+        [Authorize]
+        public async Task<ActionResult<BaseResponseModel<List<ActiveIntegration>?>>> GetActiveIntegrations(string CID) {
+            int customer_id;
+            if (int.TryParse(CID, out customer_id) && customer_id > 0) {
+                var active_integrations = await settingsService.GetActiveIntegrations(customer_id);
+                if (active_integrations != null) {
+                    return Ok(new BaseResponseModel<List<ActiveIntegration>?>() { Success = true, Data = active_integrations, ErrorMessage = "" });
+                }
+                else {
+                    return Ok(new BaseResponseModel<List<ActiveIntegration>?>() { Success = false, Data = null, ErrorMessage = "Error getting active integrations." });
                 }
             }
             return BadRequest("Invalid customer ID.");

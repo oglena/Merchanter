@@ -114,10 +114,9 @@ else {
                         foreach (var child in children) {
                             var item = new TreeViewItem {
                                     Id = child.id.ToString(),
-                                    Text = child.category_name,
+                                    Text = child.category_name + (!child.is_active ? " (pasif)" : ""),
                                     Expanded = false,
-                                    Disabled = !child.is_active,
-                                    Items = BuildTree(child.id)
+                                    Items = BuildTree(child.id),
                                 };
                             result.Add(item);
                         }

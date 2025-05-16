@@ -19,20 +19,20 @@
         <FluentGridItem xs="12">
             <FluentToolbar style="width:100%;border-radius:5px;padding:5px !important;" Orientation="Orientation.Horizontal">
                 <FluentIcon Value="@(new Icons.Filled.Size20.Apps())" Slot="start" Color="Color.Accent" />
-                <FluentButton Appearance="Appearance.Outline" OnClick="() => OpenPanelRightAsync(null)" IconStart="@(new Icons.Regular.Size20.New())">Yeni Marka</FluentButton>
+                <FluentButton Appearance="Appearance.Outline" Disabled="@loading" OnClick="() => OpenPanelRightAsync(null)" IconStart="@(new Icons.Regular.Size20.New())">Yeni Marka</FluentButton>
                 @if (default_brand != null) {
                     <FluentBadge>Varsayılan Marka:&nbsp;@default_brand</FluentBadge>
                 }
-                <FluentSelect Data="@brand_is_active_filter" TOption="BrandStatus" ValueChanged="@((e) => OnBrandActiveFilterChanged(e))" Width="150px" Appearance="Appearance.Stealth" Style="margin-right:10px;" slot="end">
+                <FluentSelect Data="@brand_is_active_filter" TOption="BrandStatus" Disabled="@loading" ValueChanged="@((e) => OnBrandActiveFilterChanged(e))" Width="150px" Appearance="Appearance.Stealth" Style="margin-right:10px;" slot="end">
                     <FluentOption Value="0" Selected="@(brand_is_active_filter == BrandStatus.All)">Tüm Durumlar</FluentOption>
                     <FluentOption Value="1" Selected="@(brand_is_active_filter == BrandStatus.Active)">Aktif Markalar</FluentOption>
                     <FluentOption Value="2" Selected="@(brand_is_active_filter == BrandStatus.Passive)">Pasif Markalar</FluentOption>
                 </FluentSelect>
-                <FluentTextField @bind-Value="@brand_name_filter" Placeholder="Ara" Style="margin-right:10px;" slot="end">
+                <FluentTextField @bind-Value="@brand_name_filter" Disabled="@loading" Placeholder="Ara" Style="margin-right:10px;" slot="end">
                     <FluentIcon Value="@(new Icons.Regular.Size16.Search())" Color="@Color.Neutral" Slot="end" />
                 </FluentTextField>
-                <FluentButton Appearance="Appearance.Outline" OnClick="Refresh" Disabled="loading" Loading="@loading" IconStart="@(new Icons.Regular.Size20.Filter())" Style="margin-right:10px;" Slot="end">Filtrele</FluentButton>
-                <FluentButton Appearance="Appearance.Outline" OnClick="ClearFilters" Disabled="loading" Loading="@loading" IconStart="@(new Icons.Regular.Size20.Broom())" Slot="end">Temizle</FluentButton>
+                <FluentButton Appearance="Appearance.Outline" OnClick="Refresh" Disabled="@loading" Loading="@loading" IconStart="@(new Icons.Regular.Size20.Filter())" Style="margin-right:10px;" Slot="end">Filtrele</FluentButton>
+                <FluentButton Appearance="Appearance.Outline" OnClick="ClearFilters" Disabled="@loading" Loading="@loading" IconStart="@(new Icons.Regular.Size20.Broom())" Slot="end">Temizle</FluentButton>
             </FluentToolbar>
         </FluentGridItem>
         <FluentGridItem xs="12">
@@ -57,7 +57,7 @@
             <FluentDataGrid Id="brands-grid" Items="@brands" RowSize="DataGridRowSize.Large" GenerateHeader="GenerateHeaderOption.Sticky"
                             TGridItem="Brand" Loading="loading" DisplayMode="DataGridDisplayMode.Grid" ShowHover="true">
                 <ChildContent>
-                    <PropertyColumn Title="ID" Property="@(b => b.id)" Width="100px" Align="Align.End" />
+                    <PropertyColumn Title="ID" Property="@(b => b.id)" Width="100px" Align="Align.End" Sortable="true" />
                     <PropertyColumn Title="Marka Adı" Property="@(b => b.brand_name)" Align="Align.Center" />
                     <PropertyColumn Title="Durum" Property="@(b => b.status ? "Aktif" : "Pasif")" Align="Align.Center" />
                     <TemplateColumn Title="" Width="250px">

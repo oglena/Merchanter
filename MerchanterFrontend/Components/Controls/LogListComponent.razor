@@ -12,7 +12,7 @@
             <FluentToolbar style="width:100%;border-radius:5px;padding:5px !important;" Orientation="Orientation.Horizontal">
                 <FluentIcon Value="@(new Icons.Filled.Size20.ReadingList())" Slot="start" Color="Color.Accent" />
                 <FluentBadge>Olay Günlükleri</FluentBadge>
-                <FluentSelect ValueChanged="@(e => workerFilter = e)" Value="@workerFilter" TOption="string" Width="150px" Appearance="Appearance.Stealth" Style="margin-right:10px;" slot="end">
+                <FluentSelect Disabled="@loading" ValueChanged="@(e => workerFilter = e)" Value="@workerFilter" TOption="string" Width="150px" Appearance="Appearance.Stealth" Style="margin-right:10px;" slot="end">
                     <FluentOption Value="" Selected="true">Tüm Bölümler</FluentOption>
                     <FluentOption Value="product">Ürün</FluentOption>
                     <FluentOption Value="notification">Bildirim</FluentOption>
@@ -23,7 +23,7 @@
                     <FluentOption Value="helper_instance">Yardımcı Program</FluentOption>
                     <FluentOption Value="xml">XML</FluentOption>
                 </FluentSelect>
-                <FluentTextField @bind-Value="@messageFilter" Placeholder="Ara" Style="margin-right:10px;" slot="end">
+                <FluentTextField @bind-Value="@messageFilter" Disabled="@loading" Placeholder="Ara" Style="margin-right:10px;" slot="end">
                     <FluentIcon Value="@(new Icons.Regular.Size16.Search())" Color="@Color.Neutral" Slot="end" />
                 </FluentTextField>
                 <FluentButton Appearance="Appearance.Outline" OnClick="Refresh" Loading="@loading" Disabled="@loading" IconStart="@(new Icons.Regular.Size20.Filter())" Style="margin-right:10px;" Slot="end">Filtrele</FluentButton>

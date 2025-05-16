@@ -6,6 +6,7 @@ using MerchanterApp.ApiService.Repositories;
 namespace MerchanterApp.ApiService.Services {
     public interface ISettingsService {
         Task<SettingsMerchanter> GetCustomerSettings(int _customer_id);
+        Task<List<ActiveIntegration>?> GetActiveIntegrations(int _customer_id);
         Task<bool> SaveGeneralSettings(int _customer_id, SettingsGeneral _settings);
         Task<bool> SaveEntegraSettings(int _customer_id, SettingsEntegra _settings);
         Task<bool> SaveNetsisSettings(int _customer_id, SettingsNetsis _settings);
@@ -24,6 +25,10 @@ namespace MerchanterApp.ApiService.Services {
     public class SettingsService(ISettingsRepository settingsRepository) : ISettingsService {
         public Task<SettingsMerchanter> GetCustomerSettings(int _customer_id) {
             return settingsRepository.GetSettings(_customer_id);
+        }
+
+        public Task<List<ActiveIntegration>?> GetActiveIntegrations(int _customer_id) {
+            return settingsRepository.GetActiveIntegrations(_customer_id);
         }
 
         public Task<bool> SaveGeneralSettings(int _customer_id, SettingsGeneral _settings) {

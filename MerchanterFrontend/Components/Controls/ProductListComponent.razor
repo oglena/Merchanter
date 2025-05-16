@@ -1,0 +1,205 @@
+﻿@rendermode InteractiveServer
+@using MerchanterFrontend.Components.Pages.Catalog
+@using System.Text.Json.Serialization
+@using Newtonsoft.Json
+@using System.Text
+@inject IPostHelper PostHelper
+@inject IHttpContextAccessor HttpContextAccessor
+@inject NavigationManager NavigationManager
+@inject IDialogService DialogService
+@inject IMessageService MessageService
+
+
+@if (customer_id > 0 && products != null) {
+    <FluentGrid Justify="JustifyContent.SpaceBetween" Spacing="2">
+        @if (!string.IsNullOrWhiteSpace(page_message)) {
+            <FluentGridItem xs="12">
+                <AlertComponent page_message="@page_message" message_status="@message_status" />
+            </FluentGridItem>
+        }
+        <FluentGridItem xs="12">
+            <FluentToolbar style="width:100%;border-radius:5px;padding:5px !important;" Orientation="Orientation.Horizontal">
+                <FluentIcon Value="@(new Icons.Filled.Size20.TetrisApp())" Slot="start" Color="Color.Accent" />
+                <FluentButton Appearance="Appearance.Outline" Disabled="@loading" IconStart="@(new Icons.Regular.Size20.New())">Yeni Ürün</FluentButton>
+                <FluentSelect Data="@product_is_active_filter" Disabled="loading" TOption="ProductStatus" ValueChanged="@((e) => OnProductActiveFilterChanged(e))" Width="150px" Appearance="Appearance.Stealth" Style="margin-right:10px;" slot="end">
+                    <FluentOption Value="0" Selected="@(product_is_active_filter == ProductStatus.All)">Tüm Durumlar</FluentOption>
+                    <FluentOption Value="1" Selected="@(product_is_active_filter == ProductStatus.Active)">Aktif Ürünler</FluentOption>
+                    <FluentOption Value="2" Selected="@(product_is_active_filter == ProductStatus.Passive)">Pasif Ürünler</FluentOption>
+                </FluentSelect>
+                <FluentTextField @bind-Value="@product_name_filter" Disabled="@loading" Placeholder="Ara" Style="margin-right:10px;" slot="end">
+                    <FluentIcon Value="@(new Icons.Regular.Size16.Search())" Color="@Color.Neutral" Slot="end" />
+                </FluentTextField>
+                <FluentButton Appearance="Appearance.Outline" OnClick="Refresh" Disabled="@loading" Loading="@loading" IconStart="@(new Icons.Regular.Size20.Filter())" Style="margin-right:10px;" Slot="end">Filtrele</FluentButton>
+                <FluentButton Appearance="Appearance.Outline" OnClick="ClearFilters" Disabled="@loading" Loading="@loading" IconStart="@(new Icons.Regular.Size20.Broom())" Slot="end">Temizle</FluentButton>
+            </FluentToolbar>
+        </FluentGridItem>
+        <FluentGridItem xs="12">
+            <FluentPaginator State="@pagination" CurrentPageIndexChanged="Refresh">
+                <SummaryTemplate>
+                    <div style="display:flex;align-items:center;">
+                        <FluentSelect TOption="int" Width="100px" ValueChanged="@(async (e) => await OnItemsPerPageChanged(e))">
+                            <FluentOption Value="5" Selected="@(pagination.ItemsPerPage == 5)">5 adet</FluentOption>
+                            <FluentOption Value="10" Selected="@(pagination.ItemsPerPage == 10)">10 adet</FluentOption>
+                            <FluentOption Value="20" Selected="@(pagination.ItemsPerPage == 20)">20 adet</FluentOption>
+                            <FluentOption Value="50" Selected="@(pagination.ItemsPerPage == 50)">50 adet</FluentOption>
+                        </FluentSelect>
+                        <FluentLabel Typo="Typography.Body">&nbsp;&nbsp;Toplam: <b>@(pagination.TotalItemCount ?? 0)</b> girdi</FluentLabel>
+                    </div>
+                </SummaryTemplate>
+                <PaginationTextTemplate>
+                    <b>@(pagination.CurrentPageIndex + 1)</b> / <b>@(pagination.LastPageIndex + 1)</b> sayfa
+                </PaginationTextTemplate>
+            </FluentPaginator>
+        </FluentGridItem>
+        <FluentGridItem xs="12">
+            <FluentDataGrid Id="products-grid" Items="@products" RowSize="DataGridRowSize.Large" GenerateHeader="GenerateHeaderOption.Sticky"
+            TGridItem="Product" Loading="loading" DisplayMode="DataGridDisplayMode.Table" ShowHover="true" MultiLine="true">
+                <ChildContent>
+                    <PropertyColumn Title="ID" Property="@(p => p.id)" Width="100px" Tooltip="true" TooltipText="@(p => p.source_product_id.ToString())" Align="Align.End" />
+                    <PropertyColumn Title="Durum" Property="@(p => p.extension.is_enabled ? "Aktif" : "Pasif")" Width="100px" Align="Align.Center" />
+                    <PropertyColumn Title="Ürün Adı" Property="@(p => p.name)" Align="Align.Start" Width="300px" />
+                    <PropertyColumn Title="Stok Kodu" Property="@(p => p.sku)" Align="Align.Start" Width="150px" />
+                    <PropertyColumn Title="Barkod" Property="@(p => p.barcode)" Align="Align.Start" Width="150px" />
+                    <TemplateColumn Title="Stok Adetleri" Align="Align.Start" Width="200px">
+                        @foreach (var item in context.sources)
+                        {
+                            <b>@(item.name):&nbsp;</b><span>@(item.qty)</span>
+                            <br />
+                        }
+                    </TemplateColumn>
+                    <TemplateColumn Title="Fiyat" Align="Align.Start" Width="250px">
+                        <b>Liste Fiyat:</b>&nbsp;<span>@(Math.Round(context.price, 2, MidpointRounding.AwayFromZero))</span>&nbsp;@(context.currency)<br />
+                        <b>Satış Fiyatı:</b>&nbsp;<span>@(Math.Round(context.special_price, 2, MidpointRounding.AwayFromZero))</span>&nbsp;@(context.currency)<br />
+                        <b>Özel Fiyat:</b>&nbsp;<span>@(Math.Round(context.custom_price, 2, MidpointRounding.AwayFromZero))</span>&nbsp;@(context.currency)
+                    </TemplateColumn>
+                    <TemplateColumn Title="Vergi" Align="Align.Start" Width="125px">
+                        <b>Vergi:</b>&nbsp;<span>@(context.tax)&#37;</span><br />
+                        Vergi&nbsp;<b><span>@(context.tax_included ? "Dahil" : "Hariç")</span></b><br />
+                    </TemplateColumn>
+                    <TemplateColumn Width="250px" Align="Align.Center">
+                        <FluentButton Appearance="Appearance.Outline" IconStart="@(new Icons.Regular.Size20.Delete())">Sil</FluentButton>
+                        <FluentButton Appearance="Appearance.Outline" IconStart="@(new Icons.Regular.Size20.Edit())">Düzenle</FluentButton><br />
+                        <b>Son Güncelleme:</b><br /><span>@(context.update_date.ToString("dd.MM.yyyy HH:mm:ss"))</span>
+                    </TemplateColumn>
+                </ChildContent>
+                <EmptyContent>
+                    <FluentLayout>
+                        <ChildContent>
+                            <span style="color: #9f9f9f;font-weight: bold"><i>Veri Yok.</i></span>
+                        </ChildContent>
+                    </FluentLayout>
+                </EmptyContent>
+                <LoadingContent>
+                    <FluentLayout Orientation="Orientation.Horizontal">
+                        <ChildContent>
+                            <FluentProgressRing />
+                        </ChildContent>
+                    </FluentLayout>
+                </LoadingContent>
+            </FluentDataGrid>
+        </FluentGridItem>
+    </FluentGrid>
+}
+else {
+    <FluentProgressRing Size="ProgressRingSize.Large" />
+}
+
+@code {
+    [Parameter]
+    public int customer_id { get; set; } = 0;
+    private IQueryable<Product>? products { get; set; } = null;
+    public bool loading = false;
+    private string? page_message = "";
+    private string? message_status = "";
+    private string? product_name_filter = null;
+    private ProductStatus product_is_active_filter { get; set; } = ProductStatus.All;
+    private PaginationState pagination = new PaginationState() { ItemsPerPage = 20 };
+    public enum ProductStatus { All = 0, Active = 1, Passive = 2 }
+
+    private IDialogReference? _dialog;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender) {
+        if (firstRender) {
+            await Refresh();
+        }
+    }
+
+    protected async Task Refresh() {
+        await LoadProducts();
+    }
+
+    private async Task LoadProducts() {
+        try {
+            loading = true;
+            var apifilter = new ApiFilter() {
+                    Pager = new Pager() {
+                        ItemsPerPage = pagination.ItemsPerPage,
+                        CurrentPageIndex = pagination.CurrentPageIndex
+                    },
+                    Filters = new List<Filter<dynamic>>(),
+                };
+            if (!string.IsNullOrWhiteSpace(product_name_filter)) {
+                apifilter.Filters.Add(new Filter<dynamic>() {
+                        Field = "p.name",
+                        Operator = "LIKE",
+                        Value = "%" + product_name_filter + "%"
+                    });
+            }
+            if (product_is_active_filter != ProductStatus.All) {
+                apifilter.Filters.Add(new Filter<dynamic>() {
+                        Field = "pe.is_enabled",
+                        Value = product_is_active_filter == ProductStatus.Active ? 1 : 0
+                    });
+            }
+            string json = JsonConvert.SerializeObject(apifilter);
+            var response = await PostHelper.Request<List<Product>>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                Classes.PostHelper.PostMethod.Post, Classes.PostHelper.PostDestination.Api,
+                "api/Product/GetProducts",
+                new StringContent(json, Encoding.UTF8, "application/json")
+                );
+
+            if (response != null && response.Success && response.Data != null) {
+                products = response.Data.AsQueryable();
+                if (response.ApiFilter != null) {
+                    await pagination.SetTotalItemCountAsync(response.ApiFilter.TotalCount.GetValueOrDefault());
+                }
+            }
+        }
+        catch (Exception ex) {
+            Console.WriteLine(ex.Message);
+            products = null;
+        }
+        finally {
+            page_message = "";
+            message_status = "";
+            loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void OnProductActiveFilterChanged(string? _status) {
+        if (string.IsNullOrWhiteSpace(_status)) {
+            product_is_active_filter = ProductStatus.All;
+            return;
+        }
+        if (int.TryParse(_status, out int status)) {
+            product_is_active_filter = (ProductStatus)status;
+        }
+        else {
+            product_is_active_filter = ProductStatus.All;
+        }
+    }
+
+    private async Task OnItemsPerPageChanged(string _items_per_page) {
+        pagination.ItemsPerPage = int.Parse(_items_per_page);
+        await pagination.SetCurrentPageIndexAsync(0); // Reset to the first page
+        await Refresh();
+    }
+
+    public async void ClearFilters() {
+        product_name_filter = null;
+        product_is_active_filter = ProductStatus.All;
+        await pagination.SetCurrentPageIndexAsync(0);
+        await Refresh();
+    }
+}

@@ -1,9 +1,11 @@
-﻿using Merchanter.Classes.Settings;
+﻿using Merchanter.Classes;
+using Merchanter.Classes.Settings;
 using MerchanterApp.ApiService.Services;
 
 namespace MerchanterApp.ApiService.Repositories {
     public interface ISettingsRepository {
         Task<SettingsMerchanter> GetSettings(int _customer_id);
+        Task<List<ActiveIntegration>?> GetActiveIntegrations(int _customer_id);
         Task<bool> SaveGeneralSettings(int _customer_id, SettingsGeneral _settings);
         Task<bool> SaveEntegraSettings(int _customer_id, SettingsEntegra _settings);
         Task<bool> SaveNetsisSettings(int _customer_id, SettingsNetsis _settings);
@@ -29,6 +31,10 @@ namespace MerchanterApp.ApiService.Repositories {
             if (merchanterService.global == null)
                 return await Task.Run(() => settings = merchanterService.helper.LoadSettings(_customer_id));
             else return await Task.Run(() => settings = merchanterService.global);
+        }
+
+        public async Task<List<ActiveIntegration>?> GetActiveIntegrations(int _customer_id) {
+            return await Task.Run(() => merchanterService.helper.LoadActiveIntegrations(_customer_id));
         }
 
         public async Task<bool> SaveGeneralSettings(int _customer_id, SettingsGeneral _settings) {

@@ -1,20 +1,16 @@
 ﻿@attribute [Authorize]
 @page "/Catalog/Products"
-@using Newtonsoft.Json
-@using System.Text
-@inject IPostHelper PostHelper
 @inject IHttpContextAccessor HttpContextAccessor
 @inject NavigationManager NavigationManager
 
 <PageTitle>Katalog > Ürünler | Merchanter</PageTitle>
-
 
 <FluentLabel Typo="Typography.H1">
     <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size28.TetrisApp())" />&nbsp;Ürünler
 </FluentLabel>
 <FluentLayout Orientation="Orientation.Vertical" Style="padding-top:10px;">
     @if (HttpContextAccessor?.HttpContext?.User.Identity != null && HttpContextAccessor.HttpContext.User.Identity.IsAuthenticated) {
-        
+        <ProductListComponent customer_id="@customer_id" />
     }
 </FluentLayout>
 

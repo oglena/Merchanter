@@ -5,10 +5,12 @@
 
 <PageTitle>Katalog > Markalar | Merchanter</PageTitle>
 
-<FluentLabel Typo="Typography.H1"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size28.Apps())" />&nbsp;Markalar</FluentLabel>
+<FluentLabel Typo="Typography.H1">
+    <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size28.Apps())" />&nbsp;Markalar
+</FluentLabel>
 <FluentLayout Orientation="Orientation.Vertical" Style="padding-top:10px;">
     @if (HttpContextAccessor?.HttpContext?.User.Identity != null && HttpContextAccessor.HttpContext.User.Identity.IsAuthenticated) {
-        <BrandsComponent customer_id="@customer_id" />
+        <BrandListComponent customer_id="@customer_id" />
     }
 </FluentLayout>
 

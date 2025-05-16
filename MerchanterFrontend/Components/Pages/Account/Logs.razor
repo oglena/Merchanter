@@ -7,7 +7,7 @@
 <FluentLabel Typo="Typography.H1"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size28.ReadingList())" />&nbsp;Olay Günlükleri</FluentLabel>
 <FluentLayout Orientation="Orientation.Vertical" Style="padding-top:10px;">
     @if (HttpContextAccessor?.HttpContext?.User.Identity != null && HttpContextAccessor.HttpContext.User.Identity.IsAuthenticated) {
-        <LogsComponent customer_id="@customer_id" />
+        <LogListComponent customer_id="@customer_id" />
     }
 </FluentLayout>
 
