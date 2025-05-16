@@ -2266,8 +2266,12 @@ internal class MainLoop {
                                                                 SatirDetay = [],
                                                                 CariSicil = new CariSicilSip() {
                                                                     HesapNo = string.Empty,
-                                                                    Adi = order_item.billing_address.firstname.Trim().ToUpper(),
-                                                                    Soyadi = order_item.billing_address.lastname.Trim().ToUpper(),
+                                                                    Adi = order_item.billing_address.firstname.Length > 50
+                                                                        ? order_item.billing_address.firstname[..50].Trim().ToUpper()
+                                                                        : order_item.billing_address.firstname.Trim().ToUpper(),
+                                                                    Soyadi = order_item.billing_address.lastname.Length > 50
+                                                                        ? order_item.billing_address.lastname[..50].Trim().ToUpper()
+                                                                        : order_item.billing_address.lastname.Trim().ToUpper(),
                                                                     Unvani = order_item.billing_address.is_corporate ? order_item.billing_address.firma_ismi.Trim().ToUpper() : (order_item.firstname.Trim().ToUpper() + " " + order_item.lastname.Trim().ToUpper()),
                                                                     Adres1 = order_item.billing_address.street.Length > 50 ? string.Join(" ", order_item.billing_address.street.Split(' ').TakeWhile((s, i) => string.Join(" ", order_item.billing_address.street.Split(' ').Take(i + 1)).Length <= 50)).Trim().ToUpper() : order_item.billing_address.street.Trim().ToUpper(),
                                                                     Adres2 = order_item.billing_address.street.Length > 50 ? string.Join(" ", order_item.billing_address.street.Split(' ').SkipWhile((s, i) => string.Join(" ", order_item.billing_address.street.Split(' ').Take(i + 1)).Length <= 50).TakeWhile((s, i) => string.Join(" ", order_item.billing_address.street.Split(' ').SkipWhile((s, j) => string.Join(" ", order_item.billing_address.street.Split(' ').Take(j + 1)).Length <= 50).Take(i + 1)).Length <= 50)).Trim().ToUpper() : string.Empty,
@@ -2287,10 +2291,13 @@ internal class MainLoop {
                                                                 },
                                                                 SevkYeri = new SevkYeriSip() {
                                                                     HesapNo = string.Empty,
-                                                                    Adi = order_item.shipping_address.firstname.Trim().ToUpper(),
-                                                                    Soyadi = order_item.shipping_address.lastname.Trim().ToUpper(),
+                                                                    Adi = order_item.shipping_address.firstname.Length > 50
+                                                                        ? order_item.shipping_address.firstname[..50].Trim().ToUpper()
+                                                                        : order_item.shipping_address.firstname.Trim().ToUpper(),
+                                                                    Soyadi = order_item.shipping_address.lastname.Length > 50
+                                                                        ? order_item.shipping_address.lastname[..50].Trim().ToUpper()
+                                                                        : order_item.shipping_address.lastname.Trim().ToUpper(),
                                                                     Unvani = order_item.shipping_address.firstname.Trim().ToUpper() + " " + order_item.shipping_address.lastname.Trim().ToUpper(),
-
                                                                     Adres1 = order_item.shipping_address.street.Length > 50 ? string.Join(" ", order_item.shipping_address.street.Split(' ').TakeWhile((s, i) => string.Join(" ", order_item.shipping_address.street.Split(' ').Take(i + 1)).Length <= 50)).Trim().ToUpper() : order_item.shipping_address.street.Trim().ToUpper(),
                                                                     Adres2 = order_item.shipping_address.street.Length > 50 ? string.Join(" ", order_item.shipping_address.street.Split(' ').SkipWhile((s, i) => string.Join(" ", order_item.shipping_address.street.Split(' ').Take(i + 1)).Length <= 50).TakeWhile((s, i) => string.Join(" ", order_item.shipping_address.street.Split(' ').SkipWhile((s, j) => string.Join(" ", order_item.shipping_address.street.Split(' ').Take(j + 1)).Length <= 50).Take(i + 1)).Length <= 50)).Trim().ToUpper() : string.Empty,
                                                                     Adres3 = order_item.shipping_address.street.Length > 100 ? string.Join(" ", order_item.shipping_address.street.Split(' ').SkipWhile((s, i) => string.Join(" ", order_item.shipping_address.street.Split(' ').Take(i + 1)).Length <= 100)).Trim().ToUpper() : string.Empty,

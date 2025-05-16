@@ -14,6 +14,7 @@ namespace Merchanter {
             }
             var pro_json = new {
                 id = _id,
+                name = _product.name,
                 barcode = _product.barcode,
                 price1 = _product.price,
                 discountType = _product.special_price > 0 ? 0 : 1,

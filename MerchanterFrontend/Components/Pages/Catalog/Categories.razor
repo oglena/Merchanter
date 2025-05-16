@@ -10,7 +10,6 @@
 
 <FluentLabel Typo="Typography.H1">
     <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size28.TextBulletListSquare())" />&nbsp;Kategoriler
-
 </FluentLabel>
 <FluentLayout Orientation="Orientation.Vertical" Style="padding-top:10px;">
     @if (HttpContextAccessor?.HttpContext?.User.Identity != null && HttpContextAccessor.HttpContext.User.Identity.IsAuthenticated) {
