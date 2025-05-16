@@ -1,0 +1,239 @@
+﻿@rendermode InteractiveServer
+@using MerchanterFrontend.Components.Pages.Catalog
+@using System.Text.Json.Serialization
+@using Newtonsoft.Json
+@using System.Text
+@inject IPostHelper PostHelper
+@inject IHttpContextAccessor HttpContextAccessor
+@inject NavigationManager NavigationManager
+@inject IDialogService DialogService
+
+<FluentGrid Justify="JustifyContent.SpaceBetween" Spacing="2">
+    @if (!string.IsNullOrWhiteSpace(page_message)) {
+        <FluentGridItem xs="12">
+            <AlertComponent page_message="@page_message" message_status="@message_status" />
+        </FluentGridItem>
+    }
+    @if (SelectedCategory != null && ParentCategory != null) {
+        <FluentGridItem xs="12">
+            <FluentToolbar style="width:100%;border-radius:5px;padding:5px !important;" Orientation="Orientation.Horizontal">
+                <FluentIcon Value="@(new Icons.Filled.Size20.TextBulletListSquare())" Slot="start" Color="Color.Accent" />
+                <FluentButton Appearance="Appearance.Outline" OnClick="NewCategoryMode" IconStart="@(new Icons.Regular.Size20.New())">Yeni Alt Kategori</FluentButton>
+                <FluentButton Appearance="Appearance.Outline" OnClick="DeleteCategory" IconStart="@(new Icons.Regular.Size20.Delete())" Style="margin-right:10px;" slot="end">Sil</FluentButton>
+                <FluentButton Appearance="Appearance.Outline" OnClick="UpdateCategory" IconStart="@(new Icons.Regular.Size20.Save())" slot="end">Güncelle</FluentButton>
+            </FluentToolbar>
+        </FluentGridItem>
+        <FluentGridItem xs="12">
+            <br />
+            <span>Kategori düzenleniyor:&nbsp;<strong>@SelectedCategory.category_name</strong></span>
+        </FluentGridItem>
+        <FluentGridItem xs="12">
+            <FluentEditForm FormName="edit_category" Model="SelectedCategory" Style="margin-top:15px;">
+                <FluentGrid Justify="JustifyContent.FlexStart">
+                    <FluentGridItem xs="12">
+                        <FluentNumberField @bind-Value="@(SelectedCategory.source_category_id)" Label="Kaynak Kategori Id" Disabled="true"></FluentNumberField>
+                    </FluentGridItem>
+                    <FluentGridItem xs="12">
+                        <FluentTextField Label="Üst Kategori" @bind-Value="ParentCategory.category_name" Required="true" Disabled="true">
+                            <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+                        </FluentTextField>
+                    </FluentGridItem>
+                    <FluentGridItem xs="12">
+                        <FluentTextField Label="Kategori İsmi" @bind-Value="SelectedCategory.category_name" Required="true">
+                            <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+                        </FluentTextField>
+                    </FluentGridItem>
+                    <FluentGridItem xs="12" Justify="JustifyContent.FlexStart">
+                        <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Status())" />&nbsp;&nbsp;
+                        <FluentSwitch @bind-Value="@SelectedCategory.is_active" Label="Kategori Durumu">
+                            <span slot="checked-message">Aktif</span>
+                            <span slot="unchecked-message">Pasif</span>
+                        </FluentSwitch>
+                    </FluentGridItem>
+                </FluentGrid>
+            </FluentEditForm>
+        </FluentGridItem>
+    }
+    else if (SelectedCategory == null && ParentCategory != null) {
+        <FluentGridItem xs="12">
+            <FluentToolbar style="width:100%;border-radius:5px;padding:5px !important;" Orientation="Orientation.Horizontal">
+                <FluentIcon Value="@(new Icons.Filled.Size20.TextBulletListSquare())" Slot="start" Color="Color.Accent" />
+                <FluentButton Appearance="Appearance.Outline" OnClick="NewCategory" IconStart="@(new Icons.Regular.Size20.Save())" slot="end">Yeni Kategori Kaydet</FluentButton>
+            </FluentToolbar>
+        </FluentGridItem>
+        <FluentGridItem xs="12">
+            <br />
+            <span><strong>@ParentCategory.category_name</strong> için yeni alt kategori oluşturuluyor</span>
+        </FluentGridItem>
+        <FluentGridItem xs="12">
+            <FluentEditForm FormName="new_category" Model="DummyCategory" Style="margin-top:15px;">
+                <FluentGrid Justify="JustifyContent.FlexStart">
+                    <FluentGridItem xs="12">
+                        <FluentNumberField @bind-Value="@(DummyCategory.source_category_id)" Label="Kaynak Kategori Id" Disabled="true"></FluentNumberField>
+                    </FluentGridItem>
+                    <FluentGridItem xs="12">
+                        <FluentTextField Label="Üst Kategori" @bind-Value="ParentCategory.category_name" Required="true" Disabled="true">
+                            <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+                        </FluentTextField>
+                    </FluentGridItem>
+                    <FluentGridItem xs="12">
+                        <FluentTextField Label="Kategori İsmi" @bind-Value="DummyCategory.category_name" Required="true">
+                            <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+                        </FluentTextField>
+                    </FluentGridItem>
+                    <FluentGridItem xs="12" Justify="JustifyContent.FlexStart">
+                        <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size20.Status())" />&nbsp;&nbsp;
+                        <FluentSwitch @bind-Value="@DummyCategory.is_active" Label="Kategori Durumu">
+                            <span slot="checked-message">Aktif</span>
+                            <span slot="unchecked-message">Pasif</span>
+                        </FluentSwitch>
+                    </FluentGridItem>
+                </FluentGrid>
+            </FluentEditForm>
+        </FluentGridItem>
+    }
+    else {
+        <FluentGridItem xs="12">
+            <FluentToolbar style="width:100%;border-radius:5px;padding:5px !important;" Orientation="Orientation.Horizontal">
+                <FluentIcon Value="@(new Icons.Filled.Size20.TextBulletListSquare())" Slot="start" Color="Color.Accent" />
+                <FluentButton Appearance="Appearance.Outline" OnClick="NewCategoryMode" IconStart="@(new Icons.Regular.Size20.New())">Yeni Alt Kategori</FluentButton>
+            </FluentToolbar>
+        </FluentGridItem>
+        <FluentGridItem xs="12">
+            <br />
+            <h2>Lütfen bir <strong>kategori</strong> seçin!</h2>
+        </FluentGridItem>
+    }
+</FluentGrid>
+
+@code {
+    [Parameter]
+    public int customer_id { get; set; } = 0;
+    [Parameter]
+    public Func<Task> OnRefresh { get; set; } = default!;
+    public bool is_refreshing { get; set; } = false;
+    private string? page_message = "";
+    private string? message_status = "";
+    public Category? SelectedCategory { get; set; } = null;
+    public Category? ParentCategory { get; set; } = null;
+    private Category DummyCategory { get; set; } = new Category();
+
+    public async Task Refresh(Category? _category, Category? _parent) {
+        page_message = "";
+        message_status = "";
+        SelectedCategory = _category;
+        ParentCategory = _parent;
+        await Task.CompletedTask;
+        StateHasChanged();
+    }
+
+    public async Task NewCategoryMode() {
+        if (SelectedCategory != null) {
+            page_message = "";
+            message_status = "";
+            if (SelectedCategory.parent_id == 1)
+                SelectedCategory.category_name = "Ana Kategori";
+            await Refresh(null, SelectedCategory);
+        }
+        else
+            await Refresh(null, await GetDefaultCategory());
+    }
+
+    private async Task UpdateCategory() {
+        if (SelectedCategory != null && ParentCategory != null) {
+            var response = await PostHelper.Request<Category?>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                Classes.PostHelper.PostMethod.Put, Classes.PostHelper.PostDestination.Api,
+                "api/Category/SaveCategory",
+                new StringContent(JsonConvert.SerializeObject(SelectedCategory), Encoding.UTF8, "application/json")
+            );
+            if (response != null && response.Success && response.Data != null) {
+                SelectedCategory = response.Data;
+                page_message = "[" + DateTime.Now.ToString() + "] Kategori güncellendi.";
+                message_status = "işlem başarılı";
+                await Refresh(SelectedCategory, ParentCategory);
+                if (OnRefresh != null) {
+                    await OnRefresh.Invoke();
+                }
+            }
+            else {
+                page_message = "[" + DateTime.Now.ToString() + "] Kategori güncellenemedi.";
+                message_status = "işlem başarısız";
+            }
+        }
+    }
+
+    private async Task NewCategory() {
+        if (DummyCategory != null && ParentCategory != null) {
+            DummyCategory.parent_id = ParentCategory.id;
+            DummyCategory.customer_id = customer_id;
+            var response = await PostHelper.Request<Category?>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                Classes.PostHelper.PostMethod.Put, Classes.PostHelper.PostDestination.Api,
+                "api/Category/SaveCategory",
+                new StringContent(JsonConvert.SerializeObject(DummyCategory), Encoding.UTF8, "application/json")
+            );
+            if (response != null && response.Success && response.Data != null) {
+                SelectedCategory = response.Data;
+                page_message = "[" + DateTime.Now.ToString() + "] Kategori kaydedildi.";
+                message_status = "işlem başarılı";
+                await Refresh(SelectedCategory, ParentCategory);
+                DummyCategory = new Category();
+                if (OnRefresh != null) {
+                    await OnRefresh.Invoke();
+                }
+            }
+            else {
+                page_message = "[" + DateTime.Now.ToString() + "] Kategori kaydedilemedi.";
+                message_status = "işlem başarısız";
+            }
+        }
+    }
+
+    private async Task DeleteCategory() {
+        var dialog = await DialogService.ShowMessageBoxAsync(new DialogParameters<MessageBoxContent>() {
+                Content = new() {
+                    Title = "Emin Misiniz ?",
+                    MarkupMessage = new MarkupString("Seçtiğiniz <strong>kategori</strong> siliniyor."),
+                    Icon = new Icons.Regular.Size24.Delete(),
+                    IconColor = Color.Error,
+                },
+                PrimaryAction = "Sil",
+                SecondaryAction = "İptal",
+                Width = "250px",
+            });
+        var result = await dialog.Result;
+        if (!result.Cancelled) {
+            if (SelectedCategory != null) {
+                var response = await PostHelper.Request<bool>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                    Classes.PostHelper.PostMethod.Delete, Classes.PostHelper.PostDestination.Api,
+                    "api/Category/DeleteCategory",
+                    new StringContent(JsonConvert.SerializeObject(SelectedCategory), Encoding.UTF8, "application/json")
+                );
+                if (response != null && response.Success && response.Data) {
+                    SelectedCategory = null;
+                    ParentCategory = null;
+                    page_message = "[" + DateTime.Now.ToString() + "] Kategori silindi.";
+                    message_status = "işlem başarılı";
+                    await Refresh(null, null);
+                    if (OnRefresh != null) {
+                        await OnRefresh.Invoke();
+                    }
+                }
+                else {
+                    page_message = "[" + DateTime.Now.ToString() + "] Kategori silinemedi.";
+                    message_status = "işlem başarısız";
+                }
+            }
+        }
+    }
+
+    protected async Task<Category?> GetDefaultCategory() {
+        var response = await PostHelper.Request<Category>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+            Classes.PostHelper.PostMethod.Get, Classes.PostHelper.PostDestination.Api,
+            "api/Category/GetDefaultCategory", null);
+        if (response != null && response.Success && response.Data != null) {
+            response.Data.category_name = "Ana Kategori";
+            return response.Data;
+        }
+        return null;
+    }
+}

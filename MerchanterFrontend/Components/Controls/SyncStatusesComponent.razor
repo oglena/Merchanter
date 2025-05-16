@@ -177,14 +177,13 @@ else {
     public int customer_id { get; set; }
     [Parameter]
     public Func<Task> OnRefresh { get; set; } = default!;
-    public Customer? customer { get; set; }
+    private Customer? customer { get; set; }
     private string page_message = string.Empty;
     private string? message_status = null;
     public bool is_refreshing { get; set; } = false;
 
-    protected override async Task OnParametersSetAsync() {
-        if (int.TryParse(HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == Variables.customer_id)?.Value, out int CID)) {
-            customer_id = CID;
+    protected override async Task OnAfterRenderAsync(bool firstRender) {
+        if (firstRender) {
             await Refresh();
         }
     }

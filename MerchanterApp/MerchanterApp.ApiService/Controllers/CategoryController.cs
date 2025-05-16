@@ -38,10 +38,10 @@ namespace MerchanterApp.ApiService.Controllers {
             if (int.TryParse(_category.customer_id.ToString(), out customer_id) && customer_id > 0) {
                 Category? category = await categoryService.SaveCategory(customer_id, _category);
                 if (category != null) {
-                    return Ok(new BaseResponseModel<Category>() { Success = true, Data = category, ErrorMessage = "" });
+                    return Ok(new BaseResponseModel<Category?>() { Success = true, Data = category, ErrorMessage = "" });
                 }
                 else {
-                    return Ok(new BaseResponseModel<Category>() { Success = false, Data = null, ErrorMessage = "Error save category" });
+                    return Ok(new BaseResponseModel<Category?>() { Success = false, Data = null, ErrorMessage = "Error save category" });
                 }
             }
             return BadRequest("Invalid customer ID.");
@@ -56,6 +56,17 @@ namespace MerchanterApp.ApiService.Controllers {
                 return Ok(new BaseResponseModel<bool>() { Success = result, Data = result, ErrorMessage = result ? "" : "Error delete category" });
             }
             return BadRequest("Invalid customer ID.");
+        }
+
+        [HttpGet("GetCategory/{_category_id}")]
+        [Authorize]
+        public async Task<ActionResult<BaseResponseModel<Category?>>> GetCategory(int _category_id) {
+            int.TryParse(HttpContext.User.FindFirst("customerId")?.Value, out int customer_id);
+            if (customer_id > 0) {
+                var category = await categoryService.GetCategory(customer_id, _category_id);
+                return Ok(new BaseResponseModel<Category>() { Success = category != null, Data = category, ErrorMessage = category != null ? "" : "Error -1" });
+            }
+            return BadRequest();
         }
 
         [HttpGet("GetDefaultCategory")]

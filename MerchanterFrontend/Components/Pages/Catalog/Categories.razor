@@ -1,30 +1,46 @@
 ﻿@attribute [Authorize]
 @page "/Catalog/Categories"
+@using Newtonsoft.Json
+@using System.Text
+@inject IPostHelper PostHelper
 @inject IHttpContextAccessor HttpContextAccessor
 @inject NavigationManager NavigationManager
 
 <PageTitle>Katalog > Kategoriler | Merchanter</PageTitle>
 
-<FluentLabel Typo="Typography.H1"><FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size28.TextBulletListSquare())" />&nbsp;Kategoriler</FluentLabel>
+<FluentLabel Typo="Typography.H1">
+    <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size28.TextBulletListSquare())" />&nbsp;Kategoriler
+
+</FluentLabel>
 <FluentLayout Orientation="Orientation.Vertical" Style="padding-top:10px;">
     @if (HttpContextAccessor?.HttpContext?.User.Identity != null && HttpContextAccessor.HttpContext.User.Identity.IsAuthenticated) {
-        <FluentGrid Justify="JustifyContent.FlexStart">
-            <FluentGridItem lg="4" xs="12">
-                <CategoryTreeComponent customer_id="@customer_id" />
-            </FluentGridItem>
-            <FluentGridItem lg="8" xs="12">
-                <CategoriesComponent customer_id="@customer_id" />
-            </FluentGridItem>
-        </FluentGrid>
+            <FluentGrid Justify="JustifyContent.FlexStart">
+                <FluentGridItem lg="4" xs="12">
+                    <CategoryTreeComponent customer_id="@customer_id" @ref="categoryTreeComponent"
+                                           OnRefresh="@(() => categoryUpdateComponent?.Refresh(categoryTreeComponent?.SelectedCategory,categoryTreeComponent?.ParentCategory))"
+                                           OnNewCategory="OnNewCategory" />
+                </FluentGridItem>
+                <FluentGridItem lg="8" xs="12">
+                    <CategoryUpdateComponent customer_id="@customer_id" @ref="@categoryUpdateComponent"
+                                           OnRefresh="@(() => categoryTreeComponent?.Refresh())"/>
+                </FluentGridItem>
+            </FluentGrid>
     }
 </FluentLayout>
 
 @code {
     public int customer_id { get; set; } = 0;
+    private CategoryUpdateComponent? categoryUpdateComponent;
+    private CategoryTreeComponent? categoryTreeComponent;
 
     protected override void OnInitialized() {
         if (int.TryParse(HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == Variables.customer_id)?.Value, out int CID)) {
             customer_id = CID;
         }
+    }
+
+    public async Task OnNewCategory() {
+        await Task.CompletedTask;
+        StateHasChanged();
     }
 }

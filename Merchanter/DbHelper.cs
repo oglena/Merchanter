@@ -5299,7 +5299,7 @@ namespace Merchanter {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
                 int val = 0;
                 string _query = "UPDATE categories SET category_name=@category_name,is_active=@is_active,parent_id=@parent_id,source_category_id=@source_category_id " +
-                    "WHERE id=@id AND customer_id=@customer_id";
+                    "WHERE id=@id AND customer_id=@customer_id;";
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("id", _category.id));

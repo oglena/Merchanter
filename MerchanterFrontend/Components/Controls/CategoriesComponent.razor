@@ -130,16 +130,52 @@ else {
     }
 
     private async Task LoadCategories() {
-        categories = new List<Category>()
-                        {
-            new Category() { customer_id = customer_id, category_name= "Test1", id= 5, is_active = true, source_category_id = 123, parent_id = 1},
-            new Category() { customer_id = customer_id, category_name= "Test2", id= 2, is_active = true, source_category_id = 456, parent_id = 1},
-            new Category() { customer_id = customer_id, category_name= "Test3", id= 3, is_active = true, source_category_id = 789, parent_id = 1},
-            new Category() { customer_id = customer_id, category_name= "Test4", id= 4, is_active = true, source_category_id = 111, parent_id = 5},
+        try {
+            loading = true;
+            var apifilter = new ApiFilter() {
+                    Pager = new Pager() {
+                        ItemsPerPage = pagination.ItemsPerPage,
+                        CurrentPageIndex = pagination.CurrentPageIndex
+                    },
+                    Filters = new List<Filter<dynamic>>(),
+                };
+            if (!string.IsNullOrWhiteSpace(category_name_filter)) {
+                apifilter.Filters.Add(new Filter<dynamic>() {
+                        Field = "category_name",
+                        Operator = "LIKE",
+                        Value = "%" + category_name_filter + "%"
+                    });
+            }
+            if (category_is_active_filter != CategoryStatus.All) {
+                apifilter.Filters.Add(new Filter<dynamic>() {
+                        Field = "is_active",
+                        Value = category_is_active_filter == CategoryStatus.Active ? 1 : 0
+                    });
+            }
+            string json = JsonConvert.SerializeObject(apifilter);
+            var response = await PostHelper.Request<List<Category>>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                Classes.PostHelper.PostMethod.Post, Classes.PostHelper.PostDestination.Api,
+                "api/Category/GetCategories",
+                new StringContent(json, Encoding.UTF8, "application/json")
+                );
 
-        }.AsQueryable();
-        await pagination.SetTotalItemCountAsync(4);
-        StateHasChanged();
+            if (response != null && response.Success && response.Data != null) {
+                categories = response.Data.AsQueryable();
+                if (response.ApiFilter != null) {
+                    await pagination.SetTotalItemCountAsync(response.ApiFilter.TotalCount.GetValueOrDefault());
+                }
+            }
+        }
+        catch (Exception ex) {
+            Console.WriteLine(ex.Message);
+            categories = null;
+        }
+        finally {
+            page_message = "";
+            message_status = "";
+            loading = false;
+            StateHasChanged();
+        }
     }
 
     private void OnCategoryActiveFilterChanged(string? _status) {

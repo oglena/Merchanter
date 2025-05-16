@@ -8,6 +8,7 @@ namespace MerchanterApp.ApiService.Services {
         Task<Category?> SaveCategory(int _customer_id, Category _category);
         Task<bool> DeleteCategory(int _customer_id, Category _category);
         Task<Category> GetDefaultCategory(int _customer_id);
+        Task<Category?> GetCategory(int _customer_id, int _category_id);
     }
 
     public class CategoryService(ICategoryRepository categoryRepository) : ICategoryService {
@@ -37,6 +38,10 @@ namespace MerchanterApp.ApiService.Services {
 
         public async Task<Category> GetDefaultCategory(int _customer_id) {
             return await categoryRepository.GetDefaultCategory(_customer_id);
+        }
+
+        public async Task<Category?> GetCategory(int _customer_id, int _category_id) {
+            return await categoryRepository.GetCategory(_customer_id, _category_id);
         }
     }
 }

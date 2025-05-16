@@ -31,7 +31,6 @@
             </FluentToolbar>
         </FluentGridItem>
     </FluentGrid>
-
     <FluentGridItem xs="12">
         <FluentPaginator State="@pagination" CurrentPageIndexChanged="Refresh">
             <SummaryTemplate>
@@ -48,7 +47,8 @@
                 <strong>@(pagination.CurrentPageIndex + 1)</strong> / <strong>@(pagination.LastPageIndex + 1)</strong> sayfa
             </PaginationTextTemplate>
         </FluentPaginator>
-
+    </FluentGridItem>
+    <FluentGridItem xs="12">
         <FluentDataGrid Id="logs-grid" Items="@customer_logs" RowSize="DataGridRowSize.Small" GenerateHeader="GenerateHeaderOption.Sticky"
                         TGridItem="Log" Virtualize="true" Loading="loading" DisplayMode="DataGridDisplayMode.Grid" ShowHover="true">
             <ChildContent>
@@ -73,22 +73,6 @@
                 </FluentLayout>
             </LoadingContent>
         </FluentDataGrid>
-
-        <FluentPaginator State="@pagination" CurrentPageIndexChanged="Refresh">
-            <SummaryTemplate>
-                <div style="display:flex;align-items:center;">
-                    <FluentSelect TOption="int" Width="120px" ValueChanged="@(async (e) => await OnItemsPerPageChanged(e))">
-                        <FluentOption Value="10" Selected="@(pagination.ItemsPerPage == 10)">10 adet</FluentOption>
-                        <FluentOption Value="20" Selected="@(pagination.ItemsPerPage == 20)">20 adet</FluentOption>
-                        <FluentOption Value="50" Selected="@(pagination.ItemsPerPage == 50)">50 adet</FluentOption>
-                    </FluentSelect>
-                    <FluentLabel Typo="Typography.Body">&nbsp;&nbsp;Toplam: <strong>@(pagination.TotalItemCount ?? 0)</strong> girdi</FluentLabel>
-                </div>
-            </SummaryTemplate>
-            <PaginationTextTemplate>
-                <strong>@(pagination.CurrentPageIndex + 1)</strong> / <strong>@(pagination.LastPageIndex + 1)</strong> sayfa
-            </PaginationTextTemplate>
-        </FluentPaginator>
     </FluentGridItem>
 }
 else {
@@ -98,14 +82,16 @@ else {
 @code {
     [Parameter]
     public int customer_id { get; set; } = 0;
-    bool loading = false;
-    IQueryable<Log>? customer_logs { get; set; } = null;
-    string messageFilter = ""; string workerFilter = ""; string titleFilter = ""; DateTime? dateFilter = null;
-    public PaginationState pagination = new PaginationState() { ItemsPerPage = 20 };
+    public bool loading = false;
+    private IQueryable<Log>? customer_logs { get; set; } = null;
+    private string messageFilter = ""; 
+    private string workerFilter = ""; 
+    private string titleFilter = ""; 
+    private DateTime? dateFilter = null;
+    private PaginationState pagination = new PaginationState() { ItemsPerPage = 20 };
 
-    protected override async Task OnParametersSetAsync() {
-        if (int.TryParse(HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == Variables.customer_id)?.Value, out int CID)) {
-            customer_id = CID;
+    protected override async Task OnAfterRenderAsync(bool firstRender) {
+        if (firstRender) {
             await Refresh();
         }
     }
