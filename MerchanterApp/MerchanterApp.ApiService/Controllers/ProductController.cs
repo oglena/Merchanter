@@ -34,13 +34,13 @@ namespace MerchanterApp.ApiService.Controllers {
 
         [HttpGet("GetProduct/{PID}")]
         [Authorize]
-        public async Task<ActionResult<BaseResponseModel<Product>>> GetProduct(string PID) {
+        public async Task<ActionResult<BaseResponseModel<Product?>>> GetProduct(string PID) {
             int.TryParse(HttpContext.User.FindFirst("customerId")?.Value, out int customer_id);
             if (customer_id > 0) {
                 if (int.TryParse(PID, out int product_id) && product_id > 0) {
                     var product = await productService.GetProduct(customer_id, product_id);
 
-                    return Ok(new BaseResponseModel<Product>() { Success = product != null, Data = product ?? new(), ErrorMessage = product != null ? "" : "Error -1", ApiFilter = null });
+                    return Ok(new BaseResponseModel<Product?>() { Success = product != null, Data = product ?? null, ErrorMessage = product != null ? "" : "Error -1", ApiFilter = null });
                 }
             }
             return BadRequest();

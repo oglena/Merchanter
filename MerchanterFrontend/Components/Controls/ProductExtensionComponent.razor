@@ -1,0 +1,56 @@
+﻿@rendermode InteractiveServer
+@using System.Text.Json.Serialization
+@using Newtonsoft.Json
+@using System.Text
+@inject IPostHelper PostHelper
+@inject IHttpContextAccessor HttpContextAccessor
+
+@if (brand_options != null) {
+    <FluentGridItem xs="12">
+        <FluentCombobox Label="Marka" Items="@brand_options" TOption="Option<Brand>"
+                        OptionText="@(b=>b.Text)"
+                        @bind-Value="@product_extension.brand.brand_name"
+                        Autocomplete="ComboboxAutocomplete.Both"
+                        Placeholder="Marka seçiniz..." Required="true" Height="300px" Style="width:100%;">
+        </FluentCombobox>
+    </FluentGridItem>
+}
+
+@code {
+    [Parameter]
+    public ProductExtension product_extension { get; set; }
+    public bool loading = true;
+    public List<Option<Brand>>? brand_options { get; set; } = null;
+
+    protected override async Task OnParametersSetAsync() {
+        if (brand_options == null) {
+            await LoadBrands();
+        }
+    }
+
+    private async Task LoadBrands() {
+        try {
+            loading = true;
+            var apifilter = new ApiFilter() { Pager = new Pager() { ItemsPerPage = int.MaxValue } };
+            string json = JsonConvert.SerializeObject(apifilter);
+            var response = await PostHelper.Request<List<Brand>>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                Classes.PostHelper.PostMethod.Post, Classes.PostHelper.PostDestination.Api,
+                "api/Brand/GetBrands",
+                new StringContent(json, Encoding.UTF8, "application/json")
+                );
+            if (response != null && response.Success && response.Data != null) {
+                brand_options = response.Data
+                    .Select(b => new Option<Brand> { Value = b, Text = b.brand_name })
+                    .ToList();
+            }
+        }
+        catch (Exception ex) {
+            Console.WriteLine(ex.Message);
+            brand_options = null;
+        }
+        finally {
+            loading = false;
+            StateHasChanged();
+        }
+    }
+}

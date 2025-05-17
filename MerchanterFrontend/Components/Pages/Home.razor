@@ -17,6 +17,10 @@
         }
     </FluentLayout>
 }
+else {
+    <FluentLabel>Ürün düzenleme sayfasına erişim izniniz yok.</FluentLabel>
+}
+
 @code {
     public int customer_id { get; set; } = 0;
     private ServerComponent? ServerComponentRef;

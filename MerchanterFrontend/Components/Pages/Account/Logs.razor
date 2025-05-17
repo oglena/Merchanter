@@ -9,6 +9,9 @@
     @if (HttpContextAccessor?.HttpContext?.User.Identity != null && HttpContextAccessor.HttpContext.User.Identity.IsAuthenticated) {
         <LogListComponent customer_id="@customer_id" />
     }
+    else {
+        <FluentLabel>Olay günlükleri sayfasına erişim izniniz yok.</FluentLabel>
+    }
 </FluentLayout>
 
 @code {

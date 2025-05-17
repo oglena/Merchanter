@@ -12,6 +12,9 @@
     @if (HttpContextAccessor?.HttpContext?.User.Identity != null && HttpContextAccessor.HttpContext.User.Identity.IsAuthenticated) {
         <BrandListComponent customer_id="@customer_id" />
     }
+    else {
+        <FluentLabel>Markalar sayfasına erişim izniniz yok.</FluentLabel>
+    }
 </FluentLayout>
 
 @code {

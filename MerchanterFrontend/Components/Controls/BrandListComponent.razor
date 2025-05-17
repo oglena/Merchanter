@@ -150,6 +150,8 @@ else {
             if (response != null && response.Success && response.Data != null) {
                 brands = response.Data.AsQueryable();
                 if (response.ApiFilter != null) {
+                    page_message = "";
+                    message_status = "";
                     await pagination.SetTotalItemCountAsync(response.ApiFilter.TotalCount.GetValueOrDefault());
                 }
             }
@@ -159,8 +161,6 @@ else {
             brands = null;
         }
         finally {
-            page_message = "";
-            message_status = "";
             loading = false;
             StateHasChanged();
         }

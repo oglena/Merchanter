@@ -12,7 +12,7 @@ namespace Merchanter.Classes {
     }
 
     public class Pager {
-        public int CurrentPageIndex { get; set; } = 1;
+        public int CurrentPageIndex { get; set; } = 0;
         public int ItemsPerPage { get; set; } = 25;
     }
 
