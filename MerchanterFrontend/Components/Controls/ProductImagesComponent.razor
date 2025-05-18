@@ -1,0 +1,27 @@
+﻿@rendermode InteractiveServer
+@using System.Text.Json.Serialization
+@using Newtonsoft.Json
+@using System.Text
+@inject IPostHelper PostHelper
+@inject IHttpContextAccessor HttpContextAccessor
+
+@if (product_images.Count > 0) {
+    @foreach (var item in product_images) {
+        <FluentGridItem xs="12" Style="margin-bottom: 10px;">
+            <FluentTextField Label="Ürün Resmi (nyd)" @bind-Value="@item.image_url" Required="true" Disabled="true">
+                <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+            </FluentTextField>
+        </FluentGridItem>
+    }
+
+}
+else {
+    <FluentGridItem xs="12" Style="margin-bottom: 10px;">
+        <span style="color: red;">Resim bulunamadı.</span>
+    </FluentGridItem>
+}
+
+@code {
+    [Parameter]
+    public List<ProductImage> product_images { get; set; }
+}

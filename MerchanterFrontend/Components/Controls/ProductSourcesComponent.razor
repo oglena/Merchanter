@@ -1,0 +1,26 @@
+﻿@rendermode InteractiveServer
+@using System.Text.Json.Serialization
+@using Newtonsoft.Json
+@using System.Text
+@inject IPostHelper PostHelper
+@inject IHttpContextAccessor HttpContextAccessor
+
+<FluentGrid Justify="JustifyContent.FlexStart" Style="">
+    @foreach (var item in product_sources) {
+        <FluentGridItem xs="6" Style="margin-bottom: 10px;">
+            <FluentTextField Label="Ürün Kaynağı (nyd)" @bind-Value="@item.name" Required="true" Disabled="true">
+                <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+            </FluentTextField>
+        </FluentGridItem>
+        <FluentGridItem xs="6" Style="margin-bottom: 10px;">
+            <FluentNumberField Label="Ürün Miktarı (nyd)" @bind-Value="@item.qty" Required="true" Disabled="true">
+                <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+            </FluentNumberField>
+        </FluentGridItem>
+    }
+</FluentGrid>
+
+@code {
+    [Parameter]
+    public List<ProductSource> product_sources { get; set; }
+}

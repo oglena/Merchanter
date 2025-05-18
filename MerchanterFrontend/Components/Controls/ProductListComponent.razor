@@ -15,7 +15,7 @@
         <AlertComponent page_message="@page_message" message_status="@message_status" />
     </FluentGridItem>
 }
-@if (customer_id > 0 && products != null) {
+@if (customer_id > 0 && !loading && products != null) {
     <FluentGrid Justify="JustifyContent.SpaceBetween" Spacing="2">
         <FluentGridItem xs="12">
             <FluentToolbar style="width:100%;border-radius:5px;padding:5px !important;" Orientation="Orientation.Horizontal">

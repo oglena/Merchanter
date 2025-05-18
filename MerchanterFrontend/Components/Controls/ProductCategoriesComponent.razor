@@ -5,7 +5,7 @@
 @inject IPostHelper PostHelper
 @inject IHttpContextAccessor HttpContextAccessor
 
-@if (categories != null) {
+@if (!loading && categories != null) {
     <FluentGrid Justify="JustifyContent.SpaceBetween" Spacing="2">
         <FluentGridItem xs="12">
             <FluentTreeView Items="@Items?.AsQueryable()">
@@ -96,11 +96,12 @@ else {
                     Filters = new List<Filter<dynamic>>(),
                 };
             string json = JsonConvert.SerializeObject(apifilter);
-            var response = await PostHelper.Request<List<Category>>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+            var response = await PostHelper.Request<List<Category>>(
+                HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
                 Classes.PostHelper.PostMethod.Post, Classes.PostHelper.PostDestination.Api,
                 "api/Category/GetCategories",
                 new StringContent(json, Encoding.UTF8, "application/json")
-                );
+            );
 
             var treeItem = new List<TreeViewItem>();
             if (response != null && response.Success && response.Data != null) {
@@ -112,18 +113,20 @@ else {
                     var categoryLookup = categories.GroupBy(c => c.parent_id)
                                                    .ToDictionary(g => g.Key, g => g.ToList());
 
-                    // Local function to build tree recursively (iterative for stack safety)
+                    // Use a non-blocking, iterative approach to build the tree
                     List<TreeViewItem> BuildTree(int parentId) {
                         var result = new List<TreeViewItem>();
                         if (!categoryLookup.TryGetValue(parentId, out var children))
                             return result;
+
                         foreach (var child in children) {
                             var item = new TreeViewItem {
                                     Id = child.id.ToString(),
                                     Text = child.category_name + (!child.is_active ? " (pasif)" : ""),
                                     Expanded = false,
-                                    Items = BuildTree(child.id),
                                 };
+                            // Recursively build children
+                            item.Items = BuildTree(child.id);
                             if (product_extension.categories.FirstOrDefault(x => x.id.ToString() == item.Id) != null)
                                 SelectedItems.Add(item);
                             result.Add(item);
@@ -141,7 +144,7 @@ else {
             return treeItem;
         }
         catch (Exception ex) {
-            Console.WriteLine(ex.Message);
+            Trace.WriteLine(ex.Message);
             categories = null;
             return new List<TreeViewItem>();
         }

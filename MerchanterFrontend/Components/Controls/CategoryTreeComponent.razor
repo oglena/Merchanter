@@ -127,7 +127,7 @@ else {
             return treeItem;
         }
         catch (Exception ex) {
-            Console.WriteLine(ex.Message);
+            Trace.WriteLine(ex.Message);
             categories = null;
             return new List<TreeViewItem>();
         }
