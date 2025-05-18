@@ -29,67 +29,87 @@
                         <FluentIcon Value="@(new Icons.Filled.Size20.TetrisApp())" Slot="start" Color="Color.Accent" />
                         <FluentButton Appearance="Appearance.Outline" OnClick="@(() => GotoProducts())" Disabled="@loading" IconStart="@(new Icons.Regular.Size20.Backspace())">Geri</FluentButton>
                         <FluentBadge><b>Id:</b>&nbsp;@product.id</FluentBadge>
+                        <FluentBadge>
+                            <b>Tipi:</b>&nbsp;@switch (product_type) {
+                                case Product.ProductTypes.SIMPLE:
+                                    <span>Normal</span>
+                                    break;
+                                case Product.ProductTypes.CONFIGURABLE:
+                                    <span>Ayarlanabilir</span>
+                                    break;
+                                case Product.ProductTypes.GROUPED:
+                                    <span>Grup</span>
+                                    break;
+                                case Product.ProductTypes.BUNDLE:
+                                    <span>Bundle</span>
+                                    break;
+                            }
+                        </FluentBadge>
                         <FluentBadge><b>Son güncelleme:</b>&nbsp;@product.update_date.ToString("MM.dd.yyyy HH:mm:ss")</FluentBadge>
                         <FluentButton Appearance="Appearance.Outline" Disabled="@loading" Loading="@loading" IconStart="@(new Icons.Regular.Size20.Save())" Slot="end">Kaydet</FluentButton>
                     </FluentToolbar>
                 </FluentGridItem>
-                <FluentGridItem lg="8" xs="12">
-                    <FluentEditForm Model="@product">
-                        <FluentGrid Justify="JustifyContent.FlexStart">
-                            <FluentGridItem xs="12">
-                                <FluentTextField Label="Ürün Adı" @bind-Value="@product.name" Autofocus="true" Placeholder="Ürün adı boş olamaz..." Spellcheck="true" Required="true" Style="width:100%;">
-                                    <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
-                                </FluentTextField>
-                            </FluentGridItem>
-                            <FluentGridItem xs="12">
-                                <FluentTextField Label="Stok Kodu" @bind-Value="@product.sku" Placeholder="Stok kodu boş olamaz..." Required="true" Style="width:100%;">
-                                    <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
-                                </FluentTextField>
-                            </FluentGridItem>
-                            <FluentGridItem xs="12">
-                                <FluentTextField Label="Barkod" @bind-Value="@product.barcode" Required="false" Style="width:100%;">
-                                    <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
-                                </FluentTextField>
-                            </FluentGridItem>
-                            <FluentGridItem xs="8">
-                                <FluentNumberField Label="Liste Fiyatı" @bind-Value="@product.price" Required="true" Style="width:100%;">
-                                    <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
-                                </FluentNumberField>
-                            </FluentGridItem>
-                            <FluentGridItem xs="4">
-                                <FluentSelect Label="Kur" TOption="string" @bind-Value="@product.currency" Required="true" Style="width:100%;">
-                                    <FluentOption Value="TRY" Selected="@(product.currency == "TRY")">TRY (₺)</FluentOption>
-                                    <FluentOption Value="USD" Selected="@(product.currency == "USD")">USD ($)</FluentOption>
-                                    <FluentOption Value="EUR" Selected="@(product.currency == "EUR")">EUR (€)</FluentOption>
-                                </FluentSelect>
-                            </FluentGridItem>
-                            <FluentGridItem xs="12">
-                                <FluentNumberField Label="Satış Fiyatı" @bind-Value="@product.special_price" Required="false" Style="width:100%;">
-                                    <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
-                                </FluentNumberField>
-                            </FluentGridItem>
-                            <FluentGridItem xs="12">
-                                <FluentNumberField Label="Özel Fiyat" @bind-Value="@product.custom_price" Required="false" Style="width:100%;">
-                                    <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
-                                </FluentNumberField>
-                            </FluentGridItem>
-                            <FluentGridItem xs="4" Justify="JustifyContent.FlexEnd">
-                                <FluentSwitch Label="Vergi Dahil Mi?" @bind-Value="@product.tax_included">
-                                    <span slot="checked-message">Evet</span>
-                                    <span slot="unchecked-message">Hayır</span>
-                                </FluentSwitch>
-                            </FluentGridItem>
-                            <FluentGridItem xs="8">
-                                <FluentNumberField Label="Vergi (%)" @bind-Value="@product.tax" Required="true" Style="width:100%;">
-                                    <FluentIcon Value="@(new Icons.Regular.Size20.TagPercent())" Color="@Color.Neutral" Slot="start" />
-                                </FluentNumberField>
-                            </FluentGridItem>
-                        </FluentGrid>
-                    </FluentEditForm>
-                </FluentGridItem>
-                <FluentGridItem lg="4" xs="12">
-                    <ProductExtensionComponent product_extension="@product.extension"></ProductExtensionComponent>
-                </FluentGridItem>
+                <FluentEditForm Model="@product">
+                    <FluentGrid Justify="JustifyContent.SpaceBetween" Spacing="2">
+                        <FluentGridItem lg="8" xs="12">
+                            <FluentGrid Justify="JustifyContent.FlexStart">
+                                <FluentGridItem xs="12">
+                                    <FluentTextField Label="Ürün Adı" @bind-Value="@product.name" Placeholder="Ürün adı boş olamaz..." Spellcheck="true" Required="true" Style="width:100%;">
+                                        <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+                                    </FluentTextField>
+                                </FluentGridItem>
+                                <FluentGridItem xs="12">
+                                    <FluentTextField Label="Stok Kodu" @bind-Value="@product.sku" Placeholder="Stok kodu boş olamaz..." Required="true" Style="width:100%;">
+                                        <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+                                    </FluentTextField>
+                                </FluentGridItem>
+                                <FluentGridItem xs="12">
+                                    <FluentTextField Label="Barkod" @bind-Value="@product.barcode" Required="false" Style="width:100%;">
+                                        <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+                                    </FluentTextField>
+                                </FluentGridItem>
+                                <FluentGridItem xs="8">
+                                    <FluentNumberField Label="Liste Fiyatı" @bind-Value="@product.price" Required="true" Style="width:100%;">
+                                        <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+                                    </FluentNumberField>
+                                </FluentGridItem>
+                                <FluentGridItem xs="4">
+                                    <FluentSelect Label="Kur" TOption="string" @bind-Value="@product.currency" Required="true" Style="width:100%;">
+                                        <FluentOption Value="TRY" Selected="@(product.currency == "TRY")">TRY (₺)</FluentOption>
+                                        <FluentOption Value="USD" Selected="@(product.currency == "USD")">USD ($)</FluentOption>
+                                        <FluentOption Value="EUR" Selected="@(product.currency == "EUR")">EUR (€)</FluentOption>
+                                    </FluentSelect>
+                                </FluentGridItem>
+                                <FluentGridItem xs="12">
+                                    <FluentNumberField Label="Satış Fiyatı" @bind-Value="@product.special_price" Required="false" Style="width:100%;">
+                                        <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+                                    </FluentNumberField>
+                                </FluentGridItem>
+                                <FluentGridItem xs="12">
+                                    <FluentNumberField Label="Özel Fiyat" @bind-Value="@product.custom_price" Required="false" Style="width:100%;">
+                                        <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+                                    </FluentNumberField>
+                                </FluentGridItem>
+                                <FluentGridItem xs="4" Justify="JustifyContent.FlexEnd">
+                                    <FluentSwitch Label="Vergi Dahil Mi?" Value="@product.tax_included" ValueChanged="@(async (bool val) => TaxChanged(val))">
+                                        <span slot="checked-message">Evet</span>
+                                        <span slot="unchecked-message">Hayır</span>
+                                    </FluentSwitch>
+                                </FluentGridItem>
+                                <FluentGridItem xs="8">
+                                    <FluentNumberField Label="Vergi (%)" @bind-Value="@product.tax" Required="true" Style="width:100%;">
+                                        <FluentIcon Value="@(new Icons.Regular.Size20.TagPercent())" Color="@Color.Neutral" Slot="start" />
+                                    </FluentNumberField>
+                                </FluentGridItem>
+                            </FluentGrid>
+                        </FluentGridItem>
+                        <FluentGridItem lg="4" xs="12">
+                            <FluentGrid Justify="JustifyContent.FlexStart">
+                                <ProductExtensionComponent product_extension="@product.extension"></ProductExtensionComponent>
+                            </FluentGrid>
+                        </FluentGridItem>
+                    </FluentGrid>
+                </FluentEditForm>
             </FluentGrid>
         </FluentLayout>
     }
@@ -121,7 +141,8 @@ else {
     public bool loading = true;
     private string? page_message = "";
     private string? message_status = "";
-    public Product? product { get; set; } = null;
+    private Product? product { get; set; } = null;
+    private Product.ProductTypes? product_type { get; set; } = null;
 
     protected override void OnInitialized() {
         if (int.TryParse(HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == Variables.customer_id)?.Value, out int CID)) {
@@ -148,7 +169,10 @@ else {
                 Classes.PostHelper.PostMethod.Get, Classes.PostHelper.PostDestination.Api,
                 $"api/Product/GetProduct/{_product_id}", null);
             if (response != null && response.Success && response.Data != null) {
+                page_message = "";
+                message_status = "";
                 product = response.Data;
+                product_type = product.type;
             }
         }
         catch (Exception ex) {
@@ -158,9 +182,24 @@ else {
             message_status = "işlem başarısız";
         }
         finally {
-            page_message = "";
-            message_status = "";
             loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void TaxChanged(bool val) {
+        if (product != null) {
+            product.tax_included = val;
+            if (product.tax_included) {
+                product.price = product.price * (1 + (product.tax / 100m));
+                product.special_price = product.special_price * (1 + (product.tax / 100m));
+                product.custom_price = product.custom_price * (1 + (product.tax / 100m));
+            }
+            else {
+                product.price = product.price / (1 + (product.tax / 100m));
+                product.special_price = product.special_price / (1 + (product.tax / 100m));
+                product.custom_price = product.custom_price / (1 + (product.tax / 100m));
+            }
             StateHasChanged();
         }
     }

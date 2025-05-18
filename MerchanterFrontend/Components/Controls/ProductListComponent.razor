@@ -66,7 +66,8 @@
                     </PropertyColumn>
                     <TemplateColumn Title="Stok Bilgileri" Align="Align.Start" Width="200px">
                         <b>Stok Kodu:&nbsp;</b><span>@(context.sku)</span><br />
-                        <b>Barkod:&nbsp;</b><span>@(context.barcode)</span>
+                        <b>Barkod:&nbsp;</b><span>@(context.barcode)</span><br />
+                        <b>Marka:&nbsp;</b><span>@(context.extension.brand.brand_name)</span>
                     </TemplateColumn>
                     <TemplateColumn Title="Stok Adetleri" Align="Align.Start" Width="200px">
                         @foreach (var item in context.sources) {
@@ -121,23 +122,24 @@ else {
     private string? page_message = "";
     private string? message_status = "";
     private string? product_name_filter = null;
-    private ProductStatus product_is_active_filter { get; set; } = ProductStatus.All;
     private PaginationState pagination = new PaginationState() { ItemsPerPage = 20 };
 
+    private ProductStatus product_is_active_filter { get; set; } = ProductStatus.All;
     public enum ProductStatus { All = 0, Active = 1, Passive = 2 }
-    public int products_grid_total_items { get; set; } = 20;
 
     private IDialogReference? _dialog;
 
     protected override async Task OnAfterRenderAsync(bool firstRender) {
         if (firstRender) {
-            var result = await ProtectedLocalStorage.GetAsync<Pager>("pagination");
+            var result = await ProtectedLocalStorage.GetAsync<Pager>("ppager");
             if (result.Success && result.Value != null) {
                 pagination.ItemsPerPage = result.Value.ItemsPerPage;
                 await Refresh(result.Value.CurrentPageIndex);
             }
-            else
+            else{
+                await SetPaginationSession();
                 await Refresh();
+            }
         }
     }
 
@@ -235,6 +237,6 @@ else {
     }
 
     private async Task SetPaginationSession() {
-        await ProtectedLocalStorage.SetAsync("pagination", new Pager() { CurrentPageIndex = pagination.CurrentPageIndex, ItemsPerPage = pagination.ItemsPerPage });
+        await ProtectedLocalStorage.SetAsync("ppager", new Pager() { CurrentPageIndex = pagination.CurrentPageIndex, ItemsPerPage = pagination.ItemsPerPage });
     }
 }

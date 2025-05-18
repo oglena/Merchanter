@@ -7,12 +7,34 @@
 
 @if (brand_options != null) {
     <FluentGridItem xs="12">
+        <FluentSwitch @bind-Value="@product_extension.is_enabled" Label="Ürün Durumu">
+            <span slot="checked-message">Aktif</span>
+            <span slot="unchecked-message">Pasif</span>
+        </FluentSwitch>
+    </FluentGridItem>
+    <FluentGridItem xs="12">
         <FluentCombobox Label="Marka" Items="@brand_options" TOption="Option<Brand>"
                         OptionText="@(b=>b.Text)"
                         @bind-Value="@product_extension.brand.brand_name"
                         Autocomplete="ComboboxAutocomplete.Both"
                         Placeholder="Marka seçiniz..." Required="true" Height="300px" Style="width:100%;">
         </FluentCombobox>
+    </FluentGridItem>
+    <FluentGridItem xs="12">
+        <FluentTextArea Label="Ürün Açıklaması" @bind-Value="@product_extension.description"
+                        Required="false" Style="width:100%;" Spellcheck="true" Rows="10" Resize="TextAreaResize.Vertical">
+            <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+        </FluentTextArea>
+    </FluentGridItem>
+    <FluentGridItem xs="12">
+        <FluentNumberField Label="Desi" @bind-Value="@product_extension.volume" Placeholder="Desi boş olamaz..." Required="true" Style="width:100%;">
+            <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+        </FluentNumberField>
+    </FluentGridItem>
+    <FluentGridItem xs="12">
+        <FluentNumberField Label="Ağırlık" @bind-Value="@product_extension.weight" Placeholder="Ağırlık boş olamaz..." Required="true" Style="width:100%;">
+            <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+        </FluentNumberField>
     </FluentGridItem>
 }
 

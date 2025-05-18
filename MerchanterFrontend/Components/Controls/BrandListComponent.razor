@@ -96,8 +96,9 @@ else {
     private string? page_message = "";
     private string? message_status = "";
     private string? brand_name_filter = null;
-    private BrandStatus brand_is_active_filter { get; set; } = BrandStatus.All;
     private PaginationState pagination = new PaginationState() { ItemsPerPage = 20 };
+
+    private BrandStatus brand_is_active_filter { get; set; } = BrandStatus.All;
     public enum BrandStatus { All = 0, Active = 1, Passive = 2 }
 
     private IDialogReference? _dialog;
