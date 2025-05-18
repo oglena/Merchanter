@@ -53,7 +53,7 @@
         </FluentGridItem>
         <FluentGridItem xs="12">
             <FluentDataGrid Id="products-grid" Items="@products" RowSize="DataGridRowSize.Large" GenerateHeader="GenerateHeaderOption.Sticky"
-            HeaderCellAsButtonWithMenu="true" TGridItem="Product" Loading="loading" DisplayMode="DataGridDisplayMode.Table" ShowHover="true" MultiLine="true">
+                            HeaderCellAsButtonWithMenu="true" TGridItem="Product" Loading="loading" DisplayMode="DataGridDisplayMode.Table" ShowHover="true" MultiLine="true">
                 <ChildContent>
                     @if (show_id_status_columns) {
                         <PropertyColumn Title="ID" Property="@(p => p.id)" Width="125px" Tooltip="true" TooltipText="@(p => p.source_product_id.ToString())" Align="Align.End" />
@@ -70,9 +70,9 @@
                         <b>Marka:&nbsp;</b><span>@(context.extension.brand.brand_name)</span>
                     </TemplateColumn>
                     <TemplateColumn Title="Stok Adetleri" Align="Align.Start" Width="200px">
+                        <b>Toplam:&nbsp;</b>@context.total_qty<br />
                         @foreach (var item in context.sources) {
                             <b>@(item.name):&nbsp;</b>
-
                             <span>@(item.qty)</span>
                             <br />
                         }
@@ -80,10 +80,8 @@
                     <TemplateColumn Title="Fiyatlar" Align="Align.Start" Width="250px">
                         <b>Liste Fiyat:</b>&nbsp;<span>@(Math.Round(context.price, 2, MidpointRounding.AwayFromZero))</span>&nbsp;@(context.currency)<br />
                         <b>Satış Fiyatı:</b>&nbsp;<span>@(Math.Round(context.special_price, 2, MidpointRounding.AwayFromZero))</span>&nbsp;@(context.currency)<br />
-                        <b>Özel Fiyat:</b>&nbsp;<span>@(Math.Round(context.custom_price, 2, MidpointRounding.AwayFromZero))</span>&nbsp;@(context.currency)
-                        <hr />
-                        <b>Vergi:</b>&nbsp;<span>@(context.tax)&#37;</span><br />
-                        Vergi&nbsp;<b><span>@(context.tax_included ? "Dahil" : "Hariç")</span></b><br />
+                        <b>Özel Fiyat:</b>&nbsp;<span>@(Math.Round(context.custom_price, 2, MidpointRounding.AwayFromZero))</span>&nbsp;@(context.currency)<br />
+                        <b>Vergi:</b>&nbsp;<span>@(context.tax)&#37;&nbsp;</span><b><span>@(context.tax_included ? "Dahil" : "Hariç")</span></b>
                     </TemplateColumn>
                     <TemplateColumn Width="250px" Align="Align.Center">
                         <FluentButton Appearance="Appearance.Outline" IconStart="@(new Icons.Regular.Size20.Delete())">Sil</FluentButton>
@@ -136,7 +134,7 @@ else {
                 pagination.ItemsPerPage = result.Value.ItemsPerPage;
                 await Refresh(result.Value.CurrentPageIndex);
             }
-            else{
+            else {
                 await SetPaginationSession();
                 await Refresh();
             }

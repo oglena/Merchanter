@@ -15,7 +15,7 @@
     @if (HttpContextAccessor?.HttpContext?.User.Identity != null && HttpContextAccessor.HttpContext.User.Identity.IsAuthenticated) {
     @if (customer_id > 0 && product != null) {
         <FluentLabel Typo="Typography.H1">
-            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size28.TetrisApp())" />&nbsp;@product.name
+            @product.name
         </FluentLabel>
         <FluentLayout Orientation="Orientation.Vertical" Style="padding-top:10px;">
             <FluentGrid Justify="JustifyContent.FlexStart">
@@ -51,7 +51,7 @@
                 </FluentGridItem>
                 <FluentEditForm Model="@product">
                     <FluentGrid Justify="JustifyContent.SpaceBetween" Spacing="2">
-                        <FluentGridItem lg="8" xs="12">
+                        <FluentGridItem lg="4" xs="12">
                             <FluentGrid Justify="JustifyContent.FlexStart">
                                 <FluentGridItem xs="12">
                                     <FluentTextField Label="Ürün Adı" @bind-Value="@product.name" Placeholder="Ürün adı boş olamaz..." Spellcheck="true" Required="true" Style="width:100%;">
@@ -68,17 +68,17 @@
                                         <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
                                     </FluentTextField>
                                 </FluentGridItem>
-                                <FluentGridItem xs="8">
-                                    <FluentNumberField Label="Liste Fiyatı" @bind-Value="@product.price" Required="true" Style="width:100%;">
-                                        <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
-                                    </FluentNumberField>
-                                </FluentGridItem>
-                                <FluentGridItem xs="4">
+                                <FluentGridItem xs="12">
                                     <FluentSelect Label="Kur" TOption="string" @bind-Value="@product.currency" Required="true" Style="width:100%;">
                                         <FluentOption Value="TRY" Selected="@(product.currency == "TRY")">TRY (₺)</FluentOption>
                                         <FluentOption Value="USD" Selected="@(product.currency == "USD")">USD ($)</FluentOption>
                                         <FluentOption Value="EUR" Selected="@(product.currency == "EUR")">EUR (€)</FluentOption>
                                     </FluentSelect>
+                                </FluentGridItem>
+                                <FluentGridItem xs="12">
+                                    <FluentNumberField Label="Liste Fiyatı" @bind-Value="@product.price" Required="true" Style="width:100%;">
+                                        <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+                                    </FluentNumberField>
                                 </FluentGridItem>
                                 <FluentGridItem xs="12">
                                     <FluentNumberField Label="Satış Fiyatı" @bind-Value="@product.special_price" Required="false" Style="width:100%;">
@@ -90,13 +90,13 @@
                                         <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
                                     </FluentNumberField>
                                 </FluentGridItem>
-                                <FluentGridItem xs="4" Justify="JustifyContent.FlexEnd">
+                                <FluentGridItem xs="12" Justify="JustifyContent.FlexEnd">
                                     <FluentSwitch Label="Vergi Dahil Mi?" Value="@product.tax_included" ValueChanged="@(async (bool val) => TaxChanged(val))">
                                         <span slot="checked-message">Evet</span>
                                         <span slot="unchecked-message">Hayır</span>
                                     </FluentSwitch>
                                 </FluentGridItem>
-                                <FluentGridItem xs="8">
+                                <FluentGridItem xs="12">
                                     <FluentNumberField Label="Vergi (%)" @bind-Value="@product.tax" Required="true" Style="width:100%;">
                                         <FluentIcon Value="@(new Icons.Regular.Size20.TagPercent())" Color="@Color.Neutral" Slot="start" />
                                     </FluentNumberField>
@@ -105,7 +105,12 @@
                         </FluentGridItem>
                         <FluentGridItem lg="4" xs="12">
                             <FluentGrid Justify="JustifyContent.FlexStart">
-                                <ProductExtensionComponent product_extension="@product.extension"></ProductExtensionComponent>
+                                <ProductCategoriesComponent product_extension="@product.extension" />
+                            </FluentGrid>
+                        </FluentGridItem>
+                        <FluentGridItem lg="4" xs="12">
+                            <FluentGrid Justify="JustifyContent.FlexStart">
+                                <ProductExtensionComponent product_extension="@product.extension" />
                             </FluentGrid>
                         </FluentGridItem>
                     </FluentGrid>

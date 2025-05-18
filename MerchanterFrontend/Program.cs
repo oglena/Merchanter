@@ -19,7 +19,7 @@ builder.Services.AddFluentUIComponents();
 
 builder.Services.AddSession(options => {
     options.Cookie.IsEssential = false;
-}); 
+});
 builder.Services.AddDistributedMemoryCache();
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();

@@ -15,12 +15,12 @@
             <FluentSpacer />
             @if (HttpContextAccessor.HttpContext != null && HttpContextAccessor.HttpContext?.User.Identity != null && HttpContextAccessor.HttpContext.User.Identity.IsAuthenticated) {
                 <FluentStack HorizontalAlignment="@HorizontalAlignment.End"
-                VerticalAlignment="@VerticalAlignment.Center">
+                             VerticalAlignment="@VerticalAlignment.Center">
                     <FluentProfileMenu Status="@PresenceStatus.Available" HeaderLabel="@HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == Variables.company_name)?.Value"
-                    Initials="@string.Join("", HttpContextAccessor.HttpContext.User.Claims.FirstOrDefault(x => x.Type == Variables.person_name).Value.Split(" ").Select(x=>x.Substring(0,1)))"
-                    ButtonSize="45px" FullName="@(HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == Variables.person_name)?.Value + " (" + HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Role)?.Value + ")")" EMail="@HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value"
-                    PopoverStyle="min-width: 400px;" FooterLink="Hesabım" OnFooterLinkClick="GotoAccount"
-                    HeaderButton="Çıkış Yap" OnHeaderButtonClick="Logout" />
+                                       Initials="@string.Join("", HttpContextAccessor.HttpContext.User.Claims.FirstOrDefault(x => x.Type == Variables.person_name).Value.Split(" ").Select(x=>x.Substring(0,1)))"
+                                       ButtonSize="45px" FullName="@(HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == Variables.person_name)?.Value + " (" + HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Role)?.Value + ")")" EMail="@HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value"
+                                       PopoverStyle="min-width: 400px;" FooterLink="Hesabım" OnFooterLinkClick="GotoAccount"
+                                       HeaderButton="Çıkış Yap" OnHeaderButtonClick="Logout" />
                 </FluentStack>
             }
         </FluentStack>

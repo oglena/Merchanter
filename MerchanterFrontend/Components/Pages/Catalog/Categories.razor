@@ -13,17 +13,17 @@
 </FluentLabel>
 <FluentLayout Orientation="Orientation.Vertical" Style="padding-top:10px;">
     @if (HttpContextAccessor?.HttpContext?.User.Identity != null && HttpContextAccessor.HttpContext.User.Identity.IsAuthenticated) {
-            <FluentGrid Justify="JustifyContent.FlexStart">
-                <FluentGridItem lg="4" xs="12">
-                    <CategoryTreeComponent customer_id="@customer_id" @ref="categoryTreeComponent"
-                                           OnRefresh="@(() => categoryUpdateComponent?.Refresh(categoryTreeComponent?.SelectedCategory,categoryTreeComponent?.ParentCategory))"
-                                           OnNewCategory="OnNewCategory" />
-                </FluentGridItem>
-                <FluentGridItem lg="8" xs="12">
-                    <CategoryUpdateComponent customer_id="@customer_id" @ref="@categoryUpdateComponent"
-                                           OnRefresh="@(() => categoryTreeComponent?.Refresh())"/>
-                </FluentGridItem>
-            </FluentGrid>
+        <FluentGrid Justify="JustifyContent.FlexStart">
+            <FluentGridItem lg="4" xs="12">
+                <CategoryTreeComponent customer_id="@customer_id" @ref="categoryTreeComponent"
+                                       OnRefresh="@(() => categoryUpdateComponent?.Refresh(categoryTreeComponent?.SelectedCategory,categoryTreeComponent?.ParentCategory))"
+                                       OnNewCategory="OnNewCategory" />
+            </FluentGridItem>
+            <FluentGridItem lg="8" xs="12">
+                <CategoryUpdateComponent customer_id="@customer_id" @ref="@categoryUpdateComponent"
+                                         OnRefresh="@(() => categoryTreeComponent?.Refresh())" />
+            </FluentGridItem>
+        </FluentGrid>
     }
     else {
         <FluentLabel>Ürün düzenleme sayfasına erişim izniniz yok.</FluentLabel>

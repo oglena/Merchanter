@@ -84,9 +84,9 @@ else {
     public int customer_id { get; set; } = 0;
     public bool loading = false;
     private IQueryable<Log>? customer_logs { get; set; } = null;
-    private string messageFilter = ""; 
-    private string workerFilter = ""; 
-    private string titleFilter = ""; 
+    private string messageFilter = "";
+    private string workerFilter = "";
+    private string titleFilter = "";
     private DateTime? dateFilter = null;
     private PaginationState pagination = new PaginationState() { ItemsPerPage = 20 };
 
