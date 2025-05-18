@@ -1,0 +1,11 @@
+﻿.no-selected-indicator fluent-tree-item[selected]::part(positioning-region) {
+    background-color: var(--neutral-fill-stealth-rest);
+}
+
+.no-selected-indicator fluent-tree-item::part(positioning-region):hover {
+    background-color: var(--neutral-fill-stealth-rest);
+}
+
+.no-selected-indicator fluent-tree-item[selected]::after {
+    display: none;
+}

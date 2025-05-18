@@ -45,8 +45,6 @@ else {
     private IQueryable<Category>? categories { get; set; } = null;
     public Category default_category { get; set; } = null;
     public bool loading = true;
-    private string? page_message = "";
-    private string? message_status = "";
 
     public Category? SelectedCategory;
     public Category? ParentCategory;
@@ -71,10 +69,6 @@ else {
                         Items = await LoadCategoryTreeAsync(default_category.id, _selected_category)
                     });
             });
-        }
-        else {
-            page_message = "Varsayılan kategori bulunamadı.";
-            message_status = "işlem başarısız";
         }
         StateHasChanged();
     }
@@ -138,8 +132,6 @@ else {
             return new List<TreeViewItem>();
         }
         finally {
-            page_message = "";
-            message_status = "";
             loading = false;
         }
     }

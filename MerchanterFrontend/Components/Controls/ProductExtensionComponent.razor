@@ -36,6 +36,21 @@
             <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
         </FluentNumberField>
     </FluentGridItem>
+    <FluentGridItem xs="12">
+        <FluentSwitch @bind-Value="@product_extension.is_xml_enabled" Label="Diğer Kaynaklar">
+            <span slot="checked-message">Aktif</span>
+            <span slot="unchecked-message">Pasif</span>
+        </FluentSwitch>
+    </FluentGridItem>
+    @if (product_extension.xml_sources != null && product_extension.xml_sources.Length > 0) {
+        <FluentGridItem xs="12">
+            <FluentTextField Label="Aktif Diğer Kaynaklar" Value="@(string.Join(",", product_extension.xml_sources))"
+                            Required="false" Disabled="true" Style="width:100%;">
+                <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+            </FluentTextField>
+            
+        </FluentGridItem>
+    }
 }
 else {
     <FluentProgressRing Size="ProgressRingSize.Large" />

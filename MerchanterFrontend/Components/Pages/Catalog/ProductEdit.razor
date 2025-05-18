@@ -90,7 +90,7 @@
                                         <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
                                     </FluentNumberField>
                                 </FluentGridItem>
-                                <FluentGridItem xs="12" Justify="JustifyContent.FlexEnd">
+                                <FluentGridItem xs="12">
                                     <FluentSwitch Label="Vergi Dahil Mi?" Value="@product.tax_included" ValueChanged="@(async (bool val) => TaxChanged(val))">
                                         <span slot="checked-message">Evet</span>
                                         <span slot="unchecked-message">Hayır</span>
@@ -105,12 +105,12 @@
                         </FluentGridItem>
                         <FluentGridItem lg="4" xs="12">
                             <FluentGrid Justify="JustifyContent.FlexStart">
-                                <ProductCategoriesComponent product_extension="@product.extension" />
+                                <ProductExtensionComponent product_extension="@product.extension" />
                             </FluentGrid>
                         </FluentGridItem>
                         <FluentGridItem lg="4" xs="12">
                             <FluentGrid Justify="JustifyContent.FlexStart">
-                                <ProductExtensionComponent product_extension="@product.extension" />
+                                <ProductCategoriesComponent product_extension="@product.extension" />
                             </FluentGrid>
                         </FluentGridItem>
                     </FluentGrid>
