@@ -5,22 +5,23 @@
 @inject IPostHelper PostHelper
 @inject IHttpContextAccessor HttpContextAccessor
 
-@if (product_images.Count > 0) {
-    @foreach (var item in product_images) {
-        <FluentGridItem xs="12">
-            <FluentTextField Label="Ürün Resmi (nyd)" @bind-Value="@item.image_url" Required="true" Disabled="true">
+@if (product_attributes.Count > 0) {
+    @foreach (var item in product_attributes) {
+        <FluentGridItem xs="12" Style="margin-bottom: 10px;">
+            <FluentTextField Label="Ürün Resmi (nyd)" @bind-Value="@item.attribute.attribute_name" Disabled="true">
                 <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
             </FluentTextField>
         </FluentGridItem>
     }
+
 }
 else {
     <FluentGridItem xs="12" Style="margin-bottom: 10px;">
-        <span style="color: red;">Resim bulunamadı.</span>
+        <span style="color: red;">Özellik bulunamadı.</span>
     </FluentGridItem>
 }
 
 @code {
     [Parameter]
-    public List<ProductImage> product_images { get; set; }
+    public List<ProductAttribute> product_attributes { get; set; }
 }

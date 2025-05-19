@@ -116,7 +116,17 @@ else {
     public int customer_id { get; set; } = 0;
     private IQueryable<Product>? products { get; set; } = null;
     public bool loading = false;
-    private bool show_id_status_columns = false;
+    public bool show_id_status_columns {
+        get => _show_id_status_columns;
+        set {
+            if (_show_id_status_columns != value) {
+                _show_id_status_columns = value;
+                _ = SaveToSessionAsync<bool>("show_id_status_columns", value);
+            }
+        }
+    }
+
+    private bool _show_id_status_columns = false;
     private string? page_message = "";
     private string? message_status = "";
     private string? product_name_filter = null;
@@ -129,10 +139,14 @@ else {
 
     protected override async Task OnAfterRenderAsync(bool firstRender) {
         if (firstRender) {
-            var result = await ProtectedLocalStorage.GetAsync<Pager>("ppager");
-            if (result.Success && result.Value != null) {
-                pagination.ItemsPerPage = result.Value.ItemsPerPage;
-                await Refresh(result.Value.CurrentPageIndex);
+            var ppager = await ProtectedLocalStorage.GetAsync<Pager>("ppager");
+            var show_id_status = await ProtectedLocalStorage.GetAsync<bool>("show_id_status_columns");
+            if (show_id_status.Success && show_id_status.Value) {
+                show_id_status_columns = show_id_status.Value;
+            }
+            if (ppager.Success && ppager.Value != null) {
+                pagination.ItemsPerPage = ppager.Value.ItemsPerPage;
+                await Refresh(ppager.Value.CurrentPageIndex);
             }
             else {
                 await SetPaginationSession();
@@ -232,6 +246,23 @@ else {
 
     private void GotoProductEdit(int _product_id) {
         NavigationManager.NavigateTo($"Catalog/ProductEdit/{_product_id}", false);
+    }
+
+    /// <summary>
+    /// Saves a value to ProtectedLocalStorage session with the given key.
+    /// </summary>
+    /// <typeparam name="T">Type of the value to save</typeparam>
+    /// <param name="key">Session key</param>
+    /// <param name="value">Value to save</param>
+    private async Task SaveToSessionAsync<T>(string key, T value) {
+        if (value != null)
+            await ProtectedLocalStorage.SetAsync(key, value);
+        else
+            await ProtectedLocalStorage.DeleteAsync(key);
+    }
+
+    private void ShowIDStatusColumns(bool _show) {
+        show_id_status_columns = _show;
     }
 
     private async Task SetPaginationSession() {

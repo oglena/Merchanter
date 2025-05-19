@@ -8,7 +8,7 @@
 @if (!loading && categories != null) {
     <FluentGrid Justify="JustifyContent.SpaceBetween" Spacing="2">
         <FluentGridItem xs="12">
-            <FluentTreeView Items="@Items?.AsQueryable()">
+            <FluentTreeView Items="@Items?.AsQueryable()" LazyLoadItems="true">
                 <ItemTemplate>
                     <FluentCheckbox Value="@(SelectedItems.Contains(context))"
                                     ValueChanged="@(e => CheckboxHandler(e, context))"

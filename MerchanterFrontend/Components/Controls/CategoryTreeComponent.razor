@@ -9,7 +9,8 @@
 @if (customer_id > 0 && categories != null) {
     <FluentGrid Justify="JustifyContent.SpaceBetween" Spacing="2">
         <FluentGridItem xs="12">
-            <FluentTreeView Items="@Items?.AsQueryable()" SelectedItemChanged="SelectedItemChanged">
+            <FluentTreeView Items="@Items?.AsQueryable()" LazyLoadItems="true"
+                            SelectedItemChanged="SelectedItemChanged">
                 <ItemTemplate>
                     @context.Text
                     <span style="color: var(--accent-fill-rest); margin: 0 4px;">

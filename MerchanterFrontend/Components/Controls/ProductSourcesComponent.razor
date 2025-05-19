@@ -5,18 +5,30 @@
 @inject IPostHelper PostHelper
 @inject IHttpContextAccessor HttpContextAccessor
 
-<FluentGrid Justify="JustifyContent.FlexStart" Style="">
+<FluentGrid Justify="JustifyContent.FlexStart">
     @foreach (var item in product_sources) {
-        <FluentGridItem xs="6" Style="margin-bottom: 10px;">
+        <FluentGridItem xs="3" Justify="JustifyContent.FlexEnd">
+            <FluentSwitch @bind-Value="@item.is_active" Label="Depo Durumu" Required="true" Disabled="true">
+                <span slot="checked-message">Aktif</span>
+                <span slot="unchecked-message">Pasif</span>
+            </FluentSwitch>
+        </FluentGridItem>
+        <FluentGridItem xs="3">
             <FluentTextField Label="Ürün Kaynağı (nyd)" @bind-Value="@item.name" Required="true" Disabled="true">
                 <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
             </FluentTextField>
         </FluentGridItem>
-        <FluentGridItem xs="6" Style="margin-bottom: 10px;">
+        <FluentGridItem xs="3">
             <FluentNumberField Label="Ürün Miktarı (nyd)" @bind-Value="@item.qty" Required="true" Disabled="true">
                 <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
             </FluentNumberField>
         </FluentGridItem>
+        <FluentGridItem xs="3">
+            <FluentTextField Label="Son Güncelleme" Value="@item.update_date.ToString("dd.MM.yyyy HH:mm:ss")" Required="true" Disabled="true">
+                <FluentIcon Value="@(new Icons.Regular.Size20.Calendar())" Color="@Color.Neutral" Slot="start" />
+            </FluentTextField>
+        </FluentGridItem>
+        <FluentDivider Style="width:100%;margin-top:0 !important;" />
     }
 </FluentGrid>
 
