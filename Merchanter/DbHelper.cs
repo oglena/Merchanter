@@ -2419,6 +2419,15 @@ namespace Merchanter {
                         OnError("GetProduct: " + p.sku + " - Product Source Not Found");
                         return null;
                     }
+
+                    var images = GetProductImages(_customer_id, p.sku);
+                    if (images != null) {
+                        p.images = [.. images];
+                    }
+                    else {
+                        OnError("GetProduct: " + p.sku + " - Product Images Not Found");
+                        return null;
+                    }
                 }
 
                 return p;

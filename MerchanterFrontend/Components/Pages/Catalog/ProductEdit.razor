@@ -71,7 +71,7 @@
                             <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Stretch" Style="height: 100%;">
                                 <FluentTabs ActiveTabId="@active_product_tab.ToString()" Orientation="Orientation.Vertical" Size="TabSize.Large" Width="100%" Style="padding-top:0 !important;">
                                     <FluentTab Overflow="false" Icon="@(new Icons.Regular.Size24.TetrisApp())"
-                                               Visible="true" Label="  Ürün Bilgileri" Id="@ProductTab.ProductInformation.ToString()"
+                                               Visible="true" Label="Ürün Bilgileri" Id="@ProductTab.ProductInformation.ToString()"
                                                Style="height:400px;" LabelStyle="font-size:13pt !important;">
                                         <FluentGridItem xs="12">
                                             <FluentGrid Justify="JustifyContent.FlexStart" Class="dotted">
@@ -129,7 +129,7 @@
                                         </FluentGridItem>
                                     </FluentTab>
                                     <FluentTab Overflow="false" Icon="@(new Icons.Regular.Size24.TetrisApp())"
-                                               Visible="true" Label="  Ek Bilgiler" Id="@ProductTab.ProductExtension.ToString()"
+                                               Visible="true" Label="Ek Bilgiler" Id="@ProductTab.ProductExtension.ToString()"
                                                Style="height:400px;" LabelStyle="font-size:13pt !important;">
                                         <FluentGridItem xs="12">
                                             <FluentGrid Justify="JustifyContent.FlexStart" Class="dotted">
@@ -138,7 +138,7 @@
                                         </FluentGridItem>
                                     </FluentTab>
                                     <FluentTab Overflow="false" Icon="@(new Icons.Regular.Size24.AppsList())"
-                                               Visible="true" Label="  Kategori Ağacı" Id="@ProductTab.Categories.ToString()"
+                                               Visible="true" Label="Kategori Ağacı" Id="@ProductTab.Categories.ToString()"
                                                Style="height:400px;" LabelStyle="font-size:13pt !important;">
                                         <FluentGridItem xs="12">
                                             <FluentGrid Justify="JustifyContent.FlexStart" Class="dotted">
@@ -147,7 +147,7 @@
                                         </FluentGridItem>
                                     </FluentTab>
                                     <FluentTab Overflow="false" Icon="@(new Icons.Regular.Size24.HardDrive())"
-                                               Visible="true" Label="  Ürün Depoları" id="@ProductTab.OtherSources.ToString()"
+                                               Visible="true" Label="Ürün Depoları" id="@ProductTab.OtherSources.ToString()"
                                                Style="height:400px;" LabelStyle="font-size:13pt !important;">
                                         <FluentGridItem xs="12">
                                             <FluentGrid Justify="JustifyContent.FlexStart" Class="dotted">
@@ -156,7 +156,7 @@
                                         </FluentGridItem>
                                     </FluentTab>
                                     <FluentTab Overflow="false" Icon="@(new Icons.Regular.Size24.Image())"
-                                               Visible="true" Label="  Resimler" id="@ProductTab.Images.ToString()"
+                                               Visible="true" Label="@("Resimler(" + product.images.Count + ")")" id="@ProductTab.Images.ToString()"
                                                Style="height:400px;" LabelStyle="font-size:13pt !important;">
                                         <FluentGridItem xs="12">
                                             <FluentGrid Justify="JustifyContent.FlexStart" Class="dotted">
@@ -165,7 +165,7 @@
                                         </FluentGridItem>
                                     </FluentTab>
                                     <FluentTab Overflow="false" Icon="@(new Icons.Regular.Size24.PuzzlePiece())"
-                                               Visible="true" Label="  Özellikler" id="@ProductTab.Attributes.ToString()"
+                                               Visible="true" Label="Özellikler" id="@ProductTab.Attributes.ToString()"
                                                Style="height:400px;" LabelStyle="font-size:13pt !important;">
                                         <FluentGridItem xs="12">
                                             <FluentGrid Justify="JustifyContent.FlexStart" Class="dotted">
