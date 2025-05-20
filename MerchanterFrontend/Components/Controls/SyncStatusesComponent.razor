@@ -9,8 +9,6 @@
 @if (customer_id > 0 && customer != null) {
     <FluentEditForm Model="customer" OnValidSubmit="@(() => SaveCustomer(customer))">
         <FluentGrid Justify="JustifyContent.FlexStart" Spacing="2">
-            <FluentGridItem xs="12">
-            </FluentGridItem>
             @if (!string.IsNullOrWhiteSpace(page_message)) {
                 <FluentGridItem xs="12">
                     <AlertComponent page_message="@page_message" message_status="@message_status" />
@@ -167,9 +165,7 @@
     </FluentEditForm>
 }
 else {
-    <FluentLayout Orientation="Orientation.Vertical" Style="padding-top:10px;">
-        <FluentProgressRing Size="ProgressRingSize.Large" />
-    </FluentLayout>
+    <FluentProgress Width="100%" Stroke="ProgressStroke.Small"></FluentProgress>
 }
 
 @code {

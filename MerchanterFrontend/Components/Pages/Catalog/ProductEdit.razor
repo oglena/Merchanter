@@ -46,6 +46,7 @@
                             }
                         </FluentBadge>
                         <FluentBadge>@(product.extension.is_enabled ? "Aktif" : "Pasif")</FluentBadge>
+                        <FluentBadge>Stokta&nbsp;@(product.total_qty > 0 ? "Var" : "Yok")</FluentBadge>
                         <FluentBadge><b>Son güncelleme:</b>&nbsp;@product.update_date.ToString("MM.dd.yyyy HH:mm:ss")</FluentBadge>
                         <FluentButton Appearance="Appearance.Outline" Type="ButtonType.Button" OnClick="@(() => SaveProduct(product))" Disabled="@loading" Loading="@loading" IconStart="@(new Icons.Regular.Size20.Save())" Slot="end">Kaydet</FluentButton>
                     </FluentToolbar>
@@ -65,20 +66,39 @@
                     </FluentBreadcrumbItem>
                 </FluentBreadcrumb>
                 <FluentDivider Style="width:100%;margin-top:0 !important;" />
-                <FluentEditForm Model="@product" style="padding-top:10px !important;">
+                <FluentEditForm Model="@product" style="width:100%;padding-top:10px !important;">
                     <FluentGrid Justify="JustifyContent.SpaceBetween" Class="dotted" Spacing="2">
                         <FluentGridItem xs="12">
                             <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Stretch" Style="height: 100%;">
-                                <FluentTabs ActiveTabId="@active_product_tab.ToString()" Orientation="Orientation.Vertical" Size="TabSize.Large" Width="100%" Style="padding-top:0 !important;">
+                                <FluentTabs ActiveTabId="@active_product_tab.ToString()" Orientation="Orientation.Horizontal" Size="TabSize.Large" Width="100%" Style="padding-top:0 !important;">
                                     <FluentTab Overflow="false" Icon="@(new Icons.Regular.Size24.TetrisApp())"
                                                Visible="true" Label="Ürün Bilgileri" Id="@ProductTab.ProductInformation.ToString()"
                                                Style="height:400px;" LabelStyle="font-size:13pt !important;">
                                         <FluentGridItem xs="12">
                                             <FluentGrid Justify="JustifyContent.FlexStart" Class="dotted">
-                                                <FluentGridItem xs="12">
+                                                <FluentGridItem xs="12" Justify="JustifyContent.FlexStart">
+                                                    <FluentSwitch @bind-Value="@product.extension.is_enabled" Label="Ürün Durumu" Required="true" Style="margin-top:10px;">
+                                                        <span slot="checked-message">Aktif</span>
+                                                        <span slot="unchecked-message">Pasif</span>
+                                                    </FluentSwitch>
+                                                </FluentGridItem>
+                                                <FluentGridItem xs="6">
                                                     <FluentTextField Label="Ürün Adı" @bind-Value="@product.name" Placeholder="Ürün adı boş olamaz..." Spellcheck="true" Required="true" Style="width:100%;">
                                                         <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
                                                     </FluentTextField>
+                                                </FluentGridItem>
+                                                <FluentGridItem xs="6">
+                                                    @if (brand_options != null) {
+                                                        <FluentCombobox Label="Marka" Items="@brand_options" TOption="Option<Brand>"
+                                                                        OptionText="@(b=>b.Text)" Appearance="Appearance.Outline"
+                                                                        @bind-Value="@product.extension.brand.brand_name"
+                                                                        Autocomplete="ComboboxAutocomplete.Both" EnableClickToClose="true"
+                                                                        Required="true" Height="300px" Style="width:100%;" />
+                                                    }
+                                                    else {
+                                                        <FluentLabel Typo="Typography.Body" Color="Color.Disabled">Marka Yükleniyor...</FluentLabel>
+                                                        <FluentSkeleton Shimmer="true" Style="width:100%;height:30px;margin-top:5px;" ></FluentSkeleton>
+                                                    }
                                                 </FluentGridItem>
                                                 <FluentGridItem xs="6">
                                                     <FluentTextField Label="Stok Kodu" @bind-Value="@product.sku" Placeholder="Stok kodu boş olamaz..." Required="true" Style="width:100%;">
@@ -120,7 +140,7 @@
                                                     </FluentNumberField>
                                                 </FluentGridItem>
                                                 <FluentGridItem xs="6" Justify="JustifyContent.FlexStart">
-                                                    <FluentSwitch Label="Vergi Dahil Mi?" Value="@product.tax_included" ValueChanged="@(async (bool val) => TaxChanged(val))">
+                                                    <FluentSwitch Label="Vergi Dahil Mi?" Value="@product.tax_included" ValueChanged="@(async (bool val) => TaxChanged(val))" Style="margin-top:10px;">
                                                         <span slot="checked-message">Evet</span>
                                                         <span slot="unchecked-message">Hayır</span>
                                                     </FluentSwitch>
@@ -147,11 +167,11 @@
                                         </FluentGridItem>
                                     </FluentTab>
                                     <FluentTab Overflow="false" Icon="@(new Icons.Regular.Size24.HardDrive())"
-                                               Visible="true" Label="Ürün Depoları" id="@ProductTab.OtherSources.ToString()"
+                                               Visible="true" Label="@("Ürün Depoları(" + product.total_qty.ToString() + ")")" id="@ProductTab.OtherSources.ToString()"
                                                Style="height:400px;" LabelStyle="font-size:13pt !important;">
                                         <FluentGridItem xs="12">
                                             <FluentGrid Justify="JustifyContent.FlexStart" Class="dotted">
-                                                <ProductSourcesComponent product_sources="@product.sources" />
+                                                <ProductSourcesComponent product_extension="@product.extension" product_sources="@product.sources" />
                                             </FluentGrid>
                                         </FluentGridItem>
                                     </FluentTab>
@@ -160,12 +180,12 @@
                                                Style="height:400px;" LabelStyle="font-size:13pt !important;">
                                         <FluentGridItem xs="12">
                                             <FluentGrid Justify="JustifyContent.FlexStart" Class="dotted">
-                                                <ProductImagesComponent product_images="@product.images" />
+                                                <ProductImagesComponent sku="@product.sku" product_images="@product.images" />
                                             </FluentGrid>
                                         </FluentGridItem>
                                     </FluentTab>
                                     <FluentTab Overflow="false" Icon="@(new Icons.Regular.Size24.PuzzlePiece())"
-                                               Visible="true" Label="Özellikler" id="@ProductTab.Attributes.ToString()"
+                                               Visible="true" Label="Özellikler(nyd)" id="@ProductTab.Attributes.ToString()"
                                                Style="height:400px;" LabelStyle="font-size:13pt !important;">
                                         <FluentGridItem xs="12">
                                             <FluentGrid Justify="JustifyContent.FlexStart" Class="dotted">
@@ -210,6 +230,7 @@ else {
     private string? page_message = "";
     private string? message_status = "";
     private Product? product { get; set; } = null;
+    public List<Option<Brand>>? brand_options { get; set; } = null;
     private Product.ProductTypes? product_type { get; set; } = null;
     private ProductTab active_product_tab { get; set; } = ProductTab.ProductInformation;
     public enum ProductTab { ProductInformation = 0, ProductExtension = 1, Categories = 2, OtherSources = 3, Images = 4, Attributes = 5 }
@@ -241,6 +262,9 @@ else {
     protected override async Task OnAfterRenderAsync(bool firstRender) {
         if (firstRender && PID > 0) {
             await Refresh(PID);
+            if (brand_options == null) {
+                await LoadBrands();
+            }
         }
     }
 
@@ -279,6 +303,33 @@ else {
         await Task.CompletedTask;
     }
 
+    private async Task LoadBrands() {
+        try {
+            loading = true;
+            var apifilter = new ApiFilter() { Pager = new Pager() { ItemsPerPage = int.MaxValue } };
+            string json = JsonConvert.SerializeObject(apifilter);
+            var response = await PostHelper.Request<List<Brand>>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                Classes.PostHelper.PostMethod.Post, Classes.PostHelper.PostDestination.Api,
+                "api/Brand/GetBrands",
+                new StringContent(json, Encoding.UTF8, "application/json")
+                );
+            if (response != null && response.Success && response.Data != null) {
+                response.Data = response.Data.DistinctBy(x => x.brand_name).ToList();
+                brand_options = response.Data
+                    .Select(b => new Option<Brand> { Value = b, Text = b.brand_name })
+                    .ToList();
+            }
+        }
+        catch (Exception ex) {
+            Console.WriteLine(ex.Message);
+            brand_options = null;
+        }
+        finally {
+            loading = false;
+            StateHasChanged();
+        }
+    }
+
     private void ChangeTab(ProductTab tab) {
         active_product_tab = tab;
         StateHasChanged();
@@ -302,6 +353,8 @@ else {
     }
 
     private void GotoProducts() {
+        product = null;
+        PID = 0;
         NavigationManager.NavigateTo($"Catalog/Products", false);
     }
 }

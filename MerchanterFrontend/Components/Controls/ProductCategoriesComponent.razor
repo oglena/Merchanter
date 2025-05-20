@@ -22,14 +22,27 @@
             </FluentTreeView>
         </FluentGridItem>
         <FluentGridItem xs="12">
-            <div>
-                Toplam:&nbsp;<strong>@Count</strong> kategori
-            </div>
+            <FluentLabel Typo="Typography.Body" Color="Color.Accent">
+                Toplam:&nbsp;<b>@Count</b> kategori
+            </FluentLabel>
         </FluentGridItem>
     </FluentGrid>
 }
 else {
-    <FluentProgressRing Size="ProgressRingSize.Large" />
+    <FluentCard class="card-padding" Style="max-width:400px;">
+        <FluentSkeleton Shimmer="true" Style="margin-top: 10px;" Width="100%" Height="50px"></FluentSkeleton>
+        <FluentSkeleton Shimmer="true" Style="margin-top: 10px;" Width="100%" Height="20px"></FluentSkeleton>
+        <FluentSkeleton Shimmer="true" Style="margin-top: 10px;" Width="100%" Height="20px"></FluentSkeleton>
+        <FluentSkeleton Shimmer="true" Style="margin-top: 10px;" Width="100%" Height="20px"></FluentSkeleton>
+        <FluentSkeleton Shimmer="true" Style="margin-top: 10px;" Width="100%" Height="20px"></FluentSkeleton>
+        <FluentSkeleton Shimmer="true" Style="margin-top: 10px;" Width="100%" Height="20px"></FluentSkeleton>
+        <FluentSkeleton Shimmer="true" Style="margin-top: 10px;" Width="100%" Height="20px"></FluentSkeleton>
+        <FluentSkeleton Shimmer="true" Style="margin-top: 10px;" Width="100%" Height="20px"></FluentSkeleton>
+        <FluentSkeleton Shimmer="true" Style="margin-top: 10px;" Width="100%" Height="20px"></FluentSkeleton>
+        <FluentSkeleton Shimmer="true" Style="margin-top: 10px;" Width="100%" Height="20px"></FluentSkeleton>
+        <FluentSkeleton Shimmer="true" Style="margin-top: 10px;" Width="100%" Height="20px"></FluentSkeleton>
+        <FluentSkeleton Shimmer="true" Style="margin-top: 10px;" Width="100%" Height="50px"></FluentSkeleton>
+    </FluentCard>
 }
 
 @code {

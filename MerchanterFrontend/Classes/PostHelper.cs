@@ -51,14 +51,14 @@ namespace MerchanterFrontend.Classes {
                                 ErrorMessage = "",
                                 Data = (T)(object)login_response
                             };
-                            logger.LogInformation("LOGIN[" + response.StatusCode.ToString() + " " + login_response.Settings.customer.user_name + "]: " + _url, DateTime.UtcNow.ToLongTimeString());
+                            logger.LogInformation(DateTime.UtcNow.ToString("HH:mm:ss") + " LOGIN[" + response.StatusCode.ToString() + " " + login_response.Settings.customer.user_name + "]: " + _url, DateTime.UtcNow.ToLongTimeString());
                         }
                         else {
-                            logger.LogInformation("LOGIN[FAIL]: " + response.StatusCode.ToString() + " " + _url, DateTime.UtcNow.ToLongTimeString());
+                            logger.LogInformation(DateTime.UtcNow.ToString("HH:mm:ss") + " LOGIN[FAIL]: " + response.StatusCode.ToString() + " " + _url, DateTime.UtcNow.ToLongTimeString());
                         }
                     }
                     catch (Exception ex) {
-                        logger.LogError("LOGIN: " + ex.Message + " " + _url, DateTime.UtcNow.ToLongTimeString());
+                        logger.LogError(DateTime.UtcNow.ToString("HH:mm:ss") + " LOGIN: " + ex.Message + " " + _url, DateTime.UtcNow.ToLongTimeString());
                         model = new BaseResponseModel<T>() {
                             Success = false,
                             ErrorMessage = ex.Message,
@@ -77,7 +77,7 @@ namespace MerchanterFrontend.Classes {
                             var response = await client.ExecuteAsync<T>(request);
                             if (response.IsSuccessStatusCode) {
                                 model = JsonConvert.DeserializeObject<BaseResponseModel<T>>(response.Content);
-                                logger.LogInformation("GET: " + response.StatusCode.ToString() + " " + _url, DateTime.UtcNow.ToLongTimeString());
+                                logger.LogInformation(DateTime.UtcNow.ToString("HH:mm:ss") + " GET: " + response.StatusCode.ToString() + " " + _url, DateTime.UtcNow.ToLongTimeString());
                             }
                             else {
                                 model = new BaseResponseModel<T>() {
@@ -88,7 +88,7 @@ namespace MerchanterFrontend.Classes {
                             }
                         }
                         catch (Exception ex) {
-                            logger.LogError("GET: " + ex.Message + " " + _url, DateTime.UtcNow.ToLongTimeString());
+                            logger.LogError(DateTime.UtcNow.ToString("HH:mm:ss") + " GET: " + ex.Message + " " + _url, DateTime.UtcNow.ToLongTimeString());
                             model = new BaseResponseModel<T>() {
                                 Success = false,
                                 ErrorMessage = ex.Message,
@@ -112,7 +112,7 @@ namespace MerchanterFrontend.Classes {
                             var response = await client.ExecutePostAsync<T>(request);
                             if (response.IsSuccessStatusCode) {
                                 model = JsonConvert.DeserializeObject<BaseResponseModel<T>>(response.Content);
-                                logger.LogInformation("POST: " + response.StatusCode.ToString() + " " + _url, DateTime.UtcNow.ToLongTimeString());
+                                logger.LogInformation(DateTime.UtcNow.ToString("HH:mm:ss") + " POST: " + response.StatusCode.ToString() + " " + _url, DateTime.UtcNow.ToLongTimeString());
                             }
                             else {
                                 model = new BaseResponseModel<T>() {
@@ -123,7 +123,7 @@ namespace MerchanterFrontend.Classes {
                             }
                         }
                         catch (Exception ex) {
-                            logger.LogError("POST: " + ex.Message + " " + _url, DateTime.UtcNow.ToLongTimeString());
+                            logger.LogError(DateTime.UtcNow.ToString("HH:mm:ss") + " POST: " + ex.Message + " " + _url, DateTime.UtcNow.ToLongTimeString());
                             model = new BaseResponseModel<T>() {
                                 Success = false,
                                 ErrorMessage = ex.Message,
@@ -147,7 +147,7 @@ namespace MerchanterFrontend.Classes {
                             var response = await client.ExecutePutAsync<T>(request);
                             if (response.IsSuccessStatusCode) {
                                 model = JsonConvert.DeserializeObject<BaseResponseModel<T>>(response.Content);
-                                logger.LogInformation("PUT: " + response.StatusCode.ToString() + " " + _url, DateTime.UtcNow.ToLongTimeString());
+                                logger.LogInformation(DateTime.UtcNow.ToString("HH:mm:ss") + " PUT: " + response.StatusCode.ToString() + " " + _url, DateTime.UtcNow.ToLongTimeString());
                             }
                             else {
                                 model = new BaseResponseModel<T>() {
@@ -158,7 +158,7 @@ namespace MerchanterFrontend.Classes {
                             }
                         }
                         catch (Exception ex) {
-                            logger.LogError("PUT: " + ex.Message + " " + _url, DateTime.UtcNow.ToLongTimeString());
+                            logger.LogError(DateTime.UtcNow.ToString("HH:mm:ss") + " PUT: " + ex.Message + " " + _url, DateTime.UtcNow.ToLongTimeString());
                             model = new BaseResponseModel<T>() {
                                 Success = false,
                                 ErrorMessage = ex.Message,
@@ -182,7 +182,7 @@ namespace MerchanterFrontend.Classes {
                             var response = await client.ExecuteDeleteAsync<T>(request);
                             if (response.IsSuccessStatusCode) {
                                 model = JsonConvert.DeserializeObject<BaseResponseModel<T>>(response.Content);
-                                logger.LogInformation("DELETE: " + response.StatusCode.ToString() + " " + _url, DateTime.UtcNow.ToLongTimeString());
+                                logger.LogInformation(DateTime.UtcNow.ToString("HH:mm:ss") + " DELETE: " + response.StatusCode.ToString() + " " + _url, DateTime.UtcNow.ToLongTimeString());
                             }
                             else {
                                 model = new BaseResponseModel<T>() {
@@ -193,7 +193,7 @@ namespace MerchanterFrontend.Classes {
                             }
                         }
                         catch (Exception ex) {
-                            logger.LogError("DELETE: " + ex.Message + " " + _url, DateTime.UtcNow.ToLongTimeString());
+                            logger.LogError(DateTime.UtcNow.ToString("HH:mm:ss") + " DELETE: " + ex.Message + " " + _url, DateTime.UtcNow.ToLongTimeString());
                             model = new BaseResponseModel<T>() {
                                 Success = false,
                                 ErrorMessage = ex.Message,

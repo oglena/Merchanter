@@ -7,6 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="wwwroot\media\catalog\product\**" />
+    <Content Remove="wwwroot\media\catalog\product\**" />
+    <EmbeddedResource Remove="wwwroot\media\catalog\product\**" />
+    <None Remove="wwwroot\media\catalog\product\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" Version="4.11.9" />
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.11.9" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
@@ -15,6 +22,8 @@
 
   <ItemGroup>
     <Folder Include="keys\" />
+    <Folder Include="wwwroot\media\catalog\" />
+    <Folder Include="wwwroot\temp\" />
   </ItemGroup>
 
   <ItemGroup>

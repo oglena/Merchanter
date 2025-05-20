@@ -7,6 +7,16 @@
 @inject NavigationManager NavigationManager
 
 @if (customer_id > 0 && categories != null) {
+    <FluentGridItem xs="12" Justify="JustifyContent.SpaceBetween">
+        <FluentLabel Typo="Typography.Body" Color="Color.Accent">
+            <b>@Count</b> kategori
+        </FluentLabel>
+        @if (SelectedCategory != null) {
+            <FluentLabel Typo="Typography.Body" Color="Color.Accent">
+                <b>@(SelectedCategory.category_name.EndsWith("-root") ? "Ana Kategori" : SelectedCategory?.category_name)</b>
+            </FluentLabel>
+        }
+    </FluentGridItem>
     <FluentGrid Justify="JustifyContent.SpaceBetween" Spacing="2">
         <FluentGridItem xs="12">
             <FluentTreeView Items="@Items?.AsQueryable()" LazyLoadItems="true"
@@ -19,20 +29,23 @@
                 </ItemTemplate>
             </FluentTreeView>
         </FluentGridItem>
-        <FluentGridItem xs="12">
-            <div>
-                Toplam:&nbsp;<strong>@Count</strong> kategori
-            </div>
-            @if (SelectedCategory != null) {
-                <div>
-                    Seçili Kategori:&nbsp;<b>@(SelectedCategory.category_name.EndsWith("-root") ? "Ana Kategori" : SelectedCategory?.category_name)</b>
-                </div>
-            }
-        </FluentGridItem>
     </FluentGrid>
 }
 else {
-    <FluentProgressRing Size="ProgressRingSize.Large" />
+    <FluentCard class="card-padding" Style="max-width:400px;">
+        <FluentSkeleton Shimmer="true" Style="margin-top: 10px;" Width="100%" Height="50px"></FluentSkeleton>
+        <FluentSkeleton Shimmer="true" Style="margin-top: 10px;" Width="100%" Height="20px"></FluentSkeleton>
+        <FluentSkeleton Shimmer="true" Style="margin-top: 10px;" Width="100%" Height="20px"></FluentSkeleton>
+        <FluentSkeleton Shimmer="true" Style="margin-top: 10px;" Width="100%" Height="20px"></FluentSkeleton>
+        <FluentSkeleton Shimmer="true" Style="margin-top: 10px;" Width="100%" Height="20px"></FluentSkeleton>
+        <FluentSkeleton Shimmer="true" Style="margin-top: 10px;" Width="100%" Height="20px"></FluentSkeleton>
+        <FluentSkeleton Shimmer="true" Style="margin-top: 10px;" Width="100%" Height="20px"></FluentSkeleton>
+        <FluentSkeleton Shimmer="true" Style="margin-top: 10px;" Width="100%" Height="20px"></FluentSkeleton>
+        <FluentSkeleton Shimmer="true" Style="margin-top: 10px;" Width="100%" Height="20px"></FluentSkeleton>
+        <FluentSkeleton Shimmer="true" Style="margin-top: 10px;" Width="100%" Height="20px"></FluentSkeleton>
+        <FluentSkeleton Shimmer="true" Style="margin-top: 10px;" Width="100%" Height="20px"></FluentSkeleton>
+        <FluentSkeleton Shimmer="true" Style="margin-top: 10px;" Width="100%" Height="50px"></FluentSkeleton>
+    </FluentCard>
 }
 
 

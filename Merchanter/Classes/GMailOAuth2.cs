@@ -59,12 +59,12 @@ namespace Merchanter.Classes {
                     var flow = new GoogleAuthorizationCodeFlow(new GoogleAuthorizationCodeFlow.Initializer {
                         ClientSecrets = new ClientSecrets {
                             ClientId = clientId,
-                            ClientSecret = clientSecret
+                            ClientSecret = clientSecret,
                         },
                         Scopes = ["https://mail.google.com/"]
                     });
                     var authorizationCode = GetAuthorizationCode(flow, user);
-                    var tokenResponse = flow.ExchangeCodeForTokenAsync(user, authorizationCode, "urn:ietf:wg:oauth:2.0:oob", CancellationToken.None).Result;
+                    var tokenResponse = flow.ExchangeCodeForTokenAsync(user, authorizationCode, "urn:ietf:wg:oauth:2.0:oob:auto", CancellationToken.None).Result;
                     accessToken = tokenResponse.AccessToken;
                     // Save the token to a file
                     using var fileStream = new FileStream(tokenPath, FileMode.Create, FileAccess.Write);

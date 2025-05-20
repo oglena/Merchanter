@@ -5,8 +5,64 @@
 @inject IPostHelper PostHelper
 @inject IHttpContextAccessor HttpContextAccessor
 
+<FluentGridItem xs="12" Style="display:contents;">
+    @if (product_images.Count > 0) {
+        <FluentGridItem xs="12" Style="width:100%;height:30px;">
+        </FluentGridItem>
+        @foreach (var item in product_images) {
+            <FluentGridItem lg="3" md="4" xs="6" Style="@("margin:5px;border:1px dashed "+(item.id > 0 ? "var(--accent-fill-rest)" : "red")+";border-radius:3px;")">
+                <FluentGridItem xs="12" Justify="JustifyContent.Center">
+                    <img style="width:250px;padding:15px;"
+                         src="@(@"media\catalog\product\" + item.image_url )"
+                         alt="@(Path.GetFileNameWithoutExtension(item.image_name))" />
+                </FluentGridItem>
+                <FluentDivider Style="max-width:100%;margin-top:0 !important;" />
+                <FluentGridItem xs="12" Justify="JustifyContent.Center">
+                    <span>@item.image_name</span>
+                </FluentGridItem>
+                <FluentGridItem xs="12" Justify="JustifyContent.Center" Style="height:30px;">
+                    <FluentBadge Appearance="Appearance.Accent">Tip:&nbsp;@item.type.ToString().ToUpper()</FluentBadge>
+                    @if (item.is_default) {
+                        <span>&nbsp;&nbsp;</span>
+                        <FluentBadge Appearance="Appearance.Accent">KAPAK</FluentBadge>
+                    }
+                </FluentGridItem>
+                <FluentGridItem xs="12" Justify="JustifyContent.Center">
+                    <FluentButton Appearance="Appearance.Outline" IconStart="@(new Icons.Regular.Size12.Delete())" Style="margin:5px;" />
+                    @if (!item.is_default) {
+                        <FluentButton Appearance="Appearance.Outline" IconStart="@(new Icons.Regular.Size12.CheckmarkCircle())" Style="margin:5px;" />
+                    }
+                </FluentGridItem>
+            </FluentGridItem>
+        }
+    }
+
+    @if (Files.Any() && !string.IsNullOrWhiteSpace(username)) {
+        @foreach (var file in Files) {
+            <FluentGridItem lg="3" md="4" xs="6" Style="margin:5px;border:1px dashed green;border-radius:3px;">
+                <FluentGridItem xs="12" Justify="JustifyContent.Center">
+                    <img style="max-width:250px;padding:15px;"
+                         src="@file.Value.Replace(@"wwwroot\",string.Empty)"
+                         alt="@(Path.GetFileNameWithoutExtension(file.Key))" />
+                </FluentGridItem>
+                <FluentDivider Style="width:100%;margin-top:0 !important;" />
+                <FluentGridItem xs="12" Justify="JustifyContent.Center">
+                    <span>@file.Key</span>
+                </FluentGridItem>
+                <FluentGridItem xs="12" Justify="JustifyContent.Center" Style="height:30px;">
+                    <FluentBadge Appearance="Appearance.Accent">Tip:&nbsp;@ImageTypes.url.ToString().ToUpper()</FluentBadge>
+                </FluentGridItem>
+                <FluentGridItem xs="12" Justify="JustifyContent.Center">
+                    <FluentButton Appearance="Appearance.Outline" IconStart="@(new Icons.Regular.Size12.Delete())" Style="margin:5px;" />
+                </FluentGridItem>
+            </FluentGridItem>
+        }
+    }
+</FluentGridItem>
+
 <FluentGridItem xs="12">
-    <FluentInputFile Id="product-image-uploader"
+    <FluentInputFile @ref="@ProductImageByStream"
+                     Id="product-image-uploader"
                      DragDropZoneVisible="true"
                      Mode="InputFileMode.Stream"
                      Multiple="true"
@@ -14,71 +70,70 @@
                      MaximumFileSize="@(10*1024*1024)"
                      Accept="image/*"
                      @bind-ProgressPercent="@ProgressPercent"
-                     OnCompleted="@OnCompletedAsync">
+                     OnFileUploaded="@OnFileUploadedAsync"
+                     OnCompleted="@OnCompleted">
         <ChildContent>
-            <label for="product-image-uploader">
+            <label for="product-image-uploader" style="margin-top:10px;">
                 <FluentIcon Value="@(new @Icons.Regular.Size24.ArrowUpload())" />
             </label>
-
             <div>
-                Dosyaları yüklemek için buraya sürükleyin,
+                Resimlerinizi(<label>max:10MB</label>) yüklemek için buraya sürükleyin,
                 veya <label for="product-image-uploader">göz atın</label>
                 ve seçin<span style="color: red;">*</span>.
                 <br />
-                <em>En fazla 10 dosya yükleyebilirsiniz.</em>
+                <em>En fazla 10 resim yükleyebilirsiniz.</em>
             </div>
         </ChildContent>
+        <ProgressTemplate>
+            <FluentProgress Width="100%" Stroke="ProgressStroke.Small" Value="@ProgressPercent" />
+            <FluentLabel Typo="Typography.Body" Color="Color.Accent">
+                @($"{ProgressPercent}%")
+            </FluentLabel>
+        </ProgressTemplate>
     </FluentInputFile>
-    <FluentDivider Style="width:100%;margin-top:0 !important;" />
-    @if (Files.Any()) {
-        <h4>Resim(ler) yüklendi:</h4>
-        <ul>
-            @foreach (var file in Files) {
-                <li>
-                    <b>@file.Name</b> 🔹
-                    @($"{Decimal.Divide(file.Size, 1024):N} KB") 🔹
-                    @file.ContentType 🔹
-                    @file.LocalFile?.FullName
-                    @file.ErrorMessage
-                </li>
-            }
-        </ul>
-    }
 </FluentGridItem>
-
-@if (product_images.Count > 0) {
-    @for (int i = 0; i < product_images.Count; i++) {
-        <FluentGridItem xs="12">
-            <FluentTextField Label="Ürün Resmi (nyd)" @bind-Value="@item.image_url" Required="false" Disabled="false" Style="width:100%;">
-                <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
-            </FluentTextField>
-            @item.is_default
-        </FluentGridItem>
-    }
-}
-else {
-    <FluentGridItem xs="12" Style="width:100%;margin-bottom: 10px;">
-        <span style="color: red;">Resim bulunamadı.</span>
-    </FluentGridItem>
-}
 
 @code {
     [Parameter]
     public List<ProductImage> product_images { get; set; }
+    [Parameter]
+    public string sku { get; set; }
+    public string? username = null;
 
-    int ProgressPercent = 0;
-    FluentInputFileEventArgs[] Files = Array.Empty<FluentInputFileEventArgs>();
+    private int ProgressPercent = 0;
+    string? progressTitle;
+    private FluentInputFile? ProductImageByStream = default!;
+    Dictionary<string, string> Files = new();
 
-    private async Task OnCompletedAsync(IEnumerable<FluentInputFileEventArgs> files) {
-        Files = files.ToArray();
+    protected override void OnParametersSet() {
+        username = HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value;
+    }
 
-        // For the demo, delete these files.
-        foreach (var file in Files) {
-            file.LocalFile?.Delete();
+    async Task OnFileUploadedAsync(FluentInputFileEventArgs file) {
+        try {
+            ProgressPercent = file.ProgressPercent;
+            progressTitle = file.ProgressTitle;
+            if (!string.IsNullOrWhiteSpace(username)) {
+                // Check if the folder is exists, if not create it
+                var tempPath = Path.Combine("wwwroot", "temp", username, sku);
+                if (!Directory.Exists(tempPath)) {
+                    Directory.CreateDirectory(tempPath);
+                }
+                var localFile = Path.Combine("wwwroot", "temp", username, sku, file.Name);
+
+                await using FileStream fs = new(localFile, FileMode.Create);
+                await file.Stream!.CopyToAsync(fs);
+                await file.Stream!.DisposeAsync();
+                Files.Add(file.Name, localFile);
+            }
         }
+        catch (Exception ex) {
+            Trace.WriteLine(ex.Message);
+        }
+    }
 
-        // Wait 3 seconds before to reset the progress bar.
-        await Task.Delay(3000);
-        ProgressPercent = 0;
+    void OnCompleted(IEnumerable<FluentInputFileEventArgs> files) {
+        ProgressPercent = ProductImageByStream!.ProgressPercent;
+        progressTitle = ProductImageByStream!.ProgressTitle;
     }
 }

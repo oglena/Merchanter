@@ -26,7 +26,10 @@ builder.Logging.AddConsole();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
 builder.WebHost.UseWebRoot("wwwroot").UseStaticWebAssets();
-builder.Services.AddServerSideBlazor().AddCircuitOptions(x => {
+builder.Services.AddServerSideBlazor().AddHubOptions(opt => {
+    opt.DisableImplicitFromServicesParameters = true;
+    opt.EnableDetailedErrors = true;
+}).AddCircuitOptions(x => {
     x.DetailedErrors = true;
     x.DisconnectedCircuitMaxRetained = 10;
 });

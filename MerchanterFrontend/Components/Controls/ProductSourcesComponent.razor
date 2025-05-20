@@ -5,34 +5,50 @@
 @inject IPostHelper PostHelper
 @inject IHttpContextAccessor HttpContextAccessor
 
-<FluentGrid Justify="JustifyContent.FlexStart">
-    @foreach (var item in product_sources) {
-        <FluentGridItem xs="3" Justify="JustifyContent.FlexEnd">
-            <FluentSwitch @bind-Value="@item.is_active" Label="Depo Durumu" Required="true" Disabled="true">
-                <span slot="checked-message">Aktif</span>
-                <span slot="unchecked-message">Pasif</span>
-            </FluentSwitch>
-        </FluentGridItem>
-        <FluentGridItem xs="3">
-            <FluentTextField Label="Ürün Kaynağı (nyd)" @bind-Value="@item.name" Required="true" Disabled="true">
-                <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
-            </FluentTextField>
-        </FluentGridItem>
-        <FluentGridItem xs="3">
-            <FluentNumberField Label="Ürün Miktarı (nyd)" @bind-Value="@item.qty" Required="true" Disabled="true">
-                <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
-            </FluentNumberField>
-        </FluentGridItem>
-        <FluentGridItem xs="3">
-            <FluentTextField Label="Son Güncelleme" Value="@item.update_date.ToString("dd.MM.yyyy HH:mm:ss")" Required="true" Disabled="true">
-                <FluentIcon Value="@(new Icons.Regular.Size20.Calendar())" Color="@Color.Neutral" Slot="start" />
-            </FluentTextField>
-        </FluentGridItem>
-        <FluentDivider Style="width:100%;margin-top:0 !important;" />
-    }
-</FluentGrid>
+<FluentGridItem xs="6" Justify="JustifyContent.FlexEnd">
+    <FluentSwitch @bind-Value="@product_extension.is_xml_enabled" Label="Diğer Kaynaklar" Style="margin-top:10px;">
+        <span slot="checked-message">Aktif</span>
+        <span slot="unchecked-message">Pasif</span>
+    </FluentSwitch>
+</FluentGridItem>
+@if (product_extension.xml_sources != null && product_extension.xml_sources.Length > 0 && product_extension.is_enabled) {
+    <FluentGridItem xs="6">
+        <FluentTextField Label="Aktif Diğer Kaynaklar (nyd)" Value="@(string.Join(",", product_extension.xml_sources))"
+                         Required="false" Disabled="true" Style="width:100%;">
+            <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+        </FluentTextField>
+
+    </FluentGridItem>
+}
+<FluentDivider Style="width:100%;margin-top:0 !important;" />
+@foreach (var item in product_sources) {
+    <FluentGridItem xs="3" Justify="JustifyContent.FlexEnd">
+        <FluentSwitch @bind-Value="@item.is_active" Label="Depo Durumu" Disabled="true" Style="margin-top:10px;">
+            <span slot="checked-message">Aktif</span>
+            <span slot="unchecked-message">Pasif</span>
+        </FluentSwitch>
+    </FluentGridItem>
+    <FluentGridItem xs="3">
+        <FluentTextField Label="Ürün Kaynağı (nyd)" @bind-Value="@item.name" Required="true" Disabled="true">
+            <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+        </FluentTextField>
+    </FluentGridItem>
+    <FluentGridItem xs="3">
+        <FluentNumberField Label="Ürün Miktarı (nyd)" @bind-Value="@item.qty" Required="true" Disabled="true">
+            <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+        </FluentNumberField>
+    </FluentGridItem>
+    <FluentGridItem xs="3">
+        <FluentTextField Label="Son Güncelleme" Value="@item.update_date.ToString("dd.MM.yyyy HH:mm:ss")" Required="true" Disabled="true">
+            <FluentIcon Value="@(new Icons.Regular.Size20.Calendar())" Color="@Color.Neutral" Slot="start" />
+        </FluentTextField>
+    </FluentGridItem>
+    <FluentDivider Style="width:100%;margin-top:0 !important;" />
+}
 
 @code {
+    [Parameter]
+    public ProductExtension product_extension { get; set; }
     [Parameter]
     public List<ProductSource> product_sources { get; set; }
 }

@@ -5,94 +5,25 @@
 @inject IPostHelper PostHelper
 @inject IHttpContextAccessor HttpContextAccessor
 
-@if (!loading && brand_options != null) {
-    <FluentGridItem xs="12" Justify="JustifyContent.FlexStart">
-        <FluentSwitch @bind-Value="@product_extension.is_enabled" Label="Ürün Durumu">
-            <span slot="checked-message">Aktif</span>
-            <span slot="unchecked-message">Pasif</span>
-        </FluentSwitch>
-    </FluentGridItem>
-    <FluentGridItem xs="6">
-        <FluentCombobox Label="Marka" Items="@brand_options" TOption="Option<Brand>"
-                        OptionText="@(b=>b.Text)" Appearance="Appearance.Neutral"
-                        @bind-Value="@product_extension.brand.brand_name"
-                        Autocomplete="ComboboxAutocomplete.List"
-                        Placeholder="Marka seçiniz..." Required="true" Height="300px" Style="width:100%;">
-        </FluentCombobox>
-    </FluentGridItem>
-    <FluentDivider Style="width:100%;margin-top:0 !important;" />
-    <FluentGridItem xs="6">
-        <FluentNumberField Label="Desi" @bind-Value="@product_extension.volume" Placeholder="Desi boş olamaz..." Required="true" Style="width:100%;">
-            <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
-        </FluentNumberField>
-    </FluentGridItem>
-    <FluentGridItem xs="6">
-        <FluentNumberField Label="Ağırlık" @bind-Value="@product_extension.weight" Placeholder="Ağırlık boş olamaz..." Required="true" Style="width:100%;">
-            <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
-        </FluentNumberField>
-    </FluentGridItem>
-    <FluentGridItem xs="6" Justify="JustifyContent.FlexEnd">
-        <FluentSwitch @bind-Value="@product_extension.is_xml_enabled" Label="Diğer Kaynaklar">
-            <span slot="checked-message">Aktif</span>
-            <span slot="unchecked-message">Pasif</span>
-        </FluentSwitch>
-    </FluentGridItem>
-    @if (product_extension.xml_sources != null && product_extension.xml_sources.Length > 0 && product_extension.is_enabled) {
-        <FluentGridItem xs="6">
-            <FluentTextField Label="Aktif Diğer Kaynaklar (nyd)" Value="@(string.Join(",", product_extension.xml_sources))"
-                             Required="false" Disabled="true" Style="width:100%;">
-                <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
-            </FluentTextField>
-
-        </FluentGridItem>
-    }
-    <FluentDivider Style="width:100%;margin-top:0 !important;" />
-    <FluentGridItem xs="12">
-        <FluentTextArea Label="Ürün Açıklaması (nyd)" @bind-Value="@product_extension.description"
-                        Required="false" Style="width:100%;" Spellcheck="true" Rows="10" Resize="TextAreaResize.Vertical">
-            <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
-        </FluentTextArea>
-    </FluentGridItem>
-}
-else {
-    <FluentProgressRing Size="ProgressRingSize.Large" />
-}
+<FluentGridItem xs="6">
+    <FluentNumberField Label="Desi" @bind-Value="@product_extension.volume" Placeholder="Desi boş olamaz..." Required="true" Style="width:100%;">
+        <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+    </FluentNumberField>
+</FluentGridItem>
+<FluentGridItem xs="6">
+    <FluentNumberField Label="Ağırlık" @bind-Value="@product_extension.weight" Placeholder="Ağırlık boş olamaz..." Required="true" Style="width:100%;">
+        <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+    </FluentNumberField>
+</FluentGridItem>
+<FluentDivider Style="width:100%;margin-top:0 !important;" />
+<FluentGridItem xs="12">
+    <FluentTextArea Label="Ürün Açıklaması (nyd)" @bind-Value="@product_extension.description"
+                    Required="false" Style="width:100%;" Spellcheck="true" Rows="10" Resize="TextAreaResize.Vertical">
+        <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
+    </FluentTextArea>
+</FluentGridItem>
 
 @code {
     [Parameter]
     public ProductExtension product_extension { get; set; }
-    public bool loading = true;
-    public List<Option<Brand>>? brand_options { get; set; } = null;
-
-    protected override async Task OnParametersSetAsync() {
-        if (brand_options == null) {
-            await LoadBrands();
-        }
-    }
-
-    private async Task LoadBrands() {
-        try {
-            loading = true;
-            var apifilter = new ApiFilter() { Pager = new Pager() { ItemsPerPage = int.MaxValue } };
-            string json = JsonConvert.SerializeObject(apifilter);
-            var response = await PostHelper.Request<List<Brand>>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
-                Classes.PostHelper.PostMethod.Post, Classes.PostHelper.PostDestination.Api,
-                "api/Brand/GetBrands",
-                new StringContent(json, Encoding.UTF8, "application/json")
-                );
-            if (response != null && response.Success && response.Data != null) {
-                brand_options = response.Data
-                    .Select(b => new Option<Brand> { Value = b, Text = b.brand_name })
-                    .ToList();
-            }
-        }
-        catch (Exception ex) {
-            Console.WriteLine(ex.Message);
-            brand_options = null;
-        }
-        finally {
-            loading = false;
-            StateHasChanged();
-        }
-    }
 }
