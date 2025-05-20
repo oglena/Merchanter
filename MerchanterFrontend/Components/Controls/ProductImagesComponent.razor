@@ -47,7 +47,7 @@
 </FluentGridItem>
 
 @if (product_images.Count > 0) {
-    @foreach (var item in product_images) {
+    @for (int i = 0; i < product_images.Count; i++) {
         <FluentGridItem xs="12">
             <FluentTextField Label="Ürün Resmi (nyd)" @bind-Value="@item.image_url" Required="false" Disabled="false" Style="width:100%;">
                 <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="@Color.Neutral" Slot="start" />
