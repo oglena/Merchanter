@@ -6,11 +6,11 @@
 @inject IHttpContextAccessor HttpContextAccessor
 
 <FluentGridItem xs="12" Style="display:contents;">
+    <FluentGridItem xs="12" Style="width:100%;height:30px;">
+    </FluentGridItem>
     @if (product_images.Count > 0) {
-        <FluentGridItem xs="12" Style="width:100%;height:30px;">
-        </FluentGridItem>
         @foreach (var item in product_images) {
-            <FluentGridItem lg="3" md="4" xs="6" Style="@("margin:5px;border:1px dashed "+(item.id > 0 ? "var(--accent-fill-rest)" : "red")+";border-radius:3px;")">
+            <FluentGridItem lg="3" md="4" xs="6" Style="@("margin:5px;border:1px dashed " + (item.id > 0 ? "var(--accent-fill-rest)" : "red") + ";border-radius:3px;")">
                 <FluentGridItem xs="12" Justify="JustifyContent.Center">
                     <img style="width:250px;padding:15px;"
                          src="@(@"media\catalog\product\" + item.image_url )"
@@ -28,9 +28,22 @@
                     }
                 </FluentGridItem>
                 <FluentGridItem xs="12" Justify="JustifyContent.Center">
-                    <FluentButton Appearance="Appearance.Outline" IconStart="@(new Icons.Regular.Size12.Delete())" Style="margin:5px;" />
+                    <FluentButton Id="@("image-delete-button" + item.image_name)" Appearance="Appearance.Outline" OnClick="@(() => item.id = 0)" IconStart="@(new Icons.Regular.Size12.Delete())" Style="margin:5px;" />
+                    @if (item.id > 0) {
+                        <FluentTooltip AutoUpdateMode="AutoUpdateMode.Anchor" Anchor="@("image-delete-button" + item.image_name)" Position="TooltipPosition.Bottom">
+                            <span>Resmi<i> silinmesi</i> için hazırla.</span>
+                        </FluentTooltip>
+                    }
+                    else {
+                        <FluentTooltip AutoUpdateMode="AutoUpdateMode.Anchor" Anchor="@("image-delete-button" + item.image_name)" Position="TooltipPosition.Bottom">
+                            <span>Resim kaydedilirken <i>silinecek.</i></span>
+                        </FluentTooltip>
+                    }
                     @if (!item.is_default) {
-                        <FluentButton Appearance="Appearance.Outline" IconStart="@(new Icons.Regular.Size12.CheckmarkCircle())" Style="margin:5px;" />
+                        <FluentButton Id="@("image-makedefault-button" + item.image_name)" OnClick="@(() => MakeDefaultImage(item.id))" Appearance="Appearance.Outline" IconStart="@(new Icons.Regular.Size12.CheckmarkCircle())" Style="margin:5px;" />
+                        <FluentTooltip AutoUpdateMode="AutoUpdateMode.Anchor" Anchor="@("image-makedefault-button" + item.image_name)" Position="TooltipPosition.Bottom">
+                            <i>KAPAK</i> resmi yap.
+                        </FluentTooltip>
                     }
                 </FluentGridItem>
             </FluentGridItem>
@@ -53,7 +66,10 @@
                     <FluentBadge Appearance="Appearance.Accent">Tip:&nbsp;@ImageTypes.url.ToString().ToUpper()</FluentBadge>
                 </FluentGridItem>
                 <FluentGridItem xs="12" Justify="JustifyContent.Center">
-                    <FluentButton Appearance="Appearance.Outline" IconStart="@(new Icons.Regular.Size12.Delete())" Style="margin:5px;" />
+                    <FluentButton Id="@("image-delete-temp-button" + file.Key)" Appearance="Appearance.Outline" OnClick="@(() => DeleteTempImage(file.Key))" IconStart="@(new Icons.Regular.Size12.Delete())" Style="margin:5px;" />
+                    <FluentTooltip AutoUpdateMode="AutoUpdateMode.Anchor" Anchor="@("image-delete-temp-button" + file.Key)" Position="TooltipPosition.Bottom">
+                        <span>Resmi<i> sil.</i></span>
+                    </FluentTooltip>
                 </FluentGridItem>
             </FluentGridItem>
         }
@@ -109,7 +125,7 @@
         username = HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value;
     }
 
-    async Task OnFileUploadedAsync(FluentInputFileEventArgs file) {
+    private async Task OnFileUploadedAsync(FluentInputFileEventArgs file) {
         try {
             ProgressPercent = file.ProgressPercent;
             progressTitle = file.ProgressTitle;
@@ -132,8 +148,29 @@
         }
     }
 
-    void OnCompleted(IEnumerable<FluentInputFileEventArgs> files) {
+    private void OnCompleted(IEnumerable<FluentInputFileEventArgs> files) {
         ProgressPercent = ProductImageByStream!.ProgressPercent;
         progressTitle = ProductImageByStream!.ProgressTitle;
+    }
+
+    private void MakeDefaultImage(int imageId) {
+        foreach (var img in product_images) {
+            img.is_default = img.id == imageId;
+        }
+    }
+
+    private void DeleteTempImage(string fileName) {
+        if (Files.ContainsKey(fileName)) {
+            try {
+                var filePath = Files[fileName];
+                if (File.Exists(filePath)) {
+                    File.Delete(filePath);
+                }
+                Files.Remove(fileName);
+            }
+            catch (Exception ex) {
+                Trace.WriteLine($"Error deleting image: {ex.Message}");
+            }
+        }
     }
 }

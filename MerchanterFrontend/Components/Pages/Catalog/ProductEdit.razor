@@ -97,7 +97,7 @@
                                                     }
                                                     else {
                                                         <FluentLabel Typo="Typography.Body" Color="Color.Disabled">Marka Yükleniyor...</FluentLabel>
-                                                        <FluentSkeleton Shimmer="true" Style="width:100%;height:30px;margin-top:5px;" ></FluentSkeleton>
+                                                        <FluentSkeleton Shimmer="true" Style="width:100%;height:30px;margin-top:5px;"></FluentSkeleton>
                                                     }
                                                 </FluentGridItem>
                                                 <FluentGridItem xs="6">
@@ -300,7 +300,28 @@ else {
     }
 
     private async Task SaveProduct(Product _product) {
-        await Task.CompletedTask;
+        try {
+            loading = true;
+            var json = JsonConvert.SerializeObject(_product);
+            var response = await PostHelper.Request<Product?>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                Classes.PostHelper.PostMethod.Put, Classes.PostHelper.PostDestination.Api,
+                "api/Product/SaveProduct",
+                new StringContent(json, Encoding.UTF8, "application/json")
+                );
+            if (response != null && response.Success && response.Data != null) {
+                page_message = $"Ürün {_product.sku} başarıyla kaydedildi.";
+                message_status = "işlem başarılı";
+            }
+        }
+        catch (Exception ex) {
+            Trace.WriteLine(ex.Message);
+            page_message = $"Ürün {_product.sku} kaydedilirken hata oluştu.";
+            message_status = "işlem başarısız";
+        }
+        finally {
+            loading = false;
+            StateHasChanged();
+        }
     }
 
     private async Task LoadBrands() {

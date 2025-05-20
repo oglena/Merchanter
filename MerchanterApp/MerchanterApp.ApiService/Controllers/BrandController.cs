@@ -3,11 +3,21 @@ using Merchanter.Classes;
 using Microsoft.AspNetCore.Authorization;
 using MerchanterApp.ApiService.Models;
 using MerchanterApp.ApiService.Services;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace MerchanterApp.ApiService.Controllers {
+    /// <summary>
+    /// Provides brand-related API endpoints for Merchanter.
+    /// </summary>
     [ApiController]
+    [SwaggerTag("Brand endpoint for Merchanter.")]
     [Route("api/[controller]")]
     public class BrandController(IBrandService brandService) : ControllerBase {
+        /// <summary>
+        /// Returns a filtered and paginated list of brands for the authenticated customer.
+        /// </summary>
+        /// <param name="_filters">Filtering, sorting, and paging options.</param>
+        /// <returns>List of brands wrapped in a BaseResponseModel.</returns>
         [HttpPost("GetBrands")]
         [Authorize]
         public async Task<ActionResult<BaseResponseModel<List<Brand>>>> GetBrands([FromBody] ApiFilter _filters) {
@@ -20,6 +30,11 @@ namespace MerchanterApp.ApiService.Controllers {
             return BadRequest();
         }
 
+        /// <summary>
+        /// Returns the total count of brands matching the given filters for the authenticated customer.
+        /// </summary>
+        /// <param name="_filters">Filtering options.</param>
+        /// <returns>Total brand count wrapped in a BaseResponseModel.</returns>
         [HttpPost("GetBrandsCount")]
         [Authorize]
         public async Task<ActionResult<BaseResponseModel<int>>> GetBrandsCount([FromBody] ApiFilter _filters) {
@@ -31,6 +46,11 @@ namespace MerchanterApp.ApiService.Controllers {
             return BadRequest();
         }
 
+        /// <summary>
+        /// Updates or creates a brand for the authenticated customer.
+        /// </summary>
+        /// <param name="_brand">Brand object to save.</param>
+        /// <returns>Saved brand wrapped in a BaseResponseModel.</returns>
         [HttpPut("SaveBrand")]
         [Authorize]
         public async Task<ActionResult<BaseResponseModel<Brand?>>> SaveBrand([FromBody] Brand _brand) {
@@ -38,15 +58,20 @@ namespace MerchanterApp.ApiService.Controllers {
             if (int.TryParse(_brand.customer_id.ToString(), out customer_id) && customer_id > 0) {
                 Brand? brand = await brandService.SaveBrand(customer_id, _brand);
                 if (brand != null) {
-                    return Ok(new BaseResponseModel<Brand>() { Success = true, Data = brand, ErrorMessage = "" });
+                    return Ok(new BaseResponseModel<Brand?>() { Success = true, Data = brand, ErrorMessage = "" });
                 }
                 else {
-                    return Ok(new BaseResponseModel<Brand>() { Success = false, Data = null, ErrorMessage = "Error save brand" });
+                    return Ok(new BaseResponseModel<Brand?>() { Success = false, Data = null, ErrorMessage = "Error save brand" });
                 }
             }
             return BadRequest("Invalid customer ID.");
         }
 
+        /// <summary>
+        /// Deletes a brand for the authenticated customer.
+        /// </summary>
+        /// <param name="_brand">Brand object to delete.</param>
+        /// <returns>Result of the delete operation wrapped in a BaseResponseModel.</returns>
         [HttpDelete("DeleteBrand")]
         [Authorize]
         public async Task<ActionResult<BaseResponseModel<bool>>> DeleteBrand([FromBody] Brand _brand) {
@@ -58,6 +83,10 @@ namespace MerchanterApp.ApiService.Controllers {
             return BadRequest("Invalid customer ID.");
         }
 
+        /// <summary>
+        /// Retrieves default brand for authenticated customer. (NOT WORKING)
+        /// </summary>
+        /// <returns>Default brand wrapped in a BaseResponseModel.</returns>
         [HttpGet("GetDefaultBrand")]
         [Authorize]
         public async Task<ActionResult<BaseResponseModel<Brand>>> GetDefaultBrand() {

@@ -3,6 +3,7 @@ using MerchanterFrontend.Classes;
 using MerchanterFrontend.Components;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.FluentUI.AspNetCore.Components;
+using Microsoft.FluentUI.AspNetCore.Components.Components.Tooltip;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDataProtection()
@@ -34,6 +35,7 @@ builder.Services.AddServerSideBlazor().AddHubOptions(opt => {
     x.DisconnectedCircuitMaxRetained = 10;
 });
 
+builder.Services.AddScoped<ITooltipService, TooltipService>();
 builder.Services.AddTransient<IPostHelper, PostHelper>();
 builder.Services.AddSingleton<LibraryConfiguration>();
 

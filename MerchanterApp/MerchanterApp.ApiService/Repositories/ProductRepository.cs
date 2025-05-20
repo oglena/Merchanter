@@ -6,6 +6,8 @@ namespace MerchanterApp.ApiService.Repositories {
         Task<List<Product>> GetProducts(int _customer_id, ApiFilter _filters);
         Task<int> GetProductsCount(int _customer_id, ApiFilter _filters);
         Task<Product?> GetProduct(int _customer_id, int _product_id);
+        Task<Product?> UpdateProduct(int _customer_id, Product product);
+        Task<Product?> InsertProduct(int _customer_id, Product product);
     }
 
     public class ProductRepository(MerchanterService merchanterService) : IProductRepository {
@@ -30,6 +32,14 @@ namespace MerchanterApp.ApiService.Repositories {
 
         private async Task<int> GetProductsCountAsync(int _customer_id, ApiFilter _filters) {
             return await Task.Run(() => merchanterService.helper.GetProductsCount(_customer_id, _filters));
+        }
+
+        public async Task<Product?> UpdateProduct(int _customer_id, Product product) {
+            return await Task.Run(() => merchanterService.helper.UpdateProduct(_customer_id, product));
+        }
+
+        public async Task<Product?> InsertProduct(int _customer_id, Product product) {
+            return await Task.Run(() => merchanterService.helper.InsertProduct(_customer_id, product));
         }
     }
 }

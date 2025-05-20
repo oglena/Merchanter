@@ -3012,7 +3012,6 @@ namespace Merchanter {
                             return 0;
                         }
                     }
-
                 }
 
                 if (inserted_id > 0)
@@ -3022,6 +3021,73 @@ namespace Merchanter {
             catch (Exception ex) {
                 OnError(ex.ToString());
                 return 0;
+            }
+        }
+
+        public Product? InsertProduct(int _customer_id, Product _product) {
+            try {
+                if (this.IsProductExists(_customer_id, _product.sku)) {
+                    OnError("InsertProducts: " + _product.sku + " - Product Already Exists");
+                    return null;
+                }
+
+                UInt64 inserted_id = 0;
+                string _query = "START TRANSACTION;" +
+                    "INSERT INTO products (customer_id,source_product_id,sku,type,barcode,total_qty,price,special_price,custom_price,currency,tax,tax_included,name,sources) VALUES (@customer_id,@source_product_id,@sku,@type,@barcode,@total_qty,@price,@special_price,@custom_price,@currency,@tax,@tax_included,@name,@sources);" +
+                    "SELECT LAST_INSERT_ID();" +
+                    "COMMIT;";
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                cmd.Parameters.Add(new MySqlParameter("source_product_id", _product.source_product_id));
+                cmd.Parameters.Add(new MySqlParameter("sku", _product.sku));
+                cmd.Parameters.Add(new MySqlParameter("type", _product.type));
+                cmd.Parameters.Add(new MySqlParameter("barcode", _product.barcode));
+                cmd.Parameters.Add(new MySqlParameter("total_qty", _product.sources.Where(x => x.is_active).Sum(x => x.qty)));
+                cmd.Parameters.Add(new MySqlParameter("price", _product.price));
+                cmd.Parameters.Add(new MySqlParameter("special_price", _product.special_price));
+                cmd.Parameters.Add(new MySqlParameter("custom_price", _product.custom_price));
+                cmd.Parameters.Add(new MySqlParameter("currency", _product.currency));
+                cmd.Parameters.Add(new MySqlParameter("tax", _product.tax));
+                cmd.Parameters.Add(new MySqlParameter("tax_included", _product.tax_included));
+                cmd.Parameters.Add(new MySqlParameter("name", _product.name));
+                cmd.Parameters.Add(new MySqlParameter("sources", string.Join(",", _product.sources.Where(x => x.is_active).Select(x => x.name))));
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                inserted_id = (UInt64)cmd.ExecuteScalar();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
+
+                if (!InsertProductExt(_customer_id, _product.extension)) {
+                    OnError("InsertProducts: " + _product.sku + " - Product Extension Insert Error");
+                    return null;
+                }
+
+                if (!UpdateProductSources(_customer_id, _product.sources, _product.sku)) {
+                    OnError("InsertProducts: " + _product.sku + " - Product Source Insert Error");
+                    return null;
+                }
+
+                if (_product.attributes != null && _product.attributes.Count > 0) {
+                    if (!UpdateProductAttributes(_customer_id, _product.attributes, (int)inserted_id)) {
+                        OnError("InsertProducts: " + _product.sku + " - Product Attributes Insert Error");
+                        return null;
+                    }
+                }
+
+                if (_product.images != null && _product.images.Count > 0) {
+                    if (!UpdateProductImages(_customer_id, _product.images, (int)inserted_id)) {
+                        OnError("InsertProducts: " + _product.sku + " - Product Images Insert Error");
+                        return null;
+                    }
+                }
+
+                if (inserted_id > 0) {
+                    _product.id = (int)inserted_id;
+                    return _product;
+                }
+                else return null;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return null;
             }
         }
 
@@ -3091,6 +3157,66 @@ namespace Merchanter {
             catch (Exception ex) {
                 OnError(ex.ToString());
                 return false;
+            }
+        }
+
+        public Product? UpdateProduct(int _customer_id, Product _product) {
+            try {
+                string _query = "UPDATE products SET type=@type,barcode=@barcode,total_qty=@total_qty,price=@price,special_price=@special_price,custom_price=@custom_price,currency=@currency,tax=@tax,tax_included=@tax_included,update_date=@update_date,name=@name,sources=@sources,source_product_id=@source_product_id WHERE id=@id AND sku=@sku AND customer_id=@customer_id";
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("id", _product.id));
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                cmd.Parameters.Add(new MySqlParameter("source_product_id", _product.source_product_id));
+                cmd.Parameters.Add(new MySqlParameter("update_date", DateTime.Now));
+                cmd.Parameters.Add(new MySqlParameter("sku", _product.sku));
+                cmd.Parameters.Add(new MySqlParameter("type", _product.type));
+                cmd.Parameters.Add(new MySqlParameter("barcode", _product.barcode));
+                cmd.Parameters.Add(new MySqlParameter("price", _product.price));
+                cmd.Parameters.Add(new MySqlParameter("special_price", _product.special_price));
+                cmd.Parameters.Add(new MySqlParameter("custom_price", _product.custom_price));
+                cmd.Parameters.Add(new MySqlParameter("currency", _product.currency));
+                cmd.Parameters.Add(new MySqlParameter("tax", _product.tax));
+                cmd.Parameters.Add(new MySqlParameter("tax_included", _product.tax_included));
+                cmd.Parameters.Add(new MySqlParameter("name", _product.name));
+                cmd.Parameters.Add(new MySqlParameter("total_qty", _product.sources.Where(x => x.is_active).Sum(x => x.qty)));
+                cmd.Parameters.Add(new MySqlParameter("sources", string.Join(",", _product.sources.Where(x => x.is_active).Select(x => x.name).ToArray())));
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                int val = cmd.ExecuteNonQuery();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
+
+                if (val == 0) {
+                    OnError("UpdateProduct: " + _product.sku + " - Product Not Found");
+                    return null;
+                }
+
+                if (!UpdateProductExt(_customer_id, _product.extension)) {
+                    OnError("UpdateProduct: " + _product.sku + " - Product Extension Update Error");
+                    return null;
+                }
+
+                //if (!UpdateProductSources(_customer_id, _product.sources, _product.sku)) {
+                //    OnError("UpdateProduct: " + _product.sku + " - Product Sources Update Error");
+                //    return null;
+                //}
+
+                if (_product.attributes != null && _product.attributes.Count > 0) {
+                    if (!UpdateProductAttributes(_customer_id, _product.attributes, _product.id)) {
+                        OnError("UpdateProduct: " + _product.sku + " - Product Attributes Update Error");
+                        return null;
+                    }
+                }
+
+                if (_product.images != null && _product.images.Count > 0) {
+                    if (!UpdateProductImages(_customer_id, _product.images, _product.id)) {
+                        OnError("UpdateProduct: " + _product.sku + " - Product Images Update Error");
+                        return null;
+                    }
+                }
+                return _product;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return null;
             }
         }
 

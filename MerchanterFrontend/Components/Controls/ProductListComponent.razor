@@ -89,7 +89,7 @@
                             <span>&nbsp;@(context.currency)</span>
                             <br />
                         }
-                        @if (context.special_price > 0) {
+                        @if (context.custom_price > 0) {
                             <b>Özel Fiyat:</b>
                             <FluentBadge Appearance="Appearance.Accent">@(Math.Round(context.custom_price, 2, MidpointRounding.AwayFromZero))&nbsp;</FluentBadge>
                             <span>&nbsp;@(context.currency)</span>

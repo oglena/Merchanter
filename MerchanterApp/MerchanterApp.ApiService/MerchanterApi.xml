@@ -1,0 +1,324 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>MerchanterApp.ApiService</name>
+    </assembly>
+    <members>
+        <member name="T:MerchanterApp.ApiService.Controllers.BrandController">
+            <summary>
+            Provides brand-related API endpoints for Merchanter.
+            </summary>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.BrandController.#ctor(MerchanterApp.ApiService.Services.IBrandService)">
+            <summary>
+            Provides brand-related API endpoints for Merchanter.
+            </summary>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.BrandController.GetBrands(Merchanter.Classes.ApiFilter)">
+            <summary>
+            Returns a filtered and paginated list of brands for the authenticated customer.
+            </summary>
+            <param name="_filters">Filtering, sorting, and paging options.</param>
+            <returns>List of brands wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.BrandController.GetBrandsCount(Merchanter.Classes.ApiFilter)">
+            <summary>
+            Returns the total count of brands matching the given filters for the authenticated customer.
+            </summary>
+            <param name="_filters">Filtering options.</param>
+            <returns>Total brand count wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.BrandController.SaveBrand(Merchanter.Classes.Brand)">
+            <summary>
+            Updates or creates a brand for the authenticated customer.
+            </summary>
+            <param name="_brand">Brand object to save.</param>
+            <returns>Saved brand wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.BrandController.DeleteBrand(Merchanter.Classes.Brand)">
+            <summary>
+            Deletes a brand for the authenticated customer.
+            </summary>
+            <param name="_brand">Brand object to delete.</param>
+            <returns>Result of the delete operation wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.BrandController.GetDefaultBrand">
+            <summary>
+            Retrieves default brand for authenticated customer. (NOT WORKING)
+            </summary>
+            <returns>Default brand wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="T:MerchanterApp.ApiService.Controllers.CategoryController">
+            <summary>
+            Provides category-related API endpoints for Merchanter.
+            </summary>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.CategoryController.#ctor(MerchanterApp.ApiService.Services.ICategoryService)">
+            <summary>
+            Provides category-related API endpoints for Merchanter.
+            </summary>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.CategoryController.GetCategories(Merchanter.Classes.ApiFilter)">
+            <summary>
+            Returns a filtered and paginated list of categories for the authenticated customer.
+            </summary>
+            <param name="_filters">Filtering, sorting, and paging options.</param>
+            <returns>List of categories wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.CategoryController.GetCategoriesCount(Merchanter.Classes.ApiFilter)">
+            <summary>
+            Returns the total count of categories matching the given filters for the authenticated customer.
+            </summary>
+            <param name="_filters">Filtering options.</param>
+            <returns>Total category count wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.CategoryController.SaveCategory(Merchanter.Classes.Category)">
+            <summary>
+            Updates or creates a category for the authenticated customer.
+            </summary>
+            <param name="_category">Category object to save.</param>
+            <returns>Saved category wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.CategoryController.DeleteCategory(Merchanter.Classes.Category)">
+            <summary>
+            Deletes a category for the authenticated customer.
+            </summary>
+            <param name="_category">Category object to delete.</param>
+            <returns>Result of the delete operation wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.CategoryController.GetCategory(System.Int32)">
+            <summary>
+            Retrieves a single category by its ID for the authenticated customer.
+            </summary>
+            <param name="CID">Category ID.</param>
+            <returns>Category details wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.CategoryController.GetDefaultCategory">
+            <summary>
+            Retrieves the default category for the authenticated customer.
+            </summary>
+            <returns>Default category wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="T:MerchanterApp.ApiService.Controllers.CustomerController">
+            <summary>
+            Provides customer-related API endpoints for Merchanter.
+            </summary>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.CustomerController.#ctor(MerchanterApp.ApiService.Services.ICustomerService)">
+            <summary>
+            Provides customer-related API endpoints for Merchanter.
+            </summary>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.CustomerController.GetCustomer(System.String)">
+            <summary>
+            Retrieves a single customer by ID.
+            </summary>
+            <param name="id">Customer ID.</param>
+            <returns>Customer details wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.CustomerController.GetCustomerLogs(System.String,Merchanter.Classes.ApiFilter)">
+            <summary>
+            Retrieves a list of customer logs.
+            </summary>
+            <param name="id">Customer ID.</param>
+            <param name="_api_filter">Filtering options.</param>
+            <returns>List of logs wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.CustomerController.GetCustomerNotifications(System.String,Merchanter.Classes.ApiFilter)">
+            <summary>
+            Retrieves a list of customer notifications.
+            </summary>
+            <param name="id">Customer ID.</param>
+            <param name="_api_filter">Filtering options.</param>
+            <returns>List of notifications wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.CustomerController.GetCustomers">
+            <summary>
+            Returns a list of customers.
+            </summary>
+            <returns>List of customers wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.CustomerController.SaveCustomer(System.String,Merchanter.Classes.Customer)">
+            <summary>
+            Updates or creates a customer.
+            </summary>
+            <param name="id">Customer ID.</param>
+            <param name="customer">Customer object to save.</param>
+            <returns>Saved customer wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="T:MerchanterApp.ApiService.Controllers.ProductController">
+            <summary>
+            Provides product-related API endpoints for Merchanter.
+            </summary>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.ProductController.#ctor(MerchanterApp.ApiService.Services.IProductService)">
+            <summary>
+            Provides product-related API endpoints for Merchanter.
+            </summary>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.ProductController.GetProducts(Merchanter.Classes.ApiFilter)">
+            <summary>
+            Returns a filtered and paginated list of products for the authenticated customer.
+            </summary>
+            <param name="_filters">Filtering, sorting, and paging options.</param>
+            <returns>List of products wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.ProductController.GetProductsCount(Merchanter.Classes.ApiFilter)">
+            <summary>
+            Returns the total count of products matching the given filters for the authenticated customer.
+            </summary>
+            <param name="_filters">Filtering options.</param>
+            <returns>Total product count wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.ProductController.GetProduct(System.String)">
+            <summary>
+            Retrieves a single product by its ID for the authenticated customer.
+            </summary>
+            <param name="PID">Product ID as string.</param>
+            <returns>Product details wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.ProductController.SaveProduct(Merchanter.Classes.Product)">
+            <summary>
+            Updates an existing product for the authenticated customer.
+            </summary>
+            <param name="product">Product object to update.</param>
+            <returns>Updated product wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="T:MerchanterApp.ApiService.Controllers.SettingsController">
+            <summary>
+            Provides settings-related API endpoints for Merchanter.
+            </summary>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.SettingsController.#ctor(MerchanterApp.ApiService.Services.ISettingsService)">
+            <summary>
+            Provides settings-related API endpoints for Merchanter.
+            </summary>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.SettingsController.GetCustomerSettings(System.String)">
+            <summary>
+            Retrieves all settings for the specified customer.
+            </summary>
+            <param name="id">Customer ID as string.</param>
+            <returns>Customer settings wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.SettingsController.GetActiveIntegrations(System.String)">
+            <summary>
+            Retrieves the list of active integrations for the specified customer.
+            </summary>
+            <param name="id">Customer ID as string.</param>
+            <returns>List of active integrations wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.SettingsController.SaveGeneralSettings(System.String,Merchanter.Classes.Settings.SettingsGeneral)">
+            <summary>
+            Saves general settings for the specified customer.
+            </summary>
+            <param name="id">Customer ID as string.</param>
+            <param name="_settings">General settings object.</param>
+            <returns>Saved general settings wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.SettingsController.SaveEntegraSettings(System.String,Merchanter.Classes.Settings.SettingsEntegra)">
+            <summary>
+            Saves Entegra integration settings for the specified customer.
+            </summary>
+            <param name="id">Customer ID as string.</param>
+            <param name="_settings">Entegra settings object.</param>
+            <returns>Saved Entegra settings wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.SettingsController.SaveMagentoSettings(System.String,Merchanter.Classes.Settings.SettingsMagento)">
+            <summary>
+            Saves Magento integration settings for the specified customer.
+            </summary>
+            <param name="id">Customer ID as string.</param>
+            <param name="_settings">Magento settings object.</param>
+            <returns>Saved Magento settings wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.SettingsController.SaveNetsisSettings(System.String,Merchanter.Classes.Settings.SettingsNetsis)">
+            <summary>
+            Saves Netsis integration settings for the specified customer.
+            </summary>
+            <param name="id">Customer ID as string.</param>
+            <param name="_settings">Netsis settings object.</param>
+            <returns>Saved Netsis settings wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.SettingsController.SaveShipmentSettings(System.String,Merchanter.Classes.Settings.SettingsShipment)">
+            <summary>
+            Saves shipment settings for the specified customer.
+            </summary>
+            <param name="id">Customer ID as string.</param>
+            <param name="_settings">Shipment settings object.</param>
+            <returns>Saved shipment settings wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.SettingsController.SaveOrderSettings(System.String,Merchanter.Classes.Settings.SettingsOrder)">
+            <summary>
+            Saves order settings for the specified customer.
+            </summary>
+            <param name="id">Customer ID as string.</param>
+            <param name="_settings">Order settings object.</param>
+            <returns>Saved order settings wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.SettingsController.SaveProductSettings(System.String,Merchanter.Classes.Settings.SettingsProduct)">
+            <summary>
+            Saves product settings for the specified customer.
+            </summary>
+            <param name="id">Customer ID as string.</param>
+            <param name="_settings">Product settings object.</param>
+            <returns>Saved product settings wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.SettingsController.SaveInvoiceSettings(System.String,Merchanter.Classes.Settings.SettingsInvoice)">
+            <summary>
+            Saves invoice settings for the specified customer.
+            </summary>
+            <param name="id">Customer ID as string.</param>
+            <param name="_settings">Invoice settings object.</param>
+            <returns>Saved invoice settings wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.SettingsController.SaveN11Settings(System.String,Merchanter.Classes.Settings.SettingsN11)">
+            <summary>
+            Saves N11 integration settings for the specified customer.
+            </summary>
+            <param name="id">Customer ID as string.</param>
+            <param name="_settings">N11 settings object.</param>
+            <returns>Saved N11 settings wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.SettingsController.SaveHBSettings(System.String,Merchanter.Classes.Settings.SettingsHB)">
+            <summary>
+            Saves Hepsiburada integration settings for the specified customer.
+            </summary>
+            <param name="id">Customer ID as string.</param>
+            <param name="_settings">HB settings object.</param>
+            <returns>Saved HB settings wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.SettingsController.SaveTYSettings(System.String,Merchanter.Classes.Settings.SettingsTY)">
+            <summary>
+            Saves Trendyol integration settings for the specified customer.
+            </summary>
+            <param name="id">Customer ID as string.</param>
+            <param name="_settings">TY settings object.</param>
+            <returns>Saved TY settings wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.SettingsController.SaveAnkERPSettings(System.String,Merchanter.Classes.Settings.SettingsAnkaraErp)">
+            <summary>
+            Saves Ankara ERP integration settings for the specified customer.
+            </summary>
+            <param name="id">Customer ID as string.</param>
+            <param name="_settings">Ankara ERP settings object.</param>
+            <returns>Saved Ankara ERP settings wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.SettingsController.SaveIdeasoftSettings(System.String,Merchanter.Classes.Settings.SettingsIdeasoft)">
+            <summary>
+            Saves Ideasoft integration settings for the specified customer.
+            </summary>
+            <param name="id">Customer ID as string.</param>
+            <param name="_settings">Ideasoft settings object.</param>
+            <returns>Saved Ideasoft settings wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.SettingsController.SaveGoogleSettings(System.String,Merchanter.Classes.Settings.SettingsGoogle)">
+            <summary>
+            Saves Google integration settings for the specified customer.
+            </summary>
+            <param name="id">Customer ID as string.</param>
+            <param name="_settings">Google settings object.</param>
+            <returns>Saved Google settings wrapped in a BaseResponseModel.</returns>
+        </member>
+    </members>
+</doc>

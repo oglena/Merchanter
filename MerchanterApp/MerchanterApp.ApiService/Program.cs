@@ -48,6 +48,7 @@ builder.Services.AddSwaggerGen(c => {
     });
     c.EnableAnnotations();
     c.OperationFilter<IgnorePropertyFilter>();
+    c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, "MerchanterApi.xml"));
 });
 
 builder.Services.AddTransient<IAuthService, AuthService>();
