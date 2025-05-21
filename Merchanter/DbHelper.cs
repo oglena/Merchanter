@@ -1,7 +1,7 @@
 ﻿using Merchanter.Classes;
 using Merchanter.Classes.Settings;
 using MySql.Data.MySqlClient;
-using static Org.BouncyCastle.Asn1.Cmp.Challenge;
+using System.Text.Json.Serialization;
 using Attribute = Merchanter.Classes.Attribute;
 
 namespace Merchanter {
@@ -114,7 +114,6 @@ namespace Merchanter {
             }
         }
         #endregion
-
 
         #region Customer
         /// <summary>
@@ -2502,6 +2501,15 @@ namespace Merchanter {
                         OnError("GetProductBySku: " + p.sku + " - Product Source Not Found");
                         return null;
                     }
+
+                    var imgs = GetProductImages(_customer_id, p.id);
+                    if (imgs != null) {
+                        p.images = [.. imgs];
+                    }
+                    else {
+                        OnError("GetProductBySku: " + p.sku + " - Product Images Not Found");
+                        return null;
+                    }
                 }
 
                 return p;
@@ -3205,6 +3213,13 @@ namespace Merchanter {
                     }
                 }
 
+                var deleted_images = GetProductImages(_customer_id, _product.id).Except(_product.images).ToList();
+                foreach (var ditem in deleted_images) {
+                    if (!DeleteProductImage(_customer_id, ditem)) {
+                        OnError("UpdateProduct: " + _product.sku + " - Product Image Delete Error");
+                        return null;
+                    }
+                }
                 if (_product.images != null && _product.images.Count > 0) {
                     if (!UpdateProductImages(_customer_id, _product.images, _product.id)) {
                         OnError("UpdateProduct: " + _product.sku + " - Product Images Update Error");
@@ -4197,6 +4212,33 @@ namespace Merchanter {
             catch (Exception ex) {
                 OnError(ex.ToString());
                 return null;
+            }
+        }
+
+        /// <summary>
+        /// Deletes the product image target from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_product_image">Product Image</param>
+        /// <returns>[No change] or [Error] returns 'false'</returns>
+        public bool DeleteProductImage(int _customer_id, ProductImage _product_image) {
+            try {
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                int val = 0;
+                string _query = "DELETE FROM product_images WHERE id=@id AND customer_id=@customer_id;";
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                cmd.Parameters.Add(new MySqlParameter("id", _product_image.id));
+                val = cmd.ExecuteNonQuery();
+
+                if (state == System.Data.ConnectionState.Open) connection.Close();
+                if (val > 0)
+                    return true;
+                else return false;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return false;
             }
         }
         #endregion

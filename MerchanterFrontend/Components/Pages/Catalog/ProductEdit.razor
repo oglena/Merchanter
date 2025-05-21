@@ -73,8 +73,8 @@
                             <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Stretch" Style="height: 100%;">
                                 <FluentTabs ActiveTabId="@active_product_tab.ToString()" Orientation="Orientation.Horizontal" Size="TabSize.Large" Width="100%" Style="padding-top:0 !important;">
                                     <FluentTab Overflow="false" Icon="@(new Icons.Regular.Size24.TetrisApp())"
-                                    Visible="true" Label="Ürün Bilgileri" Id="@ProductTab.ProductInformation.ToString()"
-                                    Style="height:400px;" LabelStyle="font-size:13pt !important;">
+                                               Visible="true" Label="Ürün Bilgileri" Id="@ProductTab.ProductInformation.ToString()"
+                                               Style="height:400px;" LabelStyle="font-size:13pt !important;">
                                         <FluentGridItem xs="12">
                                             <FluentGrid Justify="JustifyContent.FlexStart" Class="dotted">
                                                 <FluentGridItem xs="12" Justify="JustifyContent.FlexStart">
@@ -91,10 +91,10 @@
                                                 <FluentGridItem xs="6">
                                                     @if (brand_options != null) {
                                                         <FluentCombobox Label="Marka" Items="@brand_options" TOption="Option<Brand>"
-                                                        OptionText="@(b=>b.Text)" Appearance="Appearance.Outline"
-                                                        @bind-Value="@product.extension.brand.brand_name"
-                                                        Autocomplete="ComboboxAutocomplete.Both" EnableClickToClose="true"
-                                                        Required="true" Height="300px" Style="width:100%;" />
+                                                                        OptionText="@(b=>b.Text)" Appearance="Appearance.Outline"
+                                                                        @bind-Value="@product.extension.brand.brand_name"
+                                                                        Autocomplete="ComboboxAutocomplete.Both" EnableClickToClose="true"
+                                                                        Required="true" Height="300px" Style="width:100%;" />
                                                     }
                                                     else {
                                                         <FluentLabel Typo="Typography.Body" Color="Color.Disabled">Marka Yükleniyor...</FluentLabel>
@@ -150,8 +150,8 @@
                                         </FluentGridItem>
                                     </FluentTab>
                                     <FluentTab Overflow="false" Icon="@(new Icons.Regular.Size24.TetrisApp())"
-                                    Visible="true" Label="Ek Bilgiler" Id="@ProductTab.ProductExtension.ToString()"
-                                    Style="height:400px;" LabelStyle="font-size:13pt !important;">
+                                               Visible="true" Label="Ek Bilgiler" Id="@ProductTab.ProductExtension.ToString()"
+                                               Style="height:400px;" LabelStyle="font-size:13pt !important;">
                                         <FluentGridItem xs="12">
                                             <FluentGrid Justify="JustifyContent.FlexStart" Class="dotted">
                                                 <ProductExtensionComponent product_extension="@product.extension" />
@@ -159,8 +159,8 @@
                                         </FluentGridItem>
                                     </FluentTab>
                                     <FluentTab Overflow="false" Icon="@(new Icons.Regular.Size24.AppsList())"
-                                    Visible="true" Label="Kategori Ağacı" Id="@ProductTab.Categories.ToString()"
-                                    Style="height:400px;" LabelStyle="font-size:13pt !important;">
+                                               Visible="true" Label="Kategori Ağacı" Id="@ProductTab.Categories.ToString()"
+                                               Style="height:400px;" LabelStyle="font-size:13pt !important;">
                                         <FluentGridItem xs="12">
                                             <FluentGrid Justify="JustifyContent.FlexStart" Class="dotted">
                                                 <ProductCategoriesComponent product_extension="@product.extension" />
@@ -168,8 +168,8 @@
                                         </FluentGridItem>
                                     </FluentTab>
                                     <FluentTab Overflow="false" Icon="@(new Icons.Regular.Size24.HardDrive())"
-                                    Visible="true" Label="@("Ürün Depoları(" + product.total_qty.ToString() + ")")" id="@ProductTab.OtherSources.ToString()"
-                                    Style="height:400px;" LabelStyle="font-size:13pt !important;">
+                                               Visible="true" Label="@("Ürün Depoları(" + product.total_qty.ToString() + ")")" id="@ProductTab.OtherSources.ToString()"
+                                               Style="height:400px;" LabelStyle="font-size:13pt !important;">
                                         <FluentGridItem xs="12">
                                             <FluentGrid Justify="JustifyContent.FlexStart" Class="dotted">
                                                 <ProductSourcesComponent product_extension="@product.extension" product_sources="@product.sources" />
@@ -177,17 +177,17 @@
                                         </FluentGridItem>
                                     </FluentTab>
                                     <FluentTab Overflow="false" Icon="@(new Icons.Regular.Size24.Image())"
-                                    Visible="true" Label="@("Resimler(" + product.images.Count + ")")" id="@ProductTab.Images.ToString()"
-                                    Style="height:400px;" LabelStyle="font-size:13pt !important;">
+                                               Visible="true" Label="@("Resimler(" + product.images.Count + ")")" id="@ProductTab.Images.ToString()"
+                                               Style="height:400px;" LabelStyle="font-size:13pt !important;">
                                         <FluentGridItem xs="12">
                                             <FluentGrid Justify="JustifyContent.FlexStart" Class="dotted">
-                                                <ProductImagesComponent sku="@product.sku" product_images="@product.images" />
+                                                <ProductImagesComponent sku="@product.sku" product_images="@product.images" @ref="productImagesComponent" />
                                             </FluentGrid>
                                         </FluentGridItem>
                                     </FluentTab>
                                     <FluentTab Overflow="false" Icon="@(new Icons.Regular.Size24.PuzzlePiece())"
-                                    Visible="true" Label="Özellikler(nyd)" id="@ProductTab.Attributes.ToString()"
-                                    Style="height:400px;" LabelStyle="font-size:13pt !important;">
+                                               Visible="true" Label="Özellikler(nyd)" id="@ProductTab.Attributes.ToString()"
+                                               Style="height:400px;" LabelStyle="font-size:13pt !important;">
                                         <FluentGridItem xs="12">
                                             <FluentGrid Justify="JustifyContent.FlexStart" Class="dotted">
                                                 <ProductAttributesComponent product_attributes="@product.attributes" />
@@ -235,6 +235,7 @@ else {
     private Product.ProductTypes? product_type { get; set; } = null;
     private ProductTab active_product_tab { get; set; } = ProductTab.ProductInformation;
     public enum ProductTab { ProductInformation = 0, ProductExtension = 1, Categories = 2, OtherSources = 3, Images = 4, Attributes = 5 }
+    public ProductImagesComponent? productImagesComponent = null;
 
     #region Iconcans
     private static Icon EditIcon(bool active = false) =>
@@ -305,19 +306,26 @@ else {
             loading = true;
             _product.extension.sku = _product.sku;
             _product.extension.barcode = _product.barcode;
-            _product.update_date = DateTime.Now;
-            //Remove empty images
-            if (_product.images != null && _product.images.Count > 0) {
-                for (int i = _product.images.Count - 1; i > 0; i--) {
-                    if (_product.images[i].id == -1) {
-                        File.Delete(Path.Combine("wwwroot", "media", "catalog", "product", _product.images[i].image_url));
-                        _product.images.Remove(_product.images[i]);
 
+            if (_product.images != null && _product.images.Count > 0) {
+                foreach (var item in _product.images) {
+                    if (item.id == 0 && !string.IsNullOrWhiteSpace(item.image_url)) {
+                        if (!Directory.Exists(Path.Combine("wwwroot", "media", "catalog", "product", Path.GetDirectoryName(item.image_url)))) {
+                            Directory.CreateDirectory(Path.Combine("wwwroot", "media", "catalog", "product", Path.GetDirectoryName(item.image_url)));
+                        }
+                        if (HasWritePermission("wwwroot/media/catalog/product")) {
+                            string mertos = Path.Combine("wwwroot", @"temp\") + item.image_url;
+                            string gingen = Path.Combine("wwwroot", "media", "catalog", @"product\") + item.image_url;
+                            File.Move(mertos, gingen, true);
+                            item.product_id = PID;
+                        }
                     }
-                    else if (_product.images[i].id == 0) {
-                        File.Move(Path.Combine("wwwroot", "temp", _product.images[i].image_url),
-                        Path.Combine("wwwroot", "media", "catalog", "product", _product.images[i].image_url), true);
-                        _product.images[i].product_id = PID;
+                }
+            }
+            if (productImagesComponent != null && productImagesComponent.deleted_images != null && productImagesComponent.deleted_images.Count > 0) {
+                foreach (var item in productImagesComponent.deleted_images) {
+                    if (item.id > 0) {
+                        File.Delete(Path.Combine("wwwroot", "media", "catalog", "product", item.image_url));
                     }
                 }
             }
@@ -398,5 +406,20 @@ else {
         product = null;
         PID = 0;
         NavigationManager.NavigateTo($"Catalog/Products", false);
+    }
+
+    public bool HasWritePermission(string directoryPath) {
+        try {
+            string testFile = Path.Combine(directoryPath, Path.GetRandomFileName());
+            using (FileStream fs = File.Create(testFile, 1, FileOptions.DeleteOnClose)) { }
+            return true;
+        }
+        catch (UnauthorizedAccessException) {
+            return false;
+        }
+        catch (Exception) {
+            // Handle other exceptions if needed
+            return false;
+        }
     }
 }

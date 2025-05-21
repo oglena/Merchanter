@@ -8,51 +8,50 @@
 <FluentGridItem xs="12" Style="display:contents;">
     <FluentGridItem xs="12" Style="width:100%;height:30px;">
     </FluentGridItem>
-    @if (product_images.Count > 0) {
-        @foreach (var item in product_images) {
-            <FluentGridItem lg="3" md="4" xs="6" Style="@("margin:5px;border:1px dashed " + (item.id > 0 ? "var(--accent-fill-rest)" : (item.id == 0 ? "green" : "red") ) + ";border-radius:3px;")">
-                <FluentGridItem xs="12" Justify="JustifyContent.Center">
-                    <img style="width:250px;padding:15px;"
-                         src="@(item.id > 0 || item.id == -1 ? (@"media\catalog\product\" + item.image_url) : @"temp\"+ item.image_url )"
-                         alt="@(Path.GetFileNameWithoutExtension(item.image_name))" />
-                </FluentGridItem>
-                <FluentDivider Style="max-width:100%;margin-top:0 !important;" />
-                <FluentGridItem xs="12" Justify="JustifyContent.Center">
-                    <span>@item.image_name</span>
-                </FluentGridItem>
-                <FluentGridItem xs="12" Justify="JustifyContent.Center" Style="height:30px;">
-                    <FluentBadge Appearance="Appearance.Accent">Tip:&nbsp;@item.type.ToString().ToUpper()</FluentBadge>
-                    @if (item.is_default) {
-                        <span>&nbsp;&nbsp;</span>
-                        <FluentBadge Appearance="Appearance.Accent">KAPAK</FluentBadge>
-                    }
-                </FluentGridItem>
-                <FluentGridItem xs="12" Justify="JustifyContent.Center">
-                    <FluentButton Id="@("image-delete-button" + item.image_name)" Appearance="Appearance.Outline" OnClick="@(() => DeleteImage(item.image_name))" IconStart="@(new Icons.Regular.Size12.Delete())" Style="margin:5px;" />
-                    @if (item.id > 0) {
-                        <FluentTooltip AutoUpdateMode="AutoUpdateMode.Anchor" Anchor="@("image-delete-button" + item.image_name)" Position="TooltipPosition.Bottom">
-                            <span>Resmi <i>silinmesi</i> için hazırla.</span>
-                        </FluentTooltip>
-                    }
-                    else if (item.id == 0) {
-                        <FluentTooltip AutoUpdateMode="AutoUpdateMode.Anchor" Anchor="@("image-delete-button" + item.image_name)" Position="TooltipPosition.Bottom">
-                            <span>Resmi <i>sil.</i></span>
-                        </FluentTooltip>
-                    }
-                    else {
-                        <FluentTooltip AutoUpdateMode="AutoUpdateMode.Anchor" Anchor="@("image-delete-button" + item.image_name)" Position="TooltipPosition.Bottom">
-                            <span>Resim kaydedilirken <i>silinecek.</i></span>
-                        </FluentTooltip>
-                    }
-                    @if (!item.is_default) {
-                        <FluentButton Id="@("image-makedefault-button" + item.image_name)" OnClick="@(() => MakeDefaultImage(item.id))" Appearance="Appearance.Outline" IconStart="@(new Icons.Regular.Size12.CheckmarkCircle())" Style="margin:5px;" />
-                        <FluentTooltip AutoUpdateMode="AutoUpdateMode.Anchor" Anchor="@("image-makedefault-button" + item.image_name)" Position="TooltipPosition.Bottom">
-                            <i>KAPAK</i> resmi yap.
-                        </FluentTooltip>
-                    }
-                </FluentGridItem>
+    @foreach (var item in product_images) {
+        <FluentGridItem lg="3" md="4" xs="6" Style="@("margin:5px;border:1px dashed " + (item.id > 0 ? "var(--accent-fill-rest)" : "green") + ";border-radius:3px;")">
+            <FluentGridItem xs="12" Justify="JustifyContent.Center">
+                <img style="width:250px;padding:15px;"
+                     src="@(item.id > 0 ? (@"media\catalog\product\" + item.image_url) : @"temp\"+ item.image_url )"
+                     alt="@(Path.GetFileNameWithoutExtension(item.image_name))" />
             </FluentGridItem>
-        }
+            <FluentDivider Style="max-width:100%;margin-top:0 !important;" />
+            <FluentGridItem xs="12" Justify="JustifyContent.Center">
+                <span>@item.image_name</span>
+            </FluentGridItem>
+            <FluentGridItem xs="12" Justify="JustifyContent.Center" Style="height:30px;">
+                <FluentBadge Appearance="Appearance.Accent">Tip:&nbsp;@item.type.ToString().ToUpper()</FluentBadge>
+                @if (item.is_default) {
+                    <span>&nbsp;&nbsp;</span>
+                    <FluentBadge Appearance="Appearance.Accent">KAPAK</FluentBadge>
+                }
+            </FluentGridItem>
+            <FluentGridItem xs="12" Justify="JustifyContent.Center">
+                <FluentButton Id="@("image-delete-button" + item.image_name)" Appearance="Appearance.Outline" OnClick="@(() => DeleteImage(item.image_name))" IconStart="@(new Icons.Regular.Size12.Delete())" Style="margin:5px;" />
+                @if (!item.is_default) {
+                    <FluentButton Id="@("image-makedefault-button" + item.image_name)" OnClick="@(() => MakeDefaultImage(item.id))" Appearance="Appearance.Outline" IconStart="@(new Icons.Regular.Size12.CheckmarkCircle())" Style="margin:5px;" />
+                    <FluentTooltip AutoUpdateMode="AutoUpdateMode.Anchor" Anchor="@("image-makedefault-button" + item.image_name)" Position="TooltipPosition.Bottom">
+                        <i>KAPAK</i> resmi yap.
+                    </FluentTooltip>
+                }
+            </FluentGridItem>
+        </FluentGridItem>
+    }
+    @foreach (var item in deleted_images) {
+        <FluentGridItem lg="3" md="4" xs="6" Style="margin:5px;border:1px dashed red;border-radius:3px;">
+            <FluentGridItem xs="12" Justify="JustifyContent.Center">
+                <img style="width:250px;padding:15px;"
+                     src="@(@"media\catalog\product\" + item.image_url)"
+                     alt="@(Path.GetFileNameWithoutExtension(item.image_name))" />
+            </FluentGridItem>
+            <FluentDivider Style="max-width:100%;margin-top:0 !important;" />
+            <FluentGridItem xs="12" Justify="JustifyContent.Center">
+                <span>@item.image_name</span>
+            </FluentGridItem>
+            <FluentGridItem xs="12" Justify="JustifyContent.Center" Style="height:30px;">
+                <FluentBadge Appearance="Appearance.Accent">Tip:&nbsp;@item.type.ToString().ToUpper()</FluentBadge>
+            </FluentGridItem>
+        </FluentGridItem>
     }
 </FluentGridItem>
 <FluentGridItem xs="12">
@@ -93,6 +92,7 @@
 @code {
     [Parameter]
     public List<ProductImage> product_images { get; set; }
+    public List<ProductImage> deleted_images { get; set; } = new();
     [Parameter]
     public string sku { get; set; }
     [Parameter]
@@ -174,7 +174,8 @@
                     Files.Remove(fileName);
                 }
                 else {
-                    deleted_image.id = -1; //TODO: This image need to be deleted in FileSystem
+                    deleted_images.Add(deleted_image);
+                    product_images.Remove(deleted_image);
                 }
             }
         }

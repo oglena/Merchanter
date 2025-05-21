@@ -59,6 +59,15 @@
                         <PropertyColumn Title="ID" Property="@(p => p.id)" Width="125px" Tooltip="true" TooltipText="@(p => p.source_product_id.ToString())" Align="Align.End" />
                         <PropertyColumn Title="Durum" Property="@(p => p.extension.is_enabled ? "Aktif" : "Pasif")" Width="125px" Align="Align.Center" />
                     }
+                    <TemplateColumn Title="Resim" Align="Align.Center" Width="60px">
+                        @if (!string.IsNullOrWhiteSpace(context.images.FirstOrDefault(x => x.is_default)?.image_url)) {
+                            <img src="@(Path.Combine("media","catalog","product",context.images.FirstOrDefault(x=>x.is_default)?.image_url))" style="height:50px;" />
+                        }
+                        else {
+                            <!-- 1x1 transparent PNG as base64 "no image" placeholder -->
+                            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII=" style="height:50px;" />
+                        }
+                    </TemplateColumn>
                     <PropertyColumn Title="Ürün Adı" Property="@(p => p.name)" Align="Align.Start" Width="350px">
                         <ColumnOptions>
                             <FluentCheckbox @bind-Value="@show_id_status_columns" Label="ID ve durumları göster" />

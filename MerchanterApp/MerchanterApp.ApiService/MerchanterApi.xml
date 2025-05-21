@@ -184,6 +184,13 @@
             <param name="product">Product object to update.</param>
             <returns>Updated product wrapped in a BaseResponseModel.</returns>
         </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.ProductController.DeleteProductImage(Merchanter.Classes.ProductImage)">
+            <summary>
+            Deletes a product image for the authenticated customer.
+            </summary>
+            <param name="_product_image">ProductImage object to delete.</param>
+            <returns>Result of the delete operation wrapped in a BaseResponseModel.</returns>
+        </member>
         <member name="T:MerchanterApp.ApiService.Controllers.SettingsController">
             <summary>
             Provides settings-related API endpoints for Merchanter.

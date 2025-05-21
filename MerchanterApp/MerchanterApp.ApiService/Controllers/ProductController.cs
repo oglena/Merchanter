@@ -83,5 +83,21 @@ namespace MerchanterApp.ApiService.Controllers {
             }
             return BadRequest();
         }
+
+        /// <summary>
+        /// Deletes a product image for the authenticated customer.
+        /// </summary>
+        /// <param name="_product_image">ProductImage object to delete.</param>
+        /// <returns>Result of the delete operation wrapped in a BaseResponseModel.</returns>
+        [HttpDelete("DeleteProductImage")]
+        [Authorize]
+        public async Task<ActionResult<BaseResponseModel<bool>>> DeleteProductImage([FromBody] ProductImage _product_image) {
+            int customer_id;
+            if (int.TryParse(_product_image.customer_id.ToString(), out customer_id) && customer_id > 0) {
+                bool result = await productService.DeleteProductImage(customer_id, _product_image);
+                return Ok(new BaseResponseModel<bool>() { Success = result, Data = result, ErrorMessage = result ? "" : "Error delete product image" });
+            }
+            return BadRequest("Invalid customer ID.");
+        }
     }
 }
