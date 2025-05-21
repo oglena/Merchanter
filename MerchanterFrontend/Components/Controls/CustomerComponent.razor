@@ -89,7 +89,7 @@ else {
             }
         }
         catch (Exception ex) {
-            Console.WriteLine(ex.Message);
+            Trace.WriteLine(ex.Message);
             customer = null;
             is_refreshing = false;
         }
@@ -100,27 +100,37 @@ else {
     }
 
     private async Task SaveCustomer(Customer _customer) {
-        is_refreshing = true;
-        string json = JsonConvert.SerializeObject(_customer);
-        var response = await PostHelper.Request<Merchanter.Classes.Customer>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
-        Classes.PostHelper.PostMethod.Put, Classes.PostHelper.PostDestination.Api,
-        "api/Customer/" + _customer.customer_id.ToString() + "/SaveCustomer", new StringContent(json, Encoding.UTF8, "application/json"));
+        try {
+            is_refreshing = true;
+            string json = JsonConvert.SerializeObject(_customer);
+            var response = await PostHelper.Request<Merchanter.Classes.Customer>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+            Classes.PostHelper.PostMethod.Put, Classes.PostHelper.PostDestination.Api,
+            "api/Customer/" + _customer.customer_id.ToString() + "/SaveCustomer", new StringContent(json, Encoding.UTF8, "application/json"));
 
-        if (response != null && response.Success && response.Data != null) {
-            customer = response.Data;
-            if (customer != null) {
-                message_status = "işlem başarılı";
-                page_message = "[" + DateTime.Now.ToString() + "]" + " Güncelleme başarılı.";
+            if (response != null && response.Success && response.Data != null) {
+                customer = response.Data;
+                if (customer != null) {
+                    message_status = "işlem başarılı";
+                    page_message = "[" + DateTime.Now.ToString() + "]" + " Güncelleme başarılı.";
+                }
+                else {
+                    message_status = "işlem başarısız";
+                    page_message = "[" + DateTime.Now.ToString() + "]" + " Güncelleme yapılamadı.";
+                }
             }
             else {
-                message_status = "işlem başarısız";
-                page_message = "[" + DateTime.Now.ToString() + "]" + " Güncelleme yapılamadı.";
+                message_status = "işlem uygulanamadı";
+                page_message = "[" + DateTime.Now.ToString() + "]" + " Merchanter Server ServiceAPI yanıt vermiyor.";
             }
         }
-        else {
+        catch (Exception ex) {
+            Trace.WriteLine(ex.Message);
             message_status = "işlem uygulanamadı";
             page_message = "[" + DateTime.Now.ToString() + "]" + " Merchanter Server ServiceAPI yanıt vermiyor.";
         }
-        is_refreshing = false;
+        finally {
+            is_refreshing = false;
+            StateHasChanged();
+        }
     }
 }

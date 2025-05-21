@@ -23,7 +23,8 @@
   <ItemGroup>
     <Folder Include="keys\" />
     <Folder Include="wwwroot\media\catalog\" />
-    <Folder Include="wwwroot\temp\" />
+    <Folder Include="wwwroot\temp\otoahmet\" />
+    <Folder Include="wwwroot\temp\qpbilisim\" />
   </ItemGroup>
 
   <ItemGroup>

@@ -3080,8 +3080,7 @@ namespace Merchanter {
                 }
 
                 if (inserted_id > 0) {
-                    _product.id = (int)inserted_id;
-                    return _product;
+                    return GetProduct(_customer_id, (int)inserted_id);
                 }
                 else return null;
             }
@@ -3212,7 +3211,7 @@ namespace Merchanter {
                         return null;
                     }
                 }
-                return _product;
+                return GetProductBySku(_customer_id, _product.sku);
             }
             catch (Exception ex) {
                 OnError(ex.ToString());

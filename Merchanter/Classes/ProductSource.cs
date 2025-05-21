@@ -9,6 +9,10 @@
         public bool is_active { get; set; } = false;
         public DateTime update_date { get; set; }
 
+        public ProductSource() {
+            
+        }
+
         /// <summary>
         /// ProductSource constructor
         /// </summary>

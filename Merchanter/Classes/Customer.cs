@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace Merchanter.Classes {
     public class Customer {
@@ -33,6 +34,8 @@ namespace Merchanter.Classes {
         public bool is_xmlsync_working { get; set; } = false;
         public bool is_invoicesync_working { get; set; } = false;
         public bool is_notificationsync_working { get; set; } = false;
+
+        [System.Text.Json.Serialization.JsonConverter(typeof(JsonStringEnumConverter))]
 
         public enum Role {
             Admin = 0,

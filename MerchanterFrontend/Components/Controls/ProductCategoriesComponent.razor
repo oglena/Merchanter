@@ -66,16 +66,20 @@ else {
     private void CheckboxHandler(bool selected, ITreeViewItem item) {
         if (selected && !SelectedItems.Contains(item)) {
             var added_category = categories?.FirstOrDefault(x => x.id.ToString() == item.Id);
-            if (added_category != null)
+            if (added_category != null) {
                 product_extension.categories.Add(added_category);
-            SelectedItems.Add(item);
+                product_extension.category_ids = string.Join(",", product_extension.categories.Select(x => x.id));
+                SelectedItems.Add(item);
+            }
         }
         else if (!selected && SelectedItems.Contains(item)) {
             if (default_category.id.ToString() != item.Id) {
                 var removed_category = categories?.FirstOrDefault(x => x.id.ToString() == item.Id);
-                if (removed_category != null)
+                if (removed_category != null) {
                     product_extension.categories.Remove(removed_category);
-                SelectedItems.Remove(item);
+                    product_extension.category_ids = string.Join(",", product_extension.categories.Select(x => x.id));
+                    SelectedItems.Remove(item);
+                }
             }
         }
     }
@@ -167,11 +171,16 @@ else {
     }
 
     protected async Task GetDefaultCategory() {
-        var response = await PostHelper.Request<Category>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
-            Classes.PostHelper.PostMethod.Get, Classes.PostHelper.PostDestination.Api,
-            "api/Category/GetDefaultCategory", null);
-        if (response != null && response.Success && response.Data != null) {
-            default_category = response.Data;
+        try {
+            var response = await PostHelper.Request<Category>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                Classes.PostHelper.PostMethod.Get, Classes.PostHelper.PostDestination.Api,
+                "api/Category/GetDefaultCategory", null);
+            if (response != null && response.Success && response.Data != null) {
+                default_category = response.Data;
+            }
+        }
+        catch (Exception ex) {
+            Trace.WriteLine(ex.Message);
         }
     }
 }

@@ -215,7 +215,7 @@ else {
             }
         }
         catch (Exception ex) {
-            Console.WriteLine(ex.Message);
+            Trace.WriteLine(ex.Message);
             server = null;
             is_refreshing = false;
         }
@@ -248,6 +248,7 @@ else {
             }
         }
         catch (Exception ex) {
+            Trace.WriteLine(ex.Message);
             page_message = "Merchanter Server durdurulamadı. " + ex.Message;
         }
         finally {
@@ -274,6 +275,7 @@ else {
             }
         }
         catch (Exception ex) {
+            Trace.WriteLine(ex.Message);
             page_message = "Merchanter Server durdurulamadı. " + ex.Message;
         }
         finally {

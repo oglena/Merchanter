@@ -1,4 +1,6 @@
-﻿namespace Merchanter.Classes {
+﻿using System.Text.Json.Serialization;
+
+namespace Merchanter.Classes {
     public class Product {
         public int id { get; set; }
         public int source_product_id { get; set; }
@@ -20,7 +22,8 @@
         public List<ProductImage> images { get; set; } = [];
         public List<ProductAttribute> attributes { get; set; } = [];
 
-		public enum ProductTypes {
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public enum ProductTypes {
             SIMPLE = 0,
             CONFIGURABLE = 1,
             GROUPED = 2,

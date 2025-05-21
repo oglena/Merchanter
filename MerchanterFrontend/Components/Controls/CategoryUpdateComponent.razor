@@ -140,100 +140,129 @@
     }
 
     private async Task UpdateCategory() {
-        if (SelectedCategory != null && ParentCategory != null) {
-            var response = await PostHelper.Request<Category?>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
-                Classes.PostHelper.PostMethod.Put, Classes.PostHelper.PostDestination.Api,
-                "api/Category/SaveCategory",
-                new StringContent(JsonConvert.SerializeObject(SelectedCategory), Encoding.UTF8, "application/json")
-            );
-            if (response != null && response.Success && response.Data != null) {
-                SelectedCategory = response.Data;
-                page_message = "[" + DateTime.Now.ToString() + "] Kategori güncellendi.";
-                message_status = "işlem başarılı";
-                await Refresh(SelectedCategory, ParentCategory);
-                if (OnRefresh != null) {
-                    await OnRefresh.Invoke();
-                }
-            }
-            else {
-                page_message = "[" + DateTime.Now.ToString() + "] Kategori güncellenemedi.";
-                message_status = "işlem başarısız";
-            }
-        }
-    }
-
-    private async Task NewCategory() {
-        if (DummyCategory != null && ParentCategory != null) {
-            DummyCategory.parent_id = ParentCategory.id;
-            DummyCategory.customer_id = customer_id;
-            var response = await PostHelper.Request<Category?>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
-                Classes.PostHelper.PostMethod.Put, Classes.PostHelper.PostDestination.Api,
-                "api/Category/SaveCategory",
-                new StringContent(JsonConvert.SerializeObject(DummyCategory), Encoding.UTF8, "application/json")
-            );
-            if (response != null && response.Success && response.Data != null) {
-                SelectedCategory = response.Data;
-                page_message = "[" + DateTime.Now.ToString() + "] Kategori kaydedildi.";
-                message_status = "işlem başarılı";
-                await Refresh(SelectedCategory, ParentCategory);
-                DummyCategory = new Category();
-                if (OnRefresh != null) {
-                    await OnRefresh.Invoke();
-                }
-            }
-            else {
-                page_message = "[" + DateTime.Now.ToString() + "] Kategori kaydedilemedi.";
-                message_status = "işlem başarısız";
-            }
-        }
-    }
-
-    private async Task DeleteCategory() {
-        var dialog = await DialogService.ShowMessageBoxAsync(new DialogParameters<MessageBoxContent>() {
-                Content = new() {
-                    Title = "Emin Misiniz ?",
-                    MarkupMessage = new MarkupString("Seçtiğiniz <strong>kategori</strong> siliniyor."),
-                    Icon = new Icons.Regular.Size24.Delete(),
-                    IconColor = Color.Error,
-                },
-                PrimaryAction = "Sil",
-                SecondaryAction = "İptal",
-                Width = "250px",
-            });
-        var result = await dialog.Result;
-        if (!result.Cancelled) {
-            if (SelectedCategory != null) {
-                var response = await PostHelper.Request<bool>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
-                    Classes.PostHelper.PostMethod.Delete, Classes.PostHelper.PostDestination.Api,
-                    "api/Category/DeleteCategory",
+        try {
+            if (SelectedCategory != null && ParentCategory != null) {
+                var response = await PostHelper.Request<Category?>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                    Classes.PostHelper.PostMethod.Put, Classes.PostHelper.PostDestination.Api,
+                    "api/Category/SaveCategory",
                     new StringContent(JsonConvert.SerializeObject(SelectedCategory), Encoding.UTF8, "application/json")
                 );
-                if (response != null && response.Success && response.Data) {
-                    SelectedCategory = null;
-                    ParentCategory = null;
-                    page_message = "[" + DateTime.Now.ToString() + "] Kategori silindi.";
+                if (response != null && response.Success && response.Data != null) {
+                    SelectedCategory = response.Data;
+                    page_message = "[" + DateTime.Now.ToString() + "] Kategori güncellendi.";
                     message_status = "işlem başarılı";
-                    await Refresh(null, null);
+                    await Refresh(SelectedCategory, ParentCategory);
                     if (OnRefresh != null) {
                         await OnRefresh.Invoke();
                     }
                 }
                 else {
-                    page_message = "[" + DateTime.Now.ToString() + "] Kategori silinemedi.";
+                    page_message = "[" + DateTime.Now.ToString() + "] Kategori güncellenemedi.";
                     message_status = "işlem başarısız";
                 }
             }
         }
+        catch (Exception ex) {
+            Trace.WriteLine(ex.Message);
+            page_message = "[" + DateTime.Now.ToString() + "] Kategori güncellenemedi. Hata: " + ex.Message;
+            message_status = "işlem başarısız";
+        }
+    }
+
+    private async Task NewCategory() {
+        try {
+            if (DummyCategory != null && ParentCategory != null) {
+                DummyCategory.parent_id = ParentCategory.id;
+                DummyCategory.customer_id = customer_id;
+                var response = await PostHelper.Request<Category?>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                    Classes.PostHelper.PostMethod.Put, Classes.PostHelper.PostDestination.Api,
+                    "api/Category/SaveCategory",
+                    new StringContent(JsonConvert.SerializeObject(DummyCategory), Encoding.UTF8, "application/json")
+                );
+                if (response != null && response.Success && response.Data != null) {
+                    SelectedCategory = response.Data;
+                    page_message = "[" + DateTime.Now.ToString() + "] Kategori kaydedildi.";
+                    message_status = "işlem başarılı";
+                    await Refresh(SelectedCategory, ParentCategory);
+                    DummyCategory = new Category();
+                    if (OnRefresh != null) {
+                        await OnRefresh.Invoke();
+                    }
+                }
+                else {
+                    page_message = "[" + DateTime.Now.ToString() + "] Kategori kaydedilemedi.";
+                    message_status = "işlem başarısız";
+                }
+            }
+        }
+        catch (Exception ex) {
+            Trace.WriteLine(ex.Message);
+            page_message = "[" + DateTime.Now.ToString() + "] Kategori kaydedilemedi. Hata: " + ex.Message;
+            message_status = "işlem başarısız";
+        }
+    }
+
+    private async Task DeleteCategory() {
+        try {
+            var dialog = await DialogService.ShowMessageBoxAsync(new DialogParameters<MessageBoxContent>() {
+                    Content = new() {
+                        Title = "Emin Misiniz ?",
+                        MarkupMessage = new MarkupString("Seçtiğiniz <strong>kategori</strong> siliniyor."),
+                        Icon = new Icons.Regular.Size24.Delete(),
+                        IconColor = Color.Error,
+                    },
+                    PrimaryAction = "Sil",
+                    SecondaryAction = "İptal",
+                    Width = "250px",
+                });
+            var result = await dialog.Result;
+            if (!result.Cancelled) {
+                if (SelectedCategory != null) {
+                    var response = await PostHelper.Request<bool>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                        Classes.PostHelper.PostMethod.Delete, Classes.PostHelper.PostDestination.Api,
+                        "api/Category/DeleteCategory",
+                        new StringContent(JsonConvert.SerializeObject(SelectedCategory), Encoding.UTF8, "application/json")
+                    );
+                    if (response != null && response.Success && response.Data) {
+                        SelectedCategory = null;
+                        ParentCategory = null;
+                        page_message = "[" + DateTime.Now.ToString() + "] Kategori silindi.";
+                        message_status = "işlem başarılı";
+                        await Refresh(null, null);
+                        if (OnRefresh != null) {
+                            await OnRefresh.Invoke();
+                        }
+                    }
+                    else {
+                        page_message = "[" + DateTime.Now.ToString() + "] Kategori silinemedi.";
+                        message_status = "işlem başarısız";
+                    }
+                }
+            }
+        }
+        catch (Exception ex) {
+            Trace.WriteLine(ex.Message);
+            page_message = "[" + DateTime.Now.ToString() + "] Kategori silinemedi. Hata: " + ex.Message;
+            message_status = "işlem başarısız";
+        }
     }
 
     protected async Task<Category?> GetDefaultCategory() {
-        var response = await PostHelper.Request<Category>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
-            Classes.PostHelper.PostMethod.Get, Classes.PostHelper.PostDestination.Api,
-            "api/Category/GetDefaultCategory", null);
-        if (response != null && response.Success && response.Data != null) {
-            response.Data.category_name = "Ana Kategori";
-            return response.Data;
+        try {
+            var response = await PostHelper.Request<Category>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                Classes.PostHelper.PostMethod.Get, Classes.PostHelper.PostDestination.Api,
+                "api/Category/GetDefaultCategory", null);
+            if (response != null && response.Success && response.Data != null) {
+                response.Data.category_name = "Ana Kategori";
+                return response.Data;
+            }
+            return null;
         }
-        return null;
+        catch (Exception ex) {
+            Trace.WriteLine(ex.Message);
+            page_message = "[" + DateTime.Now.ToString() + "] Ana kategori alınamadı. Hata: " + ex.Message;
+            message_status = "işlem başarısız";
+            return null;
+        }
     }
 }

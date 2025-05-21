@@ -158,7 +158,7 @@ else {
             }
         }
         catch (Exception ex) {
-            Console.WriteLine(ex.Message);
+            Trace.WriteLine(ex.Message);
             brands = null;
         }
         finally {
@@ -168,35 +168,40 @@ else {
     }
 
     private async Task DeleteBrand(Brand? _brand) {
-        var dialog = await DialogService.ShowMessageBoxAsync(new DialogParameters<MessageBoxContent>() {
-                Content = new() {
-                    Title = "Emin Misiniz ?",
-                    MarkupMessage = new MarkupString("Seçtiğiniz <strong>marka</strong> siliniyor."),
-                    Icon = new Icons.Regular.Size24.Delete(),
-                    IconColor = Color.Error,
-                },
-                PrimaryAction = "Sil",
-                SecondaryAction = "İptal",
-                Width = "250px",
-            });
-        var result = await dialog.Result;
-        if (!result.Cancelled) {
-            if (_brand != null) {
-                var response = await PostHelper.Request<bool>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
-                    Classes.PostHelper.PostMethod.Delete, Classes.PostHelper.PostDestination.Api,
-                    "api/Brand/DeleteBrand",
-                    new StringContent(JsonConvert.SerializeObject(_brand), Encoding.UTF8, "application/json")
-                    );
-                if (response != null && response.Success && response.Data == true) {
-                    await Refresh();
-                    page_message = "[" + DateTime.Now.ToString() + "] Marka silindi.";
-                    message_status = "işlem başarılı";
-                }
-                else {
-                    page_message = "[" + DateTime.Now.ToString() + "] Marka silinemedi.";
-                    message_status = "işlem başarısız";
+        try {
+            var dialog = await DialogService.ShowMessageBoxAsync(new DialogParameters<MessageBoxContent>() {
+                    Content = new() {
+                        Title = "Emin Misiniz ?",
+                        MarkupMessage = new MarkupString("Seçtiğiniz <strong>marka</strong> siliniyor."),
+                        Icon = new Icons.Regular.Size24.Delete(),
+                        IconColor = Color.Error,
+                    },
+                    PrimaryAction = "Sil",
+                    SecondaryAction = "İptal",
+                    Width = "250px",
+                });
+            var result = await dialog.Result;
+            if (!result.Cancelled) {
+                if (_brand != null) {
+                    var response = await PostHelper.Request<bool>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                        Classes.PostHelper.PostMethod.Delete, Classes.PostHelper.PostDestination.Api,
+                        "api/Brand/DeleteBrand",
+                        new StringContent(JsonConvert.SerializeObject(_brand), Encoding.UTF8, "application/json")
+                        );
+                    if (response != null && response.Success && response.Data == true) {
+                        await Refresh();
+                        page_message = "[" + DateTime.Now.ToString() + "] Marka silindi.";
+                        message_status = "işlem başarılı";
+                    }
+                    else {
+                        page_message = "[" + DateTime.Now.ToString() + "] Marka silinemedi.";
+                        message_status = "işlem başarısız";
+                    }
                 }
             }
+        }
+        catch (Exception ex) {
+            Trace.WriteLine(ex.Message);
         }
     }
 
@@ -229,21 +234,26 @@ else {
         if (result.Data is not null) {
             var new_brand = (Brand)result.Data;
             if (new_brand.customer_id > 0) {
-                // Update or insert existing brand
-                var response = await PostHelper.Request<Brand>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
-                    Classes.PostHelper.PostMethod.Put, Classes.PostHelper.PostDestination.Api,
-                    "api/Brand/SaveBrand",
-                    new StringContent(JsonConvert.SerializeObject(new_brand), Encoding.UTF8, "application/json")
-                    );
-                if (response != null && response.Success && response.Data != null) {
-                    await Refresh();
-                    page_message = "[" + DateTime.Now.ToString() + "] Marka güncellendi.";
-                    message_status = "işlem başarılı";
+                try {
+                    // Update or insert existing brand
+                    var response = await PostHelper.Request<Brand>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                        Classes.PostHelper.PostMethod.Put, Classes.PostHelper.PostDestination.Api,
+                        "api/Brand/SaveBrand",
+                        new StringContent(JsonConvert.SerializeObject(new_brand), Encoding.UTF8, "application/json")
+                        );
+                    if (response != null && response.Success && response.Data != null) {
+                        await Refresh();
+                        page_message = "[" + DateTime.Now.ToString() + "] Marka güncellendi.";
+                        message_status = "işlem başarılı";
+                    }
+                    else {
+                        await Refresh();
+                        page_message = "[" + DateTime.Now.ToString() + "] Marka güncellenemedi.";
+                        message_status = "işlem başarısız";
+                    }
                 }
-                else {
-                    await Refresh();
-                    page_message = "[" + DateTime.Now.ToString() + "] Marka güncellenemedi.";
-                    message_status = "işlem başarısız";
+                catch (Exception ex) {
+                    Trace.WriteLine(ex.Message);
                 }
             }
         }

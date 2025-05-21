@@ -1,4 +1,6 @@
-﻿namespace Merchanter.Classes {
+﻿using System.Text.Json.Serialization;
+
+namespace Merchanter.Classes {
 	public class Attribute {
 		public int id { get; set; }
 		public int customer_id { get; set; }
@@ -8,7 +10,8 @@
 		public DateTime update_date { get; set; }
 	}
 
-	public enum AttributeTypes {
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public enum AttributeTypes {
 		Text = 0,
 		Price = 1,
 		Image = 2,

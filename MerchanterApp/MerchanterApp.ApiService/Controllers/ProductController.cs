@@ -76,7 +76,7 @@ namespace MerchanterApp.ApiService.Controllers {
         public async Task<ActionResult<BaseResponseModel<Product?>>> SaveProduct([FromBody] Product product) {
             int.TryParse(HttpContext.User.FindFirst("customerId")?.Value, out int customer_id);
             if (customer_id > 0) {
-                if (product != null && product.id > 0) {
+                if (product != null) {
                     var updatedProduct = await productService.SaveProduct(customer_id, product);
                     return Ok(new BaseResponseModel<Product?>() { Success = updatedProduct != null, Data = updatedProduct ?? null, ErrorMessage = updatedProduct != null ? "" : "Error -1", ApiFilter = null });
                 }

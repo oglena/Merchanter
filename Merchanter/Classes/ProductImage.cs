@@ -1,4 +1,6 @@
-﻿namespace Merchanter.Classes {
+﻿using System.Text.Json.Serialization;
+
+namespace Merchanter.Classes {
     public class ProductImage {
         public int id { get; set; }
         public int customer_id { get; set; }
@@ -12,6 +14,7 @@
         public DateTime update_date { get; set; }
     }
 
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum ImageTypes {
         url = 0,
         base64 = 1,

@@ -10,10 +10,10 @@
     </FluentGridItem>
     @if (product_images.Count > 0) {
         @foreach (var item in product_images) {
-            <FluentGridItem lg="3" md="4" xs="6" Style="@("margin:5px;border:1px dashed " + (item.id > 0 ? "var(--accent-fill-rest)" : "red") + ";border-radius:3px;")">
+            <FluentGridItem lg="3" md="4" xs="6" Style="@("margin:5px;border:1px dashed " + (item.id > 0 ? "var(--accent-fill-rest)" : (item.id == 0 ? "green" : "red") ) + ";border-radius:3px;")">
                 <FluentGridItem xs="12" Justify="JustifyContent.Center">
                     <img style="width:250px;padding:15px;"
-                         src="@(@"media\catalog\product\" + item.image_url )"
+                         src="@(item.id > 0 || item.id == -1 ? (@"media\catalog\product\" + item.image_url) : @"temp\"+ item.image_url )"
                          alt="@(Path.GetFileNameWithoutExtension(item.image_name))" />
                 </FluentGridItem>
                 <FluentDivider Style="max-width:100%;margin-top:0 !important;" />
@@ -28,10 +28,15 @@
                     }
                 </FluentGridItem>
                 <FluentGridItem xs="12" Justify="JustifyContent.Center">
-                    <FluentButton Id="@("image-delete-button" + item.image_name)" Appearance="Appearance.Outline" OnClick="@(() => item.id = 0)" IconStart="@(new Icons.Regular.Size12.Delete())" Style="margin:5px;" />
+                    <FluentButton Id="@("image-delete-button" + item.image_name)" Appearance="Appearance.Outline" OnClick="@(() => DeleteImage(item.image_name))" IconStart="@(new Icons.Regular.Size12.Delete())" Style="margin:5px;" />
                     @if (item.id > 0) {
                         <FluentTooltip AutoUpdateMode="AutoUpdateMode.Anchor" Anchor="@("image-delete-button" + item.image_name)" Position="TooltipPosition.Bottom">
-                            <span>Resmi<i> silinmesi</i> için hazırla.</span>
+                            <span>Resmi <i>silinmesi</i> için hazırla.</span>
+                        </FluentTooltip>
+                    }
+                    else if (item.id == 0) {
+                        <FluentTooltip AutoUpdateMode="AutoUpdateMode.Anchor" Anchor="@("image-delete-button" + item.image_name)" Position="TooltipPosition.Bottom">
+                            <span>Resmi <i>sil.</i></span>
                         </FluentTooltip>
                     }
                     else {
@@ -49,33 +54,7 @@
             </FluentGridItem>
         }
     }
-
-    @if (Files.Any() && !string.IsNullOrWhiteSpace(username)) {
-        @foreach (var file in Files) {
-            <FluentGridItem lg="3" md="4" xs="6" Style="margin:5px;border:1px dashed green;border-radius:3px;">
-                <FluentGridItem xs="12" Justify="JustifyContent.Center">
-                    <img style="max-width:250px;padding:15px;"
-                         src="@file.Value.Replace(@"wwwroot\",string.Empty)"
-                         alt="@(Path.GetFileNameWithoutExtension(file.Key))" />
-                </FluentGridItem>
-                <FluentDivider Style="width:100%;margin-top:0 !important;" />
-                <FluentGridItem xs="12" Justify="JustifyContent.Center">
-                    <span>@file.Key</span>
-                </FluentGridItem>
-                <FluentGridItem xs="12" Justify="JustifyContent.Center" Style="height:30px;">
-                    <FluentBadge Appearance="Appearance.Accent">Tip:&nbsp;@ImageTypes.url.ToString().ToUpper()</FluentBadge>
-                </FluentGridItem>
-                <FluentGridItem xs="12" Justify="JustifyContent.Center">
-                    <FluentButton Id="@("image-delete-temp-button" + file.Key)" Appearance="Appearance.Outline" OnClick="@(() => DeleteTempImage(file.Key))" IconStart="@(new Icons.Regular.Size12.Delete())" Style="margin:5px;" />
-                    <FluentTooltip AutoUpdateMode="AutoUpdateMode.Anchor" Anchor="@("image-delete-temp-button" + file.Key)" Position="TooltipPosition.Bottom">
-                        <span>Resmi<i> sil.</i></span>
-                    </FluentTooltip>
-                </FluentGridItem>
-            </FluentGridItem>
-        }
-    }
 </FluentGridItem>
-
 <FluentGridItem xs="12">
     <FluentInputFile @ref="@ProductImageByStream"
                      Id="product-image-uploader"
@@ -97,7 +76,9 @@
                 veya <label for="product-image-uploader">göz atın</label>
                 ve seçin<span style="color: red;">*</span>.
                 <br />
-                <em>En fazla 10 resim yükleyebilirsiniz.</em>
+                <em><span style="color: red;">*</span>En fazla 10 resim yükleyebilirsiniz.</em>
+                <br />
+                <em><span style="color: red;">*</span>Ürün isimleri benzersiz olmalıdır.</em>
             </div>
         </ChildContent>
         <ProgressTemplate>
@@ -114,7 +95,10 @@
     public List<ProductImage> product_images { get; set; }
     [Parameter]
     public string sku { get; set; }
-    public string? username = null;
+    [Parameter]
+    public int product_id { get; set; }
+    private string? username = null;
+    private int customer_id = 0;
 
     private int ProgressPercent = 0;
     string? progressTitle;
@@ -123,6 +107,7 @@
 
     protected override void OnParametersSet() {
         username = HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value;
+        customer_id = int.Parse(HttpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == Variables.customer_id)?.Value ?? "0");
     }
 
     private async Task OnFileUploadedAsync(FluentInputFileEventArgs file) {
@@ -130,6 +115,12 @@
             ProgressPercent = file.ProgressPercent;
             progressTitle = file.ProgressTitle;
             if (!string.IsNullOrWhiteSpace(username)) {
+                if (product_images.FirstOrDefault(x => x.image_name == file.Name) != null) {
+                    await file.Stream!.DisposeAsync();
+                    ProgressPercent = 0;
+                    progressTitle = "Dosya zaten var.";
+                    return;
+                }
                 // Check if the folder is exists, if not create it
                 var tempPath = Path.Combine("wwwroot", "temp", username, sku);
                 if (!Directory.Exists(tempPath)) {
@@ -141,6 +132,17 @@
                 await file.Stream!.CopyToAsync(fs);
                 await file.Stream!.DisposeAsync();
                 Files.Add(file.Name, localFile);
+                var image = new ProductImage {
+                        id = 0,
+                        image_name = file.Name,
+                        image_url = Path.Combine(username, sku, file.Name),
+                        type = ImageTypes.url,
+                        is_default = product_images.Count == 0,
+                        sku = sku,
+                        customer_id = customer_id,
+                        image_base64 = null
+                    };
+                product_images.Add(image);
             }
         }
         catch (Exception ex) {
@@ -159,18 +161,25 @@
         }
     }
 
-    private void DeleteTempImage(string fileName) {
-        if (Files.ContainsKey(fileName)) {
-            try {
-                var filePath = Files[fileName];
-                if (File.Exists(filePath)) {
-                    File.Delete(filePath);
+    private void DeleteImage(string fileName) {
+        try {
+            var deleted_image = product_images.FirstOrDefault(x => x.image_name == fileName);
+            if (deleted_image != null) {
+                if (deleted_image.id == 0) {
+                    var filePath = Files[fileName];
+                    if (File.Exists(filePath)) {
+                        File.Delete(filePath);
+                    }
+                    product_images.Remove(deleted_image);
+                    Files.Remove(fileName);
                 }
-                Files.Remove(fileName);
+                else {
+                    deleted_image.id = -1; //TODO: This image need to be deleted in FileSystem
+                }
             }
-            catch (Exception ex) {
-                Trace.WriteLine($"Error deleting image: {ex.Message}");
-            }
+        }
+        catch (Exception ex) {
+            Trace.WriteLine($"Error deleting image: {ex.Message}");
         }
     }
 }
