@@ -134,12 +134,12 @@
                 Files.Add(file.Name, localFile);
                 var image = new ProductImage {
                         id = 0,
-                        image_name = file.Name,
-                        image_url = Path.Combine(username, sku, file.Name),
-                        type = ImageTypes.url,
-                        is_default = product_images.Count == 0,
-                        sku = sku,
                         customer_id = customer_id,
+                        sku = sku,
+                        image_name = file.Name,
+                        type = ImageTypes.url,
+                        image_url = Path.Combine(username, sku, file.Name),
+                        is_default = product_images.Count == 0,
                         image_base64 = null
                     };
                 product_images.Add(image);

@@ -91,7 +91,7 @@
                                                 <FluentGridItem xs="6">
                                                     @if (brand_options != null) {
                                                         <FluentCombobox Label="Marka" Items="@brand_options" TOption="Option<Brand>"
-                                                                        OptionText="@(b=>b.Text)" Appearance="Appearance.Outline"
+                                                                        OptionText="@(b => b.Text)" Appearance="Appearance.Outline"
                                                                         @bind-Value="@product.extension.brand.brand_name"
                                                                         Autocomplete="ComboboxAutocomplete.Both" EnableClickToClose="true"
                                                                         Required="true" Height="300px" Style="width:100%;" />
