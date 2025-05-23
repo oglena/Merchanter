@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text.Json.Serialization;
 
 namespace Merchanter.Classes {
     public class Notification {
@@ -18,6 +14,7 @@ namespace Merchanter.Classes {
         public DateTime create_date { get; set; }
         public DateTime? notification_date { get; set; }
 
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public enum NotificationTypes {
             GENERAL = 0,
             NEW_ORDER = 1,

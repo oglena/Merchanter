@@ -50,16 +50,15 @@ namespace MerchanterApp.ApiService.Controllers {
         /// <summary>
         /// Retrieves a single product by its ID for the authenticated customer.
         /// </summary>
-        /// <param name="PID">Product ID as string.</param>
+        /// <param name="id">Product ID as string.</param>
         /// <returns>Product details wrapped in a BaseResponseModel.</returns>
-        [HttpGet("GetProduct/{PID}")]
+        [HttpGet("GetProduct/{id}")]
         [Authorize]
-        public async Task<ActionResult<BaseResponseModel<Product?>>> GetProduct(string PID) {
+        public async Task<ActionResult<BaseResponseModel<Product?>>> GetProduct(string id) {
             int.TryParse(HttpContext.User.FindFirst("customerId")?.Value, out int customer_id);
             if (customer_id > 0) {
-                if (int.TryParse(PID, out int product_id) && product_id > 0) {
+                if (int.TryParse(id, out int product_id) && product_id > 0) {
                     var product = await productService.GetProduct(customer_id, product_id);
-
                     return Ok(new BaseResponseModel<Product?>() { Success = product != null, Data = product ?? null, ErrorMessage = product != null ? "" : "Error -1", ApiFilter = null });
                 }
             }

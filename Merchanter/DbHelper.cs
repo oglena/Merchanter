@@ -3201,6 +3201,7 @@ namespace Merchanter {
                     return null;
                 }
 
+                //Disabled. This product sources list will be update on sync
                 //if (!UpdateProductSources(_customer_id, _product.sources, _product.sku)) {
                 //    OnError("UpdateProduct: " + _product.sku + " - Product Sources Update Error");
                 //    return null;
@@ -3213,7 +3214,8 @@ namespace Merchanter {
                     }
                 }
 
-                var deleted_images = GetProductImages(_customer_id, _product.id).Except(_product.images).ToList();
+                var deleted_images = GetProductImages(_customer_id, _product.id)
+                    .ExceptBy(_product.images.Select(img => img.id), img => img.id).ToList();
                 foreach (var ditem in deleted_images) {
                     if (!DeleteProductImage(_customer_id, ditem)) {
                         OnError("UpdateProduct: " + _product.sku + " - Product Image Delete Error");
@@ -4243,7 +4245,7 @@ namespace Merchanter {
         }
         #endregion
 
-        #region Category and Product Target Operations
+        #region Target Operations
         /// <summary>
         /// Gets the category targets from the database
         /// </summary>
@@ -4252,7 +4254,7 @@ namespace Merchanter {
         public List<CategoryTarget> GetCategoryTargets(int _customer_id) {
             try {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM category_targets WHERE customer_id=@customer_id";
+                string _query = "SELECT * FROM category_targets WHERE customer_id=@customer_id;";
                 List<CategoryTarget> list = new List<CategoryTarget>();
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
@@ -4264,6 +4266,45 @@ namespace Merchanter {
                         customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
                         target_id = Convert.ToInt32(dataReader["target_id"].ToString()),
                         target_name = dataReader["target_name"].ToString(),
+                        sync_status = Enum.TryParse<Target.SyncStatus>(dataReader["sync_status"].ToString(), out var status) ? status : Target.SyncStatus.Error,
+                        update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
+                    };
+                    list.Add(ct);
+                }
+                dataReader.Close();
+                if (state == System.Data.ConnectionState.Open)
+                    connection.Close();
+                return list;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets the category targets of category from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_category_id">Category ID</param>
+        /// <returns>[Error] returns 'null'</returns>
+        public List<CategoryTarget> GetCategoryTargets(int _customer_id, int _category_id) {
+            try {
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                string _query = "SELECT * FROM category_targets WHERE category_id=@category_id AND customer_id=@customer_id;";
+                List<CategoryTarget> list = new List<CategoryTarget>();
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                cmd.Parameters.Add(new MySqlParameter("category_id", _category_id));
+                MySqlDataReader dataReader = cmd.ExecuteReader();
+                while (dataReader.Read()) {
+                    CategoryTarget ct = new CategoryTarget {
+                        id = Convert.ToInt32(dataReader["id"].ToString()),
+                        category_id = Convert.ToInt32(dataReader["category_id"].ToString()),
+                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                        target_id = Convert.ToInt32(dataReader["target_id"].ToString()),
+                        target_name = dataReader["target_name"].ToString(),
+                        sync_status = Enum.TryParse<Target.SyncStatus>(dataReader["sync_status"].ToString(), out var status) ? status : Target.SyncStatus.Error,
                         update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
                     };
                     list.Add(ct);
@@ -4287,7 +4328,7 @@ namespace Merchanter {
         public List<ProductTarget> GetProductTargets(int _customer_id) {
             try {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM product_targets WHERE customer_id=@customer_id";
+                string _query = "SELECT * FROM product_targets WHERE customer_id=@customer_id;";
                 List<ProductTarget> list = new List<ProductTarget>();
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
@@ -4299,6 +4340,45 @@ namespace Merchanter {
                         customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
                         target_id = Convert.ToInt32(dataReader["target_id"].ToString()),
                         target_name = dataReader["target_name"].ToString(),
+                        sync_status = Enum.TryParse<Target.SyncStatus>(dataReader["sync_status"].ToString(), out var status) ? status : Target.SyncStatus.Error,
+                        update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
+                    };
+                    list.Add(pt);
+                }
+                dataReader.Close();
+                if (state == System.Data.ConnectionState.Open)
+                    connection.Close();
+                return list;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets the product targets of product from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_product_id">Product ID</param>
+        /// <returns>[Error] returns 'null'</returns>
+        public List<ProductTarget> GetProductTargets(int _customer_id, int _product_id) {
+            try {
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                string _query = "SELECT * FROM product_targets WHERE product_id=@product_id AND customer_id=@customer_id;";
+                List<ProductTarget> list = new List<ProductTarget>();
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                cmd.Parameters.Add(new MySqlParameter("product_id", _product_id));
+                MySqlDataReader dataReader = cmd.ExecuteReader();
+                while (dataReader.Read()) {
+                    ProductTarget pt = new ProductTarget {
+                        id = Convert.ToInt32(dataReader["id"].ToString()),
+                        product_id = Convert.ToInt32(dataReader["product_id"].ToString()),
+                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                        target_id = Convert.ToInt32(dataReader["target_id"].ToString()),
+                        target_name = dataReader["target_name"].ToString(),
+                        sync_status = Enum.TryParse<Target.SyncStatus>(dataReader["sync_status"].ToString(), out var status) ? status : Target.SyncStatus.Error,
                         update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
                     };
                     list.Add(pt);
@@ -4324,7 +4404,7 @@ namespace Merchanter {
             try {
                 object val;
                 string _query = "START TRANSACTION;" +
-                    "INSERT INTO category_targets (customer_id,category_id,target_id,target_name) VALUES (@customer_id,@category_id,@target_id,@target_name);" +
+                    "INSERT INTO category_targets (customer_id,category_id,target_id,target_name,sync_status) VALUES (@customer_id,@category_id,@target_id,@target_name,@sync_status);" +
                     "SELECT LAST_INSERT_ID();" +
                     "COMMIT;";
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
@@ -4332,6 +4412,7 @@ namespace Merchanter {
                 cmd.Parameters.Add(new MySqlParameter("category_id", _target.category_id));
                 cmd.Parameters.Add(new MySqlParameter("target_id", _target.target_id));
                 cmd.Parameters.Add(new MySqlParameter("target_name", _target.target_name));
+                cmd.Parameters.Add(new MySqlParameter("sync_status", (int)_target.sync_status));
 
                 if (state != System.Data.ConnectionState.Open) connection.Open();
                 val = cmd.ExecuteScalar();
@@ -4358,7 +4439,7 @@ namespace Merchanter {
             try {
                 object val;
                 string _query = "START TRANSACTION;" +
-                    "INSERT INTO product_targets (customer_id,product_id,target_id,target_name) VALUES (@customer_id,@product_id,@target_id,@target_name);" +
+                    "INSERT INTO product_targets (customer_id,product_id,target_id,target_name,sync_status) VALUES (@customer_id,@product_id,@target_id,@target_name,@sync_status);" +
                     "SELECT LAST_INSERT_ID();" +
                     "COMMIT;";
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
@@ -4366,6 +4447,7 @@ namespace Merchanter {
                 cmd.Parameters.Add(new MySqlParameter("product_id", _target.product_id));
                 cmd.Parameters.Add(new MySqlParameter("target_id", _target.target_id));
                 cmd.Parameters.Add(new MySqlParameter("target_name", _target.target_name));
+                cmd.Parameters.Add(new MySqlParameter("sync_status", (int)_target.sync_status));
 
                 if (state != System.Data.ConnectionState.Open) connection.Open();
                 val = cmd.ExecuteScalar();
@@ -4392,7 +4474,7 @@ namespace Merchanter {
             try {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
                 int val = 0;
-                string _query = "UPDATE category_targets SET category_id=@category_id,target_id=@target_id,target_name=@target_name,update_date=@update_date " +
+                string _query = "UPDATE category_targets SET category_id=@category_id,target_id=@target_id,target_name=@target_name,update_date=@update_date,sync_status=@sync_status " +
                     "WHERE id=@id AND customer_id=@customer_id";
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
@@ -4401,6 +4483,7 @@ namespace Merchanter {
                 cmd.Parameters.Add(new MySqlParameter("target_id", _target.target_id));
                 cmd.Parameters.Add(new MySqlParameter("target_name", _target.target_name));
                 cmd.Parameters.Add(new MySqlParameter("update_date", DateTime.Now));
+                cmd.Parameters.Add(new MySqlParameter("sync_status", (int)_target.sync_status));
                 val = cmd.ExecuteNonQuery();
 
                 if (state == System.Data.ConnectionState.Open) connection.Close();
@@ -4424,7 +4507,7 @@ namespace Merchanter {
             try {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
                 int val = 0;
-                string _query = "UPDATE product_targets SET product_id=@product_id,target_id=@target_id,target_name=@target_name,update_date=@update_date " +
+                string _query = "UPDATE product_targets SET product_id=@product_id,target_id=@target_id,target_name=@target_name,update_date=@update_date,sync_status=@sync_status " +
                     "WHERE id=@id AND customer_id=@customer_id";
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
@@ -4433,6 +4516,7 @@ namespace Merchanter {
                 cmd.Parameters.Add(new MySqlParameter("target_id", _target.target_id));
                 cmd.Parameters.Add(new MySqlParameter("target_name", _target.target_name));
                 cmd.Parameters.Add(new MySqlParameter("update_date", DateTime.Now));
+                cmd.Parameters.Add(new MySqlParameter("sync_status", (int)_target.sync_status));
                 val = cmd.ExecuteNonQuery();
 
                 if (state == System.Data.ConnectionState.Open) connection.Close();
@@ -4454,19 +4538,42 @@ namespace Merchanter {
         /// <returns>[No change] or [Error] returns 'false'</returns>
         public bool DeleteProductTarget(int _customer_id, int _product_id) {
             try {
-                if (state != System.Data.ConnectionState.Open)
-                    connection.Open();
-
+                if (state != System.Data.ConnectionState.Open)connection.Open();
                 int val = 0;
-                string _query = "DELETE FROM product_targets WHERE product_id=@product_id AND customer_id=@customer_id";
+                string _query = "DELETE FROM product_targets WHERE product_id=@product_id AND customer_id=@customer_id;";
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("product_id", _product_id));
                 val = cmd.ExecuteNonQuery();
 
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
+                if (state == System.Data.ConnectionState.Open)connection.Close();
+                if (val > 0)
+                    return true;
+                else return false;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return false;
+            }
+        }
 
+        /// <summary>
+        /// Deletes the category target from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_category_id">Category ID</param>
+        /// <returns>[No change] or [Error] returns 'false'</returns>
+        public bool DeleteCategoryTarget(int _customer_id, int _category_id) {
+            try {
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                int val = 0;
+                string _query = "DELETE FROM category_targets WHERE category_id=@category_id AND customer_id=@customer_id;";
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                cmd.Parameters.Add(new MySqlParameter("category_id", _category_id));
+                val = cmd.ExecuteNonQuery();
+
+                if (state == System.Data.ConnectionState.Open) connection.Close();
                 if (val > 0)
                     return true;
                 else return false;

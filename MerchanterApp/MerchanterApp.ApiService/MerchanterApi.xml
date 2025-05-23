@@ -90,7 +90,7 @@
             <summary>
             Retrieves a single category by its ID for the authenticated customer.
             </summary>
-            <param name="CID">Category ID.</param>
+            <param name="id">Category ID.</param>
             <returns>Category details wrapped in a BaseResponseModel.</returns>
         </member>
         <member name="M:MerchanterApp.ApiService.Controllers.CategoryController.GetDefaultCategory">
@@ -98,6 +98,12 @@
             Retrieves the default category for the authenticated customer.
             </summary>
             <returns>Default category wrapped in a BaseResponseModel.</returns>
+        </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.CategoryController.GetCategoryTargets(System.Int32)">
+            <summary>
+            Retrieves a list of category targets of a specific category for the authenticated customer.
+            </summary>
+            <returns>Category Targets wrapped in a BaseResponseMode.</returns>
         </member>
         <member name="T:MerchanterApp.ApiService.Controllers.CustomerController">
             <summary>
@@ -174,7 +180,7 @@
             <summary>
             Retrieves a single product by its ID for the authenticated customer.
             </summary>
-            <param name="PID">Product ID as string.</param>
+            <param name="id">Product ID as string.</param>
             <returns>Product details wrapped in a BaseResponseModel.</returns>
         </member>
         <member name="M:MerchanterApp.ApiService.Controllers.ProductController.SaveProduct(Merchanter.Classes.Product)">

@@ -14,19 +14,85 @@
             <AlertComponent page_message="@page_message" message_status="@message_status" />
         </FluentGridItem>
     }
-    @if (SelectedCategory != null && ParentCategory != null) {
-        <FluentGridItem xs="12">
-            <FluentToolbar style="width:100%;border-radius:5px;padding:5px !important;" Orientation="Orientation.Horizontal">
-                <FluentIcon Value="@(new Icons.Filled.Size20.TextBulletListSquare())" Slot="start" Color="Color.Accent" />
+    <FluentGridItem xs="12">
+        <FluentToolbar style="width:100%;border-radius:5px;padding:5px !important;" Orientation="Orientation.Horizontal">
+            <FluentIcon Value="@(new Icons.Filled.Size20.TextBulletListSquare())" Slot="start" Color="Color.Accent" />
+            @if (SelectedCategory != null && ParentCategory != null) {
                 <FluentButton Appearance="Appearance.Outline" OnClick="NewCategoryMode" IconStart="@(new Icons.Regular.Size20.New())">Yeni Alt Kategori</FluentButton>
                 <FluentButton Appearance="Appearance.Outline" OnClick="DeleteCategory" IconStart="@(new Icons.Regular.Size20.Delete())" Style="margin-right:10px;" slot="end">Sil</FluentButton>
                 <FluentButton Appearance="Appearance.Outline" OnClick="UpdateCategory" IconStart="@(new Icons.Regular.Size20.Save())" slot="end">Güncelle</FluentButton>
-            </FluentToolbar>
-        </FluentGridItem>
-        <FluentGridItem xs="12">
+                <FluentBadge><b>Id:</b>&nbsp;@SelectedCategory.id</FluentBadge>
+            }
+            else if (SelectedCategory == null && ParentCategory != null) {
+                <FluentButton Appearance="Appearance.Outline" OnClick="NewCategory" IconStart="@(new Icons.Regular.Size20.Save())" slot="end">Yeni Kategori Kaydet</FluentButton>
+            }
+            else {
+                <FluentButton Appearance="Appearance.Outline" OnClick="NewCategoryMode" IconStart="@(new Icons.Regular.Size20.New())">Yeni Alt Kategori</FluentButton>
+            }
+        </FluentToolbar>
+    </FluentGridItem>
+    <FluentGridItem xs="12">
+        @if (SelectedCategory != null && ParentCategory != null) {
             <br />
             <h2>Kategori düzenleniyor:&nbsp;<strong>@SelectedCategory.category_name</strong></h2>
-        </FluentGridItem>
+        }
+        else if (SelectedCategory == null && ParentCategory != null) {
+            <br />
+            <h2><strong>@ParentCategory.category_name</strong> için yeni alt kategori oluşturuluyor</h2>
+        }
+        else {
+            <br />
+            <h2>Lütfen bir <strong>kategori</strong> seçin!</h2>
+        }
+    </FluentGridItem>
+    @if (SelectedCategory != null && ParentCategory != null) {
+        @if (CategoryTargets != null && CategoryTargets.Count > 0) {
+            <FluentGridItem xs="12" Style="display:contents;">
+                @foreach (var item in CategoryTargets) {
+                    <FluentGridItem lg="3" md="4" xs="6" Style="@("margin:5px;border:1px dashed " + (item.sync_status == Target.SyncStatus.Synced ? "green" : "var(--accent-fill-rest)" ) + ";border-radius:3px;padding:5px;")">
+                        <FluentGridItem xs="12" Justify="JustifyContent.Center">
+                            <img style="width:125px;padding:15px;"
+                                 src="@(@"media\platform_logos\" + item.target_name + ".png")"
+                                 alt="@item.target_name" />
+                        </FluentGridItem>
+                        <FluentGridItem xs="12" Justify="JustifyContent.Center" Style="height:30px;">
+                            <FluentBadge Appearance="Appearance.Neutral">
+                                @switch (item.sync_status) {
+                                    case Target.SyncStatus.Synced:
+                                        <span style="color:green;">Senkron Edildi</span>
+                                        break;
+                                    case Target.SyncStatus.NotSynced:
+                                        <span style="color:var(--accent-fill-rest);">Senkrone Edilecek</span>
+                                        break;
+                                    case Target.SyncStatus.Error:
+                                        <span style="color:red;">Hata Oluştu</span>
+                                        break;
+                                }
+                            </FluentBadge>
+                        </FluentGridItem>
+                        <FluentGridItem xs="12" Justify="JustifyContent.Center" Style="height:30px;">
+                            <FluentBadge Appearance="Appearance.Accent">@item.target_id</FluentBadge>
+                        </FluentGridItem>
+                        <FluentGridItem xs="12" Justify="JustifyContent.Center" Style="height:30px;">
+                            <FluentLabel Typo="Typography.Body" Appearance="Appearance.Accent">
+                                @{
+                                    var n11Cat = n11_categories != null ? FindN11CategoryById(item.target_id, n11_categories.categories) : null;
+                                }
+                                @if (n11Cat != null) {
+                                    <span>@n11Cat.name</span>
+                                }
+                                else {
+                                    <FluentProgress Width="100%" Stroke="ProgressStroke.Small"></FluentProgress>
+                                }
+                            </FluentLabel>
+                        </FluentGridItem>
+                        <FluentGridItem xs="12" Justify="JustifyContent.Center">
+                            <span>@item.update_date</span>
+                        </FluentGridItem>
+                    </FluentGridItem>
+                }
+            </FluentGridItem>
+        }
         <FluentGridItem xs="12">
             <FluentEditForm FormName="edit_category" Model="SelectedCategory" Style="margin-top:15px;">
                 <FluentGrid Justify="JustifyContent.FlexStart">
@@ -56,16 +122,6 @@
     }
     else if (SelectedCategory == null && ParentCategory != null) {
         <FluentGridItem xs="12">
-            <FluentToolbar style="width:100%;border-radius:5px;padding:5px !important;" Orientation="Orientation.Horizontal">
-                <FluentIcon Value="@(new Icons.Filled.Size20.TextBulletListSquare())" Slot="start" Color="Color.Accent" />
-                <FluentButton Appearance="Appearance.Outline" OnClick="NewCategory" IconStart="@(new Icons.Regular.Size20.Save())" slot="end">Yeni Kategori Kaydet</FluentButton>
-            </FluentToolbar>
-        </FluentGridItem>
-        <FluentGridItem xs="12">
-            <br />
-            <h2><strong>@ParentCategory.category_name</strong> için yeni alt kategori oluşturuluyor</h2>
-        </FluentGridItem>
-        <FluentGridItem xs="12">
             <FluentEditForm FormName="new_category" Model="DummyCategory" Style="margin-top:15px;">
                 <FluentGrid Justify="JustifyContent.FlexStart">
                     <FluentGridItem xs="12">
@@ -92,18 +148,6 @@
             </FluentEditForm>
         </FluentGridItem>
     }
-    else {
-        <FluentGridItem xs="12">
-            <FluentToolbar style="width:100%;border-radius:5px;padding:5px !important;" Orientation="Orientation.Horizontal">
-                <FluentIcon Value="@(new Icons.Filled.Size20.TextBulletListSquare())" Slot="start" Color="Color.Accent" />
-                <FluentButton Appearance="Appearance.Outline" OnClick="NewCategoryMode" IconStart="@(new Icons.Regular.Size20.New())">Yeni Alt Kategori</FluentButton>
-            </FluentToolbar>
-        </FluentGridItem>
-        <FluentGridItem xs="12">
-            <br />
-            <h2>Lütfen bir <strong>kategori</strong> seçin!</h2>
-        </FluentGridItem>
-    }
 </FluentGrid>
 
 @code {
@@ -117,6 +161,29 @@
     public Category? SelectedCategory { get; set; } = null;
     public Category? ParentCategory { get; set; } = null;
     private Category DummyCategory { get; set; } = new Category();
+    private List<CategoryTarget>? CategoryTargets { get; set; } = null;
+    private N11_Categories? n11_categories = null;
+
+    protected override async Task OnParametersSetAsync() {
+        if (SelectedCategory != null) {
+            var response = await PostHelper.Request<List<CategoryTarget>>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                Classes.PostHelper.PostMethod.Get, Classes.PostHelper.PostDestination.Api,
+                "api/Category/GetCategoryTargets/" + SelectedCategory.id, null);
+            if (response != null && response.Success && response.Data != null) {
+                CategoryTargets = response.Data;
+                if (CategoryTargets.Count > 0 && n11_categories == null) {
+                    var n11_response = await PostHelper.Request<N11_Categories?>(null, Classes.PostHelper.PostMethod.Local,
+                        Classes.PostHelper.PostDestination.Local, "n11/categories.json", null);
+                    if (n11_response != null && n11_response.Success && n11_response.Data != null) {
+                        n11_categories = n11_response.Data;
+                    }
+                }
+                else {
+                    CategoryTargets = new List<CategoryTarget>();
+                }
+            }
+        }
+    }
 
     public async Task Refresh(Category? _category, Category? _parent) {
         page_message = "";
@@ -264,5 +331,38 @@
             message_status = "işlem başarısız";
             return null;
         }
+    }
+
+    private N11_Category? FindN11CategoryById(int id, N11_Category[] categories) {
+        foreach (var cat in categories) {
+            if (cat.id == id)
+                return cat;
+            if (cat.subCategories != null && cat.subCategories.Length > 0) {
+                var found = FindN11CategoryByIdInSubcategories(id, cat.subCategories);
+                if (found != null)
+                    return found;
+            }
+        }
+        return null;
+    }
+
+    private N11_Category? FindN11CategoryByIdInSubcategories(int id, N11_Subcategory[] subCategories) {
+        foreach (var subCat in subCategories) {
+            if (subCat.id == id) {
+                // Map N11_Subcategory to N11_Category
+                return new N11_Category {
+                        id = subCat.id,
+                        parentId = subCat.parentId,
+                        name = subCat.name,
+                        subCategories = subCat.subCategories
+                    };
+            }
+            if (subCat.subCategories != null && subCat.subCategories.Length > 0) {
+                var found = FindN11CategoryByIdInSubcategories(id, subCat.subCategories);
+                if (found != null)
+                    return found;
+            }
+        }
+        return null;
     }
 }

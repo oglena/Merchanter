@@ -1,4 +1,5 @@
-﻿using Merchanter;
+﻿using MarketplaceHelpers;
+using Merchanter;
 using Merchanter.Classes;
 using Merchanter.Classes.Settings;
 using MerchanterHelpers;
@@ -1489,46 +1490,46 @@ internal class MainLoop {
                             #endregion
 
                             #region Brand
-                            if (!selected_product.extension.brand.brand_name.Trim().Equals(item.extension.brand.brand_name?.Trim(), StringComparison.CurrentCultureIgnoreCase)) {
-                                var source_brands = Helper.GetProductAttribute(Helper.global.magento.brand_attribute_code);
-                                is_update = true; is_need_indexer = true;
-                                if (source_brands is not null) {
-                                    var selected_source_brand = source_brands.options.Where(x => x.label.Equals(item.extension.brand.brand_name, StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
-                                    if (selected_source_brand is not null) { //update
-                                        if (true || Helper.UpdateProductAttribute(item.sku, Helper.global.magento.brand_attribute_code, selected_source_brand.value)) {
-                                            PrintConsole("Sku:" + item.sku + "Brand updated " + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString());
-                                            db_helper.LogToServer(thread_id, "product_brand_updated", Helper.global.settings.company_name + " Sku:" + item.sku + selected_source_brand.label + " => " + item.extension.brand.brand_name, customer.customer_id, "product");
-                                        }
-                                        else {
-                                            PrintConsole("Sku:" + item.sku + "Brand update error " + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString());
-                                            db_helper.LogToServer(thread_id, "product_brand_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString(), customer.customer_id, "product");
-                                        }
-                                    }
-                                    else { //insert
-                                           //var inserted_id = Helper.InsertAttributeOption( Helper.global.magento.brand_attribute_code, item.brand.brand_name );
-                                        if (true /*inserted_id is not null*/ ) {
-                                            if (true /*|| Helper.UpdateProductAttribute( item.sku, Helper.global.magento.brand_attribute_code, inserted_id )*/ ) {
-                                                PrintConsole("Sku:" + item.sku + "Brand inserted " + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString());
-                                                db_helper.LogToServer(thread_id, "product_brand_inserted", Helper.global.settings.company_name + " Sku:" + item.sku + "= " + selected_product.extension.brand.brand_name + " => " + item.extension.brand.brand_name, customer.customer_id, "product");
-                                            }
-                                            else {
-                                                PrintConsole("Sku:" + item.sku + "Brand insert error " + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString());
-                                                db_helper.LogToServer(thread_id, "product_brand_insert_error", Helper.global.settings.company_name + " Sku:" + item.sku + "= " + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString(), customer.customer_id, "product");
-                                            }
-                                        }
-                                    }
+                            //if (!selected_product.extension.brand.brand_name.Trim().Equals(item.extension.brand.brand_name?.Trim(), StringComparison.CurrentCultureIgnoreCase)) {
+                            //    var source_brands = Helper.GetProductAttribute(Helper.global.magento.brand_attribute_code);
+                            //    is_update = true; is_need_indexer = true;
+                            //    if (source_brands is not null) {
+                            //        var selected_source_brand = source_brands.options.Where(x => x.label.Equals(item.extension.brand.brand_name, StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
+                            //        if (selected_source_brand is not null) { //update
+                            //            if (true || Helper.UpdateProductAttribute(item.sku, Helper.global.magento.brand_attribute_code, selected_source_brand.value)) {
+                            //                PrintConsole("Sku:" + item.sku + "Brand updated " + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString());
+                            //                db_helper.LogToServer(thread_id, "product_brand_updated", Helper.global.settings.company_name + " Sku:" + item.sku + selected_source_brand.label + " => " + item.extension.brand.brand_name, customer.customer_id, "product");
+                            //            }
+                            //            else {
+                            //                PrintConsole("Sku:" + item.sku + "Brand update error " + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString());
+                            //                db_helper.LogToServer(thread_id, "product_brand_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString(), customer.customer_id, "product");
+                            //            }
+                            //        }
+                            //        else { //insert
+                            //               //var inserted_id = Helper.InsertAttributeOption( Helper.global.magento.brand_attribute_code, item.brand.brand_name );
+                            //            if (true /*inserted_id is not null*/ ) {
+                            //                if (true /*|| Helper.UpdateProductAttribute( item.sku, Helper.global.magento.brand_attribute_code, inserted_id )*/ ) {
+                            //                    PrintConsole("Sku:" + item.sku + "Brand inserted " + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString());
+                            //                    db_helper.LogToServer(thread_id, "product_brand_inserted", Helper.global.settings.company_name + " Sku:" + item.sku + "= " + selected_product.extension.brand.brand_name + " => " + item.extension.brand.brand_name, customer.customer_id, "product");
+                            //                }
+                            //                else {
+                            //                    PrintConsole("Sku:" + item.sku + "Brand insert error " + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString());
+                            //                    db_helper.LogToServer(thread_id, "product_brand_insert_error", Helper.global.settings.company_name + " Sku:" + item.sku + "= " + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString(), customer.customer_id, "product");
+                            //                }
+                            //            }
+                            //        }
 
-                                    if (item.extension.brand.id == 0) {
-                                        item.extension.brand.id = db_helper.InsertBrand(customer.customer_id, item.extension.brand, true);
-                                        item.extension.brand_id = item.extension.brand.id;
-                                    }
+                            //        if (item.extension.brand.id == 0) {
+                            //            item.extension.brand.id = db_helper.InsertBrand(customer.customer_id, item.extension.brand, true);
+                            //            item.extension.brand_id = item.extension.brand.id;
+                            //        }
 
-                                }
-                                else { //no brand attribute exists
-                                    PrintConsole("Sku:" + item.sku + "Brand insert error " + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString());
-                                    db_helper.LogToServer(thread_id, "product_brand_insert_error", Helper.global.settings.company_name + " - " + Helper.global.magento.brand_attribute_code + " brand attribute missing?", customer.customer_id, "product");
-                                }
-                            }
+                            //    }
+                            //    else { //no brand attribute exists
+                            //        PrintConsole("Sku:" + item.sku + "Brand insert error " + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString());
+                            //        db_helper.LogToServer(thread_id, "product_brand_insert_error", Helper.global.settings.company_name + " - " + Helper.global.magento.brand_attribute_code + " brand attribute missing?", customer.customer_id, "product");
+                            //    }
+                            //}
                             #endregion
 
                             #region Barcode
@@ -1926,6 +1927,18 @@ internal class MainLoop {
 
                     if (notifications.Count > 0) {
                         db_helper.InsertNotifications(customer.customer_id, notifications);
+                    }
+                }
+
+                if (product_targets.Contains(Constants.N11)) {
+                    if (Helper.global.n11 != null && Helper.global.n11.appkey != null && Helper.global.n11.appsecret != null) {
+                        N11 n11 = new N11(Helper.global.n11.appkey, Helper.global.n11.appsecret);
+                        var live_n11_categories = n11.GetN11Categories();
+
+
+                        foreach (var item in live_products) {
+
+                        }
                     }
                 }
             }

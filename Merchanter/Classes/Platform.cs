@@ -10,6 +10,7 @@ namespace Merchanter.Classes {
         public Work.WorkType work_type { get; set; }
         public DateTime update_date { get; set; }
 
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public enum PlatformType {
             MAIN_SOURCE,
             SOURCE,

@@ -1,4 +1,5 @@
 // See https://aka.ms/new-console-template for more information
+using MarketplaceHelpers;
 using Merchanter;
 using MerchanterServer;
 using System.Reflection;
@@ -11,6 +12,12 @@ const string newline = "\r\n";
 bool first_run = true;
 PrintConsole("Press Ctrl+C to exit.");
 int customer_id = 0;
+
+#region TESTING
+//N11 n11 = new N11("c3e3a738-6015-4b42-b751-1eda1509a8b5", "WBHBnPbJCwAm4Bm0");
+//var merto = n11.GetProducts();
+//var mertocingen = n11.GetN11Categories();
+#endregion
 
 #region Customer Params
 if (args.Length == 0) {

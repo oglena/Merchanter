@@ -1,74 +1,107 @@
-﻿using n11_orderservice;
-using System;
+﻿using MerchanterHelpers;
+using MerchanterHelpers.Requests;
+using MerchanterHelpers.Responses;
 using System.Diagnostics;
-using System.Threading.Tasks;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace MarketplaceHelpers {
     public partial class N11 {
-        public string AppKey { get; set; }
-        public string AppSecret { get; set; }
-        private OrderServicePortClient N11_client { get; set; } = new OrderServicePortClient();
-        private n11_orderservice.Authentication N11_auth { get; set; }
-        private OrderServicePort N11_port;
-        public int N11_hashcode { get; set; }
+        private string AppKey { get; set; }
+        private string AppSecret { get; set; }
 
-        public N11( string _appkey, string _appsecret ) {
+        public N11(string _appkey, string _appsecret) {
             AppKey = _appkey;
             AppSecret = _appsecret;
-            N11_auth = new Authentication() {
-                appKey = _appkey,
-                appSecret = _appsecret
-            };
-
-            N11_hashcode = N11_auth.GetHashCode();
-            N11_port = N11_client.ChannelFactory.CreateChannel();
         }
 
-        public DetailedOrderData[]? GetDetailedOrders( DateTime _start_date, DateTime _end_date, int _page_size = 100, int _current_page = 0 ) {
-            DetailedOrderListRequest1 dol_req = new DetailedOrderListRequest1() {
-                DetailedOrderListRequest = new DetailedOrderListRequest() {
-                    auth = N11_auth,
-                    searchData = new OrderDataListRequest {
-                        period = new OrderSearchPeriod() {
-                            startDate = _start_date.ToString( "dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture ) + " 00:00",
-                            endDate = _end_date.ToString( "dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture ) + " 23:59"
-                        }
-                    },
-                    pagingData = new PagingData() { pageSize = _page_size, currentPage = _current_page }
-                }
-            };
+        #region Enums
 
-            var order_list_response = Task.Run( () => N11_port.DetailedOrderListAsync( dol_req ) ).Result;
-            if( order_list_response.DetailedOrderListResponse.result.status == "success" ) {
-                Debug.WriteLine( "GetDetailedOrders happened" );
-                return order_list_response.DetailedOrderListResponse.orderList;
-            }
-            else
-                return null;
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public enum N11_TaskStatus {
+            IN_QUEUE,
+            REJECT
         }
 
-        public OrderData[]? GetOrders( DateTime _start_date, DateTime _end_date, int _page_size = 100, int _current_page = 0 ) {
-            OrderListRequest1 dol_req = new OrderListRequest1() {
-                OrderListRequest = new OrderListRequest() {
-                    auth = N11_auth,
-                    searchData = new OrderDataListRequest {
-                        period = new OrderSearchPeriod() {
-                            startDate = _start_date.ToString( "dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture ) + " 00:00",
-                            endDate = _end_date.ToString( "dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture ) + " 23:59"
-                        }
-                    },
-                    pagingData = new RequestPagingData() { pageSize = _page_size, currentPage = _current_page }
-                }
-            };
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public enum N11TaskType {
+            SKU_UPDATE,
+            PRODUCT_UPDATE
+        }
 
-            var order_list_response = Task.Run( () => N11_port.OrderListAsync( dol_req ) ).Result;
-            if( order_list_response.OrderListResponse.result.status == "success" ) {
-                Debug.WriteLine( "GetOrders happened" );
-                return order_list_response.OrderListResponse.orderList;
-            }
-            else {
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public enum N11_ProductStatus {
+            Active,
+            InCatalogApproval,
+            Suspended,
+            CatalogRejected,
+            Unlisted,
+            Prohibited,
+            InApproval
+        }
+
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public enum N11_SaleStatus {
+            Before_Sale,
+            On_Sale,
+            Out_Of_Stock,
+            Sale_Closed
+        }
+        #endregion
+
+        public N11_TaskDetail? GetTaskDetail(int taskId) {
+            Executioner executioner = new Executioner();
+            var request = new { taskId, pageable = new { page = 0, size = 1000 } };
+            var task_detail = executioner.ExecuteN11("https://api.n11.com/ms/product/task-details/page-query", RestSharp.Method.Post, request, AppKey, AppSecret);
+            if (task_detail == null) {
+                Debug.WriteLine("N11 Task Detail is null");
                 return null;
             }
+            return JsonSerializer.Deserialize<N11_TaskDetail>(task_detail);
+        }
+
+        public N11_Products? GetProducts(long? _id = null, string? _productMainId = null, string? _stockCode = null, N11_SaleStatus? _saleStatus = null, N11_ProductStatus? _productStatus = null, string? _brandName = null, long[]? _categoryIds = null, int _page = 0, int _size = 20) {
+            Executioner executioner = new Executioner();
+            var n11_products = executioner.ExecuteN11($"https://api.n11.com/ms/product-query" +
+                $"?id={_id}&productMainId={_productMainId}&stockCode={_stockCode}&saleStatus={_saleStatus}" +
+                $"&productStatus={_productStatus}&brandName={_brandName}" +
+                (_categoryIds?.Length > 0 ? $"&categoryIds={string.Join(",", _categoryIds)}" : string.Empty),
+                RestSharp.Method.Get, null, AppKey, AppSecret);
+            if (n11_products == null) {
+                Debug.WriteLine("N11 Products is null");
+                return null;
+            }
+            return JsonSerializer.Deserialize<N11_Products>(n11_products);
+        }
+
+        public N11_Categories? GetN11Categories() {
+            Executioner executioner = new Executioner();
+            var n11_categories = executioner.ExecuteN11("https://api.n11.com/cdn/categories", RestSharp.Method.Get, null, AppKey, null);
+            if (n11_categories == null) {
+                Debug.WriteLine("N11 Categories is null");
+                return null;
+            }
+            return JsonSerializer.Deserialize<N11_Categories>(n11_categories);
+        }
+
+        public N11_ProductUpdate? UpdateProduct(N11_Update _request) {
+            Executioner executioner = new Executioner();
+            var task_detail = executioner.ExecuteN11("https://api.n11.com/ms/product/tasks/product-update", RestSharp.Method.Post, _request, AppKey, AppSecret);
+            if (task_detail == null) {
+                Debug.WriteLine("N11 Task Detail is null for UpdateProduct");
+                return null;
+            }
+            return JsonSerializer.Deserialize<N11_ProductUpdate>(task_detail);
+        }
+
+        public N11_ProductUpdate? UpdateProductPriceAndStock(N11_UpdatePriceAndStock _request) {
+            Executioner executioner = new Executioner();
+            var task_detail = executioner.ExecuteN11("https://api.n11.com/ms/product/tasks/price-stock-update", RestSharp.Method.Post, _request, AppKey, AppSecret);
+            if (task_detail == null) {
+                Debug.WriteLine("N11 Task Detail is null for UpdateProductPriceAndStock");
+                return null;
+            }
+            return JsonSerializer.Deserialize<N11_ProductUpdate>(task_detail);
         }
     }
 }

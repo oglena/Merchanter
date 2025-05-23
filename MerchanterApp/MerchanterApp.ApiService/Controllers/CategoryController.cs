@@ -87,14 +87,14 @@ namespace MerchanterApp.ApiService.Controllers {
         /// <summary>
         /// Retrieves a single category by its ID for the authenticated customer.
         /// </summary>
-        /// <param name="CID">Category ID.</param>
+        /// <param name="id">Category ID.</param>
         /// <returns>Category details wrapped in a BaseResponseModel.</returns>
-        [HttpGet("GetCategory/{CID}")]
+        [HttpGet("GetCategory/{id}")]
         [Authorize]
-        public async Task<ActionResult<BaseResponseModel<Category?>>> GetCategory(int CID) {
+        public async Task<ActionResult<BaseResponseModel<Category?>>> GetCategory(int id) {
             int.TryParse(HttpContext.User.FindFirst("customerId")?.Value, out int customer_id);
             if (customer_id > 0) {
-                var category = await categoryService.GetCategory(customer_id, CID);
+                var category = await categoryService.GetCategory(customer_id, id);
                 return Ok(new BaseResponseModel<Category>() { Success = category != null, Data = category, ErrorMessage = category != null ? "" : "Error -1" });
             }
             return BadRequest();
@@ -111,6 +111,22 @@ namespace MerchanterApp.ApiService.Controllers {
             if (customer_id > 0) {
                 var category = await categoryService.GetDefaultCategory(customer_id);
                 return Ok(new BaseResponseModel<Category>() { Success = category != null, Data = category, ErrorMessage = category != null ? "" : "Error -1" });
+            }
+            return BadRequest();
+        }
+
+        /// <summary>
+        /// Retrieves a list of category targets of a specific category for the authenticated customer.
+        /// </summary>
+        /// <returns>Category Targets wrapped in a BaseResponseMode.</returns>
+        [HttpGet("GetCategoryTargets/{id}")]
+        [Authorize]
+        public async Task<ActionResult<BaseResponseModel<List<CategoryTarget>>>> GetCategoryTargets(int id) {
+            int.TryParse(HttpContext.User.FindFirst("customerId")?.Value, out int customer_id);
+            if (customer_id > 0) {
+                var targets = await categoryService.GetCategoryTargets(customer_id, id);
+                return Ok(new BaseResponseModel<List<CategoryTarget>>() { Success = targets != null, Data = targets ?? [], ErrorMessage = targets != null ? "" : "Error -1" });
+
             }
             return BadRequest();
         }

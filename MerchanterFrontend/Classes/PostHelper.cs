@@ -19,10 +19,13 @@ namespace MerchanterFrontend.Classes {
         }
         public async Task<BaseResponseModel<T>?> Request<T>(string? _token, PostMethod _method, PostDestination _destination, string _url, StringContent? _body = null) {
             BaseResponseModel<T>? model = null;
-            var baseAddress = configuration?.GetSection("AppSettings:MerchanterApiUrl")?.Value;
+            string baseAddress = configuration?.GetSection("AppSettings:MerchanterApiUrl")?.Value;
             switch (_destination) {
                 case PostDestination.Server:
                     baseAddress = configuration?.GetSection("AppSettings:MerchanterServerUrl")?.Value;
+                    break;
+                case PostDestination.Local:
+                    baseAddress = configuration?.GetSection("AppSettings:MerchanterLocalUrl")?.Value;
                     break;
             }
 
@@ -73,7 +76,9 @@ namespace MerchanterFrontend.Classes {
                             var request = new RestRequest(_url, Method.Get) {
                                 Timeout = TimeSpan.FromSeconds(10)
                             };
-                            request.AddHeader("Authorization", "Bearer " + _token);
+                            if (_destination != PostDestination.Local) {
+                                request.AddHeader("Authorization", "Bearer " + _token);
+                            }
                             var response = await client.ExecuteAsync<T>(request);
                             if (response.IsSuccessStatusCode) {
                                 model = JsonConvert.DeserializeObject<BaseResponseModel<T>>(response.Content);
@@ -95,6 +100,40 @@ namespace MerchanterFrontend.Classes {
                                 Data = default
                             };
                         }
+                    }
+                    break;
+                case PostMethod.Local:
+                    try {
+                        var client = new RestClient(baseAddress);
+                        var request = new RestRequest(_url) {
+                            Method = Method.Get,
+                            Timeout = TimeSpan.FromSeconds(10)
+                        };
+                        var response = await client.GetAsync<T>(request);
+                        if (response != null) {
+                            model = new BaseResponseModel<T>() {
+                                Success = true,
+                                ErrorMessage = "",
+                                Data = response
+                            };
+                            logger.LogInformation(DateTime.UtcNow.ToString("HH:mm:ss") + " LOCAL File OK: " + baseAddress + _url, DateTime.UtcNow.ToLongTimeString());
+                        }
+                        else {
+                            model = new BaseResponseModel<T>() {
+                                Success = false,
+                                ErrorMessage = "File not Found",
+                                Data = default
+                            };
+                            logger.LogInformation(DateTime.UtcNow.ToString("HH:mm:ss") + " LOCAL File NOT FOUND: " + baseAddress + _url, DateTime.UtcNow.ToLongTimeString());
+                        }
+                    }
+                    catch (Exception ex) {
+                        logger.LogError(DateTime.UtcNow.ToString("HH:mm:ss") + " LOCAL File ERROR: " + ex.Message + " " + _url, DateTime.UtcNow.ToLongTimeString());
+                        model = new BaseResponseModel<T>() {
+                            Success = false,
+                            ErrorMessage = ex.Message,
+                            Data = default
+                        };
                     }
                     break;
                 case PostMethod.Post:
@@ -211,12 +250,14 @@ namespace MerchanterFrontend.Classes {
             Post = 1,
             Put = 2,
             Delete = 3,
-            Login = 4
+            Login = 4,
+            Local = 5
         }
 
         public enum PostDestination {
             Api = 0,
-            Server = 1
+            Server = 1,
+            Local = 2
         }
     }
 }
