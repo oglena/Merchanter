@@ -23,7 +23,7 @@
         public string currency { get; set; }
         public string order_status { get; set; }
         public DateTime order_date { get; set; }
-        public DateTime update_date { get; set; }
+        public DateTime update_date { get; set; } = DateTime.Now;
         public List<OrderItem> order_items { get; set; }
         public BillingAddress billing_address { get; set; }
         public ShippingAddress shipping_address { get; set; } //TODO: shipping_amount

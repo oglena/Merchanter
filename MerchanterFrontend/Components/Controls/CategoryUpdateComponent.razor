@@ -33,66 +33,20 @@
     </FluentGridItem>
     <FluentGridItem xs="12">
         @if (SelectedCategory != null && ParentCategory != null) {
-            <br />
-            <h2>Kategori düzenleniyor:&nbsp;<strong>@SelectedCategory.category_name</strong></h2>
+            <FluentLabel Typo="Typography.H2" Color="Color.Accent">
+                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.Edit())" Slot="start" />
+                Kategori düzenleniyor:&nbsp;<b>@SelectedCategory.category_name</b></FluentLabel>
         }
         else if (SelectedCategory == null && ParentCategory != null) {
-            <br />
-            <h2><strong>@ParentCategory.category_name</strong> için yeni alt kategori oluşturuluyor</h2>
+            <FluentLabel Typo="Typography.H2" Color="Color.Accent">
+                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.New())" Slot="start" />
+                <b>@ParentCategory.category_name</b> için yeni alt kategori oluşturuluyor</FluentLabel>
         }
         else {
-            <br />
-            <h2>Lütfen bir <strong>kategori</strong> seçin!</h2>
+            <FluentLabel Typo="Typography.H2" Color="Color.Accent">Lütfen bir <b>kategori</b> seçin!</FluentLabel>
         }
     </FluentGridItem>
     @if (SelectedCategory != null && ParentCategory != null) {
-        @if (CategoryTargets != null && CategoryTargets.Count > 0) {
-            <FluentGridItem xs="12" Style="display:contents;">
-                @foreach (var item in CategoryTargets) {
-                    <FluentGridItem lg="3" md="4" xs="6" Style="@("margin:5px;border:1px dashed " + (item.sync_status == Target.SyncStatus.Synced ? "green" : "var(--accent-fill-rest)" ) + ";border-radius:3px;padding:5px;")">
-                        <FluentGridItem xs="12" Justify="JustifyContent.Center">
-                            <img style="width:125px;padding:15px;"
-                                 src="@(@"media\platform_logos\" + item.target_name + ".png")"
-                                 alt="@item.target_name" />
-                        </FluentGridItem>
-                        <FluentGridItem xs="12" Justify="JustifyContent.Center" Style="height:30px;">
-                            <FluentBadge Appearance="Appearance.Neutral">
-                                @switch (item.sync_status) {
-                                    case Target.SyncStatus.Synced:
-                                        <span style="color:green;">Senkron Edildi</span>
-                                        break;
-                                    case Target.SyncStatus.NotSynced:
-                                        <span style="color:var(--accent-fill-rest);">Senkrone Edilecek</span>
-                                        break;
-                                    case Target.SyncStatus.Error:
-                                        <span style="color:red;">Hata Oluştu</span>
-                                        break;
-                                }
-                            </FluentBadge>
-                        </FluentGridItem>
-                        <FluentGridItem xs="12" Justify="JustifyContent.Center" Style="height:30px;">
-                            <FluentBadge Appearance="Appearance.Accent">@item.target_id</FluentBadge>
-                        </FluentGridItem>
-                        <FluentGridItem xs="12" Justify="JustifyContent.Center" Style="height:30px;">
-                            <FluentLabel Typo="Typography.Body" Appearance="Appearance.Accent">
-                                @{
-                                    var n11Cat = n11_categories != null ? FindN11CategoryById(item.target_id, n11_categories.categories) : null;
-                                }
-                                @if (n11Cat != null) {
-                                    <span>@n11Cat.name</span>
-                                }
-                                else {
-                                    <FluentProgress Width="100%" Stroke="ProgressStroke.Small"></FluentProgress>
-                                }
-                            </FluentLabel>
-                        </FluentGridItem>
-                        <FluentGridItem xs="12" Justify="JustifyContent.Center">
-                            <span>@item.update_date</span>
-                        </FluentGridItem>
-                    </FluentGridItem>
-                }
-            </FluentGridItem>
-        }
         <FluentGridItem xs="12">
             <FluentEditForm FormName="edit_category" Model="SelectedCategory" Style="margin-top:15px;">
                 <FluentGrid Justify="JustifyContent.FlexStart">
@@ -119,6 +73,70 @@
                 </FluentGrid>
             </FluentEditForm>
         </FluentGridItem>
+        @if (CategoryTargets != null && CategoryTargets.Count > 0) {
+            <FluentDivider Style="width:100%;" />
+            <FluentGridItem xs="12">
+                <FluentLabel Typo="Typography.H2" Color="Color.Accent">
+                    <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.PlugConnected())" Slot="start" />
+                    Hedef Kategoriler
+                </FluentLabel>
+            </FluentGridItem>
+            <FluentGridItem xs="12" Style="display:contents;">
+                @foreach (var item in CategoryTargets) {
+                    <FluentGridItem lg="3" md="4" xs="6" Style="@("margin:5px;border:1px dashed " + (item.sync_status == Target.SyncStatus.Synced ? "green" : "var(--accent-fill-rest)" ) + ";border-radius:3px;padding:5px;")">
+                        <FluentGridItem xs="12" Justify="JustifyContent.Center">
+                            <span>@item.update_date.ToString("dd.MM.yyyy HH:mm:ss")</span>
+                        </FluentGridItem>
+                        <FluentGridItem xs="12" Justify="JustifyContent.Center">
+                            <img style="width:125px;padding:15px;"
+                                 src="@(@"media\platform_logos\" + item.target_name + ".png")"
+                                 alt="@item.target_name" />
+                        </FluentGridItem>
+                        <FluentGridItem xs="12" Justify="JustifyContent.Center" Style="height:30px;">
+                            <FluentBadge Appearance="Appearance.Neutral">
+                                @switch (item.sync_status) {
+                                    case Target.SyncStatus.Synced:
+                                        <span style="color:green;">Senkron Edildi</span>
+                                        break;
+                                    case Target.SyncStatus.NotSynced:
+                                        <span style="color:var(--accent-fill-rest);">Senkron Edilecek</span>
+                                        break;
+                                    case Target.SyncStatus.Error:
+                                        <span style="color:red;">Hata Oluştu</span>
+                                        break;
+                                }
+                            </FluentBadge>
+                        </FluentGridItem>
+                        <FluentGridItem xs="12" Justify="JustifyContent.Center" Style="height:30px;">
+                            <FluentBadge Appearance="Appearance.Accent">@item.target_id</FluentBadge>
+                        </FluentGridItem>
+                        @{
+                            if (item.target_name == Constants.N11) {
+                                <FluentGridItem xs="12" Justify="JustifyContent.Center" Style="height:30px;">
+                                    <FluentLabel Typo="Typography.Body" Appearance="Appearance.Accent">
+                                        <span>@GetN11CategoryName(item.target_id)</span>
+                                    </FluentLabel>
+                                </FluentGridItem>
+                            }
+                            else if (item.target_name == Constants.IDEASOFT) {
+                                <FluentGridItem xs="12" Justify="JustifyContent.Center" Style="height:30px;">
+                                    <FluentLabel Typo="Typography.Body" Appearance="Appearance.Accent">
+                                        <span>@item.target_id</span>(nyd)
+                                    </FluentLabel>
+                                </FluentGridItem>
+                            }
+                            else if (item.target_name == Constants.MAGENTO2) {
+                                <FluentGridItem xs="12" Justify="JustifyContent.Center" Style="height:30px;">
+                                    <FluentLabel Typo="Typography.Body" Appearance="Appearance.Accent">
+                                        <span>@item.target_id</span>(nyd)
+                                    </FluentLabel>
+                                </FluentGridItem>
+                            }
+                        }
+                    </FluentGridItem>
+                }
+            </FluentGridItem>
+        }
     }
     else if (SelectedCategory == null && ParentCategory != null) {
         <FluentGridItem xs="12">
@@ -156,13 +174,14 @@
     [Parameter]
     public Func<Task> OnRefresh { get; set; } = default!;
     public bool is_refreshing { get; set; } = false;
+    private bool loading_categories = false;
     private string? page_message = "";
     private string? message_status = "";
     public Category? SelectedCategory { get; set; } = null;
     public Category? ParentCategory { get; set; } = null;
     private Category DummyCategory { get; set; } = new Category();
     private List<CategoryTarget>? CategoryTargets { get; set; } = null;
-    private N11_Categories? n11_categories = null;
+    private N11_Categories? n11_categories { get; set; } = null;
 
     protected override async Task OnParametersSetAsync() {
         if (SelectedCategory != null) {
@@ -171,7 +190,8 @@
                 "api/Category/GetCategoryTargets/" + SelectedCategory.id, null);
             if (response != null && response.Success && response.Data != null) {
                 CategoryTargets = response.Data;
-                if (CategoryTargets.Count > 0 && n11_categories == null) {
+                loading_categories = true;
+                if (CategoryTargets != null && CategoryTargets.Count > 0) {
                     var n11_response = await PostHelper.Request<N11_Categories?>(null, Classes.PostHelper.PostMethod.Local,
                         Classes.PostHelper.PostDestination.Local, "n11/categories.json", null);
                     if (n11_response != null && n11_response.Success && n11_response.Data != null) {
@@ -181,6 +201,7 @@
                 else {
                     CategoryTargets = new List<CategoryTarget>();
                 }
+                loading_categories = false;
             }
         }
     }
@@ -331,6 +352,16 @@
             message_status = "işlem başarısız";
             return null;
         }
+    }
+
+    private string GetN11CategoryName(int id) {
+        if (n11_categories != null) {
+            var category = FindN11CategoryById(id, n11_categories.categories);
+            if (category != null) {
+                return category.name;
+            }
+        }
+        return string.Empty;
     }
 
     private N11_Category? FindN11CategoryById(int id, N11_Category[] categories) {

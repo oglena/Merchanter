@@ -1,0 +1,83 @@
+﻿@rendermode InteractiveServer
+@using System.Text.Json.Serialization
+@using Newtonsoft.Json
+@using System.Text
+@inject IPostHelper PostHelper
+@inject IHttpContextAccessor HttpContextAccessor
+
+
+<FluentGridItem xs="12" Style="display:contents;">
+    <FluentGridItem xs="12" Style="width:100%;height:30px;">
+    </FluentGridItem>
+    @foreach (var item in product_targets) {
+        <FluentGridItem lg="3" md="4" xs="6" Style="@("margin:5px;border:1px dashed " + (item.sync_status == Target.SyncStatus.Synced ? "green" : "var(--accent-fill-rest)" ) + ";border-radius:3px;padding:5px;")">
+            <FluentGridItem xs="12" Justify="JustifyContent.Center">
+                <span>@item.update_date.ToString("dd.MM.yyyy HH:mm:ss")</span>
+            </FluentGridItem>
+            <FluentGridItem xs="12" Justify="JustifyContent.Center">
+                <img style="width:125px;padding:15px;"
+                     src="@(@"media\platform_logos\" + item.target_name + ".png")"
+                     alt="@item.target_name" />
+            </FluentGridItem>
+            <FluentGridItem xs="12" Justify="JustifyContent.Center" Style="height:30px;">
+                <FluentBadge Appearance="Appearance.Neutral">
+                    @switch (item.sync_status) {
+                        case Target.SyncStatus.Synced:
+                            <span style="color:green;">Senkron Edildi</span>
+                            break;
+                        case Target.SyncStatus.NotSynced:
+                            <span style="color:var(--accent-fill-rest);">Senkron Edilecek</span>
+                            break;
+                        case Target.SyncStatus.Error:
+                            <span style="color:red;">Hata Oluştu</span>
+                            break;
+                    }
+                </FluentBadge>
+            </FluentGridItem>
+            <FluentGridItem xs="12" Justify="JustifyContent.Center" Style="height:30px;">
+                <FluentBadge Appearance="Appearance.Accent">@item.target_id</FluentBadge>
+            </FluentGridItem>
+            @{
+                if (item.target_name == Constants.N11) {
+                    <FluentGridItem xs="12" Justify="JustifyContent.Center" Style="height:30px;">
+                        <FluentLabel Typo="Typography.Body" Appearance="Appearance.Accent">
+                            <span>item.target_id</span>(nyd)
+                        </FluentLabel>
+                    </FluentGridItem>
+                }
+                else if (item.target_name == Constants.IDEASOFT) {
+                    <FluentGridItem xs="12" Justify="JustifyContent.Center" Style="height:30px;">
+                        <FluentLabel Typo="Typography.Body" Appearance="Appearance.Accent">
+                            <span>@item.target_id</span>(nyd)
+                        </FluentLabel>
+                    </FluentGridItem>
+                }
+                else if (item.target_name == Constants.MAGENTO2) {
+                    <FluentGridItem xs="12" Justify="JustifyContent.Center" Style="height:30px;">
+                        <FluentLabel Typo="Typography.Body" Appearance="Appearance.Accent">
+                            <span>@item.target_id</span>(nyd)
+                        </FluentLabel>
+                    </FluentGridItem>
+                }
+            }
+        </FluentGridItem>
+    }
+</FluentGridItem>
+
+
+@code {
+    [Parameter]
+    public int product_id { get; set; } = 0;
+    public List<ProductTarget> product_targets { get; set; } = new List<ProductTarget>();
+
+    protected override async Task OnParametersSetAsync() {
+        if (product_id > 0) {
+            var response = await PostHelper.Request<List<ProductTarget>>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                Classes.PostHelper.PostMethod.Get, Classes.PostHelper.PostDestination.Api,
+                "api/Product/GetProductTargets/" + product_id, null);
+            if (response != null && response.Success && response.Data != null) {
+                product_targets = response.Data;
+            }
+        }
+    }
+}

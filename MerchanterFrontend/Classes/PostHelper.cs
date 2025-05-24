@@ -104,12 +104,8 @@ namespace MerchanterFrontend.Classes {
                     break;
                 case PostMethod.Local:
                     try {
-                        var client = new RestClient(baseAddress);
-                        var request = new RestRequest(_url) {
-                            Method = Method.Get,
-                            Timeout = TimeSpan.FromSeconds(10)
-                        };
-                        var response = await client.GetAsync<T>(request);
+                        var request = await File.ReadAllTextAsync(Path.Combine("wwwroot", _url));
+                        var response = JsonConvert.DeserializeObject<T>(request);
                         if (response != null) {
                             model = new BaseResponseModel<T>() {
                                 Success = true,

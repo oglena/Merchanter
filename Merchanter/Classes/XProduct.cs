@@ -13,6 +13,6 @@
         public decimal price1 { get; set; }
         public decimal price2 { get; set; }
         public string currency { get; set; }
-        public DateTime update_date { get; set; }
+        public DateTime update_date { get; set; } = DateTime.Now;
     }
 }

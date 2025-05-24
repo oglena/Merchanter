@@ -43,7 +43,10 @@
                             <FluentOption Value="20" Selected="@(pagination.ItemsPerPage == 20)">20 adet</FluentOption>
                             <FluentOption Value="50" Selected="@(pagination.ItemsPerPage == 50)">50 adet</FluentOption>
                         </FluentSelect>
-                        <FluentLabel Typo="Typography.Body">&nbsp;&nbsp;Toplam: <b>@(pagination.TotalItemCount ?? 0)</b> girdi</FluentLabel>
+                        <FluentLabel Typo="Typography.Body">&nbsp;&nbsp;Toplam: <b>@(pagination.TotalItemCount ?? 0)</b> girdi.</FluentLabel>
+                        @if (selected_products.Count() > 0) {
+                            <FluentLabel Typo="Typography.Body">&nbsp;&nbsp;Seçili: <b>@selected_products.Count()</b></FluentLabel>
+                        }
                     </div>
                 </SummaryTemplate>
                 <PaginationTextTemplate>
@@ -55,6 +58,9 @@
             <FluentDataGrid Id="products-grid" Items="@products" RowSize="DataGridRowSize.Large" GenerateHeader="GenerateHeaderOption.Sticky"
                             HeaderCellAsButtonWithMenu="true" TGridItem="Product" Loading="loading" DisplayMode="DataGridDisplayMode.Table" ShowHover="true" MultiLine="true">
                 <ChildContent>
+                    <SelectColumn TGridItem="Product" Property="@(p => selected_products.Any(x => x.id == p.id))"
+                                  SelectMode="DataGridSelectMode.Multiple"
+                                  OnSelect="@((e) => OnProductSelect(e.Item, e.Selected))" />
                     @if (show_id_status_columns) {
                         <PropertyColumn Title="ID" Property="@(p => p.id)" Width="125px" Tooltip="true" TooltipText="@(p => p.source_product_id.ToString())" Align="Align.End" />
                         <PropertyColumn Title="Durum" Property="@(p => p.extension.is_enabled ? "Aktif" : "Pasif")" Width="125px" Align="Align.Center" />
@@ -91,17 +97,17 @@
                     <TemplateColumn Title="Fiyatlar" Align="Align.Start" Width="250px">
                         <b>Liste Fiyat:</b>
                         <FluentBadge Appearance="Appearance.Accent">@(Math.Round(context.price, 2, MidpointRounding.AwayFromZero))</FluentBadge>
-                        <span>&nbsp;@(context.currency)</span><br />
+                        <span>@(context.currency.symbol)</span><br />
                         @if (context.special_price > 0) {
                             <b>Satış Fiyatı:</b>
                             <FluentBadge Appearance="Appearance.Accent">@(Math.Round(context.special_price, 2, MidpointRounding.AwayFromZero))&nbsp;</FluentBadge>
-                            <span>&nbsp;@(context.currency)</span>
+                            <span>@(context.currency.symbol)</span>
                             <br />
                         }
                         @if (context.custom_price > 0) {
                             <b>Özel Fiyat:</b>
                             <FluentBadge Appearance="Appearance.Accent">@(Math.Round(context.custom_price, 2, MidpointRounding.AwayFromZero))&nbsp;</FluentBadge>
-                            <span>&nbsp;@(context.currency)</span>
+                            <span>@(context.currency.symbol)</span>
                             <br />
                         }
                         <b>Vergi:</b>&nbsp;<span>@(context.tax)&#37;&nbsp;</span><b><span>@(context.tax_included ? "Dahil" : "Hariç")</span></b>
@@ -138,6 +144,7 @@ else {
     [Parameter]
     public int customer_id { get; set; } = 0;
     private IQueryable<Product>? products { get; set; } = null;
+    private IEnumerable<Product> selected_products { get; set; } = new List<Product>();
     public bool loading = false;
     public bool show_id_status_columns {
         get => _show_id_status_columns;
@@ -148,24 +155,32 @@ else {
             }
         }
     }
-
     private bool _show_id_status_columns = false;
     private string? page_message = "";
     private string? message_status = "";
     private string? product_name_filter = null;
     private PaginationState pagination = new PaginationState() { ItemsPerPage = 20 };
-
     private ProductStatus product_is_active_filter { get; set; } = ProductStatus.All;
     public enum ProductStatus { All = 0, Active = 1, Passive = 2 }
-
     private IDialogReference? _dialog;
+
+    private Task OnProductSelect(Product item, bool selected) {
+        if (selected) {
+            if (!selected_products.Contains(item))
+                selected_products = selected_products.Append(item).ToList();
+        }
+        else {
+            selected_products = selected_products.Where(x => x.id != item.id).ToList();
+        }
+        return Task.CompletedTask;
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender) {
         if (firstRender) {
             var ppager = await ProtectedLocalStorage.GetAsync<Pager>("ppager");
-            var show_id_status = await ProtectedLocalStorage.GetAsync<bool>("show_id_status_columns");
-            if (show_id_status.Success && show_id_status.Value) {
-                show_id_status_columns = show_id_status.Value;
+            var show_id_status_session = await ProtectedLocalStorage.GetAsync<bool>("show_id_status_columns");
+            if (show_id_status_session.Success && show_id_status_session.Value) {
+                show_id_status_columns = show_id_status_session.Value;
             }
             if (ppager.Success && ppager.Value != null) {
                 pagination.ItemsPerPage = ppager.Value.ItemsPerPage;

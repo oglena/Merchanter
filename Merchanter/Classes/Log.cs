@@ -6,6 +6,6 @@
         public string title { get; set; }
         public string message { get; set; }
         public string? thread_id { get; set; } = null;
-        public DateTime update_date { get; set; }
+        public DateTime update_date { get; set; } = DateTime.Now;
     }
 }

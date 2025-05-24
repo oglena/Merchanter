@@ -147,7 +147,7 @@ namespace Merchanter {
                 tax = _product.tax,
                 discountType = _product.special_price > 0 ? 0 : 1,
                 discount = _product.special_price > 0 ? _product.special_price : 0,
-                currency = new { id = _product.currency == "TRL" ? 3 : 3 }, //ID=3 is for Turkish Lira
+                currency = new { id = _product.currency == Currency.GetCurrency("TL") ? 3 : 3 }, //ID=3 is for Turkish Lira TODO:This should be dynamic
                 marketPriceDetail = _product.price.ToString().Replace(".", string.Empty).Replace(",", "."),
                 stockAmount = _product.total_qty,
                 volumetricWeight = _product.extension.volume,

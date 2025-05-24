@@ -8,6 +8,7 @@ namespace MerchanterApp.ApiService.Services {
 		Task<Product?> GetProduct( int _customer_id, int _product_id );
         Task<Product?> SaveProduct(int _customer_id, Product product);
         Task<bool> DeleteProductImage(int _customer_id, ProductImage _product_image);
+        Task<List<ProductTarget>> GetProductTargets(int _customer_id, int _product_id);
     }
 
 	public class ProductService( IProductRepository productRepository ) : IProductService {
@@ -37,6 +38,10 @@ namespace MerchanterApp.ApiService.Services {
                 return await productRepository.DeleteProductImage(_customer_id, _product_image);
             }
             return false;
+        }
+
+        public Task<List<ProductTarget>> GetProductTargets(int _customer_id, int _product_id) {
+            return productRepository.GetProductTargets(_customer_id, _product_id);
         }
     }
 }

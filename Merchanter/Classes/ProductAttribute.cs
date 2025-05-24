@@ -10,6 +10,6 @@
 		public string? value { get; set; } = null;
 		public string? option_ids { get; set; } = null;
 		public List<AttributeOption>? options { get; set; } = null;
-		public DateTime update_date { get; set; }
-	}
+		public DateTime update_date { get; set; } = DateTime.Now;
+    }
 }

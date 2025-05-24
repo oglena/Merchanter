@@ -11,7 +11,7 @@ namespace Merchanter.Classes {
         public string? image_url { get; set; } = null;
         public string? image_base64 { get; set; } = null;
         public bool is_default { get; set; } = false;
-        public DateTime update_date { get; set; }
+        public DateTime update_date { get; set; } = DateTime.Now;
     }
 
     [JsonConverter(typeof(JsonStringEnumConverter))]

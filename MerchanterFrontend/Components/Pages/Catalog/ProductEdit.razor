@@ -113,10 +113,10 @@
                                                 </FluentGridItem>
                                                 <FluentDivider Style="width:100%;margin-top:0 !important;" />
                                                 <FluentGridItem xs="6">
-                                                    <FluentSelect Label="Kur" TOption="string" @bind-Value="@product.currency" Required="true" Style="width:100%;">
-                                                        <FluentOption Value="TRY" Selected="@(product.currency == "TRY")">TRY (₺)</FluentOption>
-                                                        <FluentOption Value="USD" Selected="@(product.currency == "USD")">USD ($)</FluentOption>
-                                                        <FluentOption Value="EUR" Selected="@(product.currency == "EUR")">EUR (€)</FluentOption>
+                                                    <FluentSelect Label="Kur" TOption="string" @bind-Value="@product.currency.code" Required="true" Style="width:100%;">
+                                                        <FluentOption Value="TL" Selected="@(product.currency.code == "TL")">Türk Lirası (TL)</FluentOption>
+                                                        <FluentOption Value="USD" Selected="@(product.currency.code == "USD")">Amerikan Doları ($)</FluentOption>
+                                                        <FluentOption Value="EUR" Selected="@(product.currency.code == "EUR")">Euro (€)</FluentOption>
                                                     </FluentSelect>
                                                 </FluentGridItem>
                                                 <FluentGridItem xs="6">
@@ -164,6 +164,15 @@
                                         <FluentGridItem xs="12">
                                             <FluentGrid Justify="JustifyContent.FlexStart" Class="dotted">
                                                 <ProductCategoriesComponent product_extension="@product.extension" />
+                                            </FluentGrid>
+                                        </FluentGridItem>
+                                    </FluentTab>
+                                    <FluentTab Overflow="false" Icon="@(new Icons.Regular.Size24.PlugConnected())"
+                                               Visible="true" Label="Hedef Ürünler" id="@ProductTab.ProductTargets.ToString()"
+                                               Style="height:400px;" LabelStyle="font-size:13pt !important;">
+                                        <FluentGridItem xs="12">
+                                            <FluentGrid Justify="JustifyContent.FlexStart" Class="dotted">
+                                                <ProductTargetsComponent product_id="@product.id" />
                                             </FluentGrid>
                                         </FluentGridItem>
                                     </FluentTab>
@@ -234,7 +243,7 @@ else {
     public List<Option<Brand>>? brand_options { get; set; } = null;
     private Product.ProductTypes? product_type { get; set; } = null;
     private ProductTab active_product_tab { get; set; } = ProductTab.ProductInformation;
-    public enum ProductTab { ProductInformation = 0, ProductExtension = 1, Categories = 2, OtherSources = 3, Images = 4, Attributes = 5 }
+    public enum ProductTab { ProductInformation = 0, ProductExtension = 1, Categories = 2, OtherSources = 3, Images = 4, Attributes = 5, ProductTargets = 6 }
     public ProductImagesComponent? productImagesComponent = null;
 
     #region Iconcans

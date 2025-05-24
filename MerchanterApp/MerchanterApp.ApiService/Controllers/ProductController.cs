@@ -98,5 +98,21 @@ namespace MerchanterApp.ApiService.Controllers {
             }
             return BadRequest("Invalid customer ID.");
         }
+
+        /// <summary>
+        /// Retrieves a list of product targets of a specific product for the authenticated customer.
+        /// </summary>
+        /// <returns>Product Targets wrapped in a BaseResponseMode.</returns>
+        [HttpGet("GetProductTargets/{id}")]
+        [Authorize]
+        public async Task<ActionResult<BaseResponseModel<List<ProductTarget>>>> GetProductTargets(int id) {
+            int.TryParse(HttpContext.User.FindFirst("customerId")?.Value, out int customer_id);
+            if (customer_id > 0) {
+                var targets = await productService.GetProductTargets(customer_id, id);
+                return Ok(new BaseResponseModel<List<ProductTarget>>() { Success = targets != null, Data = targets ?? [], ErrorMessage = targets != null ? "" : "Error -1" });
+
+            }
+            return BadRequest();
+        }
     }
 }

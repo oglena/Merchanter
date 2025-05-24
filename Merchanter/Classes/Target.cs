@@ -12,7 +12,7 @@ namespace Merchanter.Classes {
         public int target_id { get; set; }
         public string target_name { get; set; }
         public SyncStatus sync_status { get; set; } = SyncStatus.NotSynced;
-        public DateTime update_date { get; set; }
+        public DateTime update_date { get; set; } = DateTime.Now;
 
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public enum SyncStatus {

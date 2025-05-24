@@ -2363,7 +2363,7 @@ namespace Merchanter {
         public Product? GetProduct(int _customer_id, int _id) {
             try {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM products WHERE id=@id AND customer_id=@customer_id";
+                string _query = "SELECT * FROM products WHERE id=@id AND customer_id=@customer_id;";
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("id", _id));
@@ -2383,7 +2383,7 @@ namespace Merchanter {
                         price = decimal.Parse(dataReader["price"].ToString()),
                         special_price = decimal.Parse(dataReader["special_price"].ToString()),
                         custom_price = decimal.Parse(dataReader["custom_price"].ToString()),
-                        currency = dataReader["currency"].ToString(),
+                        currency = Currency.GetCurrency(dataReader["currency"].ToString()),
                         tax = Convert.ToInt32(dataReader["tax"].ToString()),
                         tax_included = Convert.ToBoolean(Convert.ToInt32(dataReader["tax_included"].ToString()))
                     };
@@ -2446,7 +2446,7 @@ namespace Merchanter {
         public Product? GetProductBySku(int _customer_id, string _sku) {
             try {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM products WHERE sku=@sku AND customer_id=@customer_id";
+                string _query = "SELECT * FROM products WHERE sku=@sku AND customer_id=@customer_id;";
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("sku", _sku));
@@ -2466,7 +2466,7 @@ namespace Merchanter {
                         price = decimal.Parse(dataReader["price"].ToString()),
                         special_price = decimal.Parse(dataReader["special_price"].ToString()),
                         custom_price = decimal.Parse(dataReader["custom_price"].ToString()),
-                        currency = dataReader["currency"].ToString(),
+                        currency = Currency.GetCurrency(dataReader["currency"].ToString()),
                         tax = Convert.ToInt32(dataReader["tax"].ToString()),
                         tax_included = Convert.ToBoolean(Convert.ToInt32(dataReader["tax_included"].ToString()))
                     };
@@ -2555,7 +2555,7 @@ namespace Merchanter {
                         price = decimal.Parse(dataReader["p_price"].ToString()),
                         special_price = decimal.Parse(dataReader["p_special_price"].ToString()),
                         custom_price = decimal.Parse(dataReader["p_custom_price"].ToString()),
-                        currency = dataReader["p_currency"].ToString(),
+                        currency = Currency.GetCurrency(dataReader["p_currency"].ToString()),
                         tax = Convert.ToInt32(dataReader["p_tax"].ToString()),
                         tax_included = Convert.ToBoolean(Convert.ToInt32(dataReader["p_tax_included"].ToString()))
                     };
@@ -2581,6 +2581,7 @@ namespace Merchanter {
                         Convert.ToBoolean(Convert.ToInt32(dataReader["ps_is_active"].ToString())),
                         Convert.ToDateTime(dataReader["ps_update_date"].ToString())
                     )];
+                    p.target_prices = [];
                     p.attributes = [];
                     p.images = [];
                     list.Add(p);
@@ -2616,6 +2617,14 @@ namespace Merchanter {
                             if (selected_product_source != null && selected_product_source.Count > 0)
                                 item.sources.AddRange(selected_product_source);
                         }
+                    }
+                }
+
+                // Load product prices
+                var product_prices = GetProductPrices(_customer_id);
+                if (product_prices != null && product_prices.Count > 0) {
+                    foreach (var item in list) {
+                        item.target_prices = [.. product_prices.Where(x => x.product_id == item.id)];
                     }
                 }
 
@@ -2702,7 +2711,7 @@ namespace Merchanter {
                         price = decimal.Parse(dataReader["p_price"].ToString()),
                         special_price = decimal.Parse(dataReader["p_special_price"].ToString()),
                         custom_price = decimal.Parse(dataReader["p_custom_price"].ToString()),
-                        currency = dataReader["p_currency"].ToString(),
+                        currency = Currency.GetCurrency(dataReader["p_currency"].ToString()),
                         tax = Convert.ToInt32(dataReader["p_tax"].ToString()),
                         tax_included = Convert.ToBoolean(Convert.ToInt32(dataReader["p_tax_included"].ToString()))
                     };
@@ -2729,6 +2738,9 @@ namespace Merchanter {
                         Convert.ToDateTime(dataReader["ps_update_date"].ToString())
 
                     )];
+                    p.target_prices = [];
+                    p.attributes = [];
+                    p.images = [];
                     list.Add(p);
                 }
                 dataReader.Close();
@@ -2756,6 +2768,14 @@ namespace Merchanter {
                         var selected_product_source = product_other_sources?.FindAll(x => x.sku == item.sku);
                         if (selected_product_source != null && selected_product_source.Count > 0)
                             item.sources.AddRange(selected_product_source);
+                    }
+                }
+
+                // Load product prices
+                var product_prices = GetProductPrices(_customer_id);
+                if (product_prices != null && product_prices.Count > 0) {
+                    foreach (var item in list) {
+                        item.target_prices = [.. product_prices.Where(x => x.product_id == item.id)];
                     }
                 }
 
@@ -2823,7 +2843,7 @@ namespace Merchanter {
                         price = decimal.Parse(dataReader["price"].ToString()),
                         special_price = decimal.Parse(dataReader["special_price"].ToString()),
                         custom_price = decimal.Parse(dataReader["custom_price"].ToString()),
-                        currency = dataReader["currency"].ToString(),
+                        currency = Currency.GetCurrency(dataReader["currency"].ToString()),
                         tax = Convert.ToInt32(dataReader["tax"].ToString()),
                         tax_included = Convert.ToBoolean(Convert.ToInt32(dataReader["tax_included"].ToString())),
                     };
@@ -2906,7 +2926,7 @@ namespace Merchanter {
                         price = decimal.Parse(dataReader["price"].ToString()),
                         special_price = decimal.Parse(dataReader["special_price"].ToString()),
                         custom_price = decimal.Parse(dataReader["custom_price"].ToString()),
-                        currency = dataReader["currency"].ToString(),
+                        currency = Currency.GetCurrency(dataReader["currency"].ToString()),
                         tax = Convert.ToInt32(dataReader["tax"].ToString()),
                         tax_included = Convert.ToBoolean(Convert.ToInt32(dataReader["tax_included"].ToString())),
                     };
@@ -2988,7 +3008,7 @@ namespace Merchanter {
                     cmd.Parameters.Add(new MySqlParameter("price", item.price));
                     cmd.Parameters.Add(new MySqlParameter("special_price", item.special_price));
                     cmd.Parameters.Add(new MySqlParameter("custom_price", item.custom_price));
-                    cmd.Parameters.Add(new MySqlParameter("currency", item.currency));
+                    cmd.Parameters.Add(new MySqlParameter("currency", item.currency.code));
                     cmd.Parameters.Add(new MySqlParameter("tax", item.tax));
                     cmd.Parameters.Add(new MySqlParameter("tax_included", item.tax_included));
                     cmd.Parameters.Add(new MySqlParameter("name", item.name));
@@ -3010,6 +3030,13 @@ namespace Merchanter {
                     if (item.attributes != null && item.attributes.Count > 0) {
                         if (!UpdateProductAttributes(_customer_id, item.attributes, (int)inserted_id)) {
                             OnError("InsertProducts: " + item.sku + " - Product Attributes Insert Error");
+                            return 0;
+                        }
+                    }
+
+                    if (item.target_prices != null && item.target_prices.Count > 0) {
+                        if (!UpdateProductPrices(_customer_id, item.target_prices, (int)inserted_id)) {
+                            OnError("InsertProducts: " + item.sku + " - Product Prices Insert Error");
                             return 0;
                         }
                     }
@@ -3054,7 +3081,7 @@ namespace Merchanter {
                 cmd.Parameters.Add(new MySqlParameter("price", _product.price));
                 cmd.Parameters.Add(new MySqlParameter("special_price", _product.special_price));
                 cmd.Parameters.Add(new MySqlParameter("custom_price", _product.custom_price));
-                cmd.Parameters.Add(new MySqlParameter("currency", _product.currency));
+                cmd.Parameters.Add(new MySqlParameter("currency", _product.currency.code));
                 cmd.Parameters.Add(new MySqlParameter("tax", _product.tax));
                 cmd.Parameters.Add(new MySqlParameter("tax_included", _product.tax_included));
                 cmd.Parameters.Add(new MySqlParameter("name", _product.name));
@@ -3076,6 +3103,13 @@ namespace Merchanter {
                 if (_product.attributes != null && _product.attributes.Count > 0) {
                     if (!UpdateProductAttributes(_customer_id, _product.attributes, (int)inserted_id)) {
                         OnError("InsertProducts: " + _product.sku + " - Product Attributes Insert Error");
+                        return null;
+                    }
+                }
+
+                if (_product.target_prices != null && _product.target_prices.Count > 0) {
+                    if (!UpdateProductPrices(_customer_id, _product.target_prices, (int)inserted_id)) {
+                        OnError("InsertProducts: " + _product.sku + " - Product Prices Insert Error");
                         return null;
                     }
                 }
@@ -3121,7 +3155,7 @@ namespace Merchanter {
                     cmd.Parameters.Add(new MySqlParameter("price", item.price));
                     cmd.Parameters.Add(new MySqlParameter("special_price", item.special_price));
                     cmd.Parameters.Add(new MySqlParameter("custom_price", item.custom_price));
-                    cmd.Parameters.Add(new MySqlParameter("currency", item.currency));
+                    cmd.Parameters.Add(new MySqlParameter("currency", item.currency.code));
                     cmd.Parameters.Add(new MySqlParameter("tax", item.tax));
                     cmd.Parameters.Add(new MySqlParameter("tax_included", item.tax_included));
                     cmd.Parameters.Add(new MySqlParameter("name", item.name));
@@ -3136,22 +3170,52 @@ namespace Merchanter {
                         return false;
                     }
 
-                    //DeleteProductSources(_customer_id, item.sku.ToString());
+                    var deleted_sources = GetProductSources(_customer_id, item.sku)
+                        .ExceptBy(item.sources.Select(s => s.name) ?? [], s => s.name).ToList();
+                    foreach (var ditem in deleted_sources) {
+                        if (!DeleteProductSource(_customer_id, ditem)) {
+                            OnError("UpdateProduct: " + item.sku + " - Product Source Delete Error");
+                            return false;
+                        }
+                    }
                     if (!UpdateProductSources(_customer_id, item.sources, item.sku)) {
                         OnError("UpdateProducts: " + item.sku + " - Product Source Insert Error");
                         return false;
                     }
 
-                    if (item.attributes != null && item.attributes.Count > 0) {
-                        if (!UpdateProductAttributes(_customer_id, item.attributes, item.id)) {
-                            OnError("UpdateProducts: " + item.sku + " - Product Attributes Update Error");
+                    var deleted_prices = GetProductPrices(_customer_id, item.id)
+                        .ExceptBy(item.target_prices?.Select(tp => tp.id) ?? [], tp => tp.id).ToList();
+                    foreach (var ditem in deleted_prices) {
+                        if (!DeleteProductPrice(_customer_id, ditem)) {
+                            OnError("UpdateProduct: " + item.sku + " - Product Price Delete Error");
+                            return false;
+                        }
+                    }
+                    if (item.target_prices != null && item.target_prices.Count > 0) {
+                        if (!UpdateProductPrices(_customer_id, item.target_prices, item.id)) {
+                            OnError("UpdateProducts: " + item.sku + " - Product Prices Insert Error");
                             return false;
                         }
                     }
 
+                    var deleted_images = GetProductImages(_customer_id, item.id)
+                        .ExceptBy(item.images?.Select(img => img.id) ?? [], img => img.id).ToList();
+                    foreach (var ditem in deleted_images) {
+                        if (!DeleteProductImage(_customer_id, ditem)) {
+                            OnError("UpdateProduct: " + item.sku + " - Product Image Delete Error");
+                            return false;
+                        }
+                    }
                     if (item.images != null && item.images.Count > 0) {
                         if (!UpdateProductImages(_customer_id, item.images, item.id)) {
                             OnError("UpdateProducts: " + item.sku + " - Product Images Insert Error");
+                            return false;
+                        }
+                    }
+
+                    if (item.attributes != null && item.attributes.Count > 0) {
+                        if (!UpdateProductAttributes(_customer_id, item.attributes, item.id)) {
+                            OnError("UpdateProducts: " + item.sku + " - Product Attributes Update Error");
                             return false;
                         }
                     }
@@ -3181,7 +3245,7 @@ namespace Merchanter {
                 cmd.Parameters.Add(new MySqlParameter("price", _product.price));
                 cmd.Parameters.Add(new MySqlParameter("special_price", _product.special_price));
                 cmd.Parameters.Add(new MySqlParameter("custom_price", _product.custom_price));
-                cmd.Parameters.Add(new MySqlParameter("currency", _product.currency));
+                cmd.Parameters.Add(new MySqlParameter("currency", _product.currency.code));
                 cmd.Parameters.Add(new MySqlParameter("tax", _product.tax));
                 cmd.Parameters.Add(new MySqlParameter("tax_included", _product.tax_included));
                 cmd.Parameters.Add(new MySqlParameter("name", _product.name));
@@ -3201,15 +3265,19 @@ namespace Merchanter {
                     return null;
                 }
 
-                //Disabled. This product sources list will be update on sync
-                //if (!UpdateProductSources(_customer_id, _product.sources, _product.sku)) {
-                //    OnError("UpdateProduct: " + _product.sku + " - Product Sources Update Error");
-                //    return null;
-                //}
+                //Product Source update is DISABLED when customer updates product
 
-                if (_product.attributes != null && _product.attributes.Count > 0) {
-                    if (!UpdateProductAttributes(_customer_id, _product.attributes, _product.id)) {
-                        OnError("UpdateProduct: " + _product.sku + " - Product Attributes Update Error");
+                var deleted_prices = GetProductPrices(_customer_id, _product.id)
+                    .ExceptBy(_product.target_prices.Select(tp => tp.id), tp => tp.id).ToList();
+                foreach (var ditem in deleted_prices) {
+                    if (!DeleteProductPrice(_customer_id, ditem)) {
+                        OnError("UpdateProduct: " + _product.sku + " - Product Price Delete Error");
+                        return null;
+                    }
+                }
+                if (_product.target_prices != null && _product.target_prices.Count > 0) {
+                    if (!UpdateProductPrices(_customer_id, _product.target_prices, _product.id)) {
+                        OnError("UpdateProduct: " + _product.sku + " - Product Prices Update Error");
                         return null;
                     }
                 }
@@ -3228,7 +3296,14 @@ namespace Merchanter {
                         return null;
                     }
                 }
-                return GetProductBySku(_customer_id, _product.sku);
+
+                if (_product.attributes != null && _product.attributes.Count > 0) {
+                    if (!UpdateProductAttributes(_customer_id, _product.attributes, _product.id)) {
+                        OnError("UpdateProduct: " + _product.sku + " - Product Attributes Update Error");
+                        return null;
+                    }
+                }
+                return GetProduct(_customer_id, _product.id);
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -3267,7 +3342,7 @@ namespace Merchanter {
                         price = decimal.Parse(dataReader["price"].ToString()),
                         special_price = decimal.Parse(dataReader["special_price"].ToString()),
                         custom_price = decimal.Parse(dataReader["custom_price"].ToString()),
-                        currency = dataReader["currency"].ToString(),
+                        currency = Currency.GetCurrency(dataReader["currency"].ToString()),
                         tax = Convert.ToInt32(dataReader["tax"].ToString()),
                         tax_included = Convert.ToBoolean(Convert.ToInt32(dataReader["tax_included"].ToString())),
                     };
@@ -3968,6 +4043,33 @@ namespace Merchanter {
         /// Deletes the product source from the database
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_product_source">ProductSource</param>
+        /// <returns>[No change] or [Error] returns 'false'</returns>
+        public bool DeleteProductSource(int _customer_id, ProductSource _product_source) {
+            try {
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                int val = 0;
+                string _query = "DELETE FROM product_sources WHERE id=@id AND customer_id=@customer_id;";
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                cmd.Parameters.Add(new MySqlParameter("id", _product_source.id));
+                val = cmd.ExecuteNonQuery();
+
+                if (state == System.Data.ConnectionState.Open) connection.Close();
+                if (val > 0)
+                    return true;
+                else return false;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Deletes the product source from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
         /// <param name="_sku">SKU</param>
         /// <returns>[No change] or [Error] returns 'false'</returns>
         [Obsolete]
@@ -3986,6 +4088,199 @@ namespace Merchanter {
                 if (state == System.Data.ConnectionState.Open)
                     connection.Close();
 
+                if (val > 0)
+                    return true;
+                else return false;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return false;
+            }
+        }
+        #endregion
+
+        #region Product Price
+        /// <summary>
+        /// Get product prices from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <returns>[Error] returns 'null'</returns>
+        public List<ProductPrice> GetProductPrices(int _customer_id) {
+            try {
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                string _query = "SELECT * FROM product_prices WHERE customer_id=@customer_id;";
+                List<ProductPrice> list = [];
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                MySqlDataReader dataReader = cmd.ExecuteReader();
+                while (dataReader.Read()) {
+                    ProductPrice s = new ProductPrice() {
+                        id = Convert.ToInt32(dataReader["id"].ToString()),
+                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                        product_id = Convert.ToInt32(dataReader["product_id"].ToString()),
+                        platform_name = dataReader["platform_name"].ToString(),
+                        price1 = decimal.Parse(dataReader["price1"].ToString()),
+                        price2 = decimal.Parse(dataReader["price2"].ToString()),
+                        update_currency_as = Currency.GetCurrency(dataReader["update_currency_as"].ToString()),
+                        update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
+                    };
+                    list.Add(s);
+                }
+                dataReader.Close();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
+                return list;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Inserts the product price to the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <returns>Error returns 'int:0'</returns>
+        public int InsertProductPrice(int _customer_id, ProductPrice _price) {
+            try {
+                object val;
+                string _query = "START TRANSACTION;" +
+                    "INSERT INTO product_prices (customer_id,product_id,platform_name,price1,price2,update_currency_as) VALUES (@customer_id,@product_id,@platform_name,@price1,@price2,@update_currency_as);" +
+                    "SELECT LAST_INSERT_ID();" +
+                    "COMMIT;";
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                cmd.Parameters.Add(new MySqlParameter("product_id", _price.product_id));
+                cmd.Parameters.Add(new MySqlParameter("platform_name", _price.platform_name));
+                cmd.Parameters.Add(new MySqlParameter("price1", _price.price1));
+                cmd.Parameters.Add(new MySqlParameter("price2", _price.price2));
+                cmd.Parameters.Add(new MySqlParameter("update_currency_as", _price.update_currency_as.ToString()));
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                val = cmd.ExecuteScalar();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
+                if (val != null) {
+                    if (int.TryParse(val.ToString(), out int PPID))
+                        return PPID;
+                }
+                return 0;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return 0;
+            }
+        }
+
+        /// <summary>
+        /// Updates the product price in the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_prices">ProductPrice</param>
+        /// <returns>[No change] or [Error] returns 'null'</returns>
+        public bool UpdateProductPrices(int _customer_id, List<ProductPrice> _prices, int _product_id) {
+            try {
+                UInt64 val = 0;
+                var existed_prices = GetProductPrices(_customer_id, _product_id);
+                foreach (var item in _prices) {
+                    var existed_price = existed_prices.FirstOrDefault(x => x.platform_name == item.platform_name && x.product_id == item.product_id);
+                    if (existed_price != null) {
+                        if (existed_price.price1 != item.price1 || existed_price.price2 != item.price2 || existed_price.update_currency_as != item.update_currency_as) {
+                            string _query = "UPDATE product_prices SET price1=@price1,price2=@price2,update_currency_as=@update_currency_as WHERE product_id=@product_id AND platform_name=@platform_name AND customer_id=@customer_id;";
+                            MySqlCommand cmd = new MySqlCommand(_query, connection);
+                            cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                            cmd.Parameters.Add(new MySqlParameter("product_id", _product_id));
+                            cmd.Parameters.Add(new MySqlParameter("platform_name", item.platform_name));
+                            cmd.Parameters.Add(new MySqlParameter("price1", item.price1));
+                            cmd.Parameters.Add(new MySqlParameter("price2", item.price2));
+                            cmd.Parameters.Add(new MySqlParameter("update_currency_as", item.update_currency_as.code));
+                            cmd.Parameters.Add(new MySqlParameter("update_date", DateTime.Now));
+                            if (state != System.Data.ConnectionState.Open) connection.Open();
+                            val += (UInt64)cmd.ExecuteNonQuery();
+                            if (state == System.Data.ConnectionState.Open) connection.Close();
+                        }
+                        else val++;
+                    }
+                    else {
+                        string _query = "START TRANSACTION;" +
+                            "INSERT INTO product_prices (customer_id,product_id,platform_name,price1,price2,update_currency_as) VALUES (@customer_id,@product_id,@platform_name,@price1,@price2,@update_currency_as);" +
+                            "SELECT LAST_INSERT_ID();" +
+                            "COMMIT;";
+                        MySqlCommand cmd = new MySqlCommand(_query, connection);
+                        cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                        cmd.Parameters.Add(new MySqlParameter("product_id", _product_id));
+                        cmd.Parameters.Add(new MySqlParameter("platform_name", item.platform_name));
+                        cmd.Parameters.Add(new MySqlParameter("price1", item.price1));
+                        cmd.Parameters.Add(new MySqlParameter("price2", item.price2));
+                        cmd.Parameters.Add(new MySqlParameter("update_currency_as", item.update_currency_as.code));
+                        if (state != System.Data.ConnectionState.Open) connection.Open();
+                        val += (UInt64)cmd.ExecuteScalar();
+                        if (state == System.Data.ConnectionState.Open) connection.Close();
+                    }
+                }
+                if (val > 0)
+                    return true;
+                else return false;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Gets the product prices by product_id from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_product_id">Product ID</param>
+        /// <returns>[Error] returns 'null'</returns>
+        public List<ProductPrice> GetProductPrices(int _customer_id, int _product_id) {
+            try {
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                string _query = "SELECT * FROM product_prices WHERE customer_id=@customer_id AND product_id=@product_id;";
+                List<ProductPrice> list = new List<ProductPrice>();
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                cmd.Parameters.Add(new MySqlParameter("product_id", _product_id));
+                MySqlDataReader dataReader = cmd.ExecuteReader();
+                while (dataReader.Read()) {
+                    ProductPrice pp = new ProductPrice {
+                        id = Convert.ToInt32(dataReader["id"].ToString()),
+                        product_id = Convert.ToInt32(dataReader["product_id"].ToString()),
+                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                        platform_name = dataReader["platform_name"].ToString(),
+                        price1 = decimal.Parse(dataReader["price1"].ToString()),
+                        price2 = decimal.Parse(dataReader["price2"].ToString()),
+                        update_currency_as = Currency.GetCurrency(dataReader["update_currency_as"].ToString()),
+                        update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
+                    };
+                    list.Add(pp);
+                }
+                dataReader.Close();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
+                return list;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Deletes the product price target from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_product_price">ProductPrice</param>
+        /// <returns>[No change] or [Error] returns 'false'</returns>
+        public bool DeleteProductPrice(int _customer_id, ProductPrice _product_price) {
+            try {
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                int val = 0;
+                string _query = "DELETE FROM product_prices WHERE id=@id AND customer_id=@customer_id;";
+                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                cmd.Parameters.Add(new MySqlParameter("id", _product_price.id));
+                val = cmd.ExecuteNonQuery();
+
+                if (state == System.Data.ConnectionState.Open) connection.Close();
                 if (val > 0)
                     return true;
                 else return false;
@@ -4040,7 +4335,7 @@ namespace Merchanter {
         /// Updates the product image in the database
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
-        /// <param name="_image">ProductImage</param>
+        /// <param name="_images">ProductImages</param>
         /// <returns>[No change] or [Error] returns 'null'</returns>
         public bool UpdateProductImages(int _customer_id, List<ProductImage> _images, int _product_id) {
             try {
@@ -4538,7 +4833,7 @@ namespace Merchanter {
         /// <returns>[No change] or [Error] returns 'false'</returns>
         public bool DeleteProductTarget(int _customer_id, int _product_id) {
             try {
-                if (state != System.Data.ConnectionState.Open)connection.Open();
+                if (state != System.Data.ConnectionState.Open) connection.Open();
                 int val = 0;
                 string _query = "DELETE FROM product_targets WHERE product_id=@product_id AND customer_id=@customer_id;";
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
@@ -4546,7 +4841,7 @@ namespace Merchanter {
                 cmd.Parameters.Add(new MySqlParameter("product_id", _product_id));
                 val = cmd.ExecuteNonQuery();
 
-                if (state == System.Data.ConnectionState.Open)connection.Close();
+                if (state == System.Data.ConnectionState.Open) connection.Close();
                 if (val > 0)
                     return true;
                 else return false;

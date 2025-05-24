@@ -11,8 +11,8 @@ namespace Merchanter.Classes {
         public string? invoice_no { get; set; } = null;
         public string? notification_content { get; set; }
         public bool is_notification_sent { get; set; } = false;
-        public DateTime create_date { get; set; }
-        public DateTime? notification_date { get; set; }
+        public DateTime create_date { get; set; } = DateTime.Now;
+        public DateTime? notification_date { get; set; } = null;
 
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public enum NotificationTypes {
@@ -38,6 +38,7 @@ namespace Merchanter.Classes {
             ORDER_SHIPPED = 19,
             PRODUCT_UPDATE_ERROR = 20,
             NEW_ORDER_ERROR = 21,
+            PRODUCT_CURRENCY_RATE_UPDATE_ERROR = 22
         }
     }
 }

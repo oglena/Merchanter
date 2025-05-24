@@ -12,7 +12,7 @@
         public decimal weight { get; set; } = 0;
         public decimal volume { get; set; } = 0;
         public string? description { get; set; }
-        public DateTime update_date { get; set; }
+        public DateTime update_date { get; set; } = DateTime.Now;
 
 
         public List<Category> categories { get; set; }

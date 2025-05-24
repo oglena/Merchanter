@@ -30,7 +30,7 @@ internal class MainLoop {
 
     #region Variables
     private bool xml_has_error;
-    private CurrencyRates rates = new();
+    private List<CurrencyRate> rates = [];
     private List<Product> live_products = [];
     private List<ProductTarget> product_target_relation = [];
     private List<CategoryTarget> category_target_relation = [];
@@ -99,6 +99,15 @@ internal class MainLoop {
                 //Task task = Task.Run(() => this.XmlLoop(Helper.global));
             }
         }
+        #endregion
+
+        #region Currency
+        rates = [
+            // INFO: Supported currencies are TL, USD, EUR. Will be used when syncing products
+            new() { currency = Currency.GetCurrency("TL"), rate = Helper.global.settings.rate_TL },
+            new() { currency = Currency.GetCurrency("USD"), rate = Helper.global.settings.rate_USD },
+            new() { currency = Currency.GetCurrency("EUR"), rate = Helper.global.settings.rate_EUR }
+        ];
         #endregion
 
         #region Product LOOP
@@ -705,8 +714,8 @@ internal class MainLoop {
                                            "<td>" + x.qty + "</td>" +
                                            "<td>" +
                                                 (x.name == product_main_source ? "Price: " +
-                                                (selected_product.special_price != 0 ? Math.Round(selected_product.special_price * (1 + (selected_product.tax / 100)),2,MidpointRounding.AwayFromZero) + selected_product.currency :
-                                                Math.Round(selected_product.price * (1m + (selected_product.tax / 100m)),2,MidpointRounding.AwayFromZero) + selected_product.currency) :
+                                                (selected_product.special_price != 0 ? Math.Round(selected_product.special_price * (1 + (selected_product.tax / 100)),2,MidpointRounding.AwayFromZero) + selected_product.currency.code :
+                                                Math.Round(selected_product.price * (1m + (selected_product.tax / 100m)),2,MidpointRounding.AwayFromZero) + selected_product.currency.code) :
                                                 ((selected_xproducts is not null && selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault() is not null) ?
                                                 "Price: " + Math.Round(selected_xproducts.FirstOrDefault( xp => xp.xml_source == x.name ).price2,2,MidpointRounding.AwayFromZero) + selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault()?.currency + "<br>" +
                                                 "MSRP: " + Math.Round(selected_xproducts.FirstOrDefault( xp => xp.xml_source == x.name ).price1,2,MidpointRounding.AwayFromZero) + selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault()?.currency : string.Empty)) +
@@ -751,16 +760,16 @@ internal class MainLoop {
                                    selected_product.sku,
                                    selected_product.barcode,
                                    selected_product.extension.brand.brand_name,
-                                   (selected_product.special_price != 0 ? (selected_product.special_price * (1 + (selected_product.tax / 100)) * (selected_product.currency == "USD" ? Helper.global.settings.rate_USD : (selected_product.currency == "EUR" ? Helper.global.settings.rate_EUR : 1))) + "TL" :
-                                            Math.Round(selected_product.price * (1m + (selected_product.tax / 100m)) * (selected_product.currency == "USD" ? Helper.global.settings.rate_USD : (selected_product.currency == "EUR" ? Helper.global.settings.rate_EUR : 1)), 2, MidpointRounding.AwayFromZero) + "TL"),
+                                   (selected_product.special_price != 0 ? (selected_product.special_price * (1 + (selected_product.tax / 100)) * (selected_product.currency.code == "USD" ? Helper.global.settings.rate_USD : (selected_product.currency.code == "EUR" ? Helper.global.settings.rate_EUR : 1))) + "TL" :
+                                            Math.Round(selected_product.price * (1m + (selected_product.tax / 100m)) * (selected_product.currency.code == "USD" ? Helper.global.settings.rate_USD : (selected_product.currency.code == "EUR" ? Helper.global.settings.rate_EUR : 1)), 2, MidpointRounding.AwayFromZero) + "TL"),
                                    string.Join("", selected_product.sources.SelectMany(x => new List<string>() {
                                            "<tr>" +
                                            "<td>" + x.name + "</td>" +
                                            "<td>" + x.qty + "</td>" +
                                            "<td>" +
                                                 (x.name == product_main_source ? "Price: " +
-                                                (selected_product.special_price != 0 ? Math.Round(selected_product.special_price * (1 + (selected_product.tax / 100)),2,MidpointRounding.AwayFromZero) + selected_product.currency :
-                                                Math.Round(selected_product.price * (1m + (selected_product.tax / 100m)),2,MidpointRounding.AwayFromZero) + selected_product.currency) :
+                                                (selected_product.special_price != 0 ? Math.Round(selected_product.special_price * (1 + (selected_product.tax / 100)),2,MidpointRounding.AwayFromZero) + selected_product.currency.code :
+                                                Math.Round(selected_product.price * (1m + (selected_product.tax / 100m)),2,MidpointRounding.AwayFromZero) + selected_product.currency.code) :
                                                 ((selected_xproducts is not null && selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault() is not null) ?
                                                 "Price: " + Math.Round(selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault().price2,2,MidpointRounding.AwayFromZero) + selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault()?.currency + "<br>" +
                                                 "MSRP: " + Math.Round(selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault().price1,2,MidpointRounding.AwayFromZero) + selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault()?.currency : string.Empty)) +
@@ -804,16 +813,16 @@ internal class MainLoop {
                                    selected_product.sku,
                                    selected_product.barcode,
                                    selected_product.extension.brand.brand_name,
-                                   (selected_product.special_price != 0 ? (selected_product.special_price * (1 + (selected_product.tax / 100)) * (selected_product.currency == "USD" ? Helper.global.settings.rate_USD : (selected_product.currency == "EUR" ? Helper.global.settings.rate_EUR : 1))) + "TL" :
-                                            Math.Round(selected_product.price * (1m + (selected_product.tax / 100m)) * (selected_product.currency == "USD" ? Helper.global.settings.rate_USD : (selected_product.currency == "EUR" ? Helper.global.settings.rate_EUR : 1)), 2, MidpointRounding.AwayFromZero) + "TL"),
+                                   (selected_product.special_price != 0 ? (selected_product.special_price * (1 + (selected_product.tax / 100)) * (selected_product.currency.code == "USD" ? Helper.global.settings.rate_USD : (selected_product.currency.code == "EUR" ? Helper.global.settings.rate_EUR : 1))) + "TL" :
+                                            Math.Round(selected_product.price * (1m + (selected_product.tax / 100m)) * (selected_product.currency.code == "USD" ? Helper.global.settings.rate_USD : (selected_product.currency.code == "EUR" ? Helper.global.settings.rate_EUR : 1)), 2, MidpointRounding.AwayFromZero) + "TL"),
                                    string.Join("", selected_product.sources.SelectMany(x => new List<string>() {
                                            "<tr>" +
                                            "<td>" + x.name + "</td>" +
                                            "<td>" + x.qty + "</td>" +
                                            "<td>" +
                                                 (x.name == product_main_source ? "Price: " +
-                                                (selected_product.special_price != 0 ? Math.Round(selected_product.special_price * (1 + (selected_product.tax / 100)),2,MidpointRounding.AwayFromZero) + selected_product.currency :
-                                                Math.Round(selected_product.price * (1m + (selected_product.tax / 100m)),2,MidpointRounding.AwayFromZero) + selected_product.currency) :
+                                                (selected_product.special_price != 0 ? Math.Round(selected_product.special_price * (1 + (selected_product.tax / 100)),2,MidpointRounding.AwayFromZero) + selected_product.currency.code :
+                                                Math.Round(selected_product.price * (1m + (selected_product.tax / 100m)),2,MidpointRounding.AwayFromZero) + selected_product.currency.code) :
                                                 ((selected_xproducts is not null && selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault() is not null) ?
                                                 "Price: " + Math.Round(selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault().price2,2,MidpointRounding.AwayFromZero) + selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault()?.currency + "<br>" +
                                                 "MSRP: " + Math.Round(selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault().price1,2,MidpointRounding.AwayFromZero) + selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault()?.currency : string.Empty)) +
@@ -1078,18 +1087,6 @@ internal class MainLoop {
             #region Main Product Source
             if (product_main_source is not null && product_main_source == Constants.ENTEGRA) {
                 PrintConsole("Started loading " + Constants.ENTEGRA + " sources.");
-
-                //TODO: main currency source check will be here
-                var source_currency_rates = Helper.GetENTCurrencyRates();
-                if (source_currency_rates is not null) {
-                    rates.TL = source_currency_rates.TL;
-                    rates.USD = source_currency_rates.USD;
-                    rates.EUR = source_currency_rates.EUR;
-                    PrintConsole(Constants.ENTEGRA + " TRY:" + rates.TL.ToString() + "|USD:" + rates.USD.ToString() + "|EUR:" + rates.EUR.ToString());
-                }
-                else {
-                    PrintConsole("MAIN_SOURCE:" + Constants.ENTEGRA + " connection:currencies failed");
-                }
                 var ent_products = Helper.GetENTProducts();
                 if (ent_products is not null && ent_products.Count > 0) {
                     foreach (var item in ent_products) {
@@ -1115,7 +1112,7 @@ internal class MainLoop {
                                 customer_id = customer.customer_id,
                                 source_product_id = item.ProductId,
                                 barcode = item.Barcode,
-                                currency = item.Currency,
+                                currency = Currency.GetCurrency(item.Currency),
                                 name = item.Name,
                                 sku = item.Sku,
                                 price = item.Price,
@@ -1314,7 +1311,7 @@ internal class MainLoop {
                                 name = !string.IsNullOrWhiteSpace(item.UrunTanim.SicilAdiy) ? item.UrunTanim.SicilAdiy.Trim() : item.UrunTanim.SicilAdi?.Trim(),
                                 type = Product.ProductTypes.SIMPLE,
                                 tax = item.UrunTanim.KdvOrani,
-                                currency = item.UrunTanim.ParaCinsi.Trim(),
+                                currency = Currency.GetCurrency(item.UrunTanim.ParaCinsi.Trim()),
                                 price = item.UrunTanim.PerSatFiyat,
                                 special_price = decimal.TryParse(item.UrunTanim.KamSatFiyat?.Replace(",", "").Replace(".", ","), out decimal _special_price) ? _special_price : 0,
                                 tax_included = true,
@@ -1484,9 +1481,9 @@ internal class MainLoop {
 
                         if (selected_product is not null) { //existing product
                             #region Name
-                            if (selected_product.name?.ToString().Trim() != item.name?.ToString().Trim()) {
+                            //if (selected_product.name?.ToString().Trim() != item.name?.ToString().Trim()) {
 
-                            }
+                            //}
                             #endregion
 
                             #region Brand
@@ -1580,46 +1577,54 @@ internal class MainLoop {
                             #endregion
 
                             #region Prices
-                            if (selected_product.price != item.price) {
-                                is_update = true; is_need_indexer = true;
-                                if (Helper.UpdateProductPrice(item, rates)) {
-                                    PrintConsole("Sku:" + item.sku + " updated " + selected_product.price + " => " + item.price);
-                                    db_helper.LogToServer(thread_id, "product_price_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.price.ToString() + " => " + item.price.ToString(), customer.customer_id, "product");
+                            var currency_rate = rates.FirstOrDefault(x => x.currency.code == item.currency.code);
+                            if (currency_rate != null) {
+                                if (selected_product.price != item.price) {
+                                    is_update = true; is_need_indexer = true;
+                                    if (Helper.UpdateProductPrice(item, currency_rate)) {
+                                        PrintConsole("Sku:" + item.sku + " updated " + selected_product.price + " => " + item.price);
+                                        db_helper.LogToServer(thread_id, "product_price_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.price.ToString() + " => " + item.price.ToString(), customer.customer_id, "product");
+                                    }
+                                    else {
+                                        is_update = false;
+                                        notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_PRICE_UPDATE_ERROR, product_sku = item.sku, notification_content = Constants.MAGENTO2 });
+                                        db_helper.LogToServer(thread_id, "product_price_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.price.ToString() + " => " + item.price.ToString(), customer.customer_id, "product");
+                                    }
                                 }
-                                else {
-                                    is_update = false;
-                                    notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_PRICE_UPDATE_ERROR, product_sku = item.sku, notification_content = Constants.MAGENTO2 });
-                                    db_helper.LogToServer(thread_id, "product_price_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.price.ToString() + " => " + item.price.ToString(), customer.customer_id, "product");
+                                if (selected_product.special_price != item.special_price) {
+                                    is_update = true; is_need_indexer = true;
+                                    if (Helper.UpdateProductSpecialPrice(item, currency_rate)) {
+                                        PrintConsole("Sku:" + item.sku + " updated " + selected_product.special_price + " => " + item.special_price);
+                                        db_helper.LogToServer(thread_id, "product_special_price_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.special_price.ToString() + " => " + item.special_price.ToString(), customer.customer_id, "product");
+                                    }
+                                    else {
+                                        is_update = false;
+                                        notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_SPECIAL_PRICE_UPDATE_ERROR, product_sku = item.sku, notification_content = Constants.MAGENTO2 });
+                                        db_helper.LogToServer(thread_id, "product_special_price_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.special_price.ToString() + " => " + item.special_price.ToString(), customer.customer_id, "product");
+                                    }
+                                }
+                                if (selected_product.custom_price != item.custom_price) {
+                                    is_update = true; is_need_indexer = true;
+                                    bool? temp_is_inserted = Helper.UpdateProductCustomPrice(item, currency_rate);
+                                    if (temp_is_inserted.HasValue && temp_is_inserted.Value) {
+                                        PrintConsole("Sku:" + item.sku + " updated " + selected_product.custom_price + " => " + item.custom_price);
+                                        db_helper.LogToServer(thread_id, "product_custom_price_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.custom_price.ToString() + " => " + item.custom_price.ToString(), customer.customer_id, "product");
+                                    }
+                                    else if (temp_is_inserted.HasValue && !temp_is_inserted.Value) {
+                                        PrintConsole("Sku:" + item.sku + " cannot update " + selected_product.custom_price + " => " + item.custom_price);
+                                        db_helper.LogToServer(thread_id, "product_custom_price_cannot_update", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.custom_price.ToString() + " => " + item.custom_price.ToString(), customer.customer_id, "product");
+                                    }
+                                    else {
+                                        is_update = false;
+                                        notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_CUSTOM_PRICE_UPDATE_ERROR, product_sku = item.sku, notification_content = Constants.MAGENTO2 });
+                                        db_helper.LogToServer(thread_id, "product_custom_price_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.custom_price.ToString() + " => " + item.custom_price.ToString(), customer.customer_id, "product");
+                                    }
                                 }
                             }
-                            if (selected_product.special_price != item.special_price) {
-                                is_update = true; is_need_indexer = true;
-                                if (Helper.UpdateProductSpecialPrice(item, rates)) {
-                                    PrintConsole("Sku:" + item.sku + " updated " + selected_product.special_price + " => " + item.special_price);
-                                    db_helper.LogToServer(thread_id, "product_special_price_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.special_price.ToString() + " => " + item.special_price.ToString(), customer.customer_id, "product");
-                                }
-                                else {
-                                    is_update = false;
-                                    notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_SPECIAL_PRICE_UPDATE_ERROR, product_sku = item.sku, notification_content = Constants.MAGENTO2 });
-                                    db_helper.LogToServer(thread_id, "product_special_price_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.special_price.ToString() + " => " + item.special_price.ToString(), customer.customer_id, "product");
-                                }
-                            }
-                            if (selected_product.custom_price != item.custom_price) {
-                                is_update = true; is_need_indexer = true;
-                                bool? temp_is_inserted = Helper.UpdateProductCustomPrice(item, rates);
-                                if (temp_is_inserted.HasValue && temp_is_inserted.Value) {
-                                    PrintConsole("Sku:" + item.sku + " updated " + selected_product.custom_price + " => " + item.custom_price);
-                                    db_helper.LogToServer(thread_id, "product_custom_price_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.custom_price.ToString() + " => " + item.custom_price.ToString(), customer.customer_id, "product");
-                                }
-                                else if (temp_is_inserted.HasValue && !temp_is_inserted.Value) {
-                                    PrintConsole("Sku:" + item.sku + " cannot update " + selected_product.custom_price + " => " + item.custom_price);
-                                    db_helper.LogToServer(thread_id, "product_custom_price_cannot_update", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.custom_price.ToString() + " => " + item.custom_price.ToString(), customer.customer_id, "product");
-                                }
-                                else {
-                                    is_update = false;
-                                    notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_CUSTOM_PRICE_UPDATE_ERROR, product_sku = item.sku, notification_content = Constants.MAGENTO2 });
-                                    db_helper.LogToServer(thread_id, "product_custom_price_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.custom_price.ToString() + " => " + item.custom_price.ToString(), customer.customer_id, "product");
-                                }
+                            else {
+                                is_update = false;
+                                notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_CURRENCY_RATE_UPDATE_ERROR, product_sku = item.sku, notification_content = Constants.MAGENTO2 });
+                                db_helper.LogToServer(thread_id, "product_currency_rate_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.price.ToString() + " => " + item.price.ToString(), customer.customer_id, "product");
                             }
                             #endregion
                         }
@@ -2150,12 +2155,11 @@ internal class MainLoop {
             if (orders is not null) {
                 List<Notification> notifications = [];
                 foreach (var order_item in live_orders) {
-                    var selected_order = orders.Where(x => x.order_id == order_item.order_id).FirstOrDefault();
+                    var selected_order = orders.Where(x => x.order_id == order_item.order_id && OrderStatus.GetProcessEnabledCodes(order_sources).Contains(x.order_status)).FirstOrDefault();
                     if (selected_order is not null) {
                         if (!string.IsNullOrWhiteSpace(selected_order.order_shipping_barcode)) {
                             if (!selected_order.is_erp_sent) {  //process
                                 string? inserted_musteri_siparis_no = null;
-
                                 if (order_sources.Contains(Constants.MAGENTO2)) {
                                     #region Fill Corporate Info for Order
                                     var corporate_info = Helper.GetCustomerCorporateInfo(order_item.email, out bool is_corporate);

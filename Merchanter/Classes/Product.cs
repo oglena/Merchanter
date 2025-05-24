@@ -5,7 +5,7 @@ namespace Merchanter.Classes {
         public int id { get; set; }
         public int source_product_id { get; set; }
         public int customer_id { get; set; }
-        public DateTime update_date { get; set; }
+        public DateTime update_date { get; set; } = DateTime.Now;
         public string sku { get; set; }
         public ProductTypes type { get; set; } = ProductTypes.SIMPLE;
         public string barcode { get; set; }
@@ -14,11 +14,12 @@ namespace Merchanter.Classes {
         public decimal price { get; set; }
         public decimal special_price { get; set; }
         public decimal custom_price { get; set; }
-        public string currency { get; set; }
+        public Currency currency { get; set; } = Currency.GetCurrency("TL");
         public int tax { get; set; } = 20;
         public bool tax_included { get; set; } = false;
         public List<ProductSource> sources { get; set; }
         public ProductExtension extension { get; set; }
+        public List<ProductPrice> target_prices { get; set; } = [];
         public List<ProductImage> images { get; set; } = [];
         public List<ProductAttribute> attributes { get; set; } = [];
 

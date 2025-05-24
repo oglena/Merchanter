@@ -11,8 +11,8 @@
         public string? gib_fatura_no { get; set; }
         public bool is_belge_created { get; set; } = false;
         public string? belge_url { get; set; }
-        public DateTime order_date { get; set; }
-        public DateTime update_date { get; set; }
+        public DateTime order_date { get; set; } 
+        public DateTime update_date { get; set; } = DateTime.Now;
         public List<InvoiceItem> items { get; set; }
     }
 }

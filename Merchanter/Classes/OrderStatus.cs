@@ -32,12 +32,17 @@ namespace Merchanter.Classes {
 
         public static string[] GetProcessEnabledCodes(string _platform = "") {
             if (Helper.global.order_statuses == null) return [];
-                return [.. Helper.global.order_statuses.Where(x => x.process_status == true && x.platform == _platform).Select(x => x.status_code)];
+            return [.. Helper.global.order_statuses.Where(x => x.process_status == true && x.platform == _platform).Select(x => x.status_code)];
+        }
+
+        public static string[] GetProcessEnabledCodes(string[] _platforms) {
+            if (Helper.global.order_statuses == null) return [];
+            return [.. Helper.global.order_statuses.Where(x => x.process_status == true && _platforms.Contains(x.platform)).Select(x => x.status_code)];
         }
 
         public static string GetStatusOf(string _status, string _platform = "") {
             if (Helper.global.order_statuses == null) return string.Empty;
-                return Helper.global.order_statuses.Where(x => x.platform == _platform && x.platform_status_code == _status).First().status_code;
+            return Helper.global.order_statuses.Where(x => x.platform == _platform && x.platform_status_code == _status).First().status_code;
         }
     }
 }

@@ -197,6 +197,12 @@
             <param name="_product_image">ProductImage object to delete.</param>
             <returns>Result of the delete operation wrapped in a BaseResponseModel.</returns>
         </member>
+        <member name="M:MerchanterApp.ApiService.Controllers.ProductController.GetProductTargets(System.Int32)">
+            <summary>
+            Retrieves a list of product targets of a specific product for the authenticated customer.
+            </summary>
+            <returns>Product Targets wrapped in a BaseResponseMode.</returns>
+        </member>
         <member name="T:MerchanterApp.ApiService.Controllers.SettingsController">
             <summary>
             Provides settings-related API endpoints for Merchanter.

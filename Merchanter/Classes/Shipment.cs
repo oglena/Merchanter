@@ -10,7 +10,7 @@
         public bool is_shipped { get; set; } = false;
         public string? tracking_number { get; set; } = null;
         public DateTime order_date { get; set; }
-        public DateTime update_date { get; set; }
+        public DateTime update_date { get; set; } = DateTime.Now;
         public DateTime? shipment_date { get; set; } = null;
     }
 }

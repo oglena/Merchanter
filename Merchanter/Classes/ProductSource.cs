@@ -9,7 +9,7 @@ namespace Merchanter.Classes {
         public string barcode { get; set; }
         public int qty { get; set; }
         public bool is_active { get; set; } = false;
-        public DateTime update_date { get; set; }
+        public DateTime update_date { get; set; } = DateTime.Now;
 
         [JsonConstructor]
         public ProductSource() {

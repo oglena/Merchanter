@@ -7,8 +7,8 @@ namespace Merchanter.Classes {
 		public string attribute_name { get; set; }
 		public string? attribute_title { get; set; } = null;
 		public AttributeTypes type { get; set; }
-		public DateTime update_date { get; set; }
-	}
+		public DateTime update_date { get; set; } = DateTime.Now;
+    }
 
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum AttributeTypes {
