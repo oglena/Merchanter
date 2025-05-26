@@ -3730,8 +3730,8 @@ namespace Merchanter {
                 }
 
                 int val = 0;
-                string _query = "INSERT INTO products_ext (customer_id,brand_id,category_ids,sku,barcode,weight,volume,description) VALUES " +
-                    "(@customer_id,@brand_id,@category_ids,@sku,@barcode,@weight,@volume,@description)"; //,@is_xml_enabled,@xml_sources
+                string _query = "INSERT INTO products_ext (customer_id,brand_id,category_ids,sku,barcode,weight,volume,description,is_enabled,is_xml_enabled,xml_sources) VALUES " +
+                    "(@customer_id,@brand_id,@category_ids,@sku,@barcode,@weight,@volume,@description,@is_enabled,@is_xml_enabled,@xml_sources)"; 
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("brand_id", _source.brand_id));
@@ -3741,8 +3741,9 @@ namespace Merchanter {
                 cmd.Parameters.Add(new MySqlParameter("weight", _source.weight));
                 cmd.Parameters.Add(new MySqlParameter("volume", _source.volume));
                 cmd.Parameters.Add(new MySqlParameter("description", _source.description));
-                //cmd.Parameters.Add( new MySqlParameter( "is_xml_enabled", _source.is_xml_enabled ) );
-                //cmd.Parameters.Add( new MySqlParameter( "xml_sources", _source.xml_sources != null ? string.Join( ",", _source.xml_sources ) : null ) );
+                cmd.Parameters.Add(new MySqlParameter("is_enabled", _source.is_enabled ? 1 : 0));
+                cmd.Parameters.Add( new MySqlParameter( "is_xml_enabled", _source.is_xml_enabled ) );
+                cmd.Parameters.Add( new MySqlParameter( "xml_sources", _source.xml_sources != null ? string.Join( ",", _source.xml_sources ) : null ) );
                 if (state != System.Data.ConnectionState.Open) connection.Open();
                 val = cmd.ExecuteNonQuery();
                 if (state == System.Data.ConnectionState.Open) connection.Close();

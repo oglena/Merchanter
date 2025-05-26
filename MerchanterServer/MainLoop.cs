@@ -41,7 +41,7 @@ internal class MainLoop {
     private List<Brand> brands = [];
     private Brand default_brand = new();
     private List<Category> categories = [];
-    private Category? root_category = new();
+    private Category root_category = new();
     private List<Product> products = [];
     private List<Order> orders = [];
     private List<Invoice> invoices = [];
@@ -1085,6 +1085,7 @@ internal class MainLoop {
         _health = true;
         try {
             #region Main Product Source
+            product_main_source = Constants.NETSIS; //FOR TESTING 
             if (product_main_source is not null && product_main_source == Constants.ENTEGRA) {
                 PrintConsole("Started loading " + Constants.ENTEGRA + " sources.");
                 var ent_products = Helper.GetENTProducts();
@@ -1171,7 +1172,46 @@ internal class MainLoop {
             }
 
             if (product_main_source is not null && product_main_source == Constants.NETSIS) {
-                //TODO: NETSIS product main source will be here
+                PrintConsole("Started loading " + Constants.NETSIS + " sources.");
+                var netsis_products = Task.Run(() => NetOpenXHelper.GetNetsisStoks()).Result;
+                if (netsis_products is not null && netsis_products.Count > 0) {
+                    foreach (var item in netsis_products) {
+                        if (Helper.global.product.is_barcode_required) {
+                            if (string.IsNullOrWhiteSpace(item.Barkod1)) {
+                                PrintConsole(Constants.ENTEGRA + " " + item.Stok_Kodu + " barcode missing, not sync.", false);
+                                continue;
+                            }
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(item.Stok_Kodu)) {
+                            #region Creating Product Core
+                            var p = new Product() {
+                                customer_id = customer.customer_id,
+                                sku = item.Stok_Kodu.Trim(),
+                                barcode = item.Barkod1.Trim(),
+                                name = item.Stok_Adi.Trim(),
+                                type = Product.ProductTypes.SIMPLE,
+                                tax = item.KDV_Orani.HasValue ? (int)item.KDV_Orani : 20,
+                                currency = Currency.GetCurrency(item.Sat_Dov_Tip == 0 ? "TL" : (item.Sat_Dov_Tip == 1 ? "USD" : item.Sat_Dov_Tip == 2 ? "EUR" : "TL")),
+                                extension = new ProductExtension() {
+                                    customer_id = customer.customer_id,
+                                    is_enabled = item.KULL5N,
+                                    sku = item.Stok_Kodu.Trim(),
+                                    barcode = item.Barkod1.Trim(),
+                                },
+                                sources = [ new ProductSource( customer.customer_id, 0,
+                                    Constants.NETSIS,
+                                    item.Stok_Kodu.Trim(),
+                                    item.Barkod1.Trim(),
+                                    item.BAKIYE > 0 ? item.BAKIYE : 0,
+                                    true, DateTime.Now) ]
+                            };
+                            #endregion
+
+                            live_products.Add(p);
+                        }
+                    }
+                }
             }
 
             if (product_main_source is not null && product_main_source == Constants.ANK_ERP) {
@@ -1481,52 +1521,9 @@ internal class MainLoop {
 
                         if (selected_product is not null) { //existing product
                             #region Name
-                            //if (selected_product.name?.ToString().Trim() != item.name?.ToString().Trim()) {
+                            if (selected_product.name?.ToString().Trim() != item.name?.ToString().Trim()) {
 
-                            //}
-                            #endregion
-
-                            #region Brand
-                            //if (!selected_product.extension.brand.brand_name.Trim().Equals(item.extension.brand.brand_name?.Trim(), StringComparison.CurrentCultureIgnoreCase)) {
-                            //    var source_brands = Helper.GetProductAttribute(Helper.global.magento.brand_attribute_code);
-                            //    is_update = true; is_need_indexer = true;
-                            //    if (source_brands is not null) {
-                            //        var selected_source_brand = source_brands.options.Where(x => x.label.Equals(item.extension.brand.brand_name, StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
-                            //        if (selected_source_brand is not null) { //update
-                            //            if (true || Helper.UpdateProductAttribute(item.sku, Helper.global.magento.brand_attribute_code, selected_source_brand.value)) {
-                            //                PrintConsole("Sku:" + item.sku + "Brand updated " + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString());
-                            //                db_helper.LogToServer(thread_id, "product_brand_updated", Helper.global.settings.company_name + " Sku:" + item.sku + selected_source_brand.label + " => " + item.extension.brand.brand_name, customer.customer_id, "product");
-                            //            }
-                            //            else {
-                            //                PrintConsole("Sku:" + item.sku + "Brand update error " + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString());
-                            //                db_helper.LogToServer(thread_id, "product_brand_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString(), customer.customer_id, "product");
-                            //            }
-                            //        }
-                            //        else { //insert
-                            //               //var inserted_id = Helper.InsertAttributeOption( Helper.global.magento.brand_attribute_code, item.brand.brand_name );
-                            //            if (true /*inserted_id is not null*/ ) {
-                            //                if (true /*|| Helper.UpdateProductAttribute( item.sku, Helper.global.magento.brand_attribute_code, inserted_id )*/ ) {
-                            //                    PrintConsole("Sku:" + item.sku + "Brand inserted " + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString());
-                            //                    db_helper.LogToServer(thread_id, "product_brand_inserted", Helper.global.settings.company_name + " Sku:" + item.sku + "= " + selected_product.extension.brand.brand_name + " => " + item.extension.brand.brand_name, customer.customer_id, "product");
-                            //                }
-                            //                else {
-                            //                    PrintConsole("Sku:" + item.sku + "Brand insert error " + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString());
-                            //                    db_helper.LogToServer(thread_id, "product_brand_insert_error", Helper.global.settings.company_name + " Sku:" + item.sku + "= " + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString(), customer.customer_id, "product");
-                            //                }
-                            //            }
-                            //        }
-
-                            //        if (item.extension.brand.id == 0) {
-                            //            item.extension.brand.id = db_helper.InsertBrand(customer.customer_id, item.extension.brand, true);
-                            //            item.extension.brand_id = item.extension.brand.id;
-                            //        }
-
-                            //    }
-                            //    else { //no brand attribute exists
-                            //        PrintConsole("Sku:" + item.sku + "Brand insert error " + selected_product.extension.brand.brand_name.ToString() + " => " + item.extension.brand.brand_name?.ToString());
-                            //        db_helper.LogToServer(thread_id, "product_brand_insert_error", Helper.global.settings.company_name + " - " + Helper.global.magento.brand_attribute_code + " brand attribute missing?", customer.customer_id, "product");
-                            //    }
-                            //}
+                            }
                             #endregion
 
                             #region Barcode
@@ -1544,7 +1541,7 @@ internal class MainLoop {
                             #region Qty
                             if (selected_product.total_qty != item.total_qty) {
                                 if (Helper.UpdateProductQty(item.sku, item.total_qty)) {
-                                    is_update = true;
+                                    is_update = true; 
                                     PrintConsole("Sku:" + item.sku + " updated " + selected_product.total_qty + " => " + item.total_qty);
                                     db_helper.LogToServer(thread_id, "product_qty_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.total_qty.ToString() + " => " + item.total_qty.ToString(), customer.customer_id, "product");
                                     #region Notify Product - PRODUCT_IN_STOCK, PRODUCT_OUT_OF_STOCK
@@ -1577,54 +1574,60 @@ internal class MainLoop {
                             #endregion
 
                             #region Prices
-                            var currency_rate = rates.FirstOrDefault(x => x.currency.code == item.currency.code);
-                            if (currency_rate != null) {
-                                if (selected_product.price != item.price) {
-                                    is_update = true; is_need_indexer = true;
-                                    if (Helper.UpdateProductPrice(item, currency_rate)) {
-                                        PrintConsole("Sku:" + item.sku + " updated " + selected_product.price + " => " + item.price);
-                                        db_helper.LogToServer(thread_id, "product_price_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.price.ToString() + " => " + item.price.ToString(), customer.customer_id, "product");
-                                    }
-                                    else {
-                                        is_update = false;
-                                        notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_PRICE_UPDATE_ERROR, product_sku = item.sku, notification_content = Constants.MAGENTO2 });
-                                        db_helper.LogToServer(thread_id, "product_price_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.price.ToString() + " => " + item.price.ToString(), customer.customer_id, "product");
-                                    }
-                                }
-                                if (selected_product.special_price != item.special_price) {
-                                    is_update = true; is_need_indexer = true;
-                                    if (Helper.UpdateProductSpecialPrice(item, currency_rate)) {
-                                        PrintConsole("Sku:" + item.sku + " updated " + selected_product.special_price + " => " + item.special_price);
-                                        db_helper.LogToServer(thread_id, "product_special_price_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.special_price.ToString() + " => " + item.special_price.ToString(), customer.customer_id, "product");
-                                    }
-                                    else {
-                                        is_update = false;
-                                        notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_SPECIAL_PRICE_UPDATE_ERROR, product_sku = item.sku, notification_content = Constants.MAGENTO2 });
-                                        db_helper.LogToServer(thread_id, "product_special_price_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.special_price.ToString() + " => " + item.special_price.ToString(), customer.customer_id, "product");
-                                    }
-                                }
-                                if (selected_product.custom_price != item.custom_price) {
-                                    is_update = true; is_need_indexer = true;
-                                    bool? temp_is_inserted = Helper.UpdateProductCustomPrice(item, currency_rate);
-                                    if (temp_is_inserted.HasValue && temp_is_inserted.Value) {
-                                        PrintConsole("Sku:" + item.sku + " updated " + selected_product.custom_price + " => " + item.custom_price);
-                                        db_helper.LogToServer(thread_id, "product_custom_price_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.custom_price.ToString() + " => " + item.custom_price.ToString(), customer.customer_id, "product");
-                                    }
-                                    else if (temp_is_inserted.HasValue && !temp_is_inserted.Value) {
-                                        PrintConsole("Sku:" + item.sku + " cannot update " + selected_product.custom_price + " => " + item.custom_price);
-                                        db_helper.LogToServer(thread_id, "product_custom_price_cannot_update", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.custom_price.ToString() + " => " + item.custom_price.ToString(), customer.customer_id, "product");
-                                    }
-                                    else {
-                                        is_update = false;
-                                        notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_CUSTOM_PRICE_UPDATE_ERROR, product_sku = item.sku, notification_content = Constants.MAGENTO2 });
-                                        db_helper.LogToServer(thread_id, "product_custom_price_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.custom_price.ToString() + " => " + item.custom_price.ToString(), customer.customer_id, "product");
-                                    }
-                                }
-                            }
-                            else {
-                                is_update = false;
-                                notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_CURRENCY_RATE_UPDATE_ERROR, product_sku = item.sku, notification_content = Constants.MAGENTO2 });
-                                db_helper.LogToServer(thread_id, "product_currency_rate_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.price.ToString() + " => " + item.price.ToString(), customer.customer_id, "product");
+                            //var currency_rate = rates.FirstOrDefault(x => x.currency.code == item.currency.code);
+                            //if (currency_rate != null) {
+                            //    if (selected_product.price != item.price) {
+                            //        is_update = true; is_need_indexer = true;
+                            //        if (Helper.UpdateProductPrice(item, currency_rate)) {
+                            //            PrintConsole("Sku:" + item.sku + " updated " + selected_product.price + " => " + item.price);
+                            //            db_helper.LogToServer(thread_id, "product_price_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.price.ToString() + " => " + item.price.ToString(), customer.customer_id, "product");
+                            //        }
+                            //        else {
+                            //            is_update = false;
+                            //            notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_PRICE_UPDATE_ERROR, product_sku = item.sku, notification_content = Constants.MAGENTO2 });
+                            //            db_helper.LogToServer(thread_id, "product_price_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.price.ToString() + " => " + item.price.ToString(), customer.customer_id, "product");
+                            //        }
+                            //    }
+                            //    if (selected_product.special_price != item.special_price) {
+                            //        is_update = true; is_need_indexer = true;
+                            //        if (Helper.UpdateProductSpecialPrice(item, currency_rate)) {
+                            //            PrintConsole("Sku:" + item.sku + " updated " + selected_product.special_price + " => " + item.special_price);
+                            //            db_helper.LogToServer(thread_id, "product_special_price_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.special_price.ToString() + " => " + item.special_price.ToString(), customer.customer_id, "product");
+                            //        }
+                            //        else {
+                            //            is_update = false;
+                            //            notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_SPECIAL_PRICE_UPDATE_ERROR, product_sku = item.sku, notification_content = Constants.MAGENTO2 });
+                            //            db_helper.LogToServer(thread_id, "product_special_price_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.special_price.ToString() + " => " + item.special_price.ToString(), customer.customer_id, "product");
+                            //        }
+                            //    }
+                            //    if (selected_product.custom_price != item.custom_price) {
+                            //        is_update = true; is_need_indexer = true;
+                            //        bool? temp_is_inserted = Helper.UpdateProductCustomPrice(item, currency_rate);
+                            //        if (temp_is_inserted.HasValue && temp_is_inserted.Value) {
+                            //            PrintConsole("Sku:" + item.sku + " updated " + selected_product.custom_price + " => " + item.custom_price);
+                            //            db_helper.LogToServer(thread_id, "product_custom_price_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.custom_price.ToString() + " => " + item.custom_price.ToString(), customer.customer_id, "product");
+                            //        }
+                            //        else if (temp_is_inserted.HasValue && !temp_is_inserted.Value) {
+                            //            PrintConsole("Sku:" + item.sku + " cannot update " + selected_product.custom_price + " => " + item.custom_price);
+                            //            db_helper.LogToServer(thread_id, "product_custom_price_cannot_update", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.custom_price.ToString() + " => " + item.custom_price.ToString(), customer.customer_id, "product");
+                            //        }
+                            //        else {
+                            //            is_update = false;
+                            //            notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_CUSTOM_PRICE_UPDATE_ERROR, product_sku = item.sku, notification_content = Constants.MAGENTO2 });
+                            //            db_helper.LogToServer(thread_id, "product_custom_price_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.custom_price.ToString() + " => " + item.custom_price.ToString(), customer.customer_id, "product");
+                            //        }
+                            //    }
+                            //}
+                            //else {
+                            //    is_update = false;
+                            //    notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_CURRENCY_RATE_UPDATE_ERROR, product_sku = item.sku, notification_content = Constants.MAGENTO2 });
+                            //    db_helper.LogToServer(thread_id, "product_currency_rate_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.price.ToString() + " => " + item.price.ToString(), customer.customer_id, "product");
+                            //}
+                            #endregion
+
+                            #region Is Enabled
+                            if (selected_product.extension.is_enabled != item.extension.is_enabled) {
+                                is_update = true; is_need_indexer = true;
                             }
                             #endregion
                         }
@@ -1647,13 +1650,22 @@ internal class MainLoop {
                                     customer_id = customer.customer_id,
                                     sku = item.sku,
                                     barcode = item.barcode,
-                                    brand_id = item.extension.brand.id,
+                                    brand_id = default_brand.id,
+                                    brand = default_brand,
+                                    categories = [root_category],
+                                    is_enabled = item.extension.is_enabled,
+                                    volume = item.extension.volume,
+                                    weight = item.extension.weight,
+                                    description = item.extension.description,
                                     is_xml_enabled = item.extension.is_xml_enabled,
                                     xml_sources = item.extension.xml_sources,
-                                    category_ids = item.extension.category_ids
+                                    category_ids = root_category.id.ToString()
                                 },
                                 total_qty = item.total_qty,
-                                sources = item.sources
+                                sources = item.sources,
+                                attributes = item.attributes,
+                                images = item.images,
+                                target_prices = item.target_prices
                             };
                             is_insert = true;
                         }
@@ -1668,12 +1680,13 @@ internal class MainLoop {
                         }
                         if (is_insert) {
                             if (prepared_product?.id == 0) {
-                                if (db_helper.InsertProducts(customer.customer_id, [prepared_product]) > 0) {
-                                    PrintConsole("Sku:" + item.sku + " " + "inserted.");
+                                var inserted_product = db_helper.InsertProduct(customer.customer_id, prepared_product);
+                                if (inserted_product != null) {
+                                    PrintConsole("Sku:" + item.sku + " inserted on MerchanterDB.");
                                     db_helper.LogToServer(thread_id, "new_product", Helper.global.settings.company_name + " Sku:" + item.sku, customer.customer_id, "product");
                                 }
                                 else {
-                                    PrintConsole("Sku:" + item.sku + " " + "insert error.");
+                                    PrintConsole("Sku:" + item.sku + " " + "insert error on MerchanterDB.");
                                 }
                             }
                         }
@@ -1687,25 +1700,6 @@ internal class MainLoop {
                         }
                     }
                     #endregion
-
-
-                    if (Helper.global.product.product_list_filter_source_products) {
-                        //foreach (var item in products) {
-                        //    var deleted_product = live_products.FirstOrDefault(x => x.sku == item.sku);
-                        //    if (deleted_product is null && item.extension.is_enabled) {
-                        //        item.extension.is_enabled = false;
-                        //        if (db_helper.UpdateProducts(customer.customer_id, [item])) {
-                        //            PrintConsole("Sku:" + item.sku + " updated on MerchanterDB. -disabled");
-                        //        }
-                        //        else {
-                        //            PrintConsole("Sku:" + item.sku + " " + "update error on MerchanterDB. -disabled");
-                        //        }
-                        //    }
-                        //    if (deleted_product is not null && !item.extension.is_enabled) {
-                        //        //TODO: Disable product on TARGET
-                        //    }
-                        //}
-                    }
 
                     if (notifications.Count > 0) {
                         db_helper.InsertNotifications(customer.customer_id, notifications);
@@ -1824,7 +1818,8 @@ internal class MainLoop {
                                 total_qty = item.total_qty,
                                 sources = item.sources,
                                 attributes = item.attributes,
-                                images = item.images
+                                images = item.images,
+                                target_prices = item.target_prices
                             };
                             is_insert = true;
                         }
@@ -1851,7 +1846,6 @@ internal class MainLoop {
                                     PrintConsole("Sku:" + item.sku + " update error" + " ," + Constants.IDEASOFT, ConsoleColor.Red);
                                     db_helper.LogToServer(thread_id, "product_update_error", Helper.global.settings.company_name + " Sku:" + item.sku, customer.customer_id, "product");
                                 }
-                                //}
                             }
                             else { //insert ideasoft product
                                 if (is_update) {  //insert ideasoft product and update product

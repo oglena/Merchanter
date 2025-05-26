@@ -7,6 +7,7 @@ using NetOpenX.Rest.Client;
 using NetOpenX.Rest.Client.BLL;
 using NetOpenX.Rest.Client.Model;
 using NetOpenX.Rest.Client.Model.Enums;
+using NetOpenX.Rest.Client.Model.NetOpenX;
 using System.Diagnostics;
 
 namespace Merchanter {
@@ -37,6 +38,49 @@ namespace Merchanter {
             }
             catch (Exception ex) {
                 PrintConsole("Netsis login error" + Environment.NewLine + ex.ToString());
+                return null;
+            }
+        }
+
+        public static async Task<List<NETSIS_Product>> GetNetsisStoks() {
+            try {
+                List<Items> data = [];
+                var login = LoginNetsis(Helper.global);
+                var test = new QueryManager(login);
+
+                List<NETSIS_Product> list = [];
+                var response = await test.GetInternalAsync(
+                    "SELECT [STOK_KODU],[STOK_ADI],[GRUP_KODU],[KOD1],[KOD2],[KOD3],[KOD4],[KOD5],[MERKEZ],[SIPARIS],[BAKIYE],[KULL5N],[SAT_DOV_TIP],[BARKOD1],[KDV_ORANI],[SATICI_KODU] FROM [QP_STOKBAKIYE] WHERE [SAT_DOV_TIP] IS NOT NULL");
+                foreach (var item in response.Data) {
+                    if (item.HasValues == true) {
+                        NETSIS_Product netsis_product = new();
+                        netsis_product.KULL5N = Convert.ToBoolean(item["KULL5N"]);
+                        //if (!netsis_product.KULL5N)
+                        //    continue;
+                        netsis_product.Stok_Kodu = item["STOK_KODU"].ToString();
+                        netsis_product.Stok_Adi = item["STOK_ADI"].ToString();
+                        netsis_product.Grup_Kodu = item["GRUP_KODU"].ToString();
+                        netsis_product.Kod_1 = item["KOD1"].ToString();
+                        netsis_product.Kod_2 = item["KOD2"].ToString();
+                        netsis_product.Kod_3 = item["KOD3"].ToString();
+                        netsis_product.Kod_4 = item["KOD4"].ToString();
+                        netsis_product.Kod_5 = item["KOD5"].ToString();
+                        netsis_product.Barkod1 = item["BARKOD1"].ToString();
+                        netsis_product.Satici_Kodu = item["SATICI_KODU"].ToString();
+                        netsis_product.KDV_Orani = item["KDV_ORANI"] != null ? Convert.ToDouble(item["KDV_ORANI"]) : null;
+                        netsis_product.Sat_Dov_Tip = item["SAT_DOV_TIP"] != null ? Convert.ToInt32(item["SAT_DOV_TIP"]) : 0;
+                        netsis_product.MERKEZ = Convert.ToInt32(item["MERKEZ"]);
+                        netsis_product.SIPARIS = Convert.ToInt32(item["SIPARIS"]);
+                        netsis_product.BAKIYE = Convert.ToInt32(item["BAKIYE"]);
+
+                        list.Add(netsis_product);
+                    }
+                }
+
+                return list;
+            }
+            catch (Exception ex) {
+                PrintConsole("Netsis Stoklar Get Error" + Environment.NewLine + ex.ToString());
                 return null;
             }
         }

@@ -113,6 +113,8 @@ if (app.Environment.IsDevelopment()) {
 app.UseSwagger();
 app.UseSwaggerUI(ModernStyle.Dark, options => {
     options.SwaggerEndpoint("v1/swagger.json", "Merchanter.ServerAPI V1");
+    options.DocumentTitle = "Merchanter.ServerAPI V1";
+    options.EnablePinnableTopbar();
 });
 
 // Configure the HTTP request pipeline.
