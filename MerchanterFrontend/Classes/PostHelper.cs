@@ -46,7 +46,8 @@ namespace MerchanterFrontend.Classes {
                             var bodyContent = await _body.ReadAsStringAsync();
                             request.AddStringBody(bodyContent, DataFormat.Json);
                         }
-                        var response = client.ExecutePost<T>(request); var login_response = JsonConvert.DeserializeObject<UserLoginResponseModel>(response.Content);
+                        var response = client.ExecutePost<T>(request); 
+                        var login_response = JsonConvert.DeserializeObject<UserLoginResponseModel>(response.Content);
                         if (login_response != null && login_response.AuthenticateResult && !string.IsNullOrWhiteSpace(login_response.AuthToken) &&
                             login_response.Settings != null && login_response.Settings.customer != null) {
                             model = new BaseResponseModel<T>() {

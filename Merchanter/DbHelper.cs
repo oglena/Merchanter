@@ -2528,14 +2528,11 @@ namespace Merchanter {
         /// <param name="_categories"> Categories</param>
         /// <returns>[Error] returns 'null'</returns>
         public List<Product> GetProducts(int _customer_id, out List<Brand> _brands, out List<Category> _categories,
-            out List<ProductAttribute> _product_attributes, out List<ProductImage> _product_images) {
-            _brands = []; _categories = []; _product_attributes = []; _product_images = []; List<ProductSource>? _product_other_sources = [];
+            out List<ProductAttribute> _product_attributes, out List<ProductImage> _product_images, out List<ProductPrice> _product_prices) {
+            _brands = []; _categories = []; _product_attributes = []; _product_images = []; List<ProductSource>? _product_other_sources = []; _product_prices = [];
             try {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT p.id AS p_id, p.customer_id AS p_customer_id, p.source_product_id AS p_source_product_id, p.sources AS p_sources, p.update_date AS p_update_date, p.sku AS p_sku, p.type AS p_type, p.total_qty AS p_total_qty, p.name AS p_name, p.barcode AS p_barcode, p.price AS p_price, p.special_price AS p_special_price, p.custom_price AS p_custom_price, p.currency AS p_currency, p.tax AS p_tax, p.tax_included AS p_tax_included, pe.id AS pe_id, pe.brand_id AS pe_brand_id, pe.category_ids AS pe_category_ids, pe.is_xml_enabled AS pe_is_xml_enabled, pe.xml_sources AS pe_xml_sources, pe.update_date AS pe_update_date, ps.id AS ps_id, ps.name AS ps_name, ps.is_active AS ps_is_active, ps.qty AS ps_qty, ps.update_date AS ps_update_date, pe.weight AS pe_weight, pe.volume AS pe_volume, pe.is_enabled AS pe_is_enabled, pe.description AS pe_description " +
-                    "FROM products AS p INNER JOIN products_ext AS pe ON p.sku = pe.sku " +
-                    "INNER JOIN product_sources AS ps ON p.sku = ps.sku AND ps.name = SUBSTRING_INDEX(p.sources, ',', 1) " +
-                    "WHERE p.customer_id=@customer_id;";
+                string _query = "SELECT * FROM products_with_mainsource WHERE p_customer_id=@customer_id;";
                 List<Product> list = [];
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.CommandTimeout = 3600;
@@ -2593,6 +2590,7 @@ namespace Merchanter {
                 _categories = GetCategories(_customer_id);
                 _product_attributes = GetProductAttributes(_customer_id);
                 _product_images = GetProductImages(_customer_id);
+                _product_prices = GetProductPrices(_customer_id);
 
                 // Attach brands and categories
                 for (int i = 0; i < list.Count; i++) {
@@ -2621,10 +2619,9 @@ namespace Merchanter {
                 }
 
                 // Load product prices
-                var product_prices = GetProductPrices(_customer_id);
-                if (product_prices != null && product_prices.Count > 0) {
+                if (_product_prices != null && _product_prices.Count > 0) {
                     foreach (var item in list) {
-                        item.target_prices = [.. product_prices.Where(x => x.product_id == item.id)];
+                        item.target_prices = [.. _product_prices.Where(x => x.product_id == item.id)];
                     }
                 }
 
@@ -2664,10 +2661,7 @@ namespace Merchanter {
                 List<ProductSource>? product_other_sources = [];
                 _filters.Pager ??= new Pager() { ItemsPerPage = 10, CurrentPageIndex = 0 };
 
-                string _query = "SELECT p.id AS p_id, p.customer_id AS p_customer_id, p.source_product_id AS p_source_product_id, p.sources AS p_sources, p.update_date AS p_update_date, p.sku AS p_sku, p.type AS p_type, p.total_qty AS p_total_qty, p.name AS p_name, p.barcode AS p_barcode, p.price AS p_price, p.special_price AS p_special_price, p.custom_price AS p_custom_price, p.currency AS p_currency, p.tax AS p_tax, p.tax_included AS p_tax_included, pe.id AS pe_id, pe.brand_id AS pe_brand_id, pe.category_ids AS pe_category_ids, pe.is_xml_enabled AS pe_is_xml_enabled, pe.xml_sources AS pe_xml_sources, pe.update_date AS pe_update_date, ps.id AS ps_id, ps.name AS ps_name, ps.is_active AS ps_is_active, ps.qty AS ps_qty, ps.update_date AS ps_update_date, pe.weight AS pe_weight, pe.volume AS pe_volume, pe.is_enabled AS pe_is_enabled, pe.description AS pe_description " +
-                    "FROM products AS p INNER JOIN products_ext AS pe ON p.sku = pe.sku " +
-                    "INNER JOIN product_sources AS ps ON p.sku = ps.sku AND ps.name = SUBSTRING_INDEX(p.sources, ',', 1) " +
-                    "WHERE p.customer_id=@customer_id";
+                string _query = "SELECT * FROM products_with_mainsource WHERE p_customer_id=@customer_id";
 
                 if (_filters.Filters != null && _filters.Filters.Count > 0) {
                     foreach (var filter in _filters.Filters) {
@@ -2680,8 +2674,8 @@ namespace Merchanter {
                 if (_filters.Sort != null)
                     _query += " ORDER BY " + _filters.Sort.Field + " " + _filters.Sort.Direction + " LIMIT @start,@end;";
                 else {
-                    _filters.Sort = new Sort() { Field = "p.id", Direction = "DESC" };
-                    _query += " ORDER BY p.id DESC LIMIT @start,@end;";
+                    _filters.Sort = new Sort() { Field = "p_id", Direction = "DESC" };
+                    _query += " ORDER BY p_id DESC LIMIT @start,@end;";
                 }
 
                 if (state != System.Data.ConnectionState.Open) connection.Open();
@@ -3137,7 +3131,6 @@ namespace Merchanter {
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_products">Products</param>
-        /// <param name="_with_ext">Update with extension</param>
         /// <returns>[No change] or [Error] returns 'false'</returns>
         public bool UpdateProducts(int _customer_id, List<Product> _products) {
             try {
@@ -3231,7 +3224,14 @@ namespace Merchanter {
             }
         }
 
-        public Product? UpdateProduct(int _customer_id, Product _product) {
+
+        /// <summary>
+        /// Updates the products in the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_product">Product</param>
+        /// <returns>[Error] returns 'null'</returns>
+        public Product? UpdateProduct(int _customer_id, Product _product, bool _include_sources = false) {
             try {
                 string _query = "UPDATE products SET type=@type,barcode=@barcode,total_qty=@total_qty,price=@price,special_price=@special_price,custom_price=@custom_price,currency=@currency,tax=@tax,tax_included=@tax_included,update_date=@update_date,name=@name,sources=@sources,source_product_id=@source_product_id WHERE id=@id AND sku=@sku AND customer_id=@customer_id";
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
@@ -3265,7 +3265,20 @@ namespace Merchanter {
                     return null;
                 }
 
-                //Product Source update is DISABLED when customer updates product
+                if (_include_sources) {
+                    var deleted_sources = GetProductSources(_customer_id, _product.sku)
+                        .ExceptBy(_product.sources.Select(s => s.name) ?? [], s => s.name).ToList();
+                    foreach (var ditem in deleted_sources) {
+                        if (!DeleteProductSource(_customer_id, ditem)) {
+                            OnError("UpdateProduct: " + _product.sku + " - Product Source Delete Error");
+                            return null;
+                        }
+                    }
+                    if (!UpdateProductSources(_customer_id, _product.sources, _product.sku)) {
+                        OnError("UpdateProducts: " + _product.sku + " - Product Source Insert Error");
+                        return null;
+                    }
+                }
 
                 var deleted_prices = GetProductPrices(_customer_id, _product.id)
                     .ExceptBy(_product.target_prices.Select(tp => tp.id), tp => tp.id).ToList();
@@ -3425,10 +3438,7 @@ namespace Merchanter {
         public int GetProductsCount(int _customer_id, ApiFilter _filters) {
             try {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT COUNT(*) " +
-                    "FROM products AS p INNER JOIN products_ext AS pe ON p.sku = pe.sku " +
-                    "INNER JOIN product_sources AS ps ON p.sku = ps.sku AND ps.name = SUBSTRING_INDEX(p.sources, ',', 1) " +
-                    "WHERE p.customer_id=@customer_id";
+                string _query = "SELECT COUNT(*) FROM products_with_mainsource WHERE p_customer_id=@customer_id";
                 if (_filters.Filters != null && _filters.Filters.Count > 0) {
                     foreach (var filter in _filters.Filters) {
                         if (filter.Value is null) {
@@ -3454,6 +3464,50 @@ namespace Merchanter {
             catch (Exception ex) {
                 OnError(ex.ToString());
                 return -1;
+            }
+        }
+
+        /// <summary>
+        /// Fills product list extended attributes from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <param name="_filters">Api Filters</param>
+        public ApiFilter? GetProductsFilterProperties(int _customer_id, ApiFilter _filters) {
+            try {
+                if (state != System.Data.ConnectionState.Open) connection.Open();
+                string _query = "SELECT COUNT(*) AS count,MIN(p_price) AS min_price, MAX(p_price) AS max_price, MIN(p_total_qty) AS min_qty, MAX(p_total_qty) AS max_qty FROM products_with_mainsource WHERE p_customer_id=@customer_id";
+                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                    foreach (var filter in _filters.Filters) {
+                        if (filter.Value is null) {
+                            _query += $" AND {filter.Field} {filter.Operator} NULL";
+                        }
+                        else {
+                            _query += $" AND {filter.Field} {filter.Operator} @{filter.Field}";
+                        }
+                    }
+                }
+                MySqlCommand cmd = new(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                    foreach (var filter in _filters.Filters) {
+                        if (filter.Value is not null)
+                            cmd.Parameters.Add(new MySqlParameter(filter.Field, filter.Value));
+                    }
+                }
+                MySqlDataReader dataReader = cmd.ExecuteReader();
+                if (dataReader.Read()) {
+                    _filters.TotalCount = Convert.ToInt32(dataReader["count"].ToString());
+                    _filters.MinPrice = decimal.Parse(dataReader["min_price"].ToString());
+                    _filters.MaxPrice = decimal.Parse(dataReader["max_price"].ToString());
+                    _filters.MinQty = Convert.ToInt32(dataReader["min_qty"].ToString());
+                    _filters.MaxQty = Convert.ToInt32(dataReader["max_qty"].ToString());
+                }
+                if (state == System.Data.ConnectionState.Open) connection.Close();
+                return _filters;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return null;
             }
         }
 
@@ -3731,19 +3785,19 @@ namespace Merchanter {
 
                 int val = 0;
                 string _query = "INSERT INTO products_ext (customer_id,brand_id,category_ids,sku,barcode,weight,volume,description,is_enabled,is_xml_enabled,xml_sources) VALUES " +
-                    "(@customer_id,@brand_id,@category_ids,@sku,@barcode,@weight,@volume,@description,@is_enabled,@is_xml_enabled,@xml_sources)"; 
+                    "(@customer_id,@brand_id,@category_ids,@sku,@barcode,@weight,@volume,@description,@is_enabled,@is_xml_enabled,@xml_sources)";
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("brand_id", _source.brand_id));
                 cmd.Parameters.Add(new MySqlParameter("category_ids", _source.category_ids));
                 cmd.Parameters.Add(new MySqlParameter("sku", _source.sku));
-                cmd.Parameters.Add(new MySqlParameter("barcode", _source.barcode));
+                cmd.Parameters.Add(new MySqlParameter("barcode", _source.barcode ?? string.Empty));
                 cmd.Parameters.Add(new MySqlParameter("weight", _source.weight));
                 cmd.Parameters.Add(new MySqlParameter("volume", _source.volume));
                 cmd.Parameters.Add(new MySqlParameter("description", _source.description));
                 cmd.Parameters.Add(new MySqlParameter("is_enabled", _source.is_enabled ? 1 : 0));
-                cmd.Parameters.Add( new MySqlParameter( "is_xml_enabled", _source.is_xml_enabled ) );
-                cmd.Parameters.Add( new MySqlParameter( "xml_sources", _source.xml_sources != null ? string.Join( ",", _source.xml_sources ) : null ) );
+                cmd.Parameters.Add(new MySqlParameter("is_xml_enabled", _source.is_xml_enabled));
+                cmd.Parameters.Add(new MySqlParameter("xml_sources", _source.xml_sources != null ? string.Join(",", _source.xml_sources) : null));
                 if (state != System.Data.ConnectionState.Open) connection.Open();
                 val = cmd.ExecuteNonQuery();
                 if (state == System.Data.ConnectionState.Open) connection.Close();
@@ -4119,6 +4173,7 @@ namespace Merchanter {
                         id = Convert.ToInt32(dataReader["id"].ToString()),
                         customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
                         product_id = Convert.ToInt32(dataReader["product_id"].ToString()),
+                        sku = dataReader["sku"].ToString(),
                         platform_name = dataReader["platform_name"].ToString(),
                         price1 = decimal.Parse(dataReader["price1"].ToString()),
                         price2 = decimal.Parse(dataReader["price2"].ToString()),
@@ -4146,12 +4201,13 @@ namespace Merchanter {
             try {
                 object val;
                 string _query = "START TRANSACTION;" +
-                    "INSERT INTO product_prices (customer_id,product_id,platform_name,price1,price2,update_currency_as) VALUES (@customer_id,@product_id,@platform_name,@price1,@price2,@update_currency_as);" +
+                    "INSERT INTO product_prices (customer_id,product_id,sku,platform_name,price1,price2,update_currency_as) VALUES (@customer_id,@product_id,@sku,@platform_name,@price1,@price2,@update_currency_as);" +
                     "SELECT LAST_INSERT_ID();" +
                     "COMMIT;";
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("product_id", _price.product_id));
+                cmd.Parameters.Add(new MySqlParameter("sku", _price.sku));
                 cmd.Parameters.Add(new MySqlParameter("platform_name", _price.platform_name));
                 cmd.Parameters.Add(new MySqlParameter("price1", _price.price1));
                 cmd.Parameters.Add(new MySqlParameter("price2", _price.price2));
@@ -4202,12 +4258,13 @@ namespace Merchanter {
                     }
                     else {
                         string _query = "START TRANSACTION;" +
-                            "INSERT INTO product_prices (customer_id,product_id,platform_name,price1,price2,update_currency_as) VALUES (@customer_id,@product_id,@platform_name,@price1,@price2,@update_currency_as);" +
+                            "INSERT INTO product_prices (customer_id,product_id,sku,platform_name,price1,price2,update_currency_as) VALUES (@customer_id,@product_id,@sku,@platform_name,@price1,@price2,@update_currency_as);" +
                             "SELECT LAST_INSERT_ID();" +
                             "COMMIT;";
                         MySqlCommand cmd = new MySqlCommand(_query, connection);
                         cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                         cmd.Parameters.Add(new MySqlParameter("product_id", _product_id));
+                        cmd.Parameters.Add(new MySqlParameter("sku", item.sku));
                         cmd.Parameters.Add(new MySqlParameter("platform_name", item.platform_name));
                         cmd.Parameters.Add(new MySqlParameter("price1", item.price1));
                         cmd.Parameters.Add(new MySqlParameter("price2", item.price2));
@@ -4246,6 +4303,7 @@ namespace Merchanter {
                     ProductPrice pp = new ProductPrice {
                         id = Convert.ToInt32(dataReader["id"].ToString()),
                         product_id = Convert.ToInt32(dataReader["product_id"].ToString()),
+                        sku = dataReader["sku"].ToString(),
                         customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
                         platform_name = dataReader["platform_name"].ToString(),
                         price1 = decimal.Parse(dataReader["price1"].ToString()),

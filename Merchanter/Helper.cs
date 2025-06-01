@@ -1,4 +1,5 @@
-﻿using Merchanter.Classes.Settings;
+﻿using Merchanter.Classes;
+using Merchanter.Classes.Settings;
 using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text;

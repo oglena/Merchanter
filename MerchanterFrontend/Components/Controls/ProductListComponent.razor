@@ -207,20 +207,20 @@ else {
                     },
                     Filters = new List<Filter<dynamic>>(),
                     Sort = new Sort() {
-                        Field = "p.update_date",
+                        Field = "p_update_date",
                         Direction = "DESC"
                     }
                 };
             if (!string.IsNullOrWhiteSpace(product_name_filter)) {
                 apifilter.Filters.Add(new Filter<dynamic>() {
-                        Field = "p.name",
+                        Field = "p_name",
                         Operator = "LIKE",
                         Value = "%" + product_name_filter + "%"
                     });
             }
             if (product_is_active_filter != ProductStatus.All) {
                 apifilter.Filters.Add(new Filter<dynamic>() {
-                        Field = "pe.is_enabled",
+                        Field = "pe_is_enabled",
                         Value = product_is_active_filter == ProductStatus.Active ? 1 : 0
                     });
             }

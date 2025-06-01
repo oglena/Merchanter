@@ -9,6 +9,14 @@ namespace Merchanter.Classes {
 
         [SwaggerSchema(ReadOnly = true)]
         public int? TotalCount { get; set; }
+        [SwaggerSchema(ReadOnly = true)]
+        public decimal? MinPrice { get; set; }
+        [SwaggerSchema(ReadOnly = true)]
+        public decimal? MaxPrice { get; set; }
+        [SwaggerSchema(ReadOnly = true)]
+        public int? MinQty { get; set; }
+        [SwaggerSchema(ReadOnly = true)]
+        public int? MaxQty { get; set; }
     }
 
     public class Pager {

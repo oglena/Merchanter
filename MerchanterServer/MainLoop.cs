@@ -36,6 +36,7 @@ internal class MainLoop {
     private List<CategoryTarget> category_target_relation = [];
     private List<ProductImage> product_images = [];
     private List<ProductAttribute> product_attributes = [];
+    private List<ProductPrice> product_target_prices = [];
     private List<Order> live_orders = [];
     private List<XProduct> xproducts = [];
     private List<Brand> brands = [];
@@ -46,6 +47,11 @@ internal class MainLoop {
     private List<Order> orders = [];
     private List<Invoice> invoices = [];
     private List<Notification> notifications = [];
+
+    private List<IDEA_Category>? live_idea_categories = null;
+    private List<IDEA_Brand>? live_idea_brands = null;
+    private List<M2_Category>? live_m2_categories = null;
+    private Dictionary<int, string>? live_m2_brands = null;
     #endregion
 
     public MainLoop(string _thread_id, Customer _customer, DbHelper _db_helper) {
@@ -120,9 +126,9 @@ internal class MainLoop {
             Console.WriteLine("DefaultBrand:" + default_brand.brand_name + ", RootCategory:" + root_category?.category_name);
             if (default_brand is null || root_category is null) { health = false; }
 
-            products = db_helper.GetProducts(customer.customer_id, out brands, out categories, out product_attributes, out product_images);
+            products = db_helper.GetProducts(customer.customer_id, out brands, out categories, out product_attributes, out product_images, out product_target_prices);
             Console.WriteLine("Products:" + products.Count + "; Brands:" + brands.Count + "; Categories:" + categories.Count);
-            Console.WriteLine("Attributes:" + product_attributes.Count + "; Images:" + product_images.Count);
+            Console.WriteLine("Attributes:" + product_attributes.Count + "; Images:" + product_images.Count + "; TargetPrices:" + product_target_prices.Count);
             product_target_relation = db_helper.GetProductTargets(customer.customer_id);
             Console.Write("ProductTargets:" + product_target_relation.Count);
             category_target_relation = db_helper.GetCategoryTargets(customer.customer_id);
@@ -134,7 +140,7 @@ internal class MainLoop {
 
             if (health) { this.ProductSourceLoop(out health); }
 
-            if (health) { this.ProductSync(out health); }
+            if (health) { this.ProductSync(out health, live_products); }
 
             if (customer.product_sync_status) {
                 db_helper.SetProductSyncDate(customer.customer_id);
@@ -1085,7 +1091,7 @@ internal class MainLoop {
         _health = true;
         try {
             #region Main Product Source
-            product_main_source = Constants.NETSIS; //FOR TESTING 
+            //product_main_source = Constants.NETSIS; //FOR TESTING 
             if (product_main_source is not null && product_main_source == Constants.ENTEGRA) {
                 PrintConsole("Started loading " + Constants.ENTEGRA + " sources.");
                 var ent_products = Helper.GetENTProducts();
@@ -1172,49 +1178,345 @@ internal class MainLoop {
             }
 
             if (product_main_source is not null && product_main_source == Constants.NETSIS) {
-                PrintConsole("Started loading " + Constants.NETSIS + " sources.");
-                var netsis_products = Task.Run(() => NetOpenXHelper.GetNetsisStoks()).Result;
-                if (netsis_products is not null && netsis_products.Count > 0) {
-                    foreach (var item in netsis_products) {
-                        if (Helper.global.product.is_barcode_required) {
-                            if (string.IsNullOrWhiteSpace(item.Barkod1)) {
-                                PrintConsole(Constants.ENTEGRA + " " + item.Stok_Kodu + " barcode missing, not sync.", false);
-                                continue;
-                            }
-                        }
-
-                        if (!string.IsNullOrWhiteSpace(item.Stok_Kodu)) {
-                            #region Creating Product Core
-                            var p = new Product() {
+                if (Helper.global.netsis is not null && Helper.global.netsis.netopenx_user is not null && Helper.global.netsis.netopenx_password is not null && Helper.global.netsis.dbname is not null && Helper.global.netsis.dbpassword is not null && Helper.global.netsis.dbuser is not null && Helper.global.netsis.rest_url is not null) {
+                    PrintConsole("Started loading " + Constants.NETSIS + " sources.");
+                    var netsis_products = Task.Run(() => NetOpenXHelper.GetNetsisStoks()).Result;
+                    if (netsis_products is not null && netsis_products.Count > 0) {
+                        foreach (var item in netsis_products) {
+                            var p = new Product { //new product
                                 customer_id = customer.customer_id,
-                                sku = item.Stok_Kodu.Trim(),
-                                barcode = item.Barkod1.Trim(),
-                                name = item.Stok_Adi.Trim(),
+                                property_mappings = Product.SetDefaultPropertyMappings_forQP(),
                                 type = Product.ProductTypes.SIMPLE,
-                                tax = item.KDV_Orani.HasValue ? (int)item.KDV_Orani : 20,
-                                currency = Currency.GetCurrency(item.Sat_Dov_Tip == 0 ? "TL" : (item.Sat_Dov_Tip == 1 ? "USD" : item.Sat_Dov_Tip == 2 ? "EUR" : "TL")),
-                                extension = new ProductExtension() {
+                                extension = new ProductExtension {
                                     customer_id = customer.customer_id,
-                                    is_enabled = item.KULL5N,
-                                    sku = item.Stok_Kodu.Trim(),
-                                    barcode = item.Barkod1.Trim(),
-                                },
-                                sources = [ new ProductSource( customer.customer_id, 0,
+                                    property_mappings = ProductExtension.SetDefaultPropertyMappings_forQP(),
+                                    brand_id = default_brand.id,
+                                    brand = default_brand,
+                                    category_ids = root_category.id.ToString(),
+                                    categories = [root_category],
+                                }
+                            };
+                            if (Helper.global.product.is_barcode_required) {
+                                if (string.IsNullOrWhiteSpace(item.Barkod1)) {
+                                    PrintConsole(Constants.ENTEGRA + " " + item.Stok_Kodu + " barcode missing, not sync.", false);
+                                    continue;
+                                }
+                            }
+
+                            if (!string.IsNullOrWhiteSpace(item.Stok_Kodu)) {
+                                foreach (var property_item in p.property_mappings) {
+                                    if (property_item.source == Constants.NETSIS) {
+                                        if (property_item.property == "name")
+                                            p.name = item.Stok_Adi.Trim();
+                                        else if (property_item.property == "sku")
+                                            p.sku = item.Stok_Kodu.Trim();
+                                        else if (property_item.property == "barcode")
+                                            p.barcode = item.Barkod1.Trim();
+                                        else if (property_item.property == "tax")
+                                            p.tax = item.KDV_Orani.HasValue ? (int)item.KDV_Orani : 20;
+                                        else if (property_item.property == "currency")
+                                            p.currency = Currency.GetCurrency(item.Sat_Dov_Tip == 0 ? "TL" : (item.Sat_Dov_Tip == 1 ? "USD" : item.Sat_Dov_Tip == 2 ? "EUR" : "TL"));
+                                    }
+                                }
+
+                                foreach (var property_item in p.extension.property_mappings) {
+                                    if (property_item.source == Constants.NETSIS) {
+                                        if (property_item.property == "sku")
+                                            p.extension.sku = item.Stok_Kodu.Trim();
+                                        else if (property_item.property == "barcode")
+                                            p.extension.barcode = item.Barkod1.Trim();
+                                        else if (property_item.property == "is_enabled")
+                                            p.extension.is_enabled = item.KULL5N;
+                                    }
+                                }
+
+                                p.sources = [ new ProductSource( customer.customer_id, 0,
                                     Constants.NETSIS,
                                     item.Stok_Kodu.Trim(),
                                     item.Barkod1.Trim(),
                                     item.BAKIYE > 0 ? item.BAKIYE : 0,
-                                    true, DateTime.Now) ]
-                            };
-                            #endregion
+                                    true, DateTime.Now) ];
+                            }
 
                             live_products.Add(p);
                         }
                     }
                 }
+                else {
+                    PrintConsole("Netsis connection settings are not set.");
+                    _health = false;
+                }
             }
 
-            if (product_main_source is not null && product_main_source == Constants.ANK_ERP) {
+            if (product_main_source is not null && product_main_source == Constants.ANK_ERP) {  //new
+                if (Helper.global.ank_erp is not null && Helper.global.ank_erp.company_code is not null && Helper.global.ank_erp.user_name is not null && Helper.global.ank_erp.password is not null && Helper.global.ank_erp.work_year is not null && Helper.global.ank_erp.url is not null) {
+                    ANKERP ank_erp = new(Helper.global.ank_erp.company_code, Helper.global.ank_erp.user_name, Helper.global.ank_erp.password, Helper.global.ank_erp.work_year, Helper.global.ank_erp.url,
+                        """C:\MerchanterServer\ankaraerp""");
+                    PrintConsole("Started loading " + Constants.ANK_ERP + " sources.");
+
+                    #region Category Pre-Sync
+                    var ank_categories = ank_erp.GetCategoriesFromFolder("""C:\Users\caqn_\OneDrive\Masaüstü\otoahmet_categories""")?.DokumanPaketKategori.Eleman.ElemanListe.KategoriItem;
+                    //var ank_categories = ank_erp.GetCategories()?.Result?.DokumanPaketKategori.Eleman.ElemanListe.KategoriItem;
+                    PrintConsole(Constants.ANK_ERP + " total " + ank_categories?.Count + " categories found.");
+                    if (ank_categories is not null && ank_categories.Count > 0) {
+                        foreach (var item in ank_categories) {
+                            if (item.Kodu == "0" || !int.TryParse(item.Kodu, out int category_code) || !int.TryParse(item.UstBaslik, out int parent_code))
+                                continue;
+                            var existed_category = categories?.FirstOrDefault(x => x.source_category_id == category_code);
+                            if (existed_category is not null) {
+                                bool need_update = false;
+                                if (existed_category.category_name != item.Adi) {
+                                    existed_category.category_name = item.Adi;
+                                    need_update = true;
+                                }
+                                if (existed_category.is_active != (item.Pasif == "H")) {
+                                    existed_category.is_active = item.Pasif == "H";
+                                    need_update = true;
+                                }
+
+                                if (item.UstBaslik == "0") {
+                                    existed_category.parent_id = Helper.global.product.customer_root_category_id;
+                                }
+                                else {
+                                    var existed_parent_category = categories?.FirstOrDefault(x => x.source_category_id == parent_code);
+                                    if (existed_parent_category is not null) {
+                                        if (existed_category.parent_id != existed_parent_category.id) {
+                                            existed_category.parent_id = existed_parent_category.id;
+                                            need_update = true;
+                                        }
+                                    }
+                                    else {
+                                        existed_category.parent_id = Helper.global.product.customer_root_category_id;
+                                    }
+                                }
+                                if (need_update) {
+                                    if (db_helper.UpdateCategory(customer.customer_id, existed_category) is not null) {
+                                        db_helper.LogToServer(thread_id, "product_category_updated", existed_category.category_name, customer.customer_id, "product");
+                                        PrintConsole(Constants.ANK_ERP + " " + existed_category.category_name + " category updated.", false);
+                                    }
+                                    else {
+                                        PrintConsole(Constants.ANK_ERP + " " + item.Kodu + "-" + item.Adi + " category update error.", false);
+                                    }
+                                }
+                            }
+                            else {
+                                Category c = new() {
+                                    customer_id = customer.customer_id,
+                                    category_name = item.Adi,
+                                    is_active = item.Pasif == "H",
+                                    parent_id = Helper.global.product.customer_root_category_id,
+                                    source_category_id = Convert.ToInt32(item.Kodu),
+                                };
+                                var inserted_category = db_helper.InsertCategory(customer.customer_id, c);
+                                if (inserted_category is not null) {
+                                    categories?.Add(inserted_category);
+                                    db_helper.LogToServer(thread_id, "product_category_inserted", inserted_category.category_name, customer.customer_id, "product");
+                                    PrintConsole(Constants.ANK_ERP + " " + inserted_category.category_name + " category inserted.", false);
+                                }
+                                else {
+                                    PrintConsole(Constants.ANK_ERP + " " + item.Kodu + "-" + item.Adi + " category insert error.", false);
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        PrintConsole(Constants.ANK_ERP + " connection:categories failed");
+                    }
+                    PrintConsole(Constants.ANK_ERP + " category sync ended.");
+                    categories?.Clear();
+                    categories = db_helper.GetCategories(customer.customer_id);  //Re-take updated categories
+                    #endregion
+
+                    #region Product Memory Take
+                    PrintConsole(Constants.ANK_ERP + " product api take started.");
+                    //var ank_products_zip = ank_erp.GetProducts().Result;
+                    var ank_products_zip = ank_erp.GetProductsFromFolder("""C:\Users\caqn_\OneDrive\Masaüstü\otoahmet_products_2""");
+                    List<UrunSicil> ank_products = [];
+                    if (ank_products_zip is not null && ank_products_zip.Count > 0) {
+                        foreach (var zip_item in ank_products_zip) {
+                            ank_products.AddRange([.. zip_item.DokumanPaketUrun.Eleman.ElemanListe.UrunSicil]);
+                        }
+                    }
+                    else {
+                        PrintConsole(Constants.ANK_ERP + " connection:products failed.");
+                    }
+                    PrintConsole(Constants.ANK_ERP + " " + ank_products.Count + " products found in api.", false);
+                    ank_products = [.. ank_products.DistinctBy(x => x.UrunTanim.SicilKodu)];  //Remove duplicates
+                    PrintConsole(Constants.ANK_ERP + " " + ank_products.Count + " products found in api. --Duplicates removed by SicilKodu !!!");
+                    #endregion
+
+                    foreach (var item in ank_products) {
+                        var p = new Product { //new product
+                            customer_id = customer.customer_id,
+                            property_mappings = Product.SetDefaultPropertyMappings_forANK_ERP(),
+                            type = Product.ProductTypes.SIMPLE,
+                            extension = new ProductExtension {
+                                customer_id = customer.customer_id,
+                                property_mappings = ProductExtension.SetDefaultPropertyMappings_forANK_ERP(),
+                                brand_id = default_brand.id,
+                                brand = default_brand,
+                                category_ids = root_category.id.ToString(),
+                                categories = [root_category],
+                            }
+                        };
+                        if (Helper.global.product.is_barcode_required) {
+                            if (string.IsNullOrWhiteSpace(item.UrunTanim.BarkodKodu)) {
+                                PrintConsole(Constants.ANK_ERP + " " + item.UrunTanim.SicilKodu + " barcode missing, not sync.", false);
+                                continue;
+                            }
+                        }
+                        if (!string.IsNullOrWhiteSpace(item.UrunTanim.SicilKodu)) {
+                            foreach (var property_item in p.property_mappings) {
+                                if (property_item.source == Constants.ANK_ERP) {
+                                    if (property_item.property == "name")
+                                        p.name = !string.IsNullOrWhiteSpace(item.UrunTanim.SicilAdiy) ? item.UrunTanim.SicilAdiy.Trim() : item.UrunTanim.SicilAdi?.Trim();
+                                    else if (property_item.property == "sku")
+                                        p.sku = item.UrunTanim.SicilKodu.Trim();
+                                    else if (property_item.property == "barcode")
+                                        p.barcode = item.UrunTanim.BarkodKodu is not null ? item.UrunTanim.BarkodKodu.Trim() : string.Empty;
+                                    else if (property_item.property == "price")
+                                        p.price = item.UrunTanim.PerSatFiyat;
+                                    else if (property_item.property == "special_price")
+                                        p.special_price = decimal.TryParse(item.UrunTanim.KamSatFiyat?.Replace(",", "").Replace(".", ","), out decimal _special_price) ? _special_price : 0;
+                                    else if (property_item.property == "tax_included")
+                                        p.tax_included = true;
+                                    else if (property_item.property == "tax")
+                                        p.tax = item.UrunTanim.KdvOrani;
+                                    else if (property_item.property == "currency")
+                                        p.currency = Currency.GetCurrency(item.UrunTanim.ParaCinsi.Trim());
+                                }
+                            }
+
+                            foreach (var property_item in p.extension.property_mappings) {
+                                if (property_item.source == Constants.ANK_ERP) {
+                                    if (property_item.property == "sku")
+                                        p.extension.sku = item.UrunTanim.SicilKodu.Trim();
+                                    else if (property_item.property == "barcode")
+                                        p.extension.barcode = item.UrunTanim.BarkodKodu is not null ? item.UrunTanim.BarkodKodu.Trim() : string.Empty;
+                                    else if (property_item.property == "is_enabled")
+                                        p.extension.is_enabled = true;
+                                    else if (property_item.property == "volume")
+                                        p.extension.volume = decimal.TryParse(item.UrunTanim.HacmiM3.ToString(), out decimal _volume) ? _volume : 0;
+                                    else if (property_item.property == "weight")
+                                        p.extension.weight = decimal.TryParse(item.UrunTanim.AgirligiKg.ToString(), out decimal _weight) ? _weight : 0;
+                                    else if (property_item.property == "description")
+                                        p.extension.description = item.Gsozelliks.Gsozellik.Count > 0 ? !string.IsNullOrWhiteSpace(item.Gsozelliks.Gsozellik[0].IBase64Value) ? item.Gsozelliks.Gsozellik[0].IBase64Value : string.Empty : string.Empty;
+                                    else if (property_item.property == "brand_id") {
+                                        Brand? existed_brand = !string.IsNullOrWhiteSpace(item.UrunTanim.UrAdi) ? brands.FirstOrDefault(x => x.brand_name == item.UrunTanim.UrAdi.Trim()) : default_brand;
+                                        if (existed_brand is not null) { //attach existing brand and id
+                                            p.extension.brand_id = existed_brand.id;
+                                            p.extension.brand = existed_brand;
+                                        }
+                                        else {
+                                            if (string.IsNullOrWhiteSpace(item.UrunTanim.UrAdi?.Trim())) { //if brand name is empty, set default brand
+                                                p.extension.brand_id = default_brand.id; //default brand
+                                                p.extension.brand = default_brand;
+                                            }
+                                            else {
+                                                p.extension.brand_id = 0; //new brand
+                                                p.extension.brand = new Brand() {
+                                                    customer_id = customer.customer_id,
+                                                    brand_name = item.UrunTanim.UrAdi.Trim(),
+                                                    status = true,
+                                                    id = 0
+                                                };
+                                            }
+                                        }
+                                    }
+                                    else if (property_item.property == "category_ids") {
+                                        List<Category> existed_p_cats = [root_category];
+                                        foreach (var citem in item.UrunTanim.KategoriKodu.Split(",")) {
+                                            if (int.TryParse(citem, out int cat_code) && ank_categories is not null) {
+                                                var existed_cat = categories.FirstOrDefault(x => x.source_category_id == cat_code);
+                                                if (existed_cat is not null) existed_p_cats.Add(existed_cat); //existing category
+                                                else {
+                                                    string? new_category = ank_categories.FirstOrDefault(x => x.Kodu == citem)?.Adi;
+                                                    if (!string.IsNullOrWhiteSpace(new_category))
+                                                        existed_p_cats.Add(new Category() { //new category
+                                                            id = 0, customer_id = customer.customer_id, is_active = true,
+                                                            source_category_id = Convert.ToInt32(citem),
+                                                            category_name = new_category,
+                                                            parent_id = root_category.id
+                                                        });
+                                                }
+                                            }
+                                        }
+                                        p.extension.category_ids = string.Join(",", existed_p_cats.Select(x => x.id));
+                                        p.extension.categories = existed_p_cats;
+                                    }
+                                }
+                            }
+
+                            p.sources = [ new ProductSource( customer.customer_id, 0,
+                                    Constants.ANK_ERP,
+                                    item.UrunTanim.SicilKodu.Trim(),
+                                    item.UrunTanim.BarkodKodu is not null ? item.UrunTanim.BarkodKodu.Trim() : string.Empty,
+                                    item.UrunTanim.StokMevcudu > 0 ? item.UrunTanim.StokMevcudu : 0,
+                                    true, DateTime.Now) ];
+                        }
+
+                        if (p.property_mappings.FirstOrDefault(x => x.source == Constants.ANK_ERP && x.property == "images") is null) {
+                            p.images = [.. product_images.Where(x => x.sku == p.sku)]; //take existing images
+                        }
+                        else { //image sync
+                            for (int i = 0; i < item.Images.Image.Count; i++) {
+                                if (!string.IsNullOrWhiteSpace(item.Images.Image[i].IFilename) && !string.IsNullOrWhiteSpace(item.Images.Image[i].IBase64Value)) {
+                                    if (item.Images.Image[i].IFilename?.Split(".")[1].ToLower() == "jpg" || item.Images.Image[i].IFilename?.Split(".")[1].ToLower() == "png" ||
+                                        item.Images.Image[i].IFilename?.Split(".")[1].ToLower() == "jpeg" || item.Images.Image[i].IFilename?.Split(".")[1].ToLower() == "gif") {
+                                        var existed_image = product_images.FirstOrDefault(x => x.sku == item.UrunTanim.SicilKodu && x.image_name == item.Images.Image[i].IFilename);
+                                        //Save image to folder
+                                        string image_path = Path.Combine("""C:\MerchanterServer\ankaraerp\Images""", customer.user_name);
+                                        if (!Directory.Exists(image_path + """\""" + item.UrunTanim.SicilKodu.Trim())) {
+                                            Directory.CreateDirectory(image_path + """\""" + item.UrunTanim.SicilKodu.Trim());
+                                        }
+                                        string? image_name = item.Images.Image[i].IFilename?.Trim();
+                                        if (!string.IsNullOrWhiteSpace(image_name)) {
+                                            string image_full_path = Path.Combine(image_path, item.UrunTanim.SicilKodu.Trim(), image_name);
+                                            if (!File.Exists(image_full_path)) {
+                                                File.WriteAllBytes(image_full_path, Convert.FromBase64String(item.Images.Image[i].IBase64Value));
+                                            }
+                                            p.images.Add(new ProductImage() {
+                                                customer_id = customer.customer_id,
+                                                product_id = existed_image is not null ? existed_image.product_id : 0,
+                                                sku = item.UrunTanim.SicilKodu.Trim(),
+                                                image_name = image_name,
+                                                image_base64 = null,
+                                                is_default = (i == 0),
+                                                type = ImageTypes.url,
+                                                image_url = Path.Combine(customer.user_name, item.UrunTanim.SicilKodu.Trim(), image_name)
+                                            });
+                                        }
+                                    }
+                                    else {
+                                        PrintConsole(Constants.ANK_ERP + " " + item.UrunTanim.SicilKodu + " image type not supported, not sync.", false);
+                                    }
+                                }
+                            }
+                        }
+
+                        if (p.property_mappings.FirstOrDefault(x => x.source == Constants.ANK_ERP && x.property == "attributes") is null) {
+                            p.attributes = [.. product_attributes.Where(x => x.sku == p.sku)]; //take existing attributes
+                        }
+                        else { //attribute sync
+                        }
+
+                        if (p.property_mappings.FirstOrDefault(x => x.source == Constants.ANK_ERP && x.property == "target_prices") is null) {
+                            p.target_prices = [.. product_target_prices.Where(x => x.sku == p.sku)]; //take existing target prices
+                        }
+                        else { //target price sync
+                        }
+
+                        live_products.Add(p);
+                    }
+                }
+                else {
+                    PrintConsole("AnkaraERP connection settings are not set.");
+                    _health = false;
+                }
+            }
+
+            return;
+            if (product_main_source is not null && product_main_source == Constants.ANK_ERP) {  //old
                 if (Helper.global.ank_erp is not null && Helper.global.ank_erp.company_code is not null && Helper.global.ank_erp.user_name is not null && Helper.global.ank_erp.password is not null && Helper.global.ank_erp.work_year is not null && Helper.global.ank_erp.url is not null) {
                     ANKERP ank_erp = new(Helper.global.ank_erp.company_code, Helper.global.ank_erp.user_name, Helper.global.ank_erp.password, Helper.global.ank_erp.work_year, Helper.global.ank_erp.url,
                         """C:\MerchanterServer\ankaraerp""");
@@ -1384,6 +1686,7 @@ internal class MainLoop {
                                     true, DateTime.Now) ],
                                 attributes = [],
                                 images = [],
+                                target_prices = []
                             };
                             #endregion
 
@@ -1404,9 +1707,6 @@ internal class MainLoop {
                                             if (!File.Exists(image_full_path)) {
                                                 File.WriteAllBytes(image_full_path, Convert.FromBase64String(item.Images.Image[i].IBase64Value));
                                             }
-                                            else {
-                                                PrintConsole(Constants.ANK_ERP + " " + item.UrunTanim.SicilKodu + " image already exist.", false);
-                                            }
                                             p.images.Add(new ProductImage() {
                                                 customer_id = customer.customer_id,
                                                 product_id = existed_image is not null ? existed_image.product_id : 0,
@@ -1417,9 +1717,6 @@ internal class MainLoop {
                                                 type = ImageTypes.url,
                                                 image_url = Path.Combine(customer.user_name, item.UrunTanim.SicilKodu.Trim(), image_name)
                                             });
-                                        }
-                                        else {
-                                            PrintConsole(Constants.ANK_ERP + " " + item.UrunTanim.SicilKodu + " image name missing, not sync.", false);
                                         }
                                     }
                                     else {
@@ -1432,6 +1729,10 @@ internal class MainLoop {
                             live_products.Add(p);
                         }
                     }
+                }
+                else {
+                    PrintConsole("AnkaraERP connection settings are not set.");
+                    _health = false;
                 }
             }
             #endregion
@@ -1452,6 +1753,9 @@ internal class MainLoop {
             if (!string.IsNullOrWhiteSpace(product_main_source) && other_product_sources.Length > 0) {
                 PrintConsole(Helper.global.settings.company_name + " started loading other sources.", false);
                 foreach (var item in live_products) {
+                    //Check if product has other sources in MerchanterDB
+                    item.extension.is_xml_enabled = products?.FirstOrDefault(x => x.sku == item.sku)?.extension.is_xml_enabled ?? false;
+                    item.extension.xml_sources = products?.FirstOrDefault(x => x.sku == item.sku)?.extension.xml_sources ?? null;
                     if (item.sources is not null && item.extension.xml_sources is not null) {
                         var selected_xproducts = xproducts.Where(x => x.barcode == item.barcode).ToList();
                         if (selected_xproducts is not null && selected_xproducts.Count > 0) {
@@ -1500,30 +1804,571 @@ internal class MainLoop {
                 }
             }
             foreach (var item in source_total_qtys) {
-                PrintConsole(Helper.global.settings.company_name + " calculated " + item.Key + ":[total_qty] is " + item.Value.ToString(), false);
+                PrintConsole(Helper.global.settings.company_name + " calculated " + item.Key + ":[total_qty] is " + item.Value.ToString());
             }
             PrintConsole(Helper.global.settings.company_name + " calculated [total_qty] is " + global_total_qty.ToString());
             #endregion
         }
     }
 
-    private void ProductSync(out bool _health) {
+    private void ProductSync(out bool _health, List<Product> _live_products) {
         _health = true;
         try {
             if (products is not null) {
-                List<Notification> notifications = [];
+                var notifications = new List<Notification>();
+                foreach (var item in _live_products) {
+                    bool is_update = false; bool is_insert = false; bool? is_processed = false;
+                    Product? prepared_product = null; var updated_attrs_new = new List<string>();
+                    int idea_product_id = 0;
+                    int magento_product_id = 0;
+                    int n11_product_id = 0;
+
+                    // Get current version of product If exists in DB
+                    var selected_product = products.FirstOrDefault(x => x.sku == item.sku);
+
+                    #region Prepare Product
+                    if (selected_product is not null) { //existing product for MerchanterDB
+                        try {
+                            var relation = product_target_relation.FirstOrDefault(x => x.product_id == selected_product.id);
+                            if (relation is not null && (relation.sync_status is Target.SyncStatus.NotSynced)) {
+                                is_update = true;
+                                goto SAVEDPRODUCT; //this product saved on webpanel
+                            }
+
+                            #region Product Core Mappings Sync
+                            try {
+                                foreach (var property_item in item.property_mappings) {
+                                    var property_info = typeof(Product).GetProperty(property_item.property);
+                                    if (property_info != null) {
+                                        var item_value = property_info.GetValue(item);
+                                        var selected_value = property_info.GetValue(selected_product);
+                                        switch (property_item.sync_type) {
+                                            case PropertyMapping.SyncType.None:
+                                                property_info.SetValue(item, selected_value);
+                                                break;
+                                            case PropertyMapping.SyncType.OnlyInsert:
+                                                property_info.SetValue(item, selected_value);
+                                                break;
+                                            case PropertyMapping.SyncType.FullSync:
+                                                if (!Equals(selected_value, item_value)) {
+                                                    is_update = true;
+                                                    //property_info.SetValue(item, item_value);
+                                                    updated_attrs_new.Add(property_item.property);
+                                                }
+                                                break;
+                                            case PropertyMapping.SyncType.Currency:
+                                                if (!Equals(((Currency?)selected_value)?.code, ((Currency?)item_value)?.code)) {
+                                                    is_update = true;
+                                                    //property_info.SetValue(item, item_value);
+                                                    updated_attrs_new.Add(property_item.property);
+                                                }
+                                                break;
+                                        }
+                                    }
+                                }
+                            }
+                            catch (Exception ex) {
+                                db_helper.LogToServer(thread_id, "prepare_product_core_mappings_error", ex.Message + newline + ex.ToString(), customer.customer_id, "product");
+                                PrintConsole("Error preparing product core mappings for MerchanterDB: " + ex.Message);
+                                continue; //skip this product
+                            }
+                            #endregion
+
+                            #region Product Extension Mappings Sync
+                            try {
+                                foreach (var property_item in item.extension.property_mappings) {
+                                    var property_info = typeof(ProductExtension).GetProperty(property_item.property);
+                                    if (property_info != null) {
+                                        var item_value = property_info.GetValue(item.extension);
+                                        var selected_value = property_info.GetValue(selected_product.extension);
+                                        switch (property_item.sync_type) {
+                                            case PropertyMapping.SyncType.None:
+                                                property_info.SetValue(item.extension, selected_value);
+                                                break;
+                                            case PropertyMapping.SyncType.OnlyInsert:
+                                                property_info.SetValue(item.extension, selected_value);
+                                                break;
+                                            case PropertyMapping.SyncType.FullSync:
+                                                if (!Equals(selected_value, item_value)) {
+                                                    is_update = true;
+                                                    //property_info.SetValue(item.extension, item_value);
+                                                    updated_attrs_new.Add(property_item.property);
+                                                }
+                                                break;
+                                            case PropertyMapping.SyncType.Brand:
+                                                if (!Equals(selected_value, item_value)) {
+                                                    is_update = true;
+                                                    //property_info.SetValue(item.extension, item_value);
+                                                    updated_attrs_new.Add(property_item.property);
+                                                }
+                                                break;
+                                            case PropertyMapping.SyncType.Category:
+                                                if (!Equals(selected_value, item_value)) {
+                                                    is_update = true;
+                                                    //property_info.SetValue(item.extension, item_value);
+                                                    updated_attrs_new.Add(property_item.property);
+                                                }
+                                                break;
+                                        }
+                                    }
+                                }
+                            }
+                            catch (Exception ex) {
+                                db_helper.LogToServer(thread_id, "prepare_product_extension_mappings_error", ex.Message + newline + ex.ToString(), customer.customer_id, "product");
+                                PrintConsole("Error preparing product extension mappings for MerchanterDB: " + ex.Message);
+                                continue; //skip this product
+                            }
+                            #endregion
+
+                            #region Product Extended Properties Attach
+                            if (item.property_mappings.FirstOrDefault(x => x.sync_type == PropertyMapping.SyncType.Image && x.property == "images") is not null) { //image sync
+                                if (item.images is not null && item.images.Count > 0) {
+                                    foreach (var image_item in item.images) {
+                                        if (selected_product.images?.FirstOrDefault(x => x.image_name == image_item.image_name) is null) {
+                                            is_update = true;
+                                            updated_attrs_new.Add("images");
+                                        }
+                                    }
+                                }
+                            }
+                            else {
+                                item.images = [.. selected_product.images]; //take existing images
+                            }
+
+                            if (item.property_mappings.FirstOrDefault(x => x.sync_type == PropertyMapping.SyncType.TargetPrice && x.property == "target_prices") is not null) { //target price sync
+                                if (item.target_prices is not null && item.target_prices.Count > 0) {
+                                    foreach (var target_price_item in item.target_prices) {
+                                        switch (target_price_item.platform_name) {
+                                            case "N11":
+                                                if (!Equals(selected_product.target_prices.FirstOrDefault(x => x.platform_name == "N11")?.price1, target_price_item.price1)) {
+                                                    is_update = true;
+                                                    updated_attrs_new.Add("target_price_n11");
+                                                }
+                                                break;
+                                        }
+                                    }
+                                }
+                            }
+                            else {
+                                item.target_prices = [.. selected_product.target_prices]; //take existing target prices
+                            }
+                            #endregion
+                        }
+                        catch (Exception ex) {
+                            db_helper.LogToServer(thread_id, "prepare_existing_product_error", ex.Message + newline + ex.ToString(), customer.customer_id, "product");
+                            PrintConsole("Error preparing existing product for MerchanterDB: " + ex.Message);
+                            continue; //skip this product
+                        }
+                    }
+                    else { //new product for MerchanterDB
+                        try {
+                            #region New Product Core
+                            prepared_product = new Product() {
+                                id = 0,
+                                customer_id = customer.customer_id,
+                                type = Product.ProductTypes.SIMPLE,
+                                extension = new ProductExtension {
+                                    customer_id = customer.customer_id,
+                                    is_enabled = false,
+                                    brand_id = default_brand.id,
+                                    brand = default_brand,
+                                    category_ids = root_category.id.ToString(),
+                                    categories = [root_category],
+                                },
+                                sources = item.sources,
+                                attributes = item.attributes,
+                                images = item.images,
+                                target_prices = item.target_prices
+                            };
+                            #endregion
+
+                            #region New Product Core Mappings
+                            try {
+                                foreach (var property_item in item.property_mappings) {
+                                    var property_info = typeof(Product).GetProperty(property_item.property);
+                                    if (property_info != null) {
+                                        var item_value = property_info.GetValue(item);
+                                        var prepared_value = property_info.GetValue(prepared_product);
+                                        switch (property_item.sync_type) {
+                                            case PropertyMapping.SyncType.SKU:
+                                                property_info.SetValue(prepared_product, item_value);
+                                                break;
+                                            case PropertyMapping.SyncType.FullSync:
+                                                property_info.SetValue(prepared_product, item_value);
+                                                break;
+                                            case PropertyMapping.SyncType.OnlyInsert:
+                                                property_info.SetValue(prepared_product, item_value);
+                                                break;
+                                        }
+                                    }
+                                }
+                            }
+                            catch (Exception ex) {
+                                db_helper.LogToServer(thread_id, "prepare_new_product_core_mappings_error", ex.Message + newline + ex.ToString(), customer.customer_id, "product");
+                                PrintConsole("Error preparing new product core mappings for MerchanterDB: " + ex.Message);
+                                continue; //skip this product
+                            }
+                            #endregion
+
+                            #region New Product Extension Mappings
+                            try {
+                                foreach (var property_item in item.extension.property_mappings) {
+                                    var property_info = typeof(ProductExtension).GetProperty(property_item.property);
+                                    if (property_info != null) {
+                                        var item_value = property_info.GetValue(item.extension);
+                                        var prepared_value = property_info.GetValue(prepared_product.extension);
+                                        switch (property_item.sync_type) {
+                                            case PropertyMapping.SyncType.SKU:
+                                                property_info.SetValue(prepared_product.extension, item_value);
+                                                break;
+                                            case PropertyMapping.SyncType.FullSync:
+                                                property_info.SetValue(prepared_product.extension, item_value);
+                                                break;
+                                            case PropertyMapping.SyncType.OnlyInsert:
+                                                property_info.SetValue(prepared_product.extension, item_value);
+                                                break;
+                                        }
+                                    }
+                                }
+                            }
+                            catch (Exception ex) {
+                                db_helper.LogToServer(thread_id, "prepare_new_product_extension_mappings_error", ex.Message + newline + ex.ToString(), customer.customer_id, "product");
+                                PrintConsole("Error preparing new product extension mappings for MerchanterDB: " + ex.Message);
+                                continue; //skip this product
+                            }
+                            #endregion
+
+                            is_insert = true;
+                        }
+                        catch (Exception ex) {
+                            db_helper.LogToServer(thread_id, "prepare_new_product_error", ex.Message + newline + ex.ToString(), customer.customer_id, "product");
+                            PrintConsole("Error preparing new product for MerchanterDB: " + ex.Message, false);
+                            continue; //skip this product
+                        }
+                    }
+                #endregion
+
+                SAVEDPRODUCT:
+
+                    #region Update Product to Targets and Sync to MerchanterDB
+                    if (is_update) item.id = selected_product is not null ? selected_product.id : 0;  //important early arrangement
+                    if (is_update || is_insert) {
+                        #region Product Update on Targets
+                        if (item.extension.is_enabled && product_targets.Contains(Constants.MAGENTO2)) {
+                            #region Magento2 Category and Brand Live Data Take
+                            if (live_m2_categories is null && live_m2_brands is null) {
+                                PrintConsole(Constants.MAGENTO2 + " categories and brands started loading...");
+                                live_m2_categories = Helper.GetCategories(null, null)?.items.ToList(); PrintConsole(Constants.MAGENTO2 + " total " + live_m2_categories?.Count + " categories found.");
+                                var brandAttribute = Helper.GetProductAttribute("brand");
+                                if (brandAttribute != null && brandAttribute.options != null) {
+                                    live_m2_brands = brandAttribute.options
+                                        .Where(x => !string.IsNullOrWhiteSpace(x.value) && !string.IsNullOrWhiteSpace(x.label))
+                                        .ToDictionary(x => int.TryParse(x.value, out var id) ? id : 0, x => x.label);
+                                }
+                                PrintConsole(Constants.MAGENTO2 + " total " + live_m2_brands?.Count + " brands found.");
+                            }
+                            #endregion
+
+                            var m2products = Helper.GetProducts(null, null, null, null);
+                            foreach (var m2_item in m2products.items) {
+                                bool up = false;
+                                var found_product = products.FirstOrDefault(x => x.sku == m2_item.sku);
+                                if (found_product is not null) {
+                                    //get magento2 categories and save to Product 
+                                    //this operation for first time only, after that categories will be updated by product sync
+                                    if (m2_item.extension_attributes.category_links is not null) {
+                                        foreach (var citem in m2_item.extension_attributes.category_links) {
+                                            if (citem.category_id == "2") continue;
+                                            var found_target = category_target_relation.FirstOrDefault(x => x.target_id == int.Parse(citem.category_id));
+                                            if (found_target is not null) {
+                                                if (!found_product.extension.categories.Contains(categories.FirstOrDefault(x => x.id == found_target.category_id))) {
+                                                    found_product.extension.category_ids += "," + found_target.category_id.ToString();
+                                                    found_product.extension.categories.Add(categories.FirstOrDefault(x => x.id == found_target.category_id));
+                                                    up = true;
+                                                }
+                                            }
+                                        }
+                                        if (up) {
+                                            var updated_product = db_helper.UpdateProduct(customer.customer_id, found_product);
+                                            PrintConsole(updated_product?.sku + string.Join(",", updated_product?.extension.categories.Select(x => x.category_name)));
+                                        }
+                                    }
+                                }
+                            }
+
+                            foreach (var m2_item in m2products.items) {
+                                bool up = false;
+                                var found_product = products.FirstOrDefault(x => x.sku == m2_item.sku);
+                                if (found_product is not null) {
+                                    var m2_brand = m2_item.custom_attributes.FirstOrDefault(x => x.attribute_code == "brand")?.value?.ToString();
+                                    m2_brand = live_m2_brands?.GetValueOrDefault(int.Parse(m2_brand));
+                                    if (!string.IsNullOrWhiteSpace(m2_brand)) {
+                                        var found_brand = brands.FirstOrDefault(x => string.Compare(x.brand_name, m2_brand, StringComparison.OrdinalIgnoreCase) == 0);
+                                        if (found_brand is not null) {
+                                            if (found_product.extension.brand.brand_name != found_brand.brand_name) {
+                                                found_product.extension.brand_id = found_brand.id;
+                                                found_product.extension.brand = found_brand;
+                                                up = true;
+                                            }
+                                        }
+                                        else {
+                                            //found_brand = new Brand() {
+                                            //    customer_id = customer.customer_id,
+                                            //    brand_name = m2_brand,
+                                            //    status = true,
+                                            //    id = 0
+                                            //};
+                                            //if (db_helper.InsertBrand(customer.customer_id, found_brand) is not null) {
+                                            //    PrintConsole("Brand inserted: " + found_brand.brand_name, ConsoleColor.Green);
+                                            //}
+                                            //else {
+                                            //    PrintConsole("Brand insert error: " + found_brand.brand_name, ConsoleColor.Red);
+                                            //}
+                                            //up = true;
+                                        }
+                                        if (up) {
+                                            var updated_product = db_helper.UpdateProduct(customer.customer_id, found_product);
+                                            PrintConsole(updated_product?.sku + string.Join(",", updated_product?.extension.categories.Select(x => x.category_name)));
+                                        }
+                                    }
+                                }
+                            }
+
+
+
+
+                            var selected_live_magento_product = Helper.GetProductBySKU(item.sku);
+                            if (selected_live_magento_product is not null) { //update magento2 product
+                                magento_product_id = selected_live_magento_product.id;
+                                if (updated_attrs_new.Contains("total_qty")) {
+                                    if (Helper.UpdateProductQty(item.sku, item.total_qty)) {
+                                        is_processed = true;
+                                    }
+                                    else {
+                                        is_processed = null;
+                                    }
+                                }
+                                if (updated_attrs_new.Contains("is_enabled")) {
+                                    if (Helper.UpdateProductAttribute(item.sku, "status", item.extension.is_enabled ? "1" : "0")) {
+                                        is_processed = true;
+                                    }
+                                    else {
+                                        is_processed = null;
+                                    }
+                                }
+                            }
+                            else { //insert magtento2 product
+                                if (is_update) {  //insert magento product and update product
+                                    var product_relation = product_target_relation.FirstOrDefault(x => x.product_id == item.id && x.target_name == Constants.MAGENTO2);
+                                    if (product_relation is not null) {
+                                        if (db_helper.DeleteProductTarget(customer.customer_id, item.id)) {
+                                            PrintConsole("Product relation removed:" + item.sku + " deleted" + ", " + Constants.MAGENTO2);
+                                        }
+                                        goto SAVEDPRODUCT;
+                                    }
+                                    prepared_product = item;
+                                }
+
+                                if (prepared_product is not null) {
+                                    #region Magento2 Category and Brand Sync
+                                    List<int> m2_category_ids = Helper.GetM2CategoryIds(thread_id, db_helper, customer, ref live_m2_categories,
+                                        [.. category_target_relation.Where(x => x.target_name == Constants.MAGENTO2)], prepared_product.extension.categories);
+                                    var m2_brand_id = Helper.GetM2BrandId(thread_id, db_helper, customer, ref live_m2_brands, prepared_product.extension.brand);
+                                    #endregion
+                                    var currency_rate = rates.FirstOrDefault(x => x.currency.code == prepared_product.currency.code);
+                                    if (currency_rate != null && prepared_product.price > 0) { //item.price > 0
+                                        var inserted_magento_product = Helper.InsertMagentoProduct(prepared_product, m2_brand_id, m2_category_ids, currency_rate);
+                                        if (inserted_magento_product is not null) {
+                                            magento_product_id = inserted_magento_product.id;
+                                            is_processed = true;
+                                        }
+                                        else {
+                                            is_processed = null;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if (item.extension.is_enabled && product_targets.Contains(Constants.IDEASOFT)) {
+                            #region Ideasoft Category and Brand Live Data Take
+                            if (live_idea_categories is null && live_idea_brands is null) {
+                                PrintConsole(Constants.IDEASOFT + " brands and categories started loading...");
+                                live_idea_categories = Helper.GetIdeaCategories(); PrintConsole(Constants.IDEASOFT + " total " + live_idea_categories?.Count + " categories found.");
+                                live_idea_brands = Helper.GetIdeaBrands(); PrintConsole(Constants.IDEASOFT + " total " + live_idea_brands?.Count + " brands found.");
+                            }
+                            #endregion
+
+                            var selected_live_idea_product = Helper.GetIdeaProduct(item.sku);
+                            if (selected_live_idea_product is not null) { //update ideasoft product
+                                idea_product_id = selected_live_idea_product.id;
+                                #region Ideasoft Category and Brand Sync
+                                List<int> idea_category_ids = Helper.GetIdeaCategoryIds(thread_id, db_helper, customer, ref live_idea_categories,
+                                    category_target_relation, item.extension.categories);
+                                var idea_brand_id = Helper.GetIdeaBrandId(thread_id, db_helper, customer, ref live_idea_brands, item.extension.brand);
+                                #endregion
+                                idea_product_id = Helper.UpdateIdeaProduct(idea_product_id, item, idea_brand_id, idea_category_ids);
+                                if (idea_product_id > 0) {
+                                    is_processed = true;
+                                    PrintConsole("Sku:" + item.sku + " updated and sync to Id:" + idea_product_id.ToString() + " ," + Constants.IDEASOFT, ConsoleColor.Green);
+                                    db_helper.LogToServer(thread_id, "product_updated", Helper.global.settings.company_name + " Sku:" + item.sku + ", " + Constants.IDEASOFT, customer.customer_id, "product");
+                                }
+                                else {
+                                    notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_UPDATE_ERROR, product_sku = item.sku, notification_content = Constants.IDEASOFT });
+                                    PrintConsole("Sku:" + item.sku + " update error" + " ," + Constants.IDEASOFT, ConsoleColor.Red);
+                                    db_helper.LogToServer(thread_id, "product_update_error", Helper.global.settings.company_name + " Sku:" + item.sku, customer.customer_id, "product");
+                                }
+                            }
+                            else { //insert ideasoft product
+                                if (is_update) {  //insert ideasoft product and update product
+                                    var product_relation = product_target_relation.FirstOrDefault(x => x.product_id == item.id && x.target_name == Constants.IDEASOFT);
+                                    if (product_relation is not null) {
+                                        if (db_helper.DeleteProductTarget(customer.customer_id, item.id)) {
+                                            PrintConsole("Product relation removed:" + item.sku + " deleted" + ", " + Constants.IDEASOFT);
+                                        }
+                                        goto SAVEDPRODUCT;
+                                    }
+                                    prepared_product = item;
+                                }
+
+                                if (prepared_product is not null) {
+                                    #region Ideasoft Category and Brand Sync
+                                    List<int> idea_category_ids = Helper.GetIdeaCategoryIds(thread_id, db_helper, customer, ref live_idea_categories,
+                                        [.. category_target_relation.Where(x => x.target_name == Constants.IDEASOFT)], prepared_product.extension.categories);
+                                    var idea_brand_id = Helper.GetIdeaBrandId(thread_id, db_helper, customer, ref live_idea_brands, prepared_product.extension.brand);
+                                    #endregion
+
+                                    #region Ideasoft Product Insert
+                                    idea_product_id = Helper.InsertIdeaProduct(prepared_product, idea_brand_id, idea_category_ids);
+                                    if (idea_product_id > 0) {
+                                        is_processed = true;
+                                        PrintConsole("Sku:" + (prepared_product.sku) + " inserted and sync to Id:" + idea_product_id.ToString() + ", " + Constants.IDEASOFT);
+                                        db_helper.LogToServer(thread_id, "product_inserted", Helper.global.settings.company_name + " Sku:" + prepared_product.sku + ", " + Constants.IDEASOFT, customer.customer_id, "product");
+                                    }
+                                    else {
+                                        PrintConsole("Sku:" + prepared_product.sku + " insert failed." + " ," + Constants.IDEASOFT);
+                                        db_helper.LogToServer(thread_id, "product_insert_error", Helper.global.settings.company_name + " Sku:" + prepared_product.sku + ", " + Constants.IDEASOFT, customer.customer_id, "product");
+                                    }
+                                    #endregion
+                                }
+                            }
+                        }
+
+                        if (item.extension.is_enabled && product_targets.Contains(Constants.N11)) {
+
+                        }
+                        #endregion
+
+                        #region Product Update on MerchanterDB
+                        if (is_processed.HasValue) {
+                            int processes_product_id = 0;
+                            if (is_update) {
+                                var updated_product = db_helper.UpdateProduct(customer.customer_id, item, true);
+                                if (updated_product is not null) {
+                                    processes_product_id = updated_product.id;
+                                    db_helper.LogToServer(thread_id, "product_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " updated.", customer.customer_id, "product");
+                                    PrintConsole("Sku:" + item.sku + " updated on MerchanterDB." + (updated_attrs_new.Count > 0 ? string.Join(",", updated_attrs_new) : ""));
+                                }
+                                else {
+                                    db_helper.LogToServer(thread_id, "product_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " update error.", customer.customer_id, "product");
+                                    PrintConsole("Sku:" + item.sku + " update error in database.");
+                                }
+                            }
+
+                            if (is_insert && prepared_product is not null) {
+                                var inserted_product = db_helper.InsertProduct(customer.customer_id, prepared_product);
+                                if (inserted_product is not null) {
+                                    processes_product_id = inserted_product.id;
+                                    db_helper.LogToServer(thread_id, "product_inserted", Helper.global.settings.company_name + " Sku:" + item.sku + " inserted.", customer.customer_id, "product");
+                                    PrintConsole("Sku:" + inserted_product.sku + " inserted on MerchanterDB.");
+                                }
+                                else {
+                                    db_helper.LogToServer(thread_id, "product_insert_error", Helper.global.settings.company_name + " Sku:" + item.sku + " insert error.", customer.customer_id, "product");
+                                    PrintConsole("Sku:" + item.sku + " insert error in database.");
+                                }
+                            }
+
+                            if (processes_product_id <= 0) {
+                                db_helper.LogToServer(thread_id, "product_process_error", Helper.global.settings.company_name + " Sku:" + item.sku + " process error.", customer.customer_id, "product");
+                                PrintConsole("Sku:" + item.sku + " process error in database.");
+                                continue; //skip this product
+                            }
+
+                            #region Target => Magento2
+                            if (item.extension.is_enabled && product_targets.Contains(Constants.MAGENTO2)) {
+                                var product_relation = product_target_relation.FirstOrDefault(
+                                    x => x.product_id == processes_product_id && x.target_name == Constants.MAGENTO2);
+                                if (product_relation is not null) {
+                                    if (product_relation.target_id != magento_product_id || product_relation.sync_status != Target.SyncStatus.Synced) {
+                                        product_relation.target_id = magento_product_id;
+                                        product_relation.sync_status = is_processed.Value ? Target.SyncStatus.Synced : magento_product_id > 0 ? Target.SyncStatus.Synced : Target.SyncStatus.Error;
+                                        db_helper.UpdateProductTarget(customer.customer_id, product_relation);
+                                    }
+                                }
+                                else {
+                                    db_helper.InsertProductTarget(customer.customer_id, new ProductTarget() {
+                                        customer_id = customer.customer_id, sync_status = is_processed.Value ? Target.SyncStatus.Synced : magento_product_id > 0 ? Target.SyncStatus.Synced : Target.SyncStatus.Error,
+                                        product_id = processes_product_id, target_id = magento_product_id, target_name = Constants.MAGENTO2
+                                    });
+                                }
+                            }
+                            #endregion
+
+                            #region Target => IdeaSoft
+                            if (item.extension.is_enabled && product_targets.Contains(Constants.IDEASOFT)) {
+                                if (item.extension.is_enabled && product_targets.Contains(Constants.IDEASOFT)) {
+                                    var product_relation = product_target_relation.FirstOrDefault(
+                                        x => x.product_id == processes_product_id && x.target_name == Constants.IDEASOFT);
+                                    if (product_relation is not null) {
+                                        if (product_relation.target_id != idea_product_id || product_relation.sync_status != Target.SyncStatus.Synced) {
+                                            product_relation.target_id = idea_product_id;
+                                            product_relation.sync_status = is_processed.Value ? Target.SyncStatus.Synced : idea_product_id > 0 ? Target.SyncStatus.Synced : Target.SyncStatus.Error;
+                                            db_helper.UpdateProductTarget(customer.customer_id, product_relation);
+                                        }
+                                    }
+                                    else {
+                                        db_helper.InsertProductTarget(customer.customer_id, new ProductTarget() {
+                                            customer_id = customer.customer_id, sync_status = is_processed.Value ? Target.SyncStatus.Synced : idea_product_id > 0 ? Target.SyncStatus.Synced : Target.SyncStatus.Error,
+                                            product_id = processes_product_id, target_id = idea_product_id, target_name = Constants.IDEASOFT
+                                        });
+                                    }
+                                }
+                            }
+
+                            #endregion
+
+                            #region Target => N11
+                            if (item.extension.is_enabled && product_targets.Contains(Constants.N11)) {
+
+                            }
+                            #endregion
+                        }
+                        #endregion
+                    }
+                    #endregion
+                }
+
+
+
+
+
+                return;
+
                 if (product_targets.Contains(Constants.MAGENTO2)) {
                     bool is_need_indexer = false;
                     foreach (var item in live_products) {
-                        bool is_update = false; bool is_insert = false;
+                        bool is_update = false; bool is_insert = false; string updated_attrs = "";
                         Product prepared_product = null;
                         var selected_product = products.FirstOrDefault(x => x.sku == item.sku);
 
                         if (selected_product is not null) { //existing product
-                            #region Name
-                            if (selected_product.name?.ToString().Trim() != item.name?.ToString().Trim()) {
 
-                            }
+
+                            #region OLD
+                            #region Name
+                            //if (selected_product.name?.ToString().Trim() != item.name?.ToString().Trim()) {
+
+                            //}
                             #endregion
 
                             #region Barcode
@@ -1539,38 +2384,38 @@ internal class MainLoop {
                             #endregion
 
                             #region Qty
-                            if (selected_product.total_qty != item.total_qty) {
-                                if (Helper.UpdateProductQty(item.sku, item.total_qty)) {
-                                    is_update = true; 
-                                    PrintConsole("Sku:" + item.sku + " updated " + selected_product.total_qty + " => " + item.total_qty);
-                                    db_helper.LogToServer(thread_id, "product_qty_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.total_qty.ToString() + " => " + item.total_qty.ToString(), customer.customer_id, "product");
-                                    #region Notify Product - PRODUCT_IN_STOCK, PRODUCT_OUT_OF_STOCK
-                                    if (selected_product.total_qty <= 0 && item.total_qty > 0) {
-                                        notifications.Add(new Notification() {
-                                            customer_id = customer.customer_id,
-                                            type = Notification.NotificationTypes.PRODUCT_IN_STOCK,
-                                            product_sku = item.sku,
-                                            xproduct_barcode = item.sources.Count > 1 ? item.barcode : null,
-                                            notification_content = Constants.MAGENTO2
-                                        });
-                                    }
-                                    if (selected_product.total_qty > 0 && item.total_qty <= 0) {
-                                        notifications.Add(new Notification() {
-                                            customer_id = customer.customer_id,
-                                            type = Notification.NotificationTypes.PRODUCT_OUT_OF_STOCK,
-                                            product_sku = item.sku,
-                                            xproduct_barcode = item.sources.Count > 1 ? item.barcode : null,
-                                            notification_content = Constants.MAGENTO2
-                                        });
-                                    }
-                                    #endregion
-                                }
-                                else {
-                                    is_update = false;
-                                    notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_QTY_UPDATE_ERROR, product_sku = item.sku, notification_content = Constants.MAGENTO2 });
-                                    db_helper.LogToServer(thread_id, "product_qty_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.total_qty.ToString() + " => " + item.total_qty.ToString(), customer.customer_id, "product");
-                                }
-                            }
+                            //if (selected_product.total_qty != item.total_qty) {
+                            //    if (Helper.UpdateProductQty(item.sku, item.total_qty)) {
+                            //        is_update = true;
+                            //        PrintConsole("Sku:" + item.sku + " updated " + selected_product.total_qty + " => " + item.total_qty);
+                            //        db_helper.LogToServer(thread_id, "product_qty_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.total_qty.ToString() + " => " + item.total_qty.ToString(), customer.customer_id, "product");
+                            //        #region Notify Product - PRODUCT_IN_STOCK, PRODUCT_OUT_OF_STOCK
+                            //        if (selected_product.total_qty <= 0 && item.total_qty > 0) {
+                            //            notifications.Add(new Notification() {
+                            //                customer_id = customer.customer_id,
+                            //                type = Notification.NotificationTypes.PRODUCT_IN_STOCK,
+                            //                product_sku = item.sku,
+                            //                xproduct_barcode = item.sources.Count > 1 ? item.barcode : null,
+                            //                notification_content = Constants.MAGENTO2
+                            //            });
+                            //        }
+                            //        if (selected_product.total_qty > 0 && item.total_qty <= 0) {
+                            //            notifications.Add(new Notification() {
+                            //                customer_id = customer.customer_id,
+                            //                type = Notification.NotificationTypes.PRODUCT_OUT_OF_STOCK,
+                            //                product_sku = item.sku,
+                            //                xproduct_barcode = item.sources.Count > 1 ? item.barcode : null,
+                            //                notification_content = Constants.MAGENTO2
+                            //            });
+                            //        }
+                            //        #endregion
+                            //    }
+                            //    else {
+                            //        is_update = false;
+                            //        notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_QTY_UPDATE_ERROR, product_sku = item.sku, notification_content = Constants.MAGENTO2 });
+                            //        db_helper.LogToServer(thread_id, "product_qty_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " " + selected_product.total_qty.ToString() + " => " + item.total_qty.ToString(), customer.customer_id, "product");
+                            //    }
+                            //}
                             #endregion
 
                             #region Prices
@@ -1626,9 +2471,10 @@ internal class MainLoop {
                             #endregion
 
                             #region Is Enabled
-                            if (selected_product.extension.is_enabled != item.extension.is_enabled) {
-                                is_update = true; is_need_indexer = true;
-                            }
+                            //if (selected_product.extension.is_enabled != item.extension.is_enabled) {
+                            //    is_update = true; is_need_indexer = true;
+                            //}
+                            #endregion
                             #endregion
                         }
                         else { //new product
@@ -1732,7 +2578,7 @@ internal class MainLoop {
                             #region Qty
                             if (selected_product.total_qty != item.total_qty) {
                                 is_update = true;
-                                updated_attrs += "qty,";
+                                updated_attrs += "total_qty,";
                             }
                             #endregion
 
@@ -1885,16 +2731,19 @@ internal class MainLoop {
                         if (is_processed && is_update) {
                             if (db_helper.UpdateProducts(customer.customer_id, [item])) {
                                 if (idea_product_id > 0) {
-                                    var product_relation = product_target_relation.FirstOrDefault(x => x.target_id == idea_product_id && x.target_name == Constants.IDEASOFT);
+                                    var product_relation = product_target_relation.FirstOrDefault(
+                                        x => x.target_id == idea_product_id && x.target_name == Constants.IDEASOFT);
                                     if (product_relation is not null) {
                                         if (product_relation.product_id != item.id) {
                                             product_relation.product_id = item.id;
+                                            product_relation.sync_status = Target.SyncStatus.Synced;
                                             db_helper.UpdateProductTarget(customer.customer_id, product_relation);
                                         }
                                     }
                                     else {
                                         db_helper.InsertProductTarget(customer.customer_id, new ProductTarget() {
-                                            customer_id = customer.customer_id, product_id = item.id, target_id = idea_product_id, target_name = Constants.IDEASOFT
+                                            customer_id = customer.customer_id, sync_status = Target.SyncStatus.Synced,
+                                            product_id = item.id, target_id = idea_product_id, target_name = Constants.IDEASOFT
                                         });
                                     }
                                 }
@@ -1912,6 +2761,7 @@ internal class MainLoop {
                                     db_helper.InsertProductTarget(customer.customer_id, new ProductTarget() {
                                         customer_id = customer.customer_id,
                                         product_id = inserted_id,
+                                        sync_status = Target.SyncStatus.Synced,
                                         target_id = idea_product_id,
                                         target_name = Constants.IDEASOFT
                                     });

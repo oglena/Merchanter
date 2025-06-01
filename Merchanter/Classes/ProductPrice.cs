@@ -5,6 +5,7 @@ namespace Merchanter.Classes {
         public int id { get; set; }
         public int customer_id { get; set; }
         public int product_id { get; set; }
+        public string sku { get; set; }
         public string platform_name { get; set; }
         public decimal price1 { get; set; }
         public decimal price2 { get; set; } = 0;

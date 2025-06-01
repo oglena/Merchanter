@@ -24,8 +24,11 @@ namespace MerchanterApp.ApiService.Controllers {
         public async Task<ActionResult<BaseResponseModel<List<Product>>>> GetProducts([FromBody] ApiFilter _filters) {
             int.TryParse(HttpContext.User.FindFirst("customerId")?.Value, out int customer_id);
             if (customer_id > 0) {
+                _filters = await productService.GetProductsFilterProperties(customer_id, _filters);
+                if (_filters is null) {
+                    return BadRequest(new BaseResponseModel<List<Product>>() { Success = false, Data = [], ApiFilter = _filters, ErrorMessage = "Error -1" });
+                }
                 var products = await productService.GetProducts(customer_id, _filters);
-                _filters.TotalCount = await productService.GetProductsCount(customer_id, _filters);
                 return Ok(new BaseResponseModel<List<Product>>() { Success = products != null, Data = products ?? [], ApiFilter = _filters, ErrorMessage = products != null ? "" : "Error -1" });
             }
             return BadRequest();

@@ -9,13 +9,19 @@ namespace MerchanterApp.ApiService.Services {
         Task<Product?> SaveProduct(int _customer_id, Product product);
         Task<bool> DeleteProductImage(int _customer_id, ProductImage _product_image);
         Task<List<ProductTarget>> GetProductTargets(int _customer_id, int _product_id);
+        Task<ApiFilter?> GetProductsFilterProperties(int _customer_id, ApiFilter _filters);
     }
 
-	public class ProductService( IProductRepository productRepository ) : IProductService {
+    public class ProductService( IProductRepository productRepository ) : IProductService {
 		public Task<List<Product>> GetProducts( int _customer_id, ApiFilter _filters) {
 			return productRepository.GetProducts( _customer_id, _filters );
 		}
-		public Task<int> GetProductsCount( int _customer_id, ApiFilter _filters) {
+
+        public Task<ApiFilter?> GetProductsFilterProperties(int _customer_id, ApiFilter _filters) {
+            return productRepository.GetProductsFilterProperties(_customer_id, _filters);
+        }
+
+        public Task<int> GetProductsCount( int _customer_id, ApiFilter _filters) {
 			return productRepository.GetProductsCount( _customer_id, _filters );
 		}
 

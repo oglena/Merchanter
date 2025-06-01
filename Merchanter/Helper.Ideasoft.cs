@@ -63,7 +63,6 @@ namespace Merchanter {
 
         public static List<int> GetIdeaCategoryIds(string thread_id, DbHelper db_helper, Customer customer, ref List<IDEA_Category>? live_idea_categories,
             List<CategoryTarget> category_target_relation, List<Category> _categories) {
-
             List<int> idea_category_ids = [];
             foreach (var citem in _categories) {
                 if (citem.id == global.product.customer_root_category_id) continue;
@@ -89,22 +88,28 @@ namespace Merchanter {
                     else {
                         if (!string.IsNullOrWhiteSpace(citem.category_name)) {
                             idea_category_id = InsertIdeaCategory(citem.category_name, category_target_relation.FirstOrDefault(x => x.category_id == citem.parent_id)?.target_id);
-                            live_idea_categories?.Add(new IDEA_Category() { id = idea_category_id.Value, name = citem.category_name });
                             if (idea_category_id.HasValue && idea_category_id > 0) {
-                                db_helper.InsertCategoryTarget(customer.customer_id, new CategoryTarget() {
-                                    customer_id = customer.customer_id,
-                                    category_id = citem.id,
-                                    target_id = idea_category_id.Value,
-                                    target_name = Constants.IDEASOFT
-                                });
-                                idea_category_ids.Add(idea_category_id.Value);
-                                PrintConsole("Category:" + citem.category_name + " inserted and sync to Id:" + idea_category_id.Value.ToString() + " (" + Constants.IDEASOFT + ")");
-                                db_helper.LogToServer(thread_id, "category_inserted", global.settings.company_name + " Category:" + citem.category_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
+                                live_idea_categories?.Add(new IDEA_Category() { id = idea_category_id.Value, name = citem.category_name });
+                                if (idea_category_id.HasValue && idea_category_id > 0) {
+                                    db_helper.InsertCategoryTarget(customer.customer_id, new CategoryTarget() {
+                                        customer_id = customer.customer_id,
+                                        category_id = citem.id,
+                                        target_id = idea_category_id.Value,
+                                        target_name = Constants.IDEASOFT
+                                    });
+                                    idea_category_ids.Add(idea_category_id.Value);
+                                    PrintConsole("Category:" + citem.category_name + " inserted and sync to Id:" + idea_category_id.Value.ToString() + " (" + Constants.IDEASOFT + ")");
+                                    db_helper.LogToServer(thread_id, "category_inserted", global.settings.company_name + " Category:" + citem.category_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
+                                }
+                                else {
+                                    PrintConsole("Category:" + citem.category_name + " insert failed." + " (" + Constants.IDEASOFT + ")");
+                                    db_helper.LogToServer(thread_id, "category_insert_error", global.settings.company_name + " Category:" + citem.category_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
+                                }
                             }
-                            else {
-                                PrintConsole("Category:" + citem.category_name + " insert failed." + " (" + Constants.IDEASOFT + ")");
-                                db_helper.LogToServer(thread_id, "category_insert_error", global.settings.company_name + " Category:" + citem.category_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
-                            }
+                        }
+                        else {
+                            PrintConsole("Category name is empty for category ID: " + citem.id + ". Skipping insert.");
+                            db_helper.LogToServer(thread_id, "category_insert_error", global.settings.company_name + " Category ID:" + citem.id + " has no name. (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
                         }
                     }
                 }
@@ -189,7 +194,7 @@ namespace Merchanter {
             return 0;
         }
 
-        public static int InsertIdeaCategory(string _name, int? _parent_id) {
+        public static int? InsertIdeaCategory(string _name, int? _parent_id) {
             var cat_json = new {
                 name = _name,
                 status = 1,
@@ -201,9 +206,9 @@ namespace Merchanter {
             if (json_cat != null) {
                 var idea_category = Newtonsoft.Json.JsonConvert.DeserializeObject<IDEA_Category>(json_cat);
                 PrintConsole("Category Inserted: " + idea_category?.id.ToString() + " - " + idea_category?.name);
-                return idea_category != null ? idea_category.id : 0;
+                return idea_category?.id;
             }
-            return 0;
+            return null;
         }
 
         public static int InsertIdeaBrand(string _name) {

@@ -145,7 +145,7 @@ namespace Merchanter {
                 if (m2_json != null) {
                     var m2_categories = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Categories>(m2_json);
                     if (m2_categories == null) { PrintConsole("Magento Categories Load Failed. Exiting."); return null; }
-                    PrintConsole(m2_categories.items.Count().ToString() + " Magento Categories Loaded.");
+                    PrintConsole(m2_categories.items.Count().ToString() + " Magento Categories Loaded.", false);
                     return m2_categories;
                 }
                 else {
@@ -497,7 +497,7 @@ namespace Merchanter {
                 if (m2_json != null) {
                     var m2_attribute = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Attribute>(m2_json);
                     if (m2_attribute == null) { PrintConsole("Magento Product Attributes Load Failed. Exiting."); return null; }
-                    PrintConsole("Magento " + m2_attribute.attribute_code + " Loaded.");
+                    PrintConsole("Magento " + m2_attribute.attribute_code + " Loaded.", false);
                     return m2_attribute;
                 }
                 else {
@@ -1009,8 +1009,112 @@ namespace Merchanter {
             }
         }
 
+        public static M2_Product? InsertMagentoProduct(Product _product, int _brand_id, List<int> _category_ids, CurrencyRate _currency_rate) {
+            try {
+                var specialPriceValue = _product.special_price > 0
+                    ? Math.Round(
+                        _product.special_price *
+                        (_product.tax_included ? 1 : (1 + ((decimal)_product.tax / 100m))) * _currency_rate.rate,
+                        2, MidpointRounding.AwayFromZero)
+                    : (decimal?)null;
 
+                var customAttributes = new List<object> {
+                    new {
+                        attribute_code = "barcode",
+                        value = _product.barcode
+                    },
+                    new {
+                        attribute_code = "brand",
+                        value = _product.extension.brand.brand_name
+                    }
+                };
 
+                if (specialPriceValue.HasValue) {
+                    customAttributes.Add(new {
+                        attribute_code = "special_price",
+                        value = specialPriceValue.Value
+                    });
+                }
+
+                var json = new {
+                    product = new {
+                        sku = _product.sku,
+                        name = _product.name,
+                        attribute_set_id = 4,
+                        visibility = 4,
+                        type_id = "simple",
+                        price = Math.Round(
+                            _product.price *
+                            (_product.tax_included ? 1 : (1 + ((decimal)_product.tax / 100m))) * _currency_rate.rate,
+                            2, MidpointRounding.AwayFromZero),
+                        status = _product.extension.is_enabled ? 1 : 2,
+                        weight = (float)_product.extension.weight,
+                        extension_attributes = new {
+                            stock_item = new {
+                                is_in_stock = _product.total_qty > 0,
+                                qty = _product.total_qty
+                            }
+                        },
+                        custom_attributes = customAttributes
+                    },
+                    saveOptions = true
+                };
+
+                using (Executioner executioner = new Executioner()) {
+                    var json_product = executioner.Execute(global.magento.base_url + "rest/all/V1/products", RestSharp.Method.Post, json, global.magento.token);
+                    if (json_product != null) {
+                        var updated = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Product>(json_product);
+                        if (updated != null) {
+                            PrintConsole("Sku:" + _product.sku + " new product created => [qty=" + _product.total_qty.ToString() + "]");
+                            return updated;
+                        }
+                    }
+                    return null;
+                }
+            }
+            catch (Exception ex) {
+                PrintConsole(ex.ToString());
+                return null;
+            }
+        }
+
+        public static int? InsertM2Category(string category_name, int? parent_id = null, int is_active = 1, int position = 999) {
+            try {
+                // Magento requires a "category" object in the payload
+                var cat_json = new {
+                    category = new {
+                        name = category_name,
+                        is_active = is_active,
+                        position = position,
+                        parent_id = parent_id ?? global.magento.root_category_id, // fallback to root if not provided
+                        include_in_menu = true
+                    }
+                };
+
+                using (Executioner executioner = new Executioner()) {
+                    var json_cat = executioner.Execute(
+                        global.magento.base_url + "rest/all/V1/categories",
+                        RestSharp.Method.Post,
+                        cat_json,
+                        global.magento.token);
+
+                    if (json_cat != null) {
+                        // Magento returns the created category object
+                        var m2_category = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Category>(json_cat);
+                        if (m2_category != null && m2_category.id > 0) {
+                            PrintConsole("Magento Category Inserted: " + m2_category.id + " - " + m2_category.name);
+                            return m2_category.id;
+                        }
+                    }
+                }
+                PrintConsole("Magento Category Insert failed: " + category_name);
+                return null;
+            }
+            catch (Exception ex) {
+                PrintConsole("Magento Category Insert Exception: " + ex.ToString());
+                return null;
+            }
+        }
 
         public static List<Product>? BULK_UpdateProducts(List<Product> _products, CurrencyRate _currency_rate) {
             try {
@@ -1325,6 +1429,94 @@ namespace Merchanter {
                 return false;
             }
         }
+
+        public static int GetM2BrandId(string thread_id, DbHelper db_helper, Customer customer, ref Dictionary<int, string>? live_m2_brands, Brand? _brand) {
+            if (_brand == null || string.IsNullOrWhiteSpace(_brand.brand_name))
+                return 0;
+
+            // Try to find the brand ID in the current dictionary
+            int m2_brand_id = 0;
+            if (live_m2_brands != null) {
+                var found = live_m2_brands.FirstOrDefault(x => x.Value.Equals(_brand.brand_name, StringComparison.OrdinalIgnoreCase));
+                m2_brand_id = found.Key;
+                if (m2_brand_id > 0)
+                    return m2_brand_id;
+            }
+
+            // If not found, insert the brand as a new attribute option in Magento
+            var insertedOptionIdStr = InsertAttributeOption("brand", _brand.brand_name);
+            if (int.TryParse(insertedOptionIdStr, out m2_brand_id) && m2_brand_id > 0) {
+                // Update the local dictionary so future lookups succeed
+                live_m2_brands ??= [];
+                live_m2_brands[m2_brand_id] = _brand.brand_name;
+
+                PrintConsole("Brand:" + _brand.brand_name + " updated. (" + Constants.MAGENTO2 + ")");
+                db_helper.LogToServer(thread_id, "brand_inserted", global.settings.company_name + " Brand:" + _brand.brand_name + " (" + Constants.MAGENTO2 + ")", customer.customer_id, "product");
+            }
+            else {
+                PrintConsole("Brand:" + _brand.brand_name + " insert failed. (" + Constants.MAGENTO2 + ")");
+                db_helper.LogToServer(thread_id, "brand_insert_error", global.settings.company_name + " Brand:" + _brand.brand_name + " (" + Constants.MAGENTO2 + ")", customer.customer_id, "product");
+                m2_brand_id = 0;
+            }
+
+            return m2_brand_id;
+        }
+
+        public static List<int> GetM2CategoryIds(string thread_id, DbHelper db_helper, Customer customer, ref List<M2_Category>? live_m2_categories,
+            List<CategoryTarget> category_target_relation, List<Category> _categories) {
+            List<int> magento_category_ids = [];
+            foreach (var citem in _categories) {
+                // Skip root category if needed (adjust as per your logic)
+                if (citem.id == global.product.customer_root_category_id) continue;
+                if (citem.id == 0) {
+                    citem.id = db_helper.InsertCategory(customer.customer_id, citem)?.id ?? 0;
+                }
+
+                var category_relation = category_target_relation.FirstOrDefault(x => x.category_id == citem.id);
+                if (category_relation != null) {
+                    magento_category_ids.Add(category_relation.target_id);
+                }
+                else {
+                    int? magento_category_id = live_m2_categories?.FirstOrDefault(x => x.name == citem.category_name)?.id;
+                    if (magento_category_id.HasValue) {
+                        db_helper.InsertCategoryTarget(customer.customer_id, new CategoryTarget() {
+                            customer_id = customer.customer_id,
+                            category_id = citem.id,
+                            target_id = magento_category_id.Value,
+                            target_name = Constants.MAGENTO2
+                        });
+                        magento_category_ids.Add(magento_category_id.Value);
+                    }
+                    else {
+                        if (!string.IsNullOrWhiteSpace(citem.category_name)) {
+                            magento_category_id = InsertM2Category(citem.category_name, citem.parent_id, citem.is_active ? 1 : 0, 0);
+                            if (magento_category_id.HasValue && magento_category_id.Value > 0) {
+                                db_helper.InsertCategoryTarget(customer.customer_id, new CategoryTarget() {
+                                    customer_id = customer.customer_id,
+                                    category_id = citem.id,
+                                    target_id = magento_category_id.Value,
+                                    target_name = Constants.MAGENTO2
+                                });
+                                magento_category_ids.Add(magento_category_id.Value);
+                                PrintConsole("Category:" + citem.category_name + " inserted and sync to Id:" + magento_category_id.Value.ToString() + " (" + Constants.MAGENTO2 + ")");
+                                db_helper.LogToServer(thread_id, "category_inserted", global.settings.company_name + " Category:" + citem.category_name + " (" + Constants.MAGENTO2 + ")", customer.customer_id, "product");
+
+                            }
+                            else {
+                                PrintConsole("Category:" + citem.category_name + " insert failed. (" + Constants.MAGENTO2 + ")");
+                                db_helper.LogToServer(thread_id, "category_insert_error", global.settings.company_name + " Category:" + citem.category_name + " (" + Constants.MAGENTO2 + ")", customer.customer_id, "product");
+                            }
+                        }
+                        else {
+                            PrintConsole("Category name is empty for category ID: " + citem.id + ". Skipping insert.");
+                            db_helper.LogToServer(thread_id, "category_insert_error", global.settings.company_name + " Category ID:" + citem.id + " has no name. (" + Constants.MAGENTO2 + ")", customer.customer_id, "product");
+                        }
+                    }
+                }
+            }
+            return magento_category_ids;
+        }
+
         #endregion
     }
 }

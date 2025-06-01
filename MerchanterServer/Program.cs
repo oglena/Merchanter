@@ -56,6 +56,7 @@ if (Constants.Server is null || Constants.User is null || Constants.Password is 
     Thread.Sleep(2000);
     return -1;
 }
+
 DbHelper db_helper = new(Constants.Server, Constants.User, Constants.Password, Constants.Database, Constants.Port);
 PrintConsole("Merchanter Sync | Ceres Software & Consultancy" + " Version: " + Assembly.GetExecutingAssembly().GetName().Version?.ToString() + " DB:[" + db_helper.Database + "]", ConsoleColor.Green);
 db_helper.ErrorOccured += (sender, e) => { Console.WriteLine(e); db_helper.LogToServer("WTF", "helper_error", e, customer_id, "helper_instance"); };
@@ -78,10 +79,10 @@ else {
     db_helper.xml_clone = new(db_helper.Server, db_helper.User, db_helper.Password, db_helper.Database, db_helper.Port);
     db_helper.notification_clone = new(db_helper.Server, db_helper.User, db_helper.Password, db_helper.Database, db_helper.Port);
 }
-
-PrintConsole("Welcome! Program starting for " + customer_id, ConsoleColor.Blue);
-AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
 #endregion
+
+AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
+PrintConsole("Welcome! Program starting for " + customer_id, ConsoleColor.Blue);
 
 while (true) {
     try {
@@ -97,9 +98,7 @@ while (true) {
             //    Assembly.GetCallingAssembly().GetName().Name + "Error  //customer:" + customer_id.ToString(),
             //    "ERROR" + newline + "CustomerID: " + customer_id.ToString() + ". User Not Found." + newline + "exit -2" );
             PrintConsole("Thread will sleep 1h!"); Thread.Sleep(1000 * 60 * 60); //1h
-            PrintConsole("-2 exited");
-            Thread.Sleep(2000);
-            return -2;
+            continue;
         }
 
         if (!customer.status) {
