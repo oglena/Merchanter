@@ -140,7 +140,7 @@ internal class MainLoop {
 
             if (health) { this.ProductSourceLoop(out health); }
 
-            if (health) { this.ProductSync(out health, live_products); }
+            if (health) { this.ProductSync(out health); }
 
             if (customer.product_sync_status) {
                 db_helper.SetProductSyncDate(customer.customer_id);
@@ -1811,12 +1811,12 @@ internal class MainLoop {
         }
     }
 
-    private void ProductSync(out bool _health, List<Product> _live_products) {
+    private void ProductSync(out bool _health) {
         _health = true;
         try {
             if (products is not null) {
                 var notifications = new List<Notification>();
-                foreach (var item in _live_products) {
+                foreach (var item in live_products) {
                     bool is_update = false; bool is_insert = false; bool? is_processed = false;
                     Product? prepared_product = null; var updated_attrs_new = new List<string>();
                     int idea_product_id = 0;
@@ -2068,74 +2068,6 @@ internal class MainLoop {
                                 PrintConsole(Constants.MAGENTO2 + " total " + live_m2_brands?.Count + " brands found.");
                             }
                             #endregion
-
-                            var m2products = Helper.GetProducts(null, null, null, null);
-                            foreach (var m2_item in m2products.items) {
-                                bool up = false;
-                                var found_product = products.FirstOrDefault(x => x.sku == m2_item.sku);
-                                if (found_product is not null) {
-                                    //get magento2 categories and save to Product 
-                                    //this operation for first time only, after that categories will be updated by product sync
-                                    if (m2_item.extension_attributes.category_links is not null) {
-                                        foreach (var citem in m2_item.extension_attributes.category_links) {
-                                            if (citem.category_id == "2") continue;
-                                            var found_target = category_target_relation.FirstOrDefault(x => x.target_id == int.Parse(citem.category_id));
-                                            if (found_target is not null) {
-                                                if (!found_product.extension.categories.Contains(categories.FirstOrDefault(x => x.id == found_target.category_id))) {
-                                                    found_product.extension.category_ids += "," + found_target.category_id.ToString();
-                                                    found_product.extension.categories.Add(categories.FirstOrDefault(x => x.id == found_target.category_id));
-                                                    up = true;
-                                                }
-                                            }
-                                        }
-                                        if (up) {
-                                            var updated_product = db_helper.UpdateProduct(customer.customer_id, found_product);
-                                            PrintConsole(updated_product?.sku + string.Join(",", updated_product?.extension.categories.Select(x => x.category_name)));
-                                        }
-                                    }
-                                }
-                            }
-
-                            foreach (var m2_item in m2products.items) {
-                                bool up = false;
-                                var found_product = products.FirstOrDefault(x => x.sku == m2_item.sku);
-                                if (found_product is not null) {
-                                    var m2_brand = m2_item.custom_attributes.FirstOrDefault(x => x.attribute_code == "brand")?.value?.ToString();
-                                    m2_brand = live_m2_brands?.GetValueOrDefault(int.Parse(m2_brand));
-                                    if (!string.IsNullOrWhiteSpace(m2_brand)) {
-                                        var found_brand = brands.FirstOrDefault(x => string.Compare(x.brand_name, m2_brand, StringComparison.OrdinalIgnoreCase) == 0);
-                                        if (found_brand is not null) {
-                                            if (found_product.extension.brand.brand_name != found_brand.brand_name) {
-                                                found_product.extension.brand_id = found_brand.id;
-                                                found_product.extension.brand = found_brand;
-                                                up = true;
-                                            }
-                                        }
-                                        else {
-                                            //found_brand = new Brand() {
-                                            //    customer_id = customer.customer_id,
-                                            //    brand_name = m2_brand,
-                                            //    status = true,
-                                            //    id = 0
-                                            //};
-                                            //if (db_helper.InsertBrand(customer.customer_id, found_brand) is not null) {
-                                            //    PrintConsole("Brand inserted: " + found_brand.brand_name, ConsoleColor.Green);
-                                            //}
-                                            //else {
-                                            //    PrintConsole("Brand insert error: " + found_brand.brand_name, ConsoleColor.Red);
-                                            //}
-                                            //up = true;
-                                        }
-                                        if (up) {
-                                            var updated_product = db_helper.UpdateProduct(customer.customer_id, found_product);
-                                            PrintConsole(updated_product?.sku + string.Join(",", updated_product?.extension.categories.Select(x => x.category_name)));
-                                        }
-                                    }
-                                }
-                            }
-
-
-
 
                             var selected_live_magento_product = Helper.GetProductBySKU(item.sku);
                             if (selected_live_magento_product is not null) { //update magento2 product
@@ -2790,6 +2722,124 @@ internal class MainLoop {
                         }
                     }
                 }
+
+
+
+
+                #region FOR TESTING
+
+                var ent_products = Helper.GetENTProducts();
+                foreach (var ent_item in ent_products) {
+                    try {
+                        bool up = false;
+                        var found_product = products.FirstOrDefault(x => x.sku == ent_item.Sku);
+                        if (found_product != null) {
+                            if (!Equals(found_product.price, ent_item.Price)) {
+                                found_product.price = ent_item.Price;
+                                up = true;
+                            }
+                            if (!Equals(found_product.special_price, ent_item.Special_Price)) {
+                                found_product.special_price = ent_item.Special_Price;
+                                up = true;
+                            }
+                            if (!Equals(found_product.custom_price, ent_item.Custom_Price)) {
+                                found_product.custom_price = ent_item.Custom_Price;
+                                up = true;
+                            }
+
+                            if (up) {
+                                var updated_product = db_helper.UpdateProduct(customer.customer_id, found_product);
+                                PrintConsole(updated_product?.sku + " " + updated_product?.price + " " + updated_product?.special_price + " " + updated_product?.custom_price);
+                            }
+                        }
+                    }
+                    catch (Exception ex) {
+                        PrintConsole(ex.ToString(), ConsoleColor.Red);
+                    }
+                }
+
+
+                var m2products = Helper.GetProducts(null, null, null, null);
+
+                foreach (var m2_item in m2products.items) {
+
+                }
+
+                foreach (var m2_item in m2products.items) {
+                    bool up = false;
+                    var found_product = products.FirstOrDefault(x => x.sku == m2_item.sku);
+                    if (found_product is not null) {
+                        //get magento2 categories and save to Product 
+                        //this operation for first time only, after that categories will be updated by product sync
+                        if (m2_item.extension_attributes.category_links is not null) {
+                            foreach (var citem in m2_item.extension_attributes.category_links) {
+                                if (citem.category_id == "2") continue;
+                                var found_target = category_target_relation.FirstOrDefault(x => x.target_id == int.Parse(citem.category_id));
+                                if (found_target is not null) {
+                                    if (!found_product.extension.categories.Contains(categories.FirstOrDefault(x => x.id == found_target.category_id))) {
+                                        found_product.extension.category_ids += "," + found_target.category_id.ToString();
+                                        found_product.extension.categories.Add(categories.FirstOrDefault(x => x.id == found_target.category_id));
+                                        up = true;
+                                    }
+                                }
+                            }
+                            if (up) {
+                                var updated_product = db_helper.UpdateProduct(customer.customer_id, found_product);
+                                PrintConsole(updated_product?.sku + string.Join(",", updated_product?.extension.categories.Select(x => x.category_name)));
+                            }
+                        }
+                    }
+                }
+
+                foreach (var m2_item in m2products.items) {
+                    try {
+                        bool up = false;
+                        var found_product = products.FirstOrDefault(x => x.sku == m2_item.sku);
+                        if (found_product is not null) {
+                            var m2_brand = m2_item.custom_attributes.FirstOrDefault(x => x.attribute_code == "brand")?.value?.ToString();
+                            m2_brand = live_m2_brands?.GetValueOrDefault(int.Parse(m2_brand));
+                            if (!string.IsNullOrWhiteSpace(m2_brand)) {
+                                var found_brand = brands.FirstOrDefault(x => string.Compare(x.brand_name, m2_brand, StringComparison.OrdinalIgnoreCase) == 0);
+                                if (found_brand is not null) {
+                                    if (found_product.extension.brand.brand_name != found_brand.brand_name) {
+                                        found_product.extension.brand_id = found_brand.id;
+                                        found_product.extension.brand = found_brand;
+                                        up = true;
+                                    }
+                                }
+                                else {
+                                    found_brand = new Brand() {
+                                        customer_id = customer.customer_id,
+                                        brand_name = m2_brand,
+                                        status = true,
+                                        id = 0
+                                    };
+                                    var inserted_brand = db_helper.InsertBrand(customer.customer_id, found_brand);
+                                    if (inserted_brand is not null) {
+                                        brands.Add(inserted_brand);
+                                        if (found_product.extension.brand.brand_name != inserted_brand.brand_name) {
+                                            found_product.extension.brand_id = inserted_brand.id;
+                                            found_product.extension.brand = inserted_brand;
+                                            up = true;
+                                        }
+                                        PrintConsole("Brand inserted: " + found_brand.brand_name, ConsoleColor.Green);
+                                    }
+                                    else {
+                                        PrintConsole("Brand insert error: " + found_brand.brand_name, ConsoleColor.Red);
+                                    }
+                                }
+                                if (up) {
+                                    var updated_product = db_helper.UpdateProduct(customer.customer_id, found_product);
+                                    PrintConsole(updated_product?.sku + " " + m2_brand);
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex) {
+                        PrintConsole(ex.ToString(), ConsoleColor.Red);
+                    }
+                }
+                #endregion
             }
         }
         catch (Exception _ex) {

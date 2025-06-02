@@ -81,7 +81,7 @@
                     Hedef Kategoriler
                 </FluentLabel>
             </FluentGridItem>
-            <FluentGridItem xs="12" Style="display:contents;">
+            <FluentGridItem xs="12" Justify="JustifyContent.FlexStart">
                 @foreach (var item in CategoryTargets) {
                     <FluentGridItem lg="3" md="4" xs="6" Style="@("margin:5px;border:1px dashed " + (item.sync_status == Target.SyncStatus.Synced ? "green" : "var(--accent-fill-rest)" ) + ";border-radius:3px;padding:5px;")">
                         <FluentGridItem xs="12" Justify="JustifyContent.Center">

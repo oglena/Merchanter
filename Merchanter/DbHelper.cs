@@ -3224,7 +3224,6 @@ namespace Merchanter {
             }
         }
 
-
         /// <summary>
         /// Updates the products in the database
         /// </summary>

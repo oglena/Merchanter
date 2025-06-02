@@ -1011,6 +1011,13 @@ namespace Merchanter {
 
         public static M2_Product? InsertMagentoProduct(Product _product, int _brand_id, List<int> _category_ids, CurrencyRate _currency_rate) {
             try {
+                List<object> category_ids = [];
+                if (_category_ids.Count > 0) {
+                    foreach (var item in _category_ids) {
+                        if (item != 0)
+                            category_ids.Add(new { category_id = item, position = 0 });
+                    }
+                }
                 var specialPriceValue = _product.special_price > 0
                     ? Math.Round(
                         _product.special_price *
@@ -1025,7 +1032,7 @@ namespace Merchanter {
                     },
                     new {
                         attribute_code = "brand",
-                        value = _product.extension.brand.brand_name
+                        value = _brand_id
                     }
                 };
 
@@ -1039,6 +1046,7 @@ namespace Merchanter {
                 var json = new {
                     product = new {
                         sku = _product.sku,
+                        universal_sku = _product.sku,
                         name = _product.name,
                         attribute_set_id = 4,
                         visibility = 4,
@@ -1053,7 +1061,8 @@ namespace Merchanter {
                             stock_item = new {
                                 is_in_stock = _product.total_qty > 0,
                                 qty = _product.total_qty
-                            }
+                            },
+                            category_links = category_ids.Count > 0 ? category_ids : null
                         },
                         custom_attributes = customAttributes
                     },
@@ -1369,18 +1378,19 @@ namespace Merchanter {
         /// <returns>Updated Option ID</returns>
         public static string? InsertAttributeOption(string _attribute_code, string? _attribute_value) {
             try {
-                if (!string.IsNullOrWhiteSpace(_attribute_value)) return null;
+                if (string.IsNullOrWhiteSpace(_attribute_value)) return null;
                 var attribute_option = new {
                     option = new M2_AttributeOption() {
                         value = _attribute_value,
                         store_labels = [new M2_StoreLabel() { store_id = 0, label = _attribute_value }],
                         is_default = false,
-                        sort_order = 0
+                        sort_order = 0,
+                        label = _attribute_value
                     }
                 };
 
                 using (Executioner executioner = new Executioner()) {
-                    var json_product = executioner.Execute(global.magento.base_url + "index.php/rest/all/V1/products/attributes/" + ConvertFriendly(_attribute_code) + "/options", RestSharp.Method.Post, attribute_option, global.magento.token);
+                    var json_product = executioner.Execute(global.magento.base_url + "rest/all/V1/products/attributes/" + ConvertFriendly(_attribute_code) + "/options", RestSharp.Method.Post, attribute_option, global.magento.token);
                     if (json_product != null) {
                         var updated_id = Newtonsoft.Json.JsonConvert.DeserializeObject<string>(json_product);
                         if (updated_id != null) {
@@ -1467,7 +1477,10 @@ namespace Merchanter {
             List<int> magento_category_ids = [];
             foreach (var citem in _categories) {
                 // Skip root category if needed (adjust as per your logic)
-                if (citem.id == global.product.customer_root_category_id) continue;
+                if (citem.id == global.product.customer_root_category_id) {
+                    magento_category_ids.Add(global.magento.root_category_id);
+                    continue;
+                }
                 if (citem.id == 0) {
                     citem.id = db_helper.InsertCategory(customer.customer_id, citem)?.id ?? 0;
                 }
