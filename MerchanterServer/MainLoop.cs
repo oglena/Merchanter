@@ -2,9 +2,8 @@
 using Merchanter.Classes;
 using Merchanter.Classes.Settings;
 using Merchanter.Responses;
-using MerchanterHelpers;
-using MerchanterHelpers.Classes;
-using ShipmentHelpers;
+using MerchanterHelper;
+using MerchanterHelper.Classes;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Xml.Serialization;

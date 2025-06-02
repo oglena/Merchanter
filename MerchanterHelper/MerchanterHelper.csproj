@@ -1,0 +1,45 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="RestSharp" Version="112.1.0" />
+    <PackageReference Include="System.ServiceModel.Http" Version="8.1.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Merchanter\Merchanter.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="NetOpenX.Rest.Client">
+      <HintPath>bin\Debug\net9.0\NetOpenX.Rest.Client.dll</HintPath>
+    </Reference>
+    <Reference Include="NetOpenX.Rest.Core">
+      <HintPath>bin\Debug\net9.0\NetOpenX.Rest.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="NetOpenX.Rest.Model">
+      <HintPath>bin\Debug\net9.0\NetOpenX.Rest.Model.dll</HintPath>
+    </Reference>
+    <Reference Include="NetOpenX.Rest.Netsis">
+      <HintPath>bin\Debug\net9.0\NetOpenX.Rest.Netsis.dll</HintPath>
+    </Reference>
+    <Reference Include="NetOpenX.Rest.Service">
+      <HintPath>bin\Debug\net9.0\NetOpenX.Rest.Service.dll</HintPath>
+    </Reference>
+    <Reference Include="NetOpenX.Rest.Utils">
+      <HintPath>bin\Debug\net9.0\NetOpenX.Rest.Utils.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Net.Http.Formatting">
+      <HintPath>bin\Debug\net9.0\System.Net.Http.Formatting.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Http">
+      <HintPath>bin\Debug\net9.0\System.Web.Http.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

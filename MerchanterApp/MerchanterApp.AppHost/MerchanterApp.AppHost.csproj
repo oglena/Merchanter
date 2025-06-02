@@ -9,15 +9,16 @@
     <UserSecretsId>9645011e-823f-4438-b237-87343e815aa6</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Merchanter.ServerService\Merchanter.ServerService.csproj" />
+    <ProjectReference Include="..\MerchanterApp.ServerService\MerchanterApp.ServerService.csproj" />
     <ProjectReference Include="..\..\MerchanterApp.CMS\MerchanterApp.CMS.csproj" />
     <ProjectReference Include="..\..\MerchanterFrontend\MerchanterFrontend.csproj" />
+    <ProjectReference Include="..\..\MerchanterHelper\MerchanterHelper.csproj" />
+    <ProjectReference Include="..\..\MerchanterServer\MerchanterServer.csproj" />
     <ProjectReference Include="..\MerchanterApp.ApiService\MerchanterApp.ApiService.csproj" />
     <ProjectReference Include="..\MerchanterApp.ServiceDefaults\MerchanterApp.ServiceDefaults.csproj" />
-    <!--<ProjectReference Include="..\MerchanterApp.Web\MerchanterApp.Web.csproj" />-->
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.AppHost" Version="9.2.1" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.9.0" />
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="9.3.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.11.0" />
   </ItemGroup>
 </Project>

@@ -14,8 +14,7 @@
 		<FileVersion>1.2.0.0</FileVersion>
 	</PropertyGroup>
 	<ItemGroup>
-		<ProjectReference Include="..\MerchanterHelpers\MerchanterHelpers.csproj" />
+		<ProjectReference Include="..\MerchanterHelper\MerchanterHelper.csproj" />
 		<ProjectReference Include="..\Merchanter\Merchanter.csproj" />
-		<ProjectReference Include="..\ShipmentHelpers\ShipmentHelpers.csproj" />
 	</ItemGroup>
 </Project>

@@ -7,9 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Merchanter", "Merchanter.cs
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MerchanterServer", "..\MerchanterServer\MerchanterServer.csproj", "{7D85DFDC-9964-4E14-B66D-911F68C907CC}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ShipmentHelpers", "..\ShipmentHelpers\ShipmentHelpers.csproj", "{247AA11D-A72E-4D70-8A10-EEBD257F4FC8}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MerchanterHelpers", "..\MerchanterHelpers\MerchanterHelpers.csproj", "{88B252DD-7C90-4DB5-9A34-064B2DB42B2A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MerchanterHelper", "..\MerchanterHelper\MerchanterHelper.csproj", "{247AA11D-A72E-4D70-8A10-EEBD257F4FC8}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MerchanterApp.AppHost", "..\MerchanterApp\MerchanterApp.AppHost\MerchanterApp.AppHost.csproj", "{4E98A1A5-6B0A-4349-B76B-AAD2D82F43DC}"
 EndProject
@@ -23,7 +21,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MerchanterApp.CMS", "..\Mer
 		{EDD0A50E-7F3B-4499-BBBB-394970002DFB} = {EDD0A50E-7F3B-4499-BBBB-394970002DFB}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Merchanter.ServerService", "..\Merchanter.ServerService\Merchanter.ServerService.csproj", "{EDD0A50E-7F3B-4499-BBBB-394970002DFB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MerchanterApp.ServerService", "..\MerchanterApp\MerchanterApp.ServerService\MerchanterApp.ServerService.csproj", "{EDD0A50E-7F3B-4499-BBBB-394970002DFB}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{77E67DD4-00CC-4EA0-A69F-167559196E70}"
 EndProject
@@ -47,10 +45,6 @@ Global
 		{247AA11D-A72E-4D70-8A10-EEBD257F4FC8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{247AA11D-A72E-4D70-8A10-EEBD257F4FC8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{247AA11D-A72E-4D70-8A10-EEBD257F4FC8}.Release|Any CPU.Build.0 = Release|Any CPU
-		{88B252DD-7C90-4DB5-9A34-064B2DB42B2A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{88B252DD-7C90-4DB5-9A34-064B2DB42B2A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{88B252DD-7C90-4DB5-9A34-064B2DB42B2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{88B252DD-7C90-4DB5-9A34-064B2DB42B2A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{4E98A1A5-6B0A-4349-B76B-AAD2D82F43DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4E98A1A5-6B0A-4349-B76B-AAD2D82F43DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4E98A1A5-6B0A-4349-B76B-AAD2D82F43DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
