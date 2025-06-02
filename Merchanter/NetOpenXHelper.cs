@@ -67,8 +67,8 @@ namespace Merchanter {
                         netsis_product.Kod_5 = item["KOD5"].ToString();
                         netsis_product.Barkod1 = item["BARKOD1"].ToString();
                         netsis_product.Satici_Kodu = item["SATICI_KODU"].ToString();
-                        netsis_product.KDV_Orani = item["KDV_ORANI"] != null ? Convert.ToDouble(item["KDV_ORANI"]) : null;
-                        netsis_product.Sat_Dov_Tip = item["SAT_DOV_TIP"] != null ? Convert.ToInt32(item["SAT_DOV_TIP"]) : 0;
+                        netsis_product.KDV_Orani = item["KDV_ORANI"] is not null ? Convert.ToDouble(item["KDV_ORANI"]) : null;
+                        netsis_product.Sat_Dov_Tip = item["SAT_DOV_TIP"] is not null ? Convert.ToInt32(item["SAT_DOV_TIP"]) : 0;
                         netsis_product.MERKEZ = Convert.ToInt32(item["MERKEZ"]);
                         netsis_product.SIPARIS = Convert.ToInt32(item["SIPARIS"]);
                         netsis_product.BAKIYE = Convert.ToInt32(item["BAKIYE"]);
@@ -147,7 +147,7 @@ namespace Merchanter {
                 Limit = _limit,
                 Fields = ["FATIRS_NO", "FTIRSIP", "TIPI", "CariKod", "ACIK15"]
             }).Data;
-            if (query != null)
+            if (query is not null)
                 data.AddRange(query);
             if (data.Count == 0) {
                 return null;
@@ -189,7 +189,7 @@ namespace Merchanter {
                                     SIPARISNO = kalem.STra_SIPNUM,
                                     FIYAT = Convert.ToDecimal(kalem.STra_NF),
                                     KDV_ORAN = Convert.ToInt32(kalem.SatisKDVOran),
-                                    SERILER = kalem.KalemSeri != null ? kalem.KalemSeri.Select(x => x.Seri1).ToList() : []
+                                    SERILER = kalem.KalemSeri is not null ? kalem.KalemSeri.Select(x => x.Seri1).ToList() : []
                                 });
                                 if (!sipnums.Contains(kalem.STra_SIPNUM)) { }
                                 sipnums.Add(kalem.STra_SIPNUM);
@@ -347,7 +347,7 @@ namespace Merchanter {
                 DocumentBoxType = JTEBelgeBoxType.ebAll,
                 EDocumentType = (JTEBelgeTip)belgetip
             });
-            if (response != null && response.IsSuccessful) {
+            if (response is not null && response.IsSuccessful) {
                 if (!string.IsNullOrWhiteSpace(response.Data)) {
                     if (!Directory.Exists(Environment.CurrentDirectory + @"\" + Helper.global.netsis.ebelge_klasorismi + @"\" + Helper.global.settings.company_name + @"\")) {
                         Directory.CreateDirectory(Environment.CurrentDirectory + @"\" + Helper.global.netsis.ebelge_klasorismi + @"\" + Helper.global.settings.company_name + @"\");

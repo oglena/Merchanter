@@ -32,10 +32,10 @@ namespace Merchanter {
                     details = Base64ToString(_product.extension.description ?? "")
                 },
                 categories = category_ids.Count > 0 ? category_ids : null,
-                images = _product.images != null && _product.images.Count > 0 ? new List<dynamic>() : null
+                images = _product.images is not null && _product.images.Count > 0 ? new List<dynamic>() : null
             };
 
-            if (_product.images != null && _product.images.Count > 0) {
+            if (_product.images is not null && _product.images.Count > 0) {
                 foreach (var image_item in _product.images) {
                     string? base64image = GetImageAsBase64("""C:\MerchanterServer\ankaraerp""" + @"\Images\" + global.customer.user_name + @"\" + image_item.sku, image_item.image_name);
                     if (!string.IsNullOrWhiteSpace(base64image)) {
@@ -53,10 +53,10 @@ namespace Merchanter {
             using Executioner executioner = new();
             var json = executioner.Execute(global.ideasoft.store_url + "/admin-api/products/" + _id.ToString(),
                 RestSharp.Method.Put, pro_json, global.ideasoft.access_token);
-            if (json != null) {
+            if (json is not null) {
                 var idea_product = Newtonsoft.Json.JsonConvert.DeserializeObject<IDEA_Product>(json);
                 //PrintConsole("Product Updated: " + idea_product?.id.ToString() + " - " + idea_product?.name);
-                return idea_product != null ? idea_product.id : 0;
+                return idea_product is not null ? idea_product.id : 0;
             }
             return 0;
         }
@@ -71,7 +71,7 @@ namespace Merchanter {
                 }
 
                 var category_relation = category_target_relation.FirstOrDefault(x => x.category_id == citem.id);
-                if (category_relation != null) {
+                if (category_relation is not null) {
                     idea_category_ids.Add(category_relation.target_id);
                 }
                 else {
@@ -119,7 +119,7 @@ namespace Merchanter {
 
         public static int GetIdeaBrandId(string thread_id, DbHelper db_helper, Customer customer, ref List<IDEA_Brand>? live_idea_brands, Brand? _brand) {
             var idea_brand_id = live_idea_brands?.FirstOrDefault(x => x.name == _brand?.brand_name)?.id;
-            if (idea_brand_id == null && _brand != null && !string.IsNullOrWhiteSpace(_brand.brand_name)) {
+            if (idea_brand_id == null && _brand is not null && !string.IsNullOrWhiteSpace(_brand.brand_name)) {
                 idea_brand_id = InsertIdeaBrand(_brand.brand_name);
                 if (idea_brand_id > 0) {
                     live_idea_brands?.Add(new IDEA_Brand() { id = idea_brand_id.Value, name = _brand.brand_name });
@@ -166,10 +166,10 @@ namespace Merchanter {
                     details = Base64ToString(_product.extension.description ?? "")
                 },
                 categories = category_ids.Count > 0 ? category_ids : null,
-                images = _product.images != null && _product.images.Count > 0 ? new List<dynamic>() : null
+                images = _product.images is not null && _product.images.Count > 0 ? new List<dynamic>() : null
             };
 
-            if (_product.images != null && _product.images.Count > 0) {
+            if (_product.images is not null && _product.images.Count > 0) {
                 foreach (var image_item in _product.images) {
                     string? base64image = GetImageAsBase64(Environment.CurrentDirectory + @"\" + global.customer.user_name + @"\Images\" + image_item.sku, image_item.image_name);
                     if (!string.IsNullOrWhiteSpace(base64image)) {
@@ -186,10 +186,10 @@ namespace Merchanter {
 
             using Executioner executioner = new();
             var json = executioner.Execute(global.ideasoft.store_url + "/admin-api/products", RestSharp.Method.Post, pro_json, global.ideasoft.access_token);
-            if (json != null) {
+            if (json is not null) {
                 var idea_product = Newtonsoft.Json.JsonConvert.DeserializeObject<IDEA_Product>(json);
                 //PrintConsole("Product Inserted: " + idea_product?.id.ToString() + " - " + idea_product?.name);
-                return idea_product != null ? idea_product.id : 0;
+                return idea_product is not null ? idea_product.id : 0;
             }
             return 0;
         }
@@ -203,7 +203,7 @@ namespace Merchanter {
             };
             using Executioner executioner = new();
             var json_cat = executioner.Execute(global.ideasoft.store_url + "/admin-api/categories", RestSharp.Method.Post, cat_json, global.ideasoft.access_token);
-            if (json_cat != null) {
+            if (json_cat is not null) {
                 var idea_category = Newtonsoft.Json.JsonConvert.DeserializeObject<IDEA_Category>(json_cat);
                 PrintConsole("Category Inserted: " + idea_category?.id.ToString() + " - " + idea_category?.name);
                 return idea_category?.id;
@@ -219,10 +219,10 @@ namespace Merchanter {
             };
             using Executioner executioner = new();
             var json_brand = executioner.Execute(global.ideasoft.store_url + "/admin-api/brands", RestSharp.Method.Post, brand_json, global.ideasoft.access_token);
-            if (json_brand != null) {
+            if (json_brand is not null) {
                 var idea_brand = Newtonsoft.Json.JsonConvert.DeserializeObject<IDEA_Brand>(json_brand);
                 PrintConsole("Brand Inserted: " + idea_brand?.id.ToString() + " - " + idea_brand?.name);
-                return idea_brand != null ? idea_brand.id : 0;
+                return idea_brand is not null ? idea_brand.id : 0;
             }
             return 0;
         }
@@ -233,9 +233,9 @@ namespace Merchanter {
         QUERY:
             var encodedSku = Uri.EscapeDataString(_sku);
             var json = executioner.Execute(global.ideasoft.store_url + "/admin-api/products?s=" + encodedSku + "&limit=" + _limit.ToString() + "&page=" + page.ToString(), RestSharp.Method.Get, null, global.ideasoft.access_token);
-            if (json != null) {
+            if (json is not null) {
                 var temp_products = Newtonsoft.Json.JsonConvert.DeserializeObject<List<IDEA_Product>>(json);
-                if (temp_products != null) {
+                if (temp_products is not null) {
                     if (temp_products.Count == _limit) {
                         products.AddRange(temp_products);
                         page++;
@@ -257,9 +257,9 @@ namespace Merchanter {
             var json = executioner.Execute(global.ideasoft.store_url +
                 "/admin-api/products?limit=" + _limit.ToString() + "&page=" + page.ToString(),
                 RestSharp.Method.Get, null, global.ideasoft.access_token);
-            if (json != null) {
+            if (json is not null) {
                 var temp_products = Newtonsoft.Json.JsonConvert.DeserializeObject<List<IDEA_Product>>(json);
-                if (temp_products != null) {
+                if (temp_products is not null) {
                     if (temp_products.Count == _limit) {
                         products.AddRange(temp_products);
                         page++;
@@ -281,9 +281,9 @@ namespace Merchanter {
             var json = executioner.Execute(global.ideasoft.store_url +
                 "/admin-api/categories?limit=" + _limit.ToString() + "&page=" + page.ToString(),
                 RestSharp.Method.Get, null, global.ideasoft.access_token);
-            if (json != null) {
+            if (json is not null) {
                 var temp_categories = Newtonsoft.Json.JsonConvert.DeserializeObject<List<IDEA_Category>>(json);
-                if (temp_categories != null) {
+                if (temp_categories is not null) {
                     if (temp_categories.Count == _limit) {
                         categories.AddRange(temp_categories);
                         page++;
@@ -305,9 +305,9 @@ namespace Merchanter {
             var json = executioner.Execute(global.ideasoft.store_url +
                 "/admin-api/brands?limit=" + _limit.ToString() + "&page=" + page.ToString(),
                 RestSharp.Method.Get, null, global.ideasoft.access_token);
-            if (json != null) {
+            if (json is not null) {
                 var temp_brands = Newtonsoft.Json.JsonConvert.DeserializeObject<List<IDEA_Brand>>(json);
-                if (temp_brands != null) {
+                if (temp_brands is not null) {
                     if (temp_brands.Count == _limit) {
                         brands.AddRange(temp_brands);
                         page++;
@@ -329,9 +329,9 @@ namespace Merchanter {
             var json = executioner.Execute(global.ideasoft.store_url +
                 "/admin-api/orders?limit=" + _limit.ToString() + "&page=" + page.ToString() + "&startCreatedAt=" + DateTime.Now.AddDays(_daysto_ordersync * -1).ToString("yyyy-MM-dd") + "&endCreatedAt=" + DateTime.Now.ToString("yyyy-MM-dd"),
                 RestSharp.Method.Get, null, global.ideasoft.access_token);
-            if (json != null) {
+            if (json is not null) {
                 var temp_orders = Newtonsoft.Json.JsonConvert.DeserializeObject<List<IDEA_Order>>(json);
-                if (temp_orders != null) {
+                if (temp_orders is not null) {
                     if (temp_orders.Count == _limit) {
                         orders.AddRange(temp_orders);
                         page++;

@@ -12,7 +12,7 @@ namespace Merchanter {
                      "&qty=" + _max_qty.ToString() +
                      "&currentPage=1&pageSize=99999";
                 var m2_json = executioner.Execute(url_product_stocks, RestSharp.Method.Get, _json: null, global.magento.token);
-                if (m2_json != null) {
+                if (m2_json is not null) {
                     var m2_product_stocks = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_ProductStocks>(m2_json);
                     if (m2_product_stocks == null) { PrintConsole("Magento Product Stocks Load Failed. Exiting."); return null; }
                     PrintConsole(m2_product_stocks.items.Count().ToString() + " Magento Product Stocks Loaded.");
@@ -31,7 +31,7 @@ namespace Merchanter {
                      "&searchCriteria[currentPage]=" + _current_page.ToString() +
                      "&searchCriteria[pageSize]=" + _page_size.ToString();
                 var m2_json = executioner.Execute(url_attribute_set, RestSharp.Method.Get, _json: null, global.magento.token);
-                if (m2_json != null) {
+                if (m2_json is not null) {
                     var m2_attribute_sets = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_AttributeSets>(m2_json);
                     if (m2_attribute_sets == null) { PrintConsole("Magento Attribute Sets Load Failed. Exiting."); return null; }
                     PrintConsole(m2_attribute_sets.items.Count().ToString() + " Magento Attribute Sets Loaded.");
@@ -48,7 +48,7 @@ namespace Merchanter {
             using (Executioner executioner = new Executioner()) {
                 string url_attribute = global.magento.base_url + "rest/all/V1/products/attribute-sets/" + _attribute_set_id.ToString() + "/attributes";
                 var m2_json = executioner.Execute(url_attribute, RestSharp.Method.Get, _json: null, global.magento.token);
-                if (m2_json != null) {
+                if (m2_json is not null) {
                     var m2_attribute_by_id = Newtonsoft.Json.JsonConvert.DeserializeObject<List<M2_Attribute>>(m2_json);
                     if (m2_attribute_by_id == null) { PrintConsole("Magento Attribute Load Failed. Exiting."); return null; }
                     PrintConsole(m2_attribute_by_id.Count().ToString() + " Magento Attribute Loaded for " + _attribute_set_id.ToString());
@@ -67,7 +67,7 @@ namespace Merchanter {
                      "&searchCriteria[currentPage]=" + _current_page.ToString() +
                      "&searchCriteria[pageSize]=" + _page_size.ToString();
                 var m2_json = executioner.Execute(url_eav_attribute_set, RestSharp.Method.Get, _json: null, global.magento.token);
-                if (m2_json != null) {
+                if (m2_json is not null) {
                     var m2_eav_attribute_sets = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_EAVAttributeSets>(m2_json);
                     if (m2_eav_attribute_sets == null) { PrintConsole("Magento EAV Attribute Sets Load Failed. Exiting."); return null; }
                     PrintConsole(m2_eav_attribute_sets.items.Count().ToString() + " Magento EAV Attribute Sets Loaded.");
@@ -86,7 +86,7 @@ namespace Merchanter {
                      "&searchCriteria[currentPage]=" + _current_page.ToString() +
                      "&searchCriteria[pageSize]=" + _page_size.ToString();
                 var m2_json = executioner.Execute(url_attribute_set_group, RestSharp.Method.Get, _json: null, global.magento.token);
-                if (m2_json != null) {
+                if (m2_json is not null) {
                     var m2_attribute_set_groups = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_AttributeSetGroups>(m2_json);
                     if (m2_attribute_set_groups == null) { PrintConsole("Magento Attribute Set Groups Load Failed. Exiting."); return null; }
                     PrintConsole(m2_attribute_set_groups.items.Count().ToString() + " Magento Attribute Set Groups Loaded.");
@@ -108,7 +108,7 @@ namespace Merchanter {
                      "&searchCriteria[currentPage]=" + _current_page.ToString() +
                      "&searchCriteria[pageSize]=" + _page_size.ToString();
                 var m2_json = executioner.Execute(url_attribute_set_group, RestSharp.Method.Get, _json: null, global.magento.token);
-                if (m2_json != null) {
+                if (m2_json is not null) {
                     var m2_attribute_set_groups = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_AttributeSetGroups>(m2_json);
                     if (m2_attribute_set_groups == null) { PrintConsole("Magento Attribute Set Groups Load Failed. Exiting."); return null; }
                     PrintConsole(m2_attribute_set_groups.items.Count().ToString() + " Magento Attribute Set Groups Loaded.");
@@ -142,7 +142,7 @@ namespace Merchanter {
                 url_category += "&searchCriteria[currentPage]=" + _current_page.ToString() +
                      "&searchCriteria[pageSize]=" + _page_size.ToString();
                 var m2_json = executioner.Execute(url_category, RestSharp.Method.Get, _json: null, global.magento.token);
-                if (m2_json != null) {
+                if (m2_json is not null) {
                     var m2_categories = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Categories>(m2_json);
                     if (m2_categories == null) { PrintConsole("Magento Categories Load Failed. Exiting."); return null; }
                     PrintConsole(m2_categories.items.Count().ToString() + " Magento Categories Loaded.", false);
@@ -159,7 +159,7 @@ namespace Merchanter {
             using (Executioner executioner = new Executioner()) {
                 string url_category = global.magento.base_url + "rest/all/V1/categories?rootCategoryId=" + _root_category_id.ToString();
                 var m2_json = executioner.Execute(url_category, RestSharp.Method.Get, _json: null, global.magento.token);
-                if (m2_json != null) {
+                if (m2_json is not null) {
                     var m2_categories = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_CategoryList>(m2_json);
                     if (m2_categories == null) { PrintConsole("Magento Categories Load Failed. Exiting."); return null; }
                     PrintConsole(m2_categories.children_data.Count().ToString() + " Magento Categories Loaded.");
@@ -178,7 +178,7 @@ namespace Merchanter {
                      "&searchCriteria[filterGroups][0][filters][0][field]=" + "name" +
                      "&searchCriteria[filterGroups][0][filters][0][value]=%25" + _search_term + "%25" +
                      "&searchCriteria[filterGroups][0][filters][0][conditionType]=" + "like";
-                if (_is_active != null) {
+                if (_is_active is not null) {
                     url_category += "&searchCriteria[filterGroups][1][filters][0][field]=" + "is_active" +
                       "&searchCriteria[filterGroups][1][filters][0][value]=" + (_is_active.Value ? "1" : "0") +
                       "&searchCriteria[filterGroups][1][filters][0][conditionType]=" + "eq";
@@ -196,7 +196,7 @@ namespace Merchanter {
                 url_category += "&searchCriteria[currentPage]=" + _current_page.ToString() +
                      "&searchCriteria[pageSize]=" + _page_size.ToString();
                 var m2_json = executioner.Execute(url_category, RestSharp.Method.Get, _json: null, global.magento.token);
-                if (m2_json != null) {
+                if (m2_json is not null) {
                     var m2_categories = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Categories>(m2_json);
                     if (m2_categories == null) { PrintConsole("Magento Categories Load Failed. Exiting."); return null; }
                     PrintConsole(m2_categories.items.Count().ToString() + " Magento Categories Loaded.");
@@ -218,7 +218,7 @@ namespace Merchanter {
                      "&searchCriteria[currentPage]=" + _current_page.ToString() +
                      "&searchCriteria[pageSize]=" + _page_size.ToString();
                 var m2_json = executioner.Execute(url_category, RestSharp.Method.Get, _json: null, global.magento.token);
-                if (m2_json != null) {
+                if (m2_json is not null) {
                     var m2_categories = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Categories>(m2_json);
                     if (m2_categories == null) { PrintConsole("Magento Category Load Failed. Exiting."); return null; }
                     PrintConsole(m2_categories.items[0].id + " Magento Category Loaded.");
@@ -235,7 +235,7 @@ namespace Merchanter {
             using (Executioner executioner = new Executioner()) {
                 string url_category = global.magento.base_url + "rest/all/V1/categories/" + _category_id.ToString();
                 var m2_json = executioner.Execute(url_category, RestSharp.Method.Get, _json: null, global.magento.token);
-                if (m2_json != null) {
+                if (m2_json is not null) {
                     var m2_category = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Category>(m2_json);
                     if (m2_category == null) { PrintConsole("Magento Category Load Failed. Exiting."); return null; }
                     PrintConsole(m2_category.id.ToString() + " Magento Category Loaded.");
@@ -252,7 +252,7 @@ namespace Merchanter {
             using (Executioner executioner = new Executioner()) {
                 string url_tax_class = global.magento.base_url + "rest/all/V1/taxRules/" + _tax_rule_id.ToString();
                 var m2_json = executioner.Execute(url_tax_class, RestSharp.Method.Get, _json: null, global.magento.token);
-                if (m2_json != null) {
+                if (m2_json is not null) {
                     var m2_tax_class = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_TaxRules>(m2_json);
                     if (m2_tax_class == null) { PrintConsole("Magento Tax Class Load Failed. Exiting2."); return null; }
                     PrintConsole(m2_tax_class.code.ToString() + " Magento Tax Class Loaded.");
@@ -269,7 +269,7 @@ namespace Merchanter {
             using (Executioner executioner = new Executioner()) {
                 string url_tax_rate = global.magento.base_url + "rest/all/V1/taxRates/" + _tax_rate_id.ToString();
                 var m2_json = executioner.Execute(url_tax_rate, RestSharp.Method.Get, _json: null, global.magento.token);
-                if (m2_json != null) {
+                if (m2_json is not null) {
                     var m2_tax_rate = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_TaxRate>(m2_json);
                     if (m2_tax_rate == null) { PrintConsole("Magento Tax Class Load Failed. Exiting2."); return null; }
                     PrintConsole(m2_tax_rate.code.ToString() + " Magento Tax Class Loaded.");
@@ -285,32 +285,32 @@ namespace Merchanter {
         public static M2_Products? GetProducts(bool? _status, string? _type, Dictionary<int, string>? _category_ids = null, int? _brand_id = null, int _page_size = 99999, int _current_page = 1) {
             using (Executioner executioner = new Executioner()) {
                 string url_product = global.magento.base_url + "rest/all/V1/products?";
-                if (_status != null) {
+                if (_status is not null) {
                     url_product += "&searchCriteria[filterGroups][0][filters][0][field]=" + "status" +
                                    "&searchCriteria[filterGroups][0][filters][0][value]=" + (_status.Value ? "1" : "2") +
                                    "&searchCriteria[filterGroups][0][filters][0][conditionType]=" + "eq";
                 }
-                if (_category_ids != null) {
+                if (_category_ids is not null) {
                     url_product += "&searchCriteria[filterGroups][0][filters][1][field]=" + "category_id" +
                                    "&searchCriteria[filterGroups][0][filters][1][value]=" + string.Join(",", _category_ids.Keys) +
                                    "&searchCriteria[filterGroups][0][filters][1][conditionType]=" + "in";
                 }
-                if (_brand_id != null) {
+                if (_brand_id is not null) {
                     url_product += "&searchCriteria[filterGroups][2][filters][0][field]=" + "brand" +
                                    "&searchCriteria[filterGroups][2][filters][0][value]=" + _brand_id.ToString() +
                                    "&searchCriteria[filterGroups][2][filters][0][conditionType]=" + "eq";
                 }
                 if (!string.IsNullOrWhiteSpace(_type)) {
-                    url_product += "&searchCriteria[filterGroups][" + ((_status != null) ? "1" : "0") + "][filters][0][field]=" + "type_id" +
-                                   "&searchCriteria[filterGroups][" + ((_status != null) ? "1" : "0") + "][filters][0][value]=" + _type +
-                                   "&searchCriteria[filterGroups][" + ((_status != null) ? "1" : "0") + "][filters][0][conditionType]=" + "eq";
+                    url_product += "&searchCriteria[filterGroups][" + ((_status is not null) ? "1" : "0") + "][filters][0][field]=" + "type_id" +
+                                   "&searchCriteria[filterGroups][" + ((_status is not null) ? "1" : "0") + "][filters][0][value]=" + _type +
+                                   "&searchCriteria[filterGroups][" + ((_status is not null) ? "1" : "0") + "][filters][0][conditionType]=" + "eq";
                 }
                 url_product += "&searchCriteria[sortOrders][0][field]=" + "created_at" +
                     "&searchCriteria[sortOrders][0][direction]=" + "desc" +
                     "&searchCriteria[currentPage]=" + _current_page.ToString() +
                     "&searchCriteria[pageSize]=" + _page_size.ToString();
                 var m2_json = executioner.Execute(url_product, RestSharp.Method.Get, _json: null, global.magento.token);
-                if (m2_json != null) {
+                if (m2_json is not null) {
                     var m2_products = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Products>(m2_json);
                     if (m2_products == null) { PrintConsole("Magento Products Load Failed. Exiting2."); return null; }
                     PrintConsole(m2_products.items.Count().ToString() + " Magento Products Loaded.");
@@ -334,7 +334,7 @@ namespace Merchanter {
                     "&searchCriteria[currentPage]=" + _current_page.ToString() +
                     "&searchCriteria[pageSize]=" + _page_size.ToString();
                 var m2_json = executioner.Execute(url_product, RestSharp.Method.Get, _json: null, global.magento.token);
-                if (m2_json != null) {
+                if (m2_json is not null) {
                     var m2_products = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Products>(m2_json);
                     if (m2_products == null) { PrintConsole("Magento Products Load Failed. Exiting."); return null; }
                     PrintConsole(m2_products.items.Count().ToString() + " Magento Products Loaded.");
@@ -358,7 +358,7 @@ namespace Merchanter {
                     "&searchCriteria[currentPage]=" + _current_page.ToString() +
                     "&searchCriteria[pageSize]=" + _page_size.ToString();
                 var m2_json = executioner.Execute(url_product, RestSharp.Method.Get, _json: null, global.magento.token);
-                if (m2_json != null) {
+                if (m2_json is not null) {
                     var m2_products = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Products>(m2_json);
                     if (m2_products == null) { PrintConsole("Magento Products Load Failed. Exiting."); return null; }
                     PrintConsole(m2_products.items.Count().ToString() + " Magento Products Loaded.");
@@ -389,32 +389,32 @@ namespace Merchanter {
                      "&searchCriteria[filterGroups][0][filters][4][field]=" + "color" +
                      "&searchCriteria[filterGroups][0][filters][4][value]=%25" + _search_term + "%25" +
                      "&searchCriteria[filterGroups][0][filters][4][conditionType]=" + "like";
-                if (_category_ids != null) {
+                if (_category_ids is not null) {
                     url_product += "&searchCriteria[filterGroups][0][filters][5][field]=" + "category_id" +
                                    "&searchCriteria[filterGroups][0][filters][5][value]=" + string.Join(",", _category_ids.Keys) +
                                    "&searchCriteria[filterGroups][0][filters][5][conditionType]=" + "in";
                 }
-                if (_brand_id != null) {
+                if (_brand_id is not null) {
                     url_product += "&searchCriteria[filterGroups][3][filters][6][field]=" + "brand" +
                                    "&searchCriteria[filterGroups][3][filters][6][value]=" + _brand_id.ToString() +
                                    "&searchCriteria[filterGroups][3][filters][6][conditionType]=" + "eq";
                 }
-                if (_status != null) {
+                if (_status is not null) {
                     url_product += "&searchCriteria[filterGroups][1][filters][0][field]=" + "status" +
                       "&searchCriteria[filterGroups][1][filters][0][value]=" + (_status.Value ? "1" : "2") +
                       "&searchCriteria[filterGroups][1][filters][0][conditionType]=" + "eq";
                 }
                 if (!string.IsNullOrWhiteSpace(_type)) {
-                    url_product += "&searchCriteria[filterGroups][" + ((_status != null) ? "2" : "1") + "][filters][0][field]=" + "type_id" +
-                     "&searchCriteria[filterGroups][" + ((_status != null) ? "2" : "1") + "][filters][0][value]=" + _type +
-                     "&searchCriteria[filterGroups][" + ((_status != null) ? "2" : "1") + "][filters][0][conditionType]=" + "eq";
+                    url_product += "&searchCriteria[filterGroups][" + ((_status is not null) ? "2" : "1") + "][filters][0][field]=" + "type_id" +
+                     "&searchCriteria[filterGroups][" + ((_status is not null) ? "2" : "1") + "][filters][0][value]=" + _type +
+                     "&searchCriteria[filterGroups][" + ((_status is not null) ? "2" : "1") + "][filters][0][conditionType]=" + "eq";
                 }
                 url_product += "&searchCriteria[sortOrders][0][field]=" + "created_at" +
                      "&searchCriteria[sortOrders][0][direction]=" + "desc" +
                      "&searchCriteria[currentPage]=" + _current_page.ToString() +
                      "&searchCriteria[pageSize]=" + _page_size.ToString();
                 var m2_json = executioner.Execute(url_product, RestSharp.Method.Get, _json: null, global.magento.token);
-                if (m2_json != null) {
+                if (m2_json is not null) {
                     var m2_products = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Products>(m2_json);
                     if (m2_products == null) { PrintConsole("Magento Products Load Failed. Exiting."); return null; }
                     PrintConsole(m2_products.items.Count().ToString() + " Magento Products Loaded.");
@@ -453,7 +453,7 @@ namespace Merchanter {
                      "&searchCriteria[currentPage]=" + _current_page.ToString() +
                      "&searchCriteria[pageSize]=" + _page_size.ToString();
                 var m2_json = executioner.Execute(url_product, RestSharp.Method.Get, _json: null, global.magento.token);
-                if (m2_json != null) {
+                if (m2_json is not null) {
                     var m2_products = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Products>(m2_json);
                     if (m2_products == null) { PrintConsole("Magento Products Load Failed. Exiting."); return null; }
                     PrintConsole(m2_products.items.Count().ToString() + " Magento Products Loaded.");
@@ -472,7 +472,7 @@ namespace Merchanter {
                      "&searchCriteria[currentPage]=" + _current_page.ToString() +
                      "&searchCriteria[pageSize]=" + _page_size.ToString();
                 var m2_json = executioner.Execute(url_p_attributes, RestSharp.Method.Get, _json: null, global.magento.token);
-                if (m2_json != null) {
+                if (m2_json is not null) {
                     var m2_attributes = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Attributes>(m2_json);
                     if (m2_attributes == null) { PrintConsole("Magento Product Attributes Load Failed. Exiting."); return null; }
                     PrintConsole(m2_attributes.items.Count().ToString() + " Magento Product Attributes Loaded.");
@@ -494,7 +494,7 @@ namespace Merchanter {
             using (Executioner executioner = new Executioner()) {
                 string url_p_attribute = global.magento.base_url + "rest/all/V1/products/attributes/" + _attribute_code;
                 var m2_json = executioner.Execute(url_p_attribute, RestSharp.Method.Get, _json: null, global.magento.token);
-                if (m2_json != null) {
+                if (m2_json is not null) {
                     var m2_attribute = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Attribute>(m2_json);
                     if (m2_attribute == null) { PrintConsole("Magento Product Attributes Load Failed. Exiting."); return null; }
                     PrintConsole("Magento " + m2_attribute.attribute_code + " Loaded.", false);
@@ -516,7 +516,7 @@ namespace Merchanter {
                     "&searchCriteria[currentPage]=" + "1".ToString() +
                     "&searchCriteria[pageSize]=" + "1".ToString();
                 var m2_json = executioner.Execute(url_p_attribute, RestSharp.Method.Get, _json: null, global.magento.token);
-                if (m2_json != null) {
+                if (m2_json is not null) {
                     var m2_attribute = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Attribute>(m2_json);
                     if (m2_attribute == null) { PrintConsole("Product Attributes Load Failed. Exiting."); return null; }
                     PrintConsole("Magento " + m2_attribute.attribute_code + " Loaded.");
@@ -552,9 +552,9 @@ namespace Merchanter {
                             "&searchCriteria[currentPage]=" + _current_page.ToString() +
                             "&searchCriteria[pageSize]=" + _page_size.ToString();
                         var m2_json = executioner.Execute(url_product, RestSharp.Method.Get, _json: null, global.magento.token);
-                        if (m2_json != null) {
+                        if (m2_json is not null) {
                             var query_products = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Products>(m2_json)?.items?.ToList();
-                            if (query_products != null) {
+                            if (query_products is not null) {
                                 if (query_products.Count == _page_size || query_products.Count > 0) {
                                     m2_products.AddRange(query_products);
                                     _current_page++;
@@ -579,7 +579,7 @@ namespace Merchanter {
                             "&searchCriteria[currentPage]=" + _current_page.ToString() +
                             "&searchCriteria[pageSize]=" + _page_size.ToString();
                         var m2_json = executioner.Execute(url_product, RestSharp.Method.Get, _json: null, global.magento.token);
-                        if (m2_json != null) {
+                        if (m2_json is not null) {
                             var query_products = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Products>(m2_json)?.items?.ToList();
                             if (query_products == null) { PrintConsole("Magento Products Load Failed. Exiting."); return new List<M2_Product>(); }
                             PrintConsole(query_products.Count().ToString() + " Magento Products Loaded.");
@@ -607,7 +607,7 @@ namespace Merchanter {
                     }
                 };
                 var m2_json = executioner.Execute(global.magento.base_url + "rest/all/V1/products/attribute-sets/groups", RestSharp.Method.Post, Newtonsoft.Json.JsonConvert.SerializeObject(json_body, Newtonsoft.Json.Formatting.None, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }), global.magento.token);
-                if (m2_json != null) {
+                if (m2_json is not null) {
                     var m2_attribute_set_group = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_AttributeSetGroup>(m2_json);
                     PrintConsole(m2_attribute_set_group.attribute_set_id + "-" + m2_attribute_set_group.attribute_group_id.ToString() + "-" + m2_attribute_set_group.attribute_group_name + " ADDED!..");
 
@@ -623,7 +623,7 @@ namespace Merchanter {
             using (Executioner executioner = new Executioner()) {
                 string url_stock_item = global.magento.base_url + "rest/all/V1/stockItems/" + _sku + "?scopeId=" + _scope.ToString();
                 var m2_json = executioner.Execute(url_stock_item, RestSharp.Method.Get, _json: null, global.magento.token);
-                if (m2_json != null) {
+                if (m2_json is not null) {
                     var m2_stock_item = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_StockItem>(m2_json);
                     if (m2_stock_item == null) { PrintConsole(_sku + " Magento Product Load Failed. Exiting."); return null; }
                     PrintConsole(_sku + " Loaded.");
@@ -646,7 +646,7 @@ namespace Merchanter {
                 using (Executioner executioner = new Executioner()) {
                     string url_product = global.magento.base_url + "rest/all/V1/products/" + _sku;
                     var m2_json = executioner.Execute(url_product, RestSharp.Method.Get, _json: null, global.magento.token);
-                    if (m2_json != null) {
+                    if (m2_json is not null) {
                         var m2_product = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Product>(m2_json);
                         if (m2_product == null) { PrintConsole(_sku + " Magento Product Load Failed. Exiting."); return null; }
                         PrintConsole(_sku + " Magento Product Loaded.", false);
@@ -668,7 +668,7 @@ namespace Merchanter {
             using (Executioner executioner = new Executioner()) {
                 string url_products = global.magento.base_url + "rest/all/V1/configurable-products/" + _sku + "/children";
                 var m2_json = executioner.Execute(url_products, RestSharp.Method.Get, _json: null, global.magento.token);
-                if (m2_json != null) {
+                if (m2_json is not null) {
                     var m2_products = Newtonsoft.Json.JsonConvert.DeserializeObject<List<M2_ConfigurableChild>>(m2_json);
                     if (m2_products == null) { PrintConsole(_sku + " Magento Products Load Failed. Exiting."); return null; }
                     PrintConsole(_sku + " Magento Products Loaded.");
@@ -690,7 +690,7 @@ namespace Merchanter {
                     "&searchCriteria[currentPage]=" + "1".ToString() +
                     "&searchCriteria[pageSize]=" + "1".ToString();
                 var m2_json = executioner.Execute(url_product, RestSharp.Method.Get, _json: null, global.magento.token);
-                if (m2_json != null) {
+                if (m2_json is not null) {
                     var m2_products = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Products>(m2_json);
                     if (m2_products == null) { PrintConsole(string.Join(",", _product_ids) + " Magento Products Load Failed. Exiting."); return null; }
                     PrintConsole(string.Join(",", _product_ids) + " Magento Products Loaded.");
@@ -707,7 +707,7 @@ namespace Merchanter {
             using (Executioner executioner = new Executioner()) {
                 string url_currency = global.magento.base_url + "rest/all/V1/directory/currency";
                 var m2_json = executioner.Execute(url_currency, RestSharp.Method.Get, _json: null, global.magento.token);
-                if (m2_json != null) {
+                if (m2_json is not null) {
                     var m2_currency = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Currency>(m2_json);
                     if (m2_currency == null) { PrintConsole("Magento Currency Load Failed. Exiting."); return null; }
                     PrintConsole("[" + DateTime.Now.ToString() + "] " + global.settings.company_name + "Magento Currency Loaded.");
@@ -763,7 +763,7 @@ namespace Merchanter {
                     "&searchCriteria[currentPage]=" + _current_page.ToString() +
                     "&searchCriteria[pageSize]=" + _page_size.ToString();
                 var m2_json = executioner.Execute(url_order, RestSharp.Method.Get, _json: null, global.magento.token);
-                if (m2_json != null) {
+                if (m2_json is not null) {
                     var m2_orders = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Orders>(m2_json);
                     if (m2_orders == null) { PrintConsole("Magento Orders Load Failed. Exiting."); return null; }
                     return m2_orders;
@@ -798,7 +798,7 @@ namespace Merchanter {
                     "&searchCriteria[currentPage]=" + _current_page.ToString() +
                     "&searchCriteria[pageSize]=" + _page_size.ToString();
                 var m2_json = executioner.Execute(url_order, RestSharp.Method.Get, _json: null, global.magento.token);
-                if (m2_json != null) {
+                if (m2_json is not null) {
                     var m2_orders = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Orders>(m2_json);
                     if (m2_orders == null) { PrintConsole("Magento Orders Load Failed. Exiting."); return null; }
                     PrintConsole(m2_orders.items.Count().ToString() + " Magento Orders Loaded.", false);
@@ -818,9 +818,9 @@ namespace Merchanter {
                     "&searchCriteria[filter_groups][0][filters][0][value]=" + _increment_id +
                     "&searchCriteria[filter_groups][0][filters][0][condition_type]=eq";
                 var m2_json = executioner.Execute(url_order, RestSharp.Method.Get, _json: null, global.magento.token);
-                if (m2_json != null) {
+                if (m2_json is not null) {
                     var m2_orders = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Orders>(m2_json);
-                    if (m2_orders != null) {
+                    if (m2_orders is not null) {
                         var m2_order = m2_orders.items.Length > 0 ? m2_orders.items[0] : null;
                         if (m2_order == null) { PrintConsole(_increment_id + " Magento Order Load Failed. Exiting."); return null; }
                         return m2_order;
@@ -851,12 +851,12 @@ namespace Merchanter {
                 "&searchCriteria[currentPage]=1" +
                 "&searchCriteria[pageSize]=1000";
                 var m2_json = executioner.Execute(url_customer, RestSharp.Method.Get, _json: null, global.magento.token);
-                if (m2_json != null) {
+                if (m2_json is not null) {
                     var m2_customers = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Customers>(m2_json);
                     if (m2_customers == null) { PrintConsole("Magento Orders Load Failed. Exiting."); return null; }
                     if (m2_customers.items.Length > 0) {
                         var c = m2_customers.items.Where(x => x.website_id == 2).FirstOrDefault();
-                        if (c != null) {
+                        if (c is not null) {
                             PrintConsole(c.email + " Magento Customer Loaded.", false);
                             return c;
                         }
@@ -884,7 +884,7 @@ namespace Merchanter {
             string firma_vergino = string.Empty;
             string tc_no = string.Empty;
             _is_corporate = false;
-            if (selected_customer != null) {
+            if (selected_customer is not null) {
                 if (selected_customer.website_id == 2) {  //firma bilgileri doldur
                     firma_ismi = selected_customer.custom_attributes.Where(x => x.attribute_code == global.magento.customer_firma_ismi_attribute_code).FirstOrDefault()?.value;
                     firma_vergidairesi = selected_customer.custom_attributes.Where(x => x.attribute_code == global.magento.customer_firma_vergidairesi_attribute_code).FirstOrDefault()?.value;
@@ -931,7 +931,7 @@ namespace Merchanter {
 
                 using (Executioner executioner = new Executioner()) {
                     var json_invoice = executioner.Execute(global.magento.base_url + "rest/all/V1/order/" + _order.order_id.ToString() + "/invoice", RestSharp.Method.Post, invoice, global.magento.token);
-                    if (json_invoice != null) {
+                    if (json_invoice is not null) {
                         PrintConsole(json_invoice + " magento invoice created.");
                         return json_invoice;
                     }
@@ -969,7 +969,7 @@ namespace Merchanter {
 
                 using (Executioner executioner = new Executioner()) {
                     var json_order = executioner.Execute(global.magento.base_url + "/index.php/rest/all/V1/order/" + _order_id.ToString() + "/ship", RestSharp.Method.Post, ship, global.magento.token);
-                    if (json_order != null) {
+                    if (json_order is not null) {
                         PrintConsole(_order_label + ":" + _carrier_title + " => " + _tracking_numbers + " magento order shipped.");
                         return json_order;
                     }
@@ -995,7 +995,7 @@ namespace Merchanter {
 
                     using (Executioner executioner = new Executioner()) {
                         var json_order = executioner.Execute(global.magento.base_url + "rest/all/V1/orders", RestSharp.Method.Post, order, global.magento.token);
-                        if (json_order != null) {
+                        if (json_order is not null) {
                             PrintConsole(_order.order_status + " => " + _status + " magento order status changed!");
                         }
                     }
@@ -1071,9 +1071,9 @@ namespace Merchanter {
 
                 using (Executioner executioner = new Executioner()) {
                     var json_product = executioner.Execute(global.magento.base_url + "rest/all/V1/products", RestSharp.Method.Post, json, global.magento.token);
-                    if (json_product != null) {
+                    if (json_product is not null) {
                         var updated = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Product>(json_product);
-                        if (updated != null) {
+                        if (updated is not null) {
                             PrintConsole("Sku:" + _product.sku + " new product created => [qty=" + _product.total_qty.ToString() + "]");
                             return updated;
                         }
@@ -1107,10 +1107,10 @@ namespace Merchanter {
                         cat_json,
                         global.magento.token);
 
-                    if (json_cat != null) {
+                    if (json_cat is not null) {
                         // Magento returns the created category object
                         var m2_category = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Category>(json_cat);
-                        if (m2_category != null && m2_category.id > 0) {
+                        if (m2_category is not null && m2_category.id > 0) {
                             PrintConsole("Magento Category Inserted: " + m2_category.id + " - " + m2_category.name);
                             return m2_category.id;
                         }
@@ -1213,7 +1213,7 @@ namespace Merchanter {
                 };
                 using (Executioner executioner = new Executioner()) {
                     var json_price = executioner.Execute(global.magento.base_url + "index.php/rest/all/V1/products/base-prices", RestSharp.Method.Post, prices, global.magento.token);
-                    if (json_price != null) {
+                    if (json_price is not null) {
                         PrintConsole("Sku:" + _product.sku + " updated => [price=" + _product.price.ToString() + "]");
                         return true;
                     }
@@ -1254,7 +1254,7 @@ namespace Merchanter {
                     };
                     using (Executioner executioner = new Executioner()) {
                         var json_special_prices = executioner.Execute(global.magento.base_url + "index.php/rest/all/V1/products/special-price", RestSharp.Method.Post, special_prices, global.magento.token);
-                        if (json_special_prices != null) {
+                        if (json_special_prices is not null) {
                             PrintConsole("Sku:" + _product.sku + " updated => [special_price=" + _product.special_price.ToString() + "]");
                             return true;
                         }
@@ -1278,7 +1278,7 @@ namespace Merchanter {
                     };
                     using (Executioner executioner = new Executioner()) {
                         var json_special_prices_delete = executioner.Execute(global.magento.base_url + "index.php/rest/all/V1/products/special-price-delete", RestSharp.Method.Post, special_prices_delete, global.magento.token);
-                        if (json_special_prices_delete != null) {
+                        if (json_special_prices_delete is not null) {
                             PrintConsole("Sku:" + _product.sku + " updated => [special_price=" + _product.special_price.ToString() + "] deleted.");
                             return true;
                         }
@@ -1353,9 +1353,9 @@ namespace Merchanter {
 
                 using (Executioner executioner = new Executioner()) {
                     var json_product = executioner.Execute(global.magento.base_url + "index.php/rest/all/V1/products/" + ConvertFriendly(_sku), RestSharp.Method.Put, product, global.magento.token);
-                    if (json_product != null) {
+                    if (json_product is not null) {
                         var updated_product = Newtonsoft.Json.JsonConvert.DeserializeObject<M2_Product>(json_product);
-                        if (updated_product != null) {
+                        if (updated_product is not null) {
                             PrintConsole("Sku:" + _sku + " updated => [" + _attribute_code + "=" + _attribute_value + "]");
                             return true;
                         }
@@ -1391,9 +1391,9 @@ namespace Merchanter {
 
                 using (Executioner executioner = new Executioner()) {
                     var json_product = executioner.Execute(global.magento.base_url + "rest/all/V1/products/attributes/" + ConvertFriendly(_attribute_code) + "/options", RestSharp.Method.Post, attribute_option, global.magento.token);
-                    if (json_product != null) {
+                    if (json_product is not null) {
                         var updated_id = Newtonsoft.Json.JsonConvert.DeserializeObject<string>(json_product);
-                        if (updated_id != null) {
+                        if (updated_id is not null) {
                             PrintConsole("Attribute Code:" + _attribute_code + " option inserted => [" + _attribute_code + "=" + _attribute_value + "]");
                             return updated_id;
                         }
@@ -1424,7 +1424,7 @@ namespace Merchanter {
 
                 using (Executioner executioner = new Executioner()) {
                     var json_qty = executioner.Execute(global.magento.base_url + "index.php/rest/all/V1/products/" + ConvertFriendly(_sku) + "/stockItems/1", RestSharp.Method.Put, stock_item, global.magento.token);
-                    if (json_qty != null) {
+                    if (json_qty is not null) {
                         PrintConsole("Sku:" + _sku + " updated => [qty=" + _qty.ToString() + "]");
                         return true;
                     }
@@ -1446,7 +1446,7 @@ namespace Merchanter {
 
             // Try to find the brand ID in the current dictionary
             int m2_brand_id = 0;
-            if (live_m2_brands != null) {
+            if (live_m2_brands is not null) {
                 var found = live_m2_brands.FirstOrDefault(x => x.Value.Equals(_brand.brand_name, StringComparison.OrdinalIgnoreCase));
                 m2_brand_id = found.Key;
                 if (m2_brand_id > 0)
@@ -1486,7 +1486,7 @@ namespace Merchanter {
                 }
 
                 var category_relation = category_target_relation.FirstOrDefault(x => x.category_id == citem.id);
-                if (category_relation != null) {
+                if (category_relation is not null) {
                     magento_category_ids.Add(category_relation.target_id);
                 }
                 else {

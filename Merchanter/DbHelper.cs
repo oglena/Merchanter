@@ -379,7 +379,7 @@ namespace Merchanter {
                 val = cmd.ExecuteScalar();
                 if (state == System.Data.ConnectionState.Open) connection.Close();
 
-                if (val != null) {
+                if (val is not null) {
                     if (int.TryParse(val.ToString(), out inserted_id)) {
                         return GetCustomer(inserted_id);
                     }
@@ -526,7 +526,7 @@ namespace Merchanter {
                 string? filtered_message = _filters.ContainsKey("message") ? _filters["message"] : null;
                 string? filtered_date = _filters.ContainsKey("date") ? _filters["date"] : null;
                 List<Log> list = [];
-                if (filtered_worker != null || filtered_title != null || filtered_message != null || filtered_date != null) {
+                if (filtered_worker is not null || filtered_title is not null || filtered_message is not null || filtered_date is not null) {
                     _query += !string.IsNullOrWhiteSpace(filtered_worker) && filtered_worker != "0" ? " AND worker='" + filtered_worker + "'" : string.Empty;
                     _query += !string.IsNullOrWhiteSpace(filtered_title) && filtered_title != "0" ? " AND title='" + filtered_title + "'" : string.Empty;
                     _query += !string.IsNullOrWhiteSpace(filtered_message) && filtered_message != "0" ? " AND message LIKE '%" + filtered_message + "%'" : string.Empty;
@@ -573,7 +573,7 @@ namespace Merchanter {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
                 _filters.Pager ??= new Pager() { ItemsPerPage = 10, CurrentPageIndex = 0 };
                 string _query = "SELECT * FROM log WHERE customer_id=@customer_id";
-                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
                     foreach (var filter in _filters.Filters) {
                         if (filter.Value is null)
                             _query += $" AND {filter.Field} {filter.Operator} NULL";
@@ -581,7 +581,7 @@ namespace Merchanter {
                             _query += $" AND {filter.Field} {filter.Operator} @{filter.Field}";
                     }
                 }
-                if (_filters.Sort != null)
+                if (_filters.Sort is not null)
                     _query += " ORDER BY " + _filters.Sort.Field + " " + _filters.Sort.Direction + " LIMIT @start,@end;";
                 else {
                     _filters.Sort = new Sort() { Field = "update_date", Direction = "DESC" };
@@ -592,7 +592,7 @@ namespace Merchanter {
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("start", _filters.Pager.ItemsPerPage * _filters.Pager.CurrentPageIndex));
                 cmd.Parameters.Add(new MySqlParameter("end", _filters.Pager.ItemsPerPage));
-                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
                     foreach (var filter in _filters.Filters) {
                         if (filter.Value is not null)
                             cmd.Parameters.Add(new MySqlParameter(filter.Field, filter.Value));
@@ -658,7 +658,7 @@ namespace Merchanter {
                 string? filtered_message = _filters.ContainsKey("message") ? _filters["message"] : null;
                 string? filtered_date = _filters.ContainsKey("date") ? _filters["date"] : null;
                 int total_count = 0;
-                if (filtered_worker != null || filtered_title != null || filtered_message != null || filtered_date != null) {
+                if (filtered_worker is not null || filtered_title is not null || filtered_message is not null || filtered_date is not null) {
                     _query += !string.IsNullOrWhiteSpace(filtered_worker) && filtered_worker != "0" ? " AND worker='" + filtered_worker + "'" : string.Empty;
                     _query += !string.IsNullOrWhiteSpace(filtered_title) && filtered_title != "0" ? " AND title='" + filtered_title + "'" : string.Empty;
                     _query += !string.IsNullOrWhiteSpace(filtered_message) && filtered_message != "0" ? " AND message LIKE '%" + filtered_message + "%'" : string.Empty;
@@ -687,7 +687,7 @@ namespace Merchanter {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
                 _filters.Pager ??= new Pager() { ItemsPerPage = 10, CurrentPageIndex = 0 };
                 string _query = "SELECT COUNT(*) FROM log WHERE customer_id=@customer_id";
-                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
                     foreach (var filter in _filters.Filters) {
                         if (filter.Value is null)
                             _query += $" AND {filter.Field} {filter.Operator} NULL";
@@ -698,7 +698,7 @@ namespace Merchanter {
                 int total_count = 0;
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
                     foreach (var filter in _filters.Filters) {
                         if (filter.Value is not null)
                             cmd.Parameters.Add(new MySqlParameter(filter.Field, filter.Value));
@@ -726,7 +726,7 @@ namespace Merchanter {
                 DbSettings = this.GetSettings(_customer_id);
                 Helper.global = new SettingsMerchanter(_customer_id);
                 var customer = GetCustomer(_customer_id);
-                if (customer != null) { Helper.global.customer = customer; }
+                if (customer is not null) { Helper.global.customer = customer; }
                 else { PrintConsole("Customer not found!", ConsoleColor.Red); return null; }
 
                 #region Core Settings
@@ -774,39 +774,39 @@ namespace Merchanter {
 
 
                 #region Decyrption
-                if (Helper.global.shipment != null && !string.IsNullOrWhiteSpace(Helper.global.shipment.yurtici_kargo_password))
+                if (Helper.global.shipment is not null && !string.IsNullOrWhiteSpace(Helper.global.shipment.yurtici_kargo_password))
                     Helper.global.shipment.yurtici_kargo_password = DBSetting.Decrypt(Helper.global.shipment.yurtici_kargo_password);
-                if (Helper.global.shipment != null && !string.IsNullOrWhiteSpace(Helper.global.shipment.mng_kargo_password))
+                if (Helper.global.shipment is not null && !string.IsNullOrWhiteSpace(Helper.global.shipment.mng_kargo_password))
                     Helper.global.shipment.mng_kargo_password = DBSetting.Decrypt(Helper.global.shipment.mng_kargo_password);
-                if (Helper.global.shipment != null && !string.IsNullOrWhiteSpace(Helper.global.shipment.mng_kargo_client_secret))
+                if (Helper.global.shipment is not null && !string.IsNullOrWhiteSpace(Helper.global.shipment.mng_kargo_client_secret))
                     Helper.global.shipment.mng_kargo_client_secret = DBSetting.Decrypt(Helper.global.shipment.mng_kargo_client_secret);
-                if (Helper.global.magento != null && !string.IsNullOrWhiteSpace(Helper.global.magento.token))
+                if (Helper.global.magento is not null && !string.IsNullOrWhiteSpace(Helper.global.magento.token))
                     Helper.global.magento.token = DBSetting.Decrypt(Helper.global.magento.token);
-                if (Helper.global.entegra != null && !string.IsNullOrWhiteSpace(Helper.global.entegra.api_password))
+                if (Helper.global.entegra is not null && !string.IsNullOrWhiteSpace(Helper.global.entegra.api_password))
                     Helper.global.entegra.api_password = DBSetting.Decrypt(Helper.global.entegra.api_password);
-                if (Helper.global.netsis != null && !string.IsNullOrWhiteSpace(Helper.global.netsis.netopenx_password))
+                if (Helper.global.netsis is not null && !string.IsNullOrWhiteSpace(Helper.global.netsis.netopenx_password))
                     Helper.global.netsis.netopenx_password = DBSetting.Decrypt(Helper.global.netsis.netopenx_password);
-                if (Helper.global.netsis != null && !string.IsNullOrWhiteSpace(Helper.global.netsis.dbpassword))
+                if (Helper.global.netsis is not null && !string.IsNullOrWhiteSpace(Helper.global.netsis.dbpassword))
                     Helper.global.netsis.dbpassword = DBSetting.Decrypt(Helper.global.netsis.dbpassword);
-                if (Helper.global.invoice != null && !string.IsNullOrWhiteSpace(Helper.global.invoice.erp_invoice_ftp_password))
+                if (Helper.global.invoice is not null && !string.IsNullOrWhiteSpace(Helper.global.invoice.erp_invoice_ftp_password))
                     Helper.global.invoice.erp_invoice_ftp_password = DBSetting.Decrypt(Helper.global.invoice.erp_invoice_ftp_password);
-                if (Helper.global.n11 != null && !string.IsNullOrWhiteSpace(Helper.global.n11.appsecret))
+                if (Helper.global.n11 is not null && !string.IsNullOrWhiteSpace(Helper.global.n11.appsecret))
                     Helper.global.n11.appsecret = DBSetting.Decrypt(Helper.global.n11.appsecret);
-                if (Helper.global.hb != null && !string.IsNullOrWhiteSpace(Helper.global.hb.token))
+                if (Helper.global.hb is not null && !string.IsNullOrWhiteSpace(Helper.global.hb.token))
                     Helper.global.hb.token = DBSetting.Decrypt(Helper.global.hb.token);
-                if (Helper.global.hb != null && !string.IsNullOrWhiteSpace(Helper.global.hb.password))
+                if (Helper.global.hb is not null && !string.IsNullOrWhiteSpace(Helper.global.hb.password))
                     Helper.global.hb.password = DBSetting.Decrypt(Helper.global.hb.password);
-                if (Helper.global.ty != null && !string.IsNullOrWhiteSpace(Helper.global.ty.api_secret))
+                if (Helper.global.ty is not null && !string.IsNullOrWhiteSpace(Helper.global.ty.api_secret))
                     Helper.global.ty.api_secret = DBSetting.Decrypt(Helper.global.ty.api_secret);
-                if (Helper.global.ank_erp != null && !string.IsNullOrWhiteSpace(Helper.global.ank_erp.password))
+                if (Helper.global.ank_erp is not null && !string.IsNullOrWhiteSpace(Helper.global.ank_erp.password))
                     Helper.global.ank_erp.password = DBSetting.Decrypt(Helper.global.ank_erp.password);
-                if (Helper.global.ideasoft != null && !string.IsNullOrWhiteSpace(Helper.global.ideasoft.client_secret))
+                if (Helper.global.ideasoft is not null && !string.IsNullOrWhiteSpace(Helper.global.ideasoft.client_secret))
                     Helper.global.ideasoft.client_secret = DBSetting.Decrypt(Helper.global.ideasoft.client_secret);
-                if (Helper.global.ideasoft != null && !string.IsNullOrWhiteSpace(Helper.global.ideasoft.refresh_token))
+                if (Helper.global.ideasoft is not null && !string.IsNullOrWhiteSpace(Helper.global.ideasoft.refresh_token))
                     Helper.global.ideasoft.refresh_token = DBSetting.Decrypt(Helper.global.ideasoft.refresh_token);
-                if (Helper.global.ideasoft != null && !string.IsNullOrWhiteSpace(Helper.global.ideasoft.access_token))
+                if (Helper.global.ideasoft is not null && !string.IsNullOrWhiteSpace(Helper.global.ideasoft.access_token))
                     Helper.global.ideasoft.access_token = DBSetting.Decrypt(Helper.global.ideasoft.access_token);
-                if (Helper.global.google != null && !string.IsNullOrWhiteSpace(Helper.global.google.oauth2_clientsecret))
+                if (Helper.global.google is not null && !string.IsNullOrWhiteSpace(Helper.global.google.oauth2_clientsecret))
                     Helper.global.google.oauth2_clientsecret = DBSetting.Decrypt(Helper.global.google.oauth2_clientsecret);
                 #endregion
 
@@ -814,7 +814,7 @@ namespace Merchanter {
                     PrintConsole(Helper.global.settings.company_name + " local enabled!!!", ConsoleColor.Yellow);
                     //Console.Beep();
                     if (_customer_id == 1) {
-                        if (Helper.global?.netsis != null && Helper.global?.entegra != null) {
+                        if (Helper.global?.netsis is not null && Helper.global?.entegra is not null) {
                             Helper.global.netsis.rest_url = "http://85.106.8.239:7070/";
                             Helper.global.entegra.api_url = "http://85.106.8.239:5421/";
                         }
@@ -2335,7 +2335,7 @@ namespace Merchanter {
                         work_source = dataReader["work_source"].ToString(),
                         source_attribute = dataReader["source_attribute"].ToString(),
                         regex = dataReader["regex"].ToString(),
-                        is_active = dataReader["is_active"] != null ? dataReader["is_active"].ToString() == "1" ? true : false : false,
+                        is_active = dataReader["is_active"] is not null ? dataReader["is_active"].ToString() == "1" ? true : false : false,
                         update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
                     };
                     list.Add(sm);
@@ -2391,9 +2391,9 @@ namespace Merchanter {
                 dataReader.Close();
                 if (state == System.Data.ConnectionState.Open) connection.Close();
 
-                if (p != null && !string.IsNullOrWhiteSpace(p.sku)) {
+                if (p is not null && !string.IsNullOrWhiteSpace(p.sku)) {
                     var ext = GetProductExt(_customer_id, p.sku);
-                    if (ext != null) {
+                    if (ext is not null) {
                         p.extension = ext;
                     }
                     else {
@@ -2402,7 +2402,7 @@ namespace Merchanter {
                     }
 
                     var pas = GetProductAttributes(_customer_id, p.id);
-                    if (pas != null) {
+                    if (pas is not null) {
                         p.attributes = [.. pas];
                     }
                     else {
@@ -2411,7 +2411,7 @@ namespace Merchanter {
                     }
 
                     var ss = GetProductSources(_customer_id, p.sku);
-                    if (ss != null && ss.Count > 0) {
+                    if (ss is not null && ss.Count > 0) {
                         p.sources = [.. ss];
                     }
                     else {
@@ -2420,7 +2420,7 @@ namespace Merchanter {
                     }
 
                     var images = GetProductImages(_customer_id, p.sku);
-                    if (images != null) {
+                    if (images is not null) {
                         p.images = [.. images];
                     }
                     else {
@@ -2474,9 +2474,9 @@ namespace Merchanter {
                 dataReader.Close();
                 if (state == System.Data.ConnectionState.Open) connection.Close();
 
-                if (p != null && !string.IsNullOrWhiteSpace(p.sku)) {
+                if (p is not null && !string.IsNullOrWhiteSpace(p.sku)) {
                     var ext = GetProductExt(_customer_id, p.sku);
-                    if (ext != null) {
+                    if (ext is not null) {
                         p.extension = ext;
                     }
                     else {
@@ -2485,7 +2485,7 @@ namespace Merchanter {
                     }
 
                     var pas = GetProductAttributes(_customer_id, p.id);
-                    if (pas != null) {
+                    if (pas is not null) {
                         p.attributes = [.. pas];
                     }
                     else {
@@ -2494,7 +2494,7 @@ namespace Merchanter {
                     }
 
                     var ss = GetProductSources(_customer_id, p.sku);
-                    if (ss != null && ss.Count > 0) {
+                    if (ss is not null && ss.Count > 0) {
                         p.sources = [.. ss];
                     }
                     else {
@@ -2503,7 +2503,7 @@ namespace Merchanter {
                     }
 
                     var imgs = GetProductImages(_customer_id, p.id);
-                    if (imgs != null) {
+                    if (imgs is not null) {
                         p.images = [.. imgs];
                     }
                     else {
@@ -2609,31 +2609,31 @@ namespace Merchanter {
                 var main_source = ai.FirstOrDefault(x => x.work_status && x.work_type == Work.WorkType.PRODUCT && x.work_direction == Work.WorkDirection.MAIN_SOURCE);
                 if (main_source is not null) {
                     _product_other_sources = GetProductOtherSources(_customer_id, main_source.work_name);
-                    if (_product_other_sources != null && _product_other_sources.Count > 0) {
+                    if (_product_other_sources is not null && _product_other_sources.Count > 0) {
                         foreach (var item in list) {
                             var selected_product_source = _product_other_sources?.FindAll(x => x.sku == item.sku);
-                            if (selected_product_source != null && selected_product_source.Count > 0)
+                            if (selected_product_source is not null && selected_product_source.Count > 0)
                                 item.sources.AddRange(selected_product_source);
                         }
                     }
                 }
 
                 // Load product prices
-                if (_product_prices != null && _product_prices.Count > 0) {
+                if (_product_prices is not null && _product_prices.Count > 0) {
                     foreach (var item in list) {
                         item.target_prices = [.. _product_prices.Where(x => x.product_id == item.id)];
                     }
                 }
 
                 //Attach product attributes
-                if (_product_attributes != null && _product_attributes.Count > 0) {
+                if (_product_attributes is not null && _product_attributes.Count > 0) {
                     foreach (var item in list) {
                         item.attributes = [.. _product_attributes.Where(x => x.product_id == item.id)];
                     }
                 }
 
                 //Attach product images
-                if (_product_images != null && _product_images.Count > 0) {
+                if (_product_images is not null && _product_images.Count > 0) {
                     foreach (var item in list) {
                         item.images = [.. _product_images.Where(x => x.product_id == item.id)];
                     }
@@ -2663,7 +2663,7 @@ namespace Merchanter {
 
                 string _query = "SELECT * FROM products_with_mainsource WHERE p_customer_id=@customer_id";
 
-                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
                     foreach (var filter in _filters.Filters) {
                         if (filter.Value is null)
                             _query += $" AND {filter.Field} {filter.Operator} NULL";
@@ -2671,7 +2671,7 @@ namespace Merchanter {
                             _query += $" AND {filter.Field} {filter.Operator} @{filter.Field}";
                     }
                 }
-                if (_filters.Sort != null)
+                if (_filters.Sort is not null)
                     _query += " ORDER BY " + _filters.Sort.Field + " " + _filters.Sort.Direction + " LIMIT @start,@end;";
                 else {
                     _filters.Sort = new Sort() { Field = "p_id", Direction = "DESC" };
@@ -2684,7 +2684,7 @@ namespace Merchanter {
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("start", _filters.Pager.ItemsPerPage * _filters.Pager.CurrentPageIndex));
                 cmd.Parameters.Add(new MySqlParameter("end", _filters.Pager.ItemsPerPage));
-                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
                     foreach (var filter in _filters.Filters) {
                         if (filter.Value is not null)
                             cmd.Parameters.Add(new MySqlParameter(filter.Field, filter.Value));
@@ -2755,19 +2755,19 @@ namespace Merchanter {
                     return [];
                 }
                 var main_source = ai.FirstOrDefault(x => x.work_status && x.work_type == Work.WorkType.PRODUCT && x.work_direction == Work.WorkDirection.MAIN_SOURCE);
-                if (main_source != null)
+                if (main_source is not null)
                     product_other_sources = GetProductOtherSources(_customer_id, main_source.work_name);
-                if (product_other_sources != null && product_other_sources.Count > 0) {
+                if (product_other_sources is not null && product_other_sources.Count > 0) {
                     foreach (var item in list) {
                         var selected_product_source = product_other_sources?.FindAll(x => x.sku == item.sku);
-                        if (selected_product_source != null && selected_product_source.Count > 0)
+                        if (selected_product_source is not null && selected_product_source.Count > 0)
                             item.sources.AddRange(selected_product_source);
                     }
                 }
 
                 // Load product prices
                 var product_prices = GetProductPrices(_customer_id);
-                if (product_prices != null && product_prices.Count > 0) {
+                if (product_prices is not null && product_prices.Count > 0) {
                     foreach (var item in list) {
                         item.target_prices = [.. product_prices.Where(x => x.product_id == item.id)];
                     }
@@ -2775,7 +2775,7 @@ namespace Merchanter {
 
                 // Get product attributes
                 var attrs = GetProductAttributes(_customer_id);
-                if (attrs != null && attrs.Count > 0) {
+                if (attrs is not null && attrs.Count > 0) {
                     foreach (var item in list) {
                         item.attributes = [.. attrs.Where(x => x.product_id == item.id)];
                     }
@@ -2783,7 +2783,7 @@ namespace Merchanter {
 
                 // Get product images
                 var images = GetProductImages(_customer_id);
-                if (images != null && images.Count > 0) {
+                if (images is not null && images.Count > 0) {
                     foreach (var item in list) {
                         item.images = [.. images.Where(x => x.product_id == item.id)];
                     }
@@ -2849,7 +2849,7 @@ namespace Merchanter {
                     var exts = GetProductExts(_customer_id);
                     foreach (var item in list) {
                         var selected_ext = exts?.Where(x => x.sku == item.sku).FirstOrDefault();
-                        if (selected_ext != null)
+                        if (selected_ext is not null)
                             item.extension = selected_ext;
                         else {
                             OnError("SearchProducts: " + item.sku + " - Product Extension Not Found");
@@ -2860,7 +2860,7 @@ namespace Merchanter {
 
                 if (_with_attr) {
                     var attrs = GetProductAttributes(_customer_id);
-                    if (attrs != null) {
+                    if (attrs is not null) {
                         foreach (var item in list) {
                             item.attributes = [.. attrs.Where(x => x.product_id == item.id)];
                         }
@@ -2874,7 +2874,7 @@ namespace Merchanter {
                 var product_sources = GetProductSources(_customer_id);
                 foreach (var item in list) {
                     var selected_product_source = product_sources?.Where(x => x.sku == item.sku).ToList();
-                    if (selected_product_source != null)
+                    if (selected_product_source is not null)
                         item.sources = selected_product_source;
                     else {
                         OnError("SearchProducts: " + item.sku + " - Product Source Not Found");
@@ -2932,7 +2932,7 @@ namespace Merchanter {
                     var exts = GetProductExts(_customer_id);
                     foreach (var item in list) {
                         var selected_ext = exts?.Where(x => x.sku == item.sku).FirstOrDefault();
-                        if (selected_ext != null)
+                        if (selected_ext is not null)
                             item.extension = selected_ext;
                         else {
                             OnError("SearchProducts: " + item.sku + " - Product Extension Not Found");
@@ -2943,7 +2943,7 @@ namespace Merchanter {
 
                 if (_with_attr) {
                     var attrs = GetProductAttributes(_customer_id);
-                    if (attrs != null) {
+                    if (attrs is not null) {
                         foreach (var item in list) {
                             item.attributes = attrs.Where(x => x.product_id == item.id).ToList();
                         }
@@ -2957,7 +2957,7 @@ namespace Merchanter {
                 var product_sources = GetProductSources(_customer_id);
                 foreach (var item in list) {
                     var selected_product_source = product_sources?.Where(x => x.sku == item.sku).ToList();
-                    if (selected_product_source != null)
+                    if (selected_product_source is not null)
                         item.sources = selected_product_source;
                     else {
                         OnError("SearchProducts: " + item.sku + " - Product Source Not Found");
@@ -3021,21 +3021,21 @@ namespace Merchanter {
                         return 0;
                     }
 
-                    if (item.attributes != null && item.attributes.Count > 0) {
+                    if (item.attributes is not null && item.attributes.Count > 0) {
                         if (!UpdateProductAttributes(_customer_id, item.attributes, (int)inserted_id)) {
                             OnError("InsertProducts: " + item.sku + " - Product Attributes Insert Error");
                             return 0;
                         }
                     }
 
-                    if (item.target_prices != null && item.target_prices.Count > 0) {
+                    if (item.target_prices is not null && item.target_prices.Count > 0) {
                         if (!UpdateProductPrices(_customer_id, item.target_prices, (int)inserted_id)) {
                             OnError("InsertProducts: " + item.sku + " - Product Prices Insert Error");
                             return 0;
                         }
                     }
 
-                    if (item.images != null && item.images.Count > 0) {
+                    if (item.images is not null && item.images.Count > 0) {
                         if (!UpdateProductImages(_customer_id, item.images, (int)inserted_id)) {
                             OnError("InsertProducts: " + item.sku + " - Product Images Insert Error");
                             return 0;
@@ -3094,21 +3094,21 @@ namespace Merchanter {
                     return null;
                 }
 
-                if (_product.attributes != null && _product.attributes.Count > 0) {
+                if (_product.attributes is not null && _product.attributes.Count > 0) {
                     if (!UpdateProductAttributes(_customer_id, _product.attributes, (int)inserted_id)) {
                         OnError("InsertProducts: " + _product.sku + " - Product Attributes Insert Error");
                         return null;
                     }
                 }
 
-                if (_product.target_prices != null && _product.target_prices.Count > 0) {
+                if (_product.target_prices is not null && _product.target_prices.Count > 0) {
                     if (!UpdateProductPrices(_customer_id, _product.target_prices, (int)inserted_id)) {
                         OnError("InsertProducts: " + _product.sku + " - Product Prices Insert Error");
                         return null;
                     }
                 }
 
-                if (_product.images != null && _product.images.Count > 0) {
+                if (_product.images is not null && _product.images.Count > 0) {
                     if (!UpdateProductImages(_customer_id, _product.images, (int)inserted_id)) {
                         OnError("InsertProducts: " + _product.sku + " - Product Images Insert Error");
                         return null;
@@ -3184,7 +3184,7 @@ namespace Merchanter {
                             return false;
                         }
                     }
-                    if (item.target_prices != null && item.target_prices.Count > 0) {
+                    if (item.target_prices is not null && item.target_prices.Count > 0) {
                         if (!UpdateProductPrices(_customer_id, item.target_prices, item.id)) {
                             OnError("UpdateProducts: " + item.sku + " - Product Prices Insert Error");
                             return false;
@@ -3199,14 +3199,14 @@ namespace Merchanter {
                             return false;
                         }
                     }
-                    if (item.images != null && item.images.Count > 0) {
+                    if (item.images is not null && item.images.Count > 0) {
                         if (!UpdateProductImages(_customer_id, item.images, item.id)) {
                             OnError("UpdateProducts: " + item.sku + " - Product Images Insert Error");
                             return false;
                         }
                     }
 
-                    if (item.attributes != null && item.attributes.Count > 0) {
+                    if (item.attributes is not null && item.attributes.Count > 0) {
                         if (!UpdateProductAttributes(_customer_id, item.attributes, item.id)) {
                             OnError("UpdateProducts: " + item.sku + " - Product Attributes Update Error");
                             return false;
@@ -3287,7 +3287,7 @@ namespace Merchanter {
                         return null;
                     }
                 }
-                if (_product.target_prices != null && _product.target_prices.Count > 0) {
+                if (_product.target_prices is not null && _product.target_prices.Count > 0) {
                     if (!UpdateProductPrices(_customer_id, _product.target_prices, _product.id)) {
                         OnError("UpdateProduct: " + _product.sku + " - Product Prices Update Error");
                         return null;
@@ -3302,14 +3302,14 @@ namespace Merchanter {
                         return null;
                     }
                 }
-                if (_product.images != null && _product.images.Count > 0) {
+                if (_product.images is not null && _product.images.Count > 0) {
                     if (!UpdateProductImages(_customer_id, _product.images, _product.id)) {
                         OnError("UpdateProduct: " + _product.sku + " - Product Images Update Error");
                         return null;
                     }
                 }
 
-                if (_product.attributes != null && _product.attributes.Count > 0) {
+                if (_product.attributes is not null && _product.attributes.Count > 0) {
                     if (!UpdateProductAttributes(_customer_id, _product.attributes, _product.id)) {
                         OnError("UpdateProduct: " + _product.sku + " - Product Attributes Update Error");
                         return null;
@@ -3366,7 +3366,7 @@ namespace Merchanter {
                     var exts = GetProductExts(_customer_id);
                     foreach (var item in list) {
                         var selected_ext = exts?.Where(x => x.sku == item.sku).FirstOrDefault();
-                        if (selected_ext != null)
+                        if (selected_ext is not null)
                             item.extension = selected_ext;
                         else {
                             OnError("GetXMLEnabledProducts: " + item.sku + " - Product Extension Not Found");
@@ -3378,7 +3378,7 @@ namespace Merchanter {
                 var product_sources = GetProductSources(_customer_id);
                 foreach (var item in list) {
                     var selected_product_source = product_sources?.Where(x => x.sku == item.sku).ToList();
-                    if (selected_product_source != null)
+                    if (selected_product_source is not null)
                         item.sources = selected_product_source;
                     else {
                         OnError("GetXMLEnabledProducts: " + item.sku + " - Product Source Not Found");
@@ -3438,7 +3438,7 @@ namespace Merchanter {
             try {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
                 string _query = "SELECT COUNT(*) FROM products_with_mainsource WHERE p_customer_id=@customer_id";
-                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
                     foreach (var filter in _filters.Filters) {
                         if (filter.Value is null) {
                             _query += $" AND {filter.Field} {filter.Operator} NULL";
@@ -3450,7 +3450,7 @@ namespace Merchanter {
                 }
                 MySqlCommand cmd = new(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
                     foreach (var filter in _filters.Filters) {
                         if (filter.Value is not null)
                             cmd.Parameters.Add(new MySqlParameter(filter.Field, filter.Value));
@@ -3475,7 +3475,7 @@ namespace Merchanter {
             try {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
                 string _query = "SELECT COUNT(*) AS count,MIN(p_price) AS min_price, MAX(p_price) AS max_price, MIN(p_total_qty) AS min_qty, MAX(p_total_qty) AS max_qty FROM products_with_mainsource WHERE p_customer_id=@customer_id";
-                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
                     foreach (var filter in _filters.Filters) {
                         if (filter.Value is null) {
                             _query += $" AND {filter.Field} {filter.Operator} NULL";
@@ -3487,7 +3487,7 @@ namespace Merchanter {
                 }
                 MySqlCommand cmd = new(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
                     foreach (var filter in _filters.Filters) {
                         if (filter.Value is not null)
                             cmd.Parameters.Add(new MySqlParameter(filter.Field, filter.Value));
@@ -3549,7 +3549,7 @@ namespace Merchanter {
                     cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                     cmd.Parameters.Add(new MySqlParameter("barcode", _barcode));
                     cmd.Parameters.Add(new MySqlParameter("is_xml_enabled", _is_xml_enabled ? 1 : 0));
-                    cmd.Parameters.Add(new MySqlParameter("xml_sources", _xml_sources != null ? string.Join(",", _xml_sources) : null));
+                    cmd.Parameters.Add(new MySqlParameter("xml_sources", _xml_sources is not null ? string.Join(",", _xml_sources) : null));
                     if (state != System.Data.ConnectionState.Open) connection.Open();
                     val += cmd.ExecuteNonQuery();
                     if (state == System.Data.ConnectionState.Open) connection.Close();
@@ -3604,9 +3604,9 @@ namespace Merchanter {
                 if (state == System.Data.ConnectionState.Open)
                     connection.Close();
 
-                if (px != null && px.brand_id > 0) {
+                if (px is not null && px.brand_id > 0) {
                     var b = GetBrand(_customer_id, px.brand_id);
-                    if (b != null) {
+                    if (b is not null) {
                         px.brand = b;
                     }
                     else {
@@ -3615,7 +3615,7 @@ namespace Merchanter {
                     }
 
                     var cats = GetProductCategories(_customer_id, _sku);
-                    if (cats != null && cats.Count > 0) {
+                    if (cats is not null && cats.Count > 0) {
                         px.categories = [.. cats];
                     }
                     else {
@@ -3654,12 +3654,12 @@ namespace Merchanter {
                         category_ids = dataReader["category_ids"].ToString(),
                         sku = dataReader["sku"].ToString(),
                         barcode = dataReader["barcode"].ToString(),
-                        is_xml_enabled = dataReader["is_xml_enabled"] != null && dataReader["is_xml_enabled"].ToString() == "1",
+                        is_xml_enabled = dataReader["is_xml_enabled"] is not null && dataReader["is_xml_enabled"].ToString() == "1",
                         xml_sources = dataReader["xml_sources"]?.ToString()?.Split(','),
                         description = dataReader["description"].ToString(),
                         weight = decimal.Parse(dataReader["weight"].ToString()),
                         volume = decimal.Parse(dataReader["volume"].ToString()),
-                        is_enabled = dataReader["is_enabled"] != null && dataReader["is_enabled"].ToString() == "1",
+                        is_enabled = dataReader["is_enabled"] is not null && dataReader["is_enabled"].ToString() == "1",
                         update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
                     };
                     list.Add(s);
@@ -3676,7 +3676,7 @@ namespace Merchanter {
 
                 foreach (var item in list) {
                     var b = brands.FirstOrDefault(x => x.id == item.brand_id);
-                    if (b != null) {
+                    if (b is not null) {
                         item.brand = b;
                     }
                     else {
@@ -3685,7 +3685,7 @@ namespace Merchanter {
                     }
 
                     var c = categories.Where(x => item.category_ids.Split(',').Contains(x.id.ToString())).ToList();
-                    if (c != null && c.Count > 0) {
+                    if (c is not null && c.Count > 0) {
                         item.categories = [.. c];
                     }
                     else {
@@ -3722,12 +3722,12 @@ namespace Merchanter {
                         category_ids = dataReader["category_ids"].ToString(),
                         sku = dataReader["sku"].ToString(),
                         barcode = dataReader["barcode"].ToString(),
-                        is_xml_enabled = dataReader["is_xml_enabled"] != null && dataReader["is_xml_enabled"].ToString() == "1",
+                        is_xml_enabled = dataReader["is_xml_enabled"] is not null && dataReader["is_xml_enabled"].ToString() == "1",
                         xml_sources = dataReader["xml_sources"]?.ToString()?.Split(','),
                         description = dataReader["description"].ToString(),
                         weight = decimal.Parse(dataReader["weight"].ToString()),
                         volume = decimal.Parse(dataReader["volume"].ToString()),
-                        is_enabled = dataReader["is_enabled"] != null && dataReader["is_enabled"].ToString() == "1",
+                        is_enabled = dataReader["is_enabled"] is not null && dataReader["is_enabled"].ToString() == "1",
                         update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
                     };
                     list.Add(s);
@@ -3744,7 +3744,7 @@ namespace Merchanter {
 
                 foreach (var item in list) {
                     var b = brands.FirstOrDefault(x => x.id == item.brand_id);
-                    if (b != null) {
+                    if (b is not null) {
                         item.brand = b;
                     }
                     else {
@@ -3753,7 +3753,7 @@ namespace Merchanter {
                     }
 
                     var c = categories.Where(x => item.category_ids.Split(',').Contains(x.id.ToString())).ToList();
-                    if (c != null && c.Count > 0) {
+                    if (c is not null && c.Count > 0) {
                         item.categories = [.. c];
                     }
                     else {
@@ -3796,7 +3796,7 @@ namespace Merchanter {
                 cmd.Parameters.Add(new MySqlParameter("description", _source.description));
                 cmd.Parameters.Add(new MySqlParameter("is_enabled", _source.is_enabled ? 1 : 0));
                 cmd.Parameters.Add(new MySqlParameter("is_xml_enabled", _source.is_xml_enabled));
-                cmd.Parameters.Add(new MySqlParameter("xml_sources", _source.xml_sources != null ? string.Join(",", _source.xml_sources) : null));
+                cmd.Parameters.Add(new MySqlParameter("xml_sources", _source.xml_sources is not null ? string.Join(",", _source.xml_sources) : null));
                 if (state != System.Data.ConnectionState.Open) connection.Open();
                 val = cmd.ExecuteNonQuery();
                 if (state == System.Data.ConnectionState.Open) connection.Close();
@@ -3831,7 +3831,7 @@ namespace Merchanter {
                 cmd.Parameters.Add(new MySqlParameter("brand_id", _source.brand_id));
                 cmd.Parameters.Add(new MySqlParameter("category_ids", _source.category_ids));
                 cmd.Parameters.Add(new MySqlParameter("barcode", _source.barcode));
-                cmd.Parameters.Add(new MySqlParameter("xml_sources", (_source.xml_sources != null && _source.xml_sources.Length > 0) ? string.Join(",", _source.xml_sources) : string.Empty));
+                cmd.Parameters.Add(new MySqlParameter("xml_sources", (_source.xml_sources is not null && _source.xml_sources.Length > 0) ? string.Join(",", _source.xml_sources) : string.Empty));
                 cmd.Parameters.Add(new MySqlParameter("is_xml_enabled", _source.is_xml_enabled));
                 cmd.Parameters.Add(new MySqlParameter("weight", _source.weight));
                 cmd.Parameters.Add(new MySqlParameter("volume", _source.volume));
@@ -3902,7 +3902,7 @@ namespace Merchanter {
                 var existed_sources = GetProductSources(_customer_id, _sku);
                 foreach (var item in _sources) {
                     var existed_source = existed_sources.FirstOrDefault(x => x.name == item.name && x.sku == item.sku);
-                    if (existed_source != null) {
+                    if (existed_source is not null) {
                         if (existed_source.qty != item.qty || existed_source.is_active != item.is_active || existed_source.barcode != item.barcode) {
                             string _query = "UPDATE product_sources SET barcode=@barcode,qty=@qty,is_active=@is_active,update_date=@update_date WHERE sku=@sku AND name=@name AND customer_id=@customer_id;";
                             MySqlCommand cmd = new MySqlCommand(_query, connection);
@@ -4214,7 +4214,7 @@ namespace Merchanter {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
                 val = cmd.ExecuteScalar();
                 if (state == System.Data.ConnectionState.Open) connection.Close();
-                if (val != null) {
+                if (val is not null) {
                     if (int.TryParse(val.ToString(), out int PPID))
                         return PPID;
                 }
@@ -4238,7 +4238,7 @@ namespace Merchanter {
                 var existed_prices = GetProductPrices(_customer_id, _product_id);
                 foreach (var item in _prices) {
                     var existed_price = existed_prices.FirstOrDefault(x => x.platform_name == item.platform_name && x.product_id == item.product_id);
-                    if (existed_price != null) {
+                    if (existed_price is not null) {
                         if (existed_price.price1 != item.price1 || existed_price.price2 != item.price2 || existed_price.update_currency_as != item.update_currency_as) {
                             string _query = "UPDATE product_prices SET price1=@price1,price2=@price2,update_currency_as=@update_currency_as WHERE product_id=@product_id AND platform_name=@platform_name AND customer_id=@customer_id;";
                             MySqlCommand cmd = new MySqlCommand(_query, connection);
@@ -4377,7 +4377,7 @@ namespace Merchanter {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
                 val = cmd.ExecuteScalar();
                 if (state == System.Data.ConnectionState.Open) connection.Close();
-                if (val != null) {
+                if (val is not null) {
                     if (int.TryParse(val.ToString(), out int PIID))
                         return PIID;
                 }
@@ -4401,7 +4401,7 @@ namespace Merchanter {
                 var existed_images = GetProductImages(_customer_id, _product_id);
                 foreach (var item in _images) {
                     var existed_image = existed_images.FirstOrDefault(x => x.image_name == item.image_name && x.sku == item.sku);
-                    if (existed_image != null) {
+                    if (existed_image is not null) {
                         if (existed_image.image_url != item.image_url || existed_image.is_default != item.is_default || existed_image.type != item.type) {
                             string _query = "UPDATE product_images SET type=@type,image_url=@image_url,image_base64=@image_base64,is_default=@is_default,update_date=@update_date WHERE sku=@sku AND product_id=@product_id AND image_name=@image_name AND customer_id=@customer_id;";
                             MySqlCommand cmd = new MySqlCommand(_query, connection);
@@ -4473,7 +4473,7 @@ namespace Merchanter {
                         image_name = dataReader["image_name"].ToString(),
                         image_url = dataReader["image_url"].ToString(),
                         image_base64 = dataReader["image_base64"].ToString(),
-                        is_default = dataReader["is_default"] != null && dataReader["is_default"].ToString() == "1",
+                        is_default = dataReader["is_default"] is not null && dataReader["is_default"].ToString() == "1",
                         update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
                     };
                     list.Add(pi);
@@ -4513,7 +4513,7 @@ namespace Merchanter {
                         image_name = dataReader["image_name"].ToString(),
                         image_url = dataReader["image_url"].ToString(),
                         image_base64 = dataReader["image_base64"].ToString(),
-                        is_default = dataReader["is_default"] != null && dataReader["is_default"].ToString() == "1",
+                        is_default = dataReader["is_default"] is not null && dataReader["is_default"].ToString() == "1",
                         update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
                     };
                     list.Add(pi);
@@ -4554,7 +4554,7 @@ namespace Merchanter {
                         image_name = dataReader["image_name"].ToString(),
                         image_url = dataReader["image_url"].ToString(),
                         image_base64 = dataReader["image_base64"].ToString(),
-                        is_default = dataReader["is_default"] != null && dataReader["is_default"].ToString() == "1",
+                        is_default = dataReader["is_default"] is not null && dataReader["is_default"].ToString() == "1",
                         update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
                     };
                     list.Add(pi);
@@ -4770,7 +4770,7 @@ namespace Merchanter {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
                 val = cmd.ExecuteScalar();
                 if (state == System.Data.ConnectionState.Open) connection.Close();
-                if (val != null) {
+                if (val is not null) {
                     if (int.TryParse(val.ToString(), out int CTID))
                         return CTID;
                 }
@@ -4805,7 +4805,7 @@ namespace Merchanter {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
                 val = cmd.ExecuteScalar();
                 if (state == System.Data.ConnectionState.Open) connection.Close();
-                if (val != null) {
+                if (val is not null) {
                     if (int.TryParse(val.ToString(), out int PTID))
                         return PTID;
                 }
@@ -5111,7 +5111,7 @@ namespace Merchanter {
                 if (_with_ext) {
                     foreach (var item in list) {
                         var attr = GetAttribute(_customer_id, item.attribute_id);
-                        if (attr != null) {
+                        if (attr is not null) {
                             item.attribute = attr;
                         }
                         else {
@@ -5119,9 +5119,9 @@ namespace Merchanter {
                             return null;
                         }
 
-                        if (item.option_ids != null && item.option_ids.Length > 0) {
+                        if (item.option_ids is not null && item.option_ids.Length > 0) {
                             var options = GetAttributeOptions(_customer_id, item.option_ids);
-                            if (options != null && options.Count > 0) {
+                            if (options is not null && options.Count > 0) {
                                 item.options = [.. options];
                             }
                             else {
@@ -5176,7 +5176,7 @@ namespace Merchanter {
                 if (_with_ext) {
                     foreach (var item in list) {
                         var attr = GetAttribute(_customer_id, item.attribute_id);
-                        if (attr != null) {
+                        if (attr is not null) {
                             item.attribute = attr;
                         }
                         else {
@@ -5184,9 +5184,9 @@ namespace Merchanter {
                             return null;
                         }
 
-                        if (item.option_ids != null && item.option_ids.Length > 0) {
+                        if (item.option_ids is not null && item.option_ids.Length > 0) {
                             var options = GetAttributeOptions(_customer_id, item.option_ids);
-                            if (options != null && options.Count > 0) {
+                            if (options is not null && options.Count > 0) {
                                 item.options = [.. options];
                             }
                             else {
@@ -5281,7 +5281,7 @@ namespace Merchanter {
                     b.id = Convert.ToInt32(dataReader["id"].ToString());
                     b.customer_id = Convert.ToInt32(dataReader["customer_id"].ToString());
                     b.brand_name = dataReader["brand_name"].ToString();
-                    b.status = dataReader["status"] != null ? dataReader["status"].ToString() == "1" ? true : false : false;
+                    b.status = dataReader["status"] is not null ? dataReader["status"].ToString() == "1" ? true : false : false;
                 }
                 dataReader.Close();
                 if (state == System.Data.ConnectionState.Open) connection.Close();
@@ -5305,7 +5305,7 @@ namespace Merchanter {
                 var default_brand = GetBrandByName(_customer_id, Helper.global.product.default_brand);
                 if (default_brand == null) {
                     var inserted_default_brand = InsertBrand(_customer_id, new Brand() { customer_id = _customer_id, brand_name = Helper.global.product.default_brand, status = true });
-                    if (inserted_default_brand != null) {
+                    if (inserted_default_brand is not null) {
                         return inserted_default_brand;
                     }
                     else {
@@ -5367,7 +5367,7 @@ namespace Merchanter {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
                 _filters.Pager ??= new Pager() { ItemsPerPage = 10, CurrentPageIndex = 0 };
                 string _query = "SELECT * FROM brands WHERE customer_id=@customer_id";
-                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
                     foreach (var filter in _filters.Filters) {
                         if (filter.Value is null)
                             _query += $" AND {filter.Field} {filter.Operator} NULL";
@@ -5375,7 +5375,7 @@ namespace Merchanter {
                             _query += $" AND {filter.Field} {filter.Operator} @{filter.Field}";
                     }
                 }
-                if (_filters.Sort != null)
+                if (_filters.Sort is not null)
                     _query += " ORDER BY " + _filters.Sort.Field + " " + _filters.Sort.Direction + " LIMIT @start,@end;";
                 else {
                     _filters.Sort = new Sort() { Field = "id", Direction = "DESC" };
@@ -5386,7 +5386,7 @@ namespace Merchanter {
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("start", _filters.Pager.ItemsPerPage * _filters.Pager.CurrentPageIndex));
                 cmd.Parameters.Add(new MySqlParameter("end", _filters.Pager.ItemsPerPage));
-                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
                     foreach (var filter in _filters.Filters) {
                         if (filter.Value is not null)
                             cmd.Parameters.Add(new MySqlParameter(filter.Field, filter.Value));
@@ -5433,7 +5433,7 @@ namespace Merchanter {
                     b.id = Convert.ToInt32(dataReader["BID"].ToString());
                     b.customer_id = Convert.ToInt32(dataReader["customer"].ToString());
                     b.brand_name = dataReader["brand_name"].ToString();
-                    b.status = dataReader["brand_status"] != null ? dataReader["brand_status"].ToString() == "1" ? true : false : false;
+                    b.status = dataReader["brand_status"] is not null ? dataReader["brand_status"].ToString() == "1" ? true : false : false;
                 }
                 dataReader.Close();
                 if (state == System.Data.ConnectionState.Open) connection.Close();
@@ -5467,7 +5467,7 @@ namespace Merchanter {
                     b.id = Convert.ToInt32(dataReader["id"].ToString());
                     b.customer_id = Convert.ToInt32(dataReader["customer_id"].ToString());
                     b.brand_name = dataReader["brand_name"].ToString();
-                    b.status = dataReader["status"] != null ? dataReader["status"].ToString() == "1" ? true : false : false;
+                    b.status = dataReader["status"] is not null ? dataReader["status"].ToString() == "1" ? true : false : false;
                 }
                 dataReader.Close();
                 if (state == System.Data.ConnectionState.Open) connection.Close();
@@ -5490,7 +5490,7 @@ namespace Merchanter {
             try {
                 object val; int inserted_id;
                 var existed_brand = GetBrandByName(_customer_id, _brand.brand_name);
-                if (existed_brand != null) {
+                if (existed_brand is not null) {
                     return existed_brand;
                 }
                 string _query = "START TRANSACTION;" +
@@ -5504,7 +5504,7 @@ namespace Merchanter {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
                 val = cmd.ExecuteScalar();
                 if (state == System.Data.ConnectionState.Open) connection.Close();
-                if (val != null) {
+                if (val is not null) {
                     if (int.TryParse(val.ToString(), out inserted_id)) {
                         return GetBrand(_customer_id, inserted_id);
                     }
@@ -5527,7 +5527,7 @@ namespace Merchanter {
         public int InsertBrand(int _customer_id, Brand _brand, bool return_bid) {
             try {
                 var existed_brand = GetBrandByName(_customer_id, _brand.brand_name);
-                if (existed_brand != null) {
+                if (existed_brand is not null) {
                     return existed_brand.id;
                 }
                 object val;
@@ -5542,7 +5542,7 @@ namespace Merchanter {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
                 val = cmd.ExecuteScalar();
                 if (state == System.Data.ConnectionState.Open) connection.Close();
-                if (val != null) {
+                if (val is not null) {
                     if (int.TryParse(val.ToString(), out int BID))
                         return BID;
                 }
@@ -5563,7 +5563,7 @@ namespace Merchanter {
         public Brand? UpdateBrand(int _customer_id, Brand _brand) {
             try {
                 var existed_brand = GetBrandByName(_customer_id, _brand.brand_name);
-                if (existed_brand != null && existed_brand.id != _brand.id) {
+                if (existed_brand is not null && existed_brand.id != _brand.id) {
                     return null;
                 }
                 if (state != System.Data.ConnectionState.Open) connection.Open();
@@ -5645,7 +5645,7 @@ namespace Merchanter {
             try {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
                 string _query = "SELECT COUNT(*) FROM brands WHERE customer_id=@customer_id";
-                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
                     foreach (var filter in _filters.Filters) {
                         if (filter.Value is null)
                             _query += $" AND {filter.Field} {filter.Operator} NULL";
@@ -5655,7 +5655,7 @@ namespace Merchanter {
                 }
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
                     foreach (var filter in _filters.Filters) {
                         if (filter.Value is not null)
                             cmd.Parameters.Add(new MySqlParameter(filter.Field, filter.Value));
@@ -5694,7 +5694,7 @@ namespace Merchanter {
                         customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
                         parent_id = Convert.ToInt32(dataReader["parent_id"].ToString()),
                         category_name = dataReader["category_name"].ToString(),
-                        is_active = dataReader["is_active"] != null && dataReader["is_active"].ToString() == "1",
+                        is_active = dataReader["is_active"] is not null && dataReader["is_active"].ToString() == "1",
                         source_category_id = Convert.ToInt32(dataReader["source_category_id"].ToString())
                     };
                 }
@@ -5730,7 +5730,7 @@ namespace Merchanter {
                     category_ids = cmd.ExecuteScalar().ToString();
                 }
 
-                if (category_ids != null) {
+                if (category_ids is not null) {
                     string _query = string.Format("SELECT * FROM categories " +
                         "WHERE customer_id=@customer_id AND id IN ({0})", category_ids);
                     MySqlCommand cmd = new MySqlCommand(_query, connection);
@@ -5742,7 +5742,7 @@ namespace Merchanter {
                             customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
                             parent_id = Convert.ToInt32(dataReader["parent_id"].ToString()),
                             category_name = dataReader["category_name"].ToString(),
-                            is_active = dataReader["is_active"] != null && (dataReader["is_active"].ToString() == "1"),
+                            is_active = dataReader["is_active"] is not null && (dataReader["is_active"].ToString() == "1"),
                             source_category_id = Convert.ToInt32(dataReader["source_category_id"].ToString())
                         };
                         categories.Add(c);
@@ -5780,7 +5780,7 @@ namespace Merchanter {
                         customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
                         parent_id = Convert.ToInt32(dataReader["parent_id"].ToString()),
                         category_name = dataReader["category_name"].ToString(),
-                        is_active = dataReader["is_active"] != null ? dataReader["is_active"].ToString() == "1" ? true : false : false,
+                        is_active = dataReader["is_active"] is not null ? dataReader["is_active"].ToString() == "1" ? true : false : false,
                         source_category_id = Convert.ToInt32(dataReader["source_category_id"].ToString())
                     };
                     categories.Add(c);
@@ -5807,7 +5807,7 @@ namespace Merchanter {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
                 _filters.Pager ??= new Pager() { ItemsPerPage = 10, CurrentPageIndex = 0 };
                 string _query = "SELECT * FROM categories WHERE customer_id=@customer_id";
-                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
                     foreach (var filter in _filters.Filters) {
                         if (filter.Value is null)
                             _query += $" AND {filter.Field} {filter.Operator} NULL";
@@ -5815,7 +5815,7 @@ namespace Merchanter {
                             _query += $" AND {filter.Field} {filter.Operator} @{filter.Field}";
                     }
                 }
-                if (_filters.Sort != null)
+                if (_filters.Sort is not null)
                     _query += " ORDER BY " + _filters.Sort.Field + " " + _filters.Sort.Direction + " LIMIT @start,@end;";
                 else {
                     _filters.Sort = new Sort() { Field = "id", Direction = "DESC" };
@@ -5826,7 +5826,7 @@ namespace Merchanter {
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("start", _filters.Pager.ItemsPerPage * _filters.Pager.CurrentPageIndex));
                 cmd.Parameters.Add(new MySqlParameter("end", _filters.Pager.ItemsPerPage));
-                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
                     foreach (var filter in _filters.Filters) {
                         if (filter.Value is not null)
                             cmd.Parameters.Add(new MySqlParameter(filter.Field, filter.Value));
@@ -5839,7 +5839,7 @@ namespace Merchanter {
                         customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
                         parent_id = Convert.ToInt32(dataReader["parent_id"].ToString()),
                         category_name = dataReader["category_name"].ToString(),
-                        is_active = dataReader["is_active"] != null ? dataReader["is_active"].ToString() == "1" ? true : false : false,
+                        is_active = dataReader["is_active"] is not null ? dataReader["is_active"].ToString() == "1" ? true : false : false,
                         source_category_id = Convert.ToInt32(dataReader["source_category_id"].ToString())
                     };
                     categories.Add(c);
@@ -5877,7 +5877,7 @@ namespace Merchanter {
                         customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
                         parent_id = Convert.ToInt32(dataReader["parent_id"].ToString()),
                         category_name = dataReader["category_name"].ToString(),
-                        is_active = dataReader["is_active"] != null ? dataReader["is_active"].ToString() == "1" ? true : false : false,
+                        is_active = dataReader["is_active"] is not null ? dataReader["is_active"].ToString() == "1" ? true : false : false,
                         source_category_id = Convert.ToInt32(dataReader["source_category_id"].ToString())
                     };
                 }
@@ -5914,7 +5914,7 @@ namespace Merchanter {
                     c.customer_id = Convert.ToInt32(dataReader["customer_id"].ToString());
                     c.parent_id = Convert.ToInt32(dataReader["parent_id"].ToString());
                     c.category_name = dataReader["category_name"].ToString();
-                    c.is_active = dataReader["is_active"] != null ? dataReader["is_active"].ToString() == "1" ? true : false : false;
+                    c.is_active = dataReader["is_active"] is not null ? dataReader["is_active"].ToString() == "1" ? true : false : false;
                     c.source_category_id = Convert.ToInt32(dataReader["source_category_id"].ToString());
                 }
                 dataReader.Close();
@@ -5938,7 +5938,7 @@ namespace Merchanter {
             try {
                 object val; int inserted_id;
                 var existed_category = GetCategoryByName(_customer_id, _category.category_name);
-                if (existed_category != null && existed_category.parent_id == _category.parent_id) {
+                if (existed_category is not null && existed_category.parent_id == _category.parent_id) {
                     return null;
                 }
                 string _query = "START TRANSACTION;" +
@@ -5954,7 +5954,7 @@ namespace Merchanter {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
                 val = cmd.ExecuteScalar();
                 if (state == System.Data.ConnectionState.Open) connection.Close();
-                if (val != null) {
+                if (val is not null) {
                     if (int.TryParse(val.ToString(), out inserted_id)) {
                         return GetCategory(_customer_id, inserted_id);
                     }
@@ -5976,7 +5976,7 @@ namespace Merchanter {
         public Category? UpdateCategory(int _customer_id, Category _category) {
             try {
                 //var existed_category = GetCategoryByName(_customer_id, _category.category_name);
-                //if (existed_category != null && existed_category.parent_id == _category.parent_id) {
+                //if (existed_category is not null && existed_category.parent_id == _category.parent_id) {
                 //    return null;
                 //}
                 if (state != System.Data.ConnectionState.Open) connection.Open();
@@ -6060,7 +6060,7 @@ namespace Merchanter {
             try {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
                 string _query = "SELECT COUNT(*) FROM categories WHERE customer_id=@customer_id";
-                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
                     foreach (var filter in _filters.Filters) {
                         if (filter.Value is null)
                             _query += $" AND {filter.Field} {filter.Operator} NULL";
@@ -6070,7 +6070,7 @@ namespace Merchanter {
                 }
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                if (_filters.Filters != null && _filters.Filters.Count > 0) {
+                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
                     foreach (var filter in _filters.Filters) {
                         if (filter.Value is not null)
                             cmd.Parameters.Add(new MySqlParameter(filter.Field, filter.Value));
@@ -6363,7 +6363,7 @@ namespace Merchanter {
                         shipment_method = dataReader["shipment_method"].ToString(),
                         order_source = dataReader["order_source"].ToString(),
                         barcode = dataReader["barcode"].ToString(),
-                        is_shipped = dataReader["is_shipped"] != null ? dataReader["is_shipped"].ToString() == "1" ? true : false : false,
+                        is_shipped = dataReader["is_shipped"] is not null ? dataReader["is_shipped"].ToString() == "1" ? true : false : false,
                         tracking_number = dataReader["tracking_number"].ToString(),
                         order_date = Convert.ToDateTime(dataReader["order_date"].ToString()),
                         update_date = Convert.ToDateTime(dataReader["update_date"].ToString()),
@@ -6405,7 +6405,7 @@ namespace Merchanter {
                     s.shipment_method = dataReader["shipment_method"].ToString();
                     s.order_source = dataReader["order_source"].ToString();
                     s.barcode = dataReader["barcode"].ToString();
-                    s.is_shipped = dataReader["is_shipped"] != null ? dataReader["is_shipped"].ToString() == "1" ? true : false : false;
+                    s.is_shipped = dataReader["is_shipped"] is not null ? dataReader["is_shipped"].ToString() == "1" ? true : false : false;
                     s.tracking_number = dataReader["tracking_number"].ToString();
                     s.order_date = Convert.ToDateTime(dataReader["order_date"].ToString());
                     s.update_date = Convert.ToDateTime(dataReader["update_date"].ToString());
@@ -6561,7 +6561,7 @@ namespace Merchanter {
                         order_label = dataReader["order_label"].ToString(),
                         erp_customer_code = dataReader["erp_customer_code"].ToString(),
                         erp_customer_group = dataReader["erp_customer_group"].ToString(),
-                        is_belge_created = dataReader["is_belge_created"] != null && dataReader["is_belge_created"].ToString() == "1",
+                        is_belge_created = dataReader["is_belge_created"] is not null && dataReader["is_belge_created"].ToString() == "1",
                         erp_no = dataReader["erp_no"].ToString(),
                         invoice_no = dataReader["invoice_no"].ToString(),
                         belge_url = dataReader["belge_url"].ToString(),
@@ -6577,7 +6577,7 @@ namespace Merchanter {
 
                 if (_with_ext) {
                     var items = GetInvoiceItems(_customer_id);
-                    if (items != null) {
+                    if (items is not null) {
                         foreach (var item in list) {
                             item.items = items.Where(x => x.erp_no == item.erp_no).ToList();
                         }
@@ -6616,7 +6616,7 @@ namespace Merchanter {
                     inv.customer_id = Convert.ToInt32(dataReader["customer_id"].ToString());
                     inv.order_id = dataReader["order_id"].ToString();
                     inv.order_label = dataReader["order_label"].ToString();
-                    inv.is_belge_created = dataReader["is_belge_created"] != null && (dataReader["is_belge_created"].ToString() == "1");
+                    inv.is_belge_created = dataReader["is_belge_created"] is not null && (dataReader["is_belge_created"].ToString() == "1");
                     inv.erp_customer_code = dataReader["erp_customer_code"].ToString();
                     inv.erp_customer_group = dataReader["erp_customer_group"].ToString();
                     inv.erp_no = dataReader["erp_no"].ToString();
@@ -6628,9 +6628,9 @@ namespace Merchanter {
                 }
                 dataReader.Close();
                 if (state == System.Data.ConnectionState.Open) connection.Close();
-                if (inv != null) {
+                if (inv is not null) {
                     var i = GetInvoiceItems(_customer_id, _erp_no);
-                    if (i != null)
+                    if (i is not null)
                         inv.items = i;
                     else {
                         OnError("GetInvoice: " + inv.erp_no + " - Invoice Items Not Found");
@@ -6673,7 +6673,7 @@ namespace Merchanter {
                     if (state == System.Data.ConnectionState.Open) connection.Close();
 
                     if (_with_items) {
-                        if (item.items != null && item.items.Count > 0) {
+                        if (item.items is not null && item.items.Count > 0) {
                             if (!string.IsNullOrWhiteSpace(item.erp_no)) {
                                 if (!InsertInvoiceItems(_customer_id, item.items)) {
                                     OnError("InsertInvoices: " + item.erp_no + " Invoice Items Not Inserted");
@@ -6723,7 +6723,7 @@ namespace Merchanter {
                     if (state == System.Data.ConnectionState.Open) connection.Close();
 
                     if (_with_ext) {
-                        if (item.items != null && item.items.Count > 0) {
+                        if (item.items is not null && item.items.Count > 0) {
                             if (!UpdateInvoiceItems(_customer_id, item.items)) {
                                 OnError("UpdateInvoices: " + item.erp_no + " Invoice Items Not Updated");
                                 return false;
@@ -6949,8 +6949,8 @@ namespace Merchanter {
                         shipment_method = dataReader["shipment_method"].ToString(),
                         comment = dataReader["comment"].ToString(),
                         order_shipping_barcode = dataReader["order_shipping_barcode"].ToString(),
-                        erp_no = dataReader["erp_no"] != null ? dataReader["erp_no"].ToString() : null,
-                        is_erp_sent = dataReader["is_erp_sent"] != null ? dataReader["is_erp_sent"].ToString().Equals("1") : false,
+                        erp_no = dataReader["erp_no"] is not null ? dataReader["erp_no"].ToString() : null,
+                        is_erp_sent = dataReader["is_erp_sent"] is not null ? dataReader["is_erp_sent"].ToString().Equals("1") : false,
                         grand_total = float.Parse(dataReader["grand_total"].ToString()),
                         subtotal = float.Parse(dataReader["subtotal"].ToString()),
                         discount_amount = float.Parse(dataReader["discount_amount"].ToString()),
@@ -6968,7 +6968,7 @@ namespace Merchanter {
                 if (state == System.Data.ConnectionState.Open) connection.Close();
 
                 var order_items = GetOrderItems(_customer_id);
-                if (order_items != null) {
+                if (order_items is not null) {
                     foreach (var item in list) {
                         item.order_items = order_items.Where(x => x.order_id == item.order_id).ToList();
                     }
@@ -6979,10 +6979,10 @@ namespace Merchanter {
                 }
 
                 var billing_items = GetBillingAddresses(_customer_id);
-                if (billing_items != null) {
+                if (billing_items is not null) {
                     foreach (var item in list) {
                         var bi = billing_items.Where(x => x.order_id == item.order_id)?.FirstOrDefault();
-                        if (bi != null) {
+                        if (bi is not null) {
                             item.billing_address = bi;
                         }
                         else {
@@ -6997,10 +6997,10 @@ namespace Merchanter {
                 }
 
                 var shipping_items = GetShippingAddresses(_customer_id);
-                if (shipping_items != null) {
+                if (shipping_items is not null) {
                     foreach (var item in list) {
                         var si = shipping_items.Where(x => x.order_id == item.order_id)?.FirstOrDefault();
-                        if (si != null) {
+                        if (si is not null) {
                             item.shipping_address = si;
                         }
                         else {
@@ -7058,8 +7058,8 @@ namespace Merchanter {
                         shipment_method = dataReader["shipment_method"].ToString(),
                         comment = dataReader["comment"].ToString(),
                         order_shipping_barcode = dataReader["order_shipping_barcode"].ToString(),
-                        erp_no = dataReader["erp_no"] != null ? dataReader["erp_no"].ToString() : null,
-                        is_erp_sent = dataReader["is_erp_sent"] != null ? dataReader["is_erp_sent"].ToString().Equals("1") : false,
+                        erp_no = dataReader["erp_no"] is not null ? dataReader["erp_no"].ToString() : null,
+                        is_erp_sent = dataReader["is_erp_sent"] is not null ? dataReader["is_erp_sent"].ToString().Equals("1") : false,
                         grand_total = float.Parse(dataReader["grand_total"].ToString()),
                         subtotal = float.Parse(dataReader["subtotal"].ToString()),
                         discount_amount = float.Parse(dataReader["discount_amount"].ToString()),
@@ -7077,7 +7077,7 @@ namespace Merchanter {
                 if (state == System.Data.ConnectionState.Open) connection.Close();
 
                 var order_items = GetOrderItems(_customer_id);
-                if (order_items != null) {
+                if (order_items is not null) {
                     foreach (var item in list) {
                         item.order_items = order_items.Where(x => x.order_id == item.order_id).ToList();
                     }
@@ -7088,10 +7088,10 @@ namespace Merchanter {
                 }
 
                 var billing_items = GetBillingAddresses(_customer_id);
-                if (billing_items != null) {
+                if (billing_items is not null) {
                     foreach (var item in list) {
                         var bi = billing_items.Where(x => x.order_id == item.order_id)?.FirstOrDefault();
-                        if (bi != null) {
+                        if (bi is not null) {
                             item.billing_address = bi;
                         }
                         else {
@@ -7106,10 +7106,10 @@ namespace Merchanter {
                 }
 
                 var shipping_items = GetShippingAddresses(_customer_id);
-                if (shipping_items != null) {
+                if (shipping_items is not null) {
                     foreach (var item in list) {
                         var si = shipping_items.Where(x => x.order_id == item.order_id)?.FirstOrDefault();
-                        if (si != null) {
+                        if (si is not null) {
                             item.shipping_address = si;
                         }
                         else {
@@ -7160,8 +7160,8 @@ namespace Merchanter {
                     o.shipment_method = dataReader["shipment_method"].ToString();
                     o.comment = dataReader["comment"].ToString();
                     o.order_shipping_barcode = dataReader["order_shipping_barcode"].ToString();
-                    o.erp_no = dataReader["erp_no"] != null ? dataReader["erp_no"].ToString() : null;
-                    o.is_erp_sent = dataReader["is_erp_sent"] != null ? dataReader["is_erp_sent"].ToString().Equals("1") : false;
+                    o.erp_no = dataReader["erp_no"] is not null ? dataReader["erp_no"].ToString() : null;
+                    o.is_erp_sent = dataReader["is_erp_sent"] is not null ? dataReader["is_erp_sent"].ToString().Equals("1") : false;
                     o.grand_total = float.Parse(dataReader["grand_total"].ToString());
                     o.subtotal = float.Parse(dataReader["subtotal"].ToString());
                     o.discount_amount = float.Parse(dataReader["discount_amount"].ToString());
@@ -7176,9 +7176,9 @@ namespace Merchanter {
 
                 if (state == System.Data.ConnectionState.Open) connection.Close();
 
-                if (o != null) {
+                if (o is not null) {
                     var order_items = GetOrderItems(_customer_id, _order_id);
-                    if (order_items != null)
+                    if (order_items is not null)
                         o.order_items = order_items;
                     else {
                         OnError("GetOrder: " + o.order_label + " Order Items Not Found");
@@ -7186,7 +7186,7 @@ namespace Merchanter {
                     }
 
                     var order_ba = GetBillingAddress(_customer_id, _order_id);
-                    if (order_ba != null)
+                    if (order_ba is not null)
                         o.billing_address = order_ba;
                     else {
                         OnError("GetOrder: " + o.order_label + " Billing Address Not Found");
@@ -7194,7 +7194,7 @@ namespace Merchanter {
                     }
 
                     var order_sa = GetShippingAddress(_customer_id, _order_id);
-                    if (order_sa != null)
+                    if (order_sa is not null)
                         o.shipping_address = order_sa;
                     else {
                         OnError("GetOrder: " + o.order_label + " Shipping Address Not Found");
@@ -7382,7 +7382,7 @@ namespace Merchanter {
                         qty_cancelled = Convert.ToInt32(dataReader["qty_cancelled"].ToString()),
                         qty_refunded = Convert.ToInt32(dataReader["qty_refunded"].ToString()),
                         tax = Convert.ToInt32(dataReader["tax"].ToString()),
-                        tax_included = dataReader["tax_included"] != null ? dataReader["tax_included"].ToString().Equals("1") : false,
+                        tax_included = dataReader["tax_included"] is not null ? dataReader["tax_included"].ToString().Equals("1") : false,
                     };
                     list.Add(oi);
                 }
@@ -7428,7 +7428,7 @@ namespace Merchanter {
                         qty_cancelled = Convert.ToInt32(dataReader["qty_cancelled"].ToString()),
                         qty_refunded = Convert.ToInt32(dataReader["qty_refunded"].ToString()),
                         tax = Convert.ToInt32(dataReader["tax"].ToString()),
-                        tax_included = dataReader["tax_included"] != null ? dataReader["tax_included"].ToString().Equals("1") : false,
+                        tax_included = dataReader["tax_included"] is not null ? dataReader["tax_included"].ToString().Equals("1") : false,
                     };
                     list.Add(oi);
                 }
@@ -7577,7 +7577,7 @@ namespace Merchanter {
                         street = dataReader["street"].ToString(),
                         region = dataReader["region"].ToString(),
                         city = dataReader["city"].ToString(),
-                        is_corporate = dataReader["is_corporate"] != null ? dataReader["is_corporate"].ToString().Equals("1") : false,
+                        is_corporate = dataReader["is_corporate"] is not null ? dataReader["is_corporate"].ToString().Equals("1") : false,
                         firma_ismi = dataReader["firma_ismi"].ToString(),
                         firma_vergidairesi = dataReader["firma_vergidairesi"].ToString(),
                         firma_vergino = dataReader["firma_vergino"].ToString(),
@@ -7623,7 +7623,7 @@ namespace Merchanter {
                     ba.street = dataReader["street"].ToString();
                     ba.region = dataReader["region"].ToString();
                     ba.city = dataReader["city"].ToString();
-                    ba.is_corporate = dataReader["is_corporate"] != null ? dataReader["is_corporate"].ToString().Equals("1") : false;
+                    ba.is_corporate = dataReader["is_corporate"] is not null ? dataReader["is_corporate"].ToString().Equals("1") : false;
                     ba.firma_ismi = dataReader["firma_ismi"].ToString();
                     ba.firma_vergidairesi = dataReader["firma_vergidairesi"].ToString();
                     ba.firma_vergino = dataReader["firma_vergino"].ToString();

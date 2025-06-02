@@ -1839,7 +1839,7 @@ internal class MainLoop {
                             try {
                                 foreach (var property_item in item.property_mappings) {
                                     var property_info = typeof(Product).GetProperty(property_item.property);
-                                    if (property_info != null) {
+                                    if (property_info is not null) {
                                         var item_value = property_info.GetValue(item);
                                         var selected_value = property_info.GetValue(selected_product);
                                         switch (property_item.sync_type) {
@@ -1878,7 +1878,7 @@ internal class MainLoop {
                             try {
                                 foreach (var property_item in item.extension.property_mappings) {
                                     var property_info = typeof(ProductExtension).GetProperty(property_item.property);
-                                    if (property_info != null) {
+                                    if (property_info is not null) {
                                         var item_value = property_info.GetValue(item.extension);
                                         var selected_value = property_info.GetValue(selected_product.extension);
                                         switch (property_item.sync_type) {
@@ -1986,7 +1986,7 @@ internal class MainLoop {
                             try {
                                 foreach (var property_item in item.property_mappings) {
                                     var property_info = typeof(Product).GetProperty(property_item.property);
-                                    if (property_info != null) {
+                                    if (property_info is not null) {
                                         var item_value = property_info.GetValue(item);
                                         var prepared_value = property_info.GetValue(prepared_product);
                                         switch (property_item.sync_type) {
@@ -2014,7 +2014,7 @@ internal class MainLoop {
                             try {
                                 foreach (var property_item in item.extension.property_mappings) {
                                     var property_info = typeof(ProductExtension).GetProperty(property_item.property);
-                                    if (property_info != null) {
+                                    if (property_info is not null) {
                                         var item_value = property_info.GetValue(item.extension);
                                         var prepared_value = property_info.GetValue(prepared_product.extension);
                                         switch (property_item.sync_type) {
@@ -2060,7 +2060,7 @@ internal class MainLoop {
                                 PrintConsole(Constants.MAGENTO2 + " categories and brands started loading...");
                                 live_m2_categories = Helper.GetCategories(null, null)?.items.ToList(); PrintConsole(Constants.MAGENTO2 + " total " + live_m2_categories?.Count + " categories found.");
                                 var brandAttribute = Helper.GetProductAttribute("brand");
-                                if (brandAttribute != null && brandAttribute.options != null) {
+                                if (brandAttribute is not null && brandAttribute.options is not null) {
                                     live_m2_brands = brandAttribute.options
                                         .Where(x => !string.IsNullOrWhiteSpace(x.value) && !string.IsNullOrWhiteSpace(x.label))
                                         .ToDictionary(x => int.TryParse(x.value, out var id) ? id : 0, x => x.label);
@@ -2108,7 +2108,7 @@ internal class MainLoop {
                                     var m2_brand_id = Helper.GetM2BrandId(thread_id, db_helper, customer, ref live_m2_brands, prepared_product.extension.brand);
                                     #endregion
                                     var currency_rate = rates.FirstOrDefault(x => x.currency.code == prepared_product.currency.code);
-                                    if (currency_rate != null && prepared_product.price > 0) { //item.price > 0
+                                    if (currency_rate is not null && prepared_product.price > 0) { //item.price > 0
                                         var inserted_magento_product = Helper.InsertMagentoProduct(prepared_product, m2_brand_id, m2_category_ids, currency_rate);
                                         if (inserted_magento_product is not null) {
                                             magento_product_id = inserted_magento_product.id;
@@ -2352,7 +2352,7 @@ internal class MainLoop {
 
                             #region Prices
                             //var currency_rate = rates.FirstOrDefault(x => x.currency.code == item.currency.code);
-                            //if (currency_rate != null) {
+                            //if (currency_rate is not null) {
                             //    if (selected_product.price != item.price) {
                             //        is_update = true; is_need_indexer = true;
                             //        if (Helper.UpdateProductPrice(item, currency_rate)) {
@@ -2459,7 +2459,7 @@ internal class MainLoop {
                         if (is_insert) {
                             if (prepared_product?.id == 0) {
                                 var inserted_product = db_helper.InsertProduct(customer.customer_id, prepared_product);
-                                if (inserted_product != null) {
+                                if (inserted_product is not null) {
                                     PrintConsole("Sku:" + item.sku + " inserted on MerchanterDB.");
                                     db_helper.LogToServer(thread_id, "new_product", Helper.global.settings.company_name + " Sku:" + item.sku, customer.customer_id, "product");
                                 }
@@ -2712,7 +2712,7 @@ internal class MainLoop {
                 }
 
                 if (product_targets.Contains(Constants.N11)) {
-                    if (Helper.global.n11 != null && Helper.global.n11.appkey != null && Helper.global.n11.appsecret != null) {
+                    if (Helper.global.n11 is not null && Helper.global.n11.appkey is not null && Helper.global.n11.appsecret is not null) {
                         N11 n11 = new N11(Helper.global.n11.appkey, Helper.global.n11.appsecret);
                         var live_n11_categories = n11.GetN11Categories();
 
@@ -2733,7 +2733,7 @@ internal class MainLoop {
                     try {
                         bool up = false;
                         var found_product = products.FirstOrDefault(x => x.sku == ent_item.Sku);
-                        if (found_product != null) {
+                        if (found_product is not null) {
                             if (!Equals(found_product.price, ent_item.Price)) {
                                 found_product.price = ent_item.Price;
                                 up = true;

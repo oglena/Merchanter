@@ -34,7 +34,7 @@ namespace Merchanter {
                 if( !string.IsNullOrWhiteSpace( _token ) ) request.AddHeader( "Authorization", "Bearer " + _token );
 
                 if( _method == Method.Post ) {
-                    if( _json != null ) {
+                    if( _json is not null ) {
                         request.AddJsonBody( _json );
                     }
 
@@ -68,7 +68,7 @@ namespace Merchanter {
                     }
                 }
                 else if( _method == Method.Put ) {
-                    if( _json != null ) {
+                    if( _json is not null ) {
                         request.AddJsonBody( _json );
                     }
                     var response = restClient.Execute( request );
