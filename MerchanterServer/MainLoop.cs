@@ -1,5 +1,4 @@
-﻿using MarketplaceHelpers;
-using Merchanter;
+﻿using Merchanter;
 using Merchanter.Classes;
 using Merchanter.Classes.Settings;
 using Merchanter.Responses;

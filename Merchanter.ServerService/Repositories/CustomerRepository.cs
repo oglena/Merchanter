@@ -1,7 +1,7 @@
 ﻿using Merchanter.Classes;
 using Merchanter.ServerService.Services;
 
-namespace Merchanter.CustomerService.Repositories {
+namespace Merchanter.ServerService.Repositories {
     public interface ICustomerRepository {
         Task<Customer> GetCustomerById(int _customer_id);
         Task<List<Log>> GetCustomerLogsById(int _customer_id, ApiFilter _filters);

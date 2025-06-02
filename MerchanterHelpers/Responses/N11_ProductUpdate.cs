@@ -1,6 +1,4 @@
-﻿using MarketplaceHelpers;
-
-namespace MerchanterHelpers.Responses {
+﻿namespace MerchanterHelpers.Responses {
 
     public class N11_ProductUpdate {
         public int id { get; set; }

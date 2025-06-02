@@ -2,6 +2,7 @@ using AspNetCore.Swagger.Themes;
 using MerchanterApp.ApiService.Classes;
 using MerchanterApp.ApiService.Repositories;
 using MerchanterApp.ApiService.Services;
+using MerchanterApp.ServiceDefaults;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;

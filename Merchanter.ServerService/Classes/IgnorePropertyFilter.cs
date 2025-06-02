@@ -2,9 +2,9 @@
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Text.Json.Serialization;
-using System.Linq; // Add this using directive
+using System.Linq;
 
-namespace Merchanter.ServerService {
+namespace Merchanter.ServerService.Classes {
     public class IgnorePropertyFilter :IOperationFilter {
         public void Apply( OpenApiOperation operation, OperationFilterContext context ) {
             if( context.ApiDescription == null || operation.Parameters == null )

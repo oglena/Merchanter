@@ -1,5 +1,4 @@
 // See https://aka.ms/new-console-template for more information
-using MarketplaceHelpers;
 using Merchanter;
 using MerchanterServer;
 using System.Reflection;

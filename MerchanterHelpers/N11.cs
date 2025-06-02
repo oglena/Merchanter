@@ -1,11 +1,10 @@
-﻿using MerchanterHelpers;
-using MerchanterHelpers.Requests;
+﻿using MerchanterHelpers.Requests;
 using MerchanterHelpers.Responses;
 using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace MarketplaceHelpers {
+namespace MerchanterHelpers {
     public partial class N11 {
         private string AppKey { get; set; }
         private string AppSecret { get; set; }
