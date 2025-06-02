@@ -8,7 +8,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Merchanter\Merchanter.csproj" />
+		<ProjectReference Include="..\..\Merchanter\Merchanter.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

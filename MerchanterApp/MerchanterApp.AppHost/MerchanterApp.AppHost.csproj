@@ -9,11 +9,11 @@
     <UserSecretsId>9645011e-823f-4438-b237-87343e815aa6</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\MerchanterApp.ServerService\MerchanterApp.ServerService.csproj" />
-    <ProjectReference Include="..\..\MerchanterApp.CMS\MerchanterApp.CMS.csproj" />
-    <ProjectReference Include="..\..\MerchanterFrontend\MerchanterFrontend.csproj" />
     <ProjectReference Include="..\..\MerchanterHelper\MerchanterHelper.csproj" />
     <ProjectReference Include="..\..\MerchanterServer\MerchanterServer.csproj" />
+    <ProjectReference Include="..\MerchanterApp.ServerService\MerchanterApp.ServerService.csproj" />
+    <ProjectReference Include="..\MerchanterApp.CMS\MerchanterApp.CMS.csproj" />
+    <ProjectReference Include="..\MerchanterFrontend\MerchanterFrontend.csproj" />
     <ProjectReference Include="..\MerchanterApp.ApiService\MerchanterApp.ApiService.csproj" />
     <ProjectReference Include="..\MerchanterApp.ServiceDefaults\MerchanterApp.ServiceDefaults.csproj" />
   </ItemGroup>

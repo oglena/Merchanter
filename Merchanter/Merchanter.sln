@@ -15,7 +15,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MerchanterApp.ServiceDefaul
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MerchanterApp.ApiService", "..\MerchanterApp\MerchanterApp.ApiService\MerchanterApp.ApiService.csproj", "{7C8C56FB-6350-4FFF-8347-593E0FE7DA54}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MerchanterApp.CMS", "..\MerchanterApp.CMS\MerchanterApp.CMS.csproj", "{22D1D136-C0F0-4664-8638-9F24C8D97F25}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MerchanterApp.CMS", "..\MerchanterApp\MerchanterApp.CMS\MerchanterApp.CMS.csproj", "{22D1D136-C0F0-4664-8638-9F24C8D97F25}"
 	ProjectSection(ProjectDependencies) = postProject
 		{7C8C56FB-6350-4FFF-8347-593E0FE7DA54} = {7C8C56FB-6350-4FFF-8347-593E0FE7DA54}
 		{EDD0A50E-7F3B-4499-BBBB-394970002DFB} = {EDD0A50E-7F3B-4499-BBBB-394970002DFB}
@@ -25,7 +25,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MerchanterApp.ServerService
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{77E67DD4-00CC-4EA0-A69F-167559196E70}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MerchanterFrontend", "..\MerchanterFrontend\MerchanterFrontend.csproj", "{580D507D-8F08-48F7-BA27-51E27194C8E4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MerchanterFrontend", "..\MerchanterApp\MerchanterFrontend\MerchanterFrontend.csproj", "{580D507D-8F08-48F7-BA27-51E27194C8E4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
