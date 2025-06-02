@@ -1,5 +1,5 @@
 ﻿namespace Merchanter.Classes {
-	public class AttributeOption {
+	public record class AttributeOption {
 		public int id { get; set; }
 		public int customer_id { get; set; }
 		public int attribute_id { get; set; }

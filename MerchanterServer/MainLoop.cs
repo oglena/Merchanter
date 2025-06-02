@@ -2,6 +2,7 @@
 using Merchanter;
 using Merchanter.Classes;
 using Merchanter.Classes.Settings;
+using Merchanter.Responses;
 using MerchanterHelpers;
 using MerchanterHelpers.Classes;
 using ShipmentHelpers;
@@ -2895,22 +2896,6 @@ internal class MainLoop {
                             },
                             order_items = new List<OrderItem>()
                         };
-
-                        #region OLD
-                        //#region Corporate Info
-                        //var corporate_info = Helper.GetCustomerCorporateInfo( item.customer_email, out bool is_corporate );
-                        //if( corporate_info is not null && is_corporate ) {
-                        //    o.billing_address.is_corporate = is_corporate;
-                        //    o.billing_address.tc_no = corporate_info.GetValueOrDefault( Helper.global.magento.customer_tc_no_attribute_code ) ?? Constants.DUMMY_TCNO;
-                        //    o.billing_address.firma_ismi = corporate_info.GetValueOrDefault( Helper.global.magento.customer_firma_ismi_attribute_code );
-                        //    o.billing_address.firma_vergidairesi = corporate_info.GetValueOrDefault( Helper.global.magento.customer_firma_vergidairesi_attribute_code );
-                        //    o.billing_address.firma_vergino = corporate_info.GetValueOrDefault( Helper.global.magento.customer_firma_vergino_attribute_code );
-                        //}
-                        //else if( corporate_info is not null && !is_corporate ) {
-                        //    o.billing_address.tc_no = corporate_info.GetValueOrDefault( Helper.global.magento.customer_tc_no_attribute_code ) ?? Constants.DUMMY_TCNO;
-                        //}
-                        //#endregion 
-                        #endregion
 
                         float calculated_grand_total = 0;
                         foreach (var order_item in item.items) {

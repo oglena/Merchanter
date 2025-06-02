@@ -1,5 +1,5 @@
 ﻿namespace Merchanter.Classes {
-    public class PropertyMapping {
+    public record class PropertyMapping {
         public int id { get; set; }
         public string property { get; set; }
         public string source { get; set; }

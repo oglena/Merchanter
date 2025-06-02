@@ -1,6 +1,6 @@
 ﻿namespace Merchanter.Responses
 {
-    public class M2_ProductSetGroupAttributes
+    public record class M2_ProductSetGroupAttributes
     {
         public int entity_attribute_id { get; set; }
         public int entity_type_id { get; set; }

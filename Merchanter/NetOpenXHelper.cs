@@ -231,6 +231,7 @@ namespace Merchanter {
                         CARI_TEL = _billing_address.telephone,
                         CARI_ILCE = CheckNull(_billing_address.region).ToUpper(),
                         EMAIL = _email,
+                        
                         Grup_Kodu = DbHelper.GetSettingValue(Helper.global.netsis.cari_siparis_grupkodu, _payment_method),
                         M_KOD = Helper.global.netsis.siparis_muhasebekodu,
                         VERGI_DAIRESI = _billing_address.is_corporate ? _billing_address.firma_vergidairesi : string.Empty,

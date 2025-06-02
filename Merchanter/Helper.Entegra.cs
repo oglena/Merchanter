@@ -1,4 +1,6 @@
-﻿namespace Merchanter {
+﻿using Merchanter.Responses;
+
+namespace Merchanter {
     public static partial class Helper {
         #region ENTEGRA
         /// <summary>

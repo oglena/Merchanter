@@ -1,4 +1,5 @@
-﻿public class M2_SpecialPriceDeleteRequest {
+﻿namespace Merchanter.Requests {
+    public record class M2_SpecialPriceDeleteRequest {
     public M2_SpecialPriceDeleteRequest() {
     }
 
@@ -8,4 +9,9 @@
     public M2_PriceRequestPriceExtensionAttributes[] extension_attributes { get; set; }
     public string price_from { get; set; }
     public string price_to { get; set; }
+}
+public record class M2_PriceRequestPriceExtensionAttributes {
+    public M2_PriceRequestPriceExtensionAttributes() {
+    }
+}
 }

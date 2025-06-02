@@ -1,5 +1,5 @@
 ﻿namespace Merchanter.Responses {
-    public class NETSIS_InvoiceResponse {
+    public record class NETSIS_InvoiceResponse {
         public string FATURANO { get; set; }
         public string SIPARISNO { get; set; }
         public string GIB_FATIRS_NO { get; set; }

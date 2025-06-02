@@ -1,5 +1,5 @@
 ﻿namespace Merchanter.Classes {
-    public class Category {
+    public record class Category {
         public int id { get; set; }
         public int customer_id { get; set; }
         public int source_category_id { get; set; }

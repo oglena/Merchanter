@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 
 namespace Merchanter.Classes {
-    public class Notification {
+    public record class Notification {
         public int id { get; set; }
         public int customer_id { get; set; }
         public NotificationTypes type { get; set; }

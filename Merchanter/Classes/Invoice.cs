@@ -1,5 +1,5 @@
 ﻿namespace Merchanter.Classes {
-    public class Invoice {
+    public record class Invoice {
         public int id { get; set; }
         public int customer_id { get; set; }
         public string? order_id { get; set; }

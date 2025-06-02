@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 
 namespace Merchanter.Classes {
-	public class Attribute {
+	public record class Attribute {
 		public int id { get; set; }
 		public int customer_id { get; set; }
 		public string attribute_name { get; set; }

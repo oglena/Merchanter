@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 
 namespace Merchanter.Classes {
-    public class ProductExtension {
+    public record class ProductExtension {
         /// <summary>
         /// Tracks the source of each property value for this product instance.
         /// </summary>

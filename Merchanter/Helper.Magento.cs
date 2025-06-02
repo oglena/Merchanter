@@ -1,4 +1,6 @@
 ﻿using Merchanter.Classes;
+using Merchanter.Requests;
+using Merchanter.Responses;
 using Newtonsoft.Json;
 using Order = Merchanter.Classes.Order;
 
@@ -1380,9 +1382,9 @@ namespace Merchanter {
             try {
                 if (string.IsNullOrWhiteSpace(_attribute_value)) return null;
                 var attribute_option = new {
-                    option = new M2_AttributeOption() {
+                    option = new Requests.M2_AttributeOption() {
                         value = _attribute_value,
-                        store_labels = [new M2_StoreLabel() { store_id = 0, label = _attribute_value }],
+                        store_labels = [new Requests.M2_StoreLabel() { store_id = 0, label = _attribute_value }],
                         is_default = false,
                         sort_order = 0,
                         label = _attribute_value

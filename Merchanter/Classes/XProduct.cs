@@ -1,5 +1,5 @@
 ﻿namespace Merchanter.Classes {
-    public class XProduct {
+    public record class XProduct {
         public int id { get; set; }
         public int customer_id { get; set; }
         public string barcode { get; set; }

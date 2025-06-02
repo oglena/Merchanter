@@ -1,6 +1,6 @@
 ﻿namespace Merchanter.Classes
 {
-    public class Order {
+    public record class Order {
         public int id { get; set; }
         public int customer_id { get; set; }
         public int order_id { get; set; }
@@ -29,7 +29,7 @@
         public ShippingAddress shipping_address { get; set; } //TODO: shipping_amount
     }
 
-    public class OrderItem {
+    public record class OrderItem {
         public int id { get; set; }
         public int customer_id { get; set; }
         public int order_id { get; set; }
@@ -46,7 +46,7 @@
         public bool tax_included { get; set; } = true;
     }
 
-    public class ShippingAddress {
+    public record class ShippingAddress {
         public int id { get; set; }
         public int shipping_id { get; set; }
         public int customer_id { get; set; }
@@ -59,7 +59,7 @@
         public string city { get; set; }
     }
 
-    public class BillingAddress {
+    public record class BillingAddress {
         public int id { get; set; }
         public int billing_id { get; set; }
         public int customer_id { get; set; }

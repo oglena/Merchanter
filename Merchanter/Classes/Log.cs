@@ -1,5 +1,5 @@
 ﻿namespace Merchanter.Classes {
-    public class Log {
+    public record class Log {
         public int id { get; set; }
         public int customer_id { get; set; }
         public string? worker { get; set; } = null;

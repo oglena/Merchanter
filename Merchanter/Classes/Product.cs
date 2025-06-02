@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 
 namespace Merchanter.Classes {
-    public class Product {
+    public record class Product {
         [JsonIgnore]
         public List<PropertyMapping> property_mappings { get; set; } = [];
         public int id { get; set; }

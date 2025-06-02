@@ -1,4 +1,5 @@
 ﻿using Merchanter.Classes;
+using Merchanter.Responses;
 using ZstdSharp.Unsafe;
 using Product = Merchanter.Classes.Product;
 
