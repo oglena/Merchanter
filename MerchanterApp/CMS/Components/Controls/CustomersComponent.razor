@@ -1,0 +1,123 @@
+﻿@rendermode InteractiveServer
+@using Newtonsoft.Json
+@using System.Text.Json.Serialization
+@inject NavigationManager navigationManager
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IConfiguration configuration
+@inject IPostHelper PostHelper
+
+<div class="container-fluid bg-rebeccapurple bg-gradient text-light rounded-2 p-3">
+	<div class="row mt-3">
+		<div class="col-12 ps-2">
+			<h2>
+				<i class="bi bi-people bi-lg"></i>&nbsp;Customers
+			</h2>
+		</div>
+	</div>
+</div>
+
+<div class="row mt-3">
+	<AlertComponent page_message="@page_message" />
+	<div class="col-12 ps-2 table-overflow">
+		@if (customers != null)
+		{
+			<table class="table table-responsive table-hover">
+				<thead>
+					<tr>
+						<th scope="col">Customer ID</th>
+						<th scope="col">User Name</th>
+						<th scope="col">User Status</th>
+						<th scope="col">Product Sync</th>
+						<th scope="col">Order Sync</th>
+						<th scope="col">Notification Sync</th>
+						<th scope="col">XML Sync</th>
+						<th scope="col">Invoice Sync</th>
+						<th scope="col">Actions</th>
+					</tr>
+				</thead>
+				<tbody class="table-group-divider">
+					@foreach (var item in customers)
+					{
+						<tr>
+							<td class="align-content-center">
+								<span class="badge rounded-pill text-bg-dark">@item.customer_id</span>
+							</td>
+							<td class="align-content-center">
+								<a class="link-opacity-75-hover" href="@("Customer/" + item.customer_id.ToString())">@item.user_name</a>
+							</td>
+							<td class="align-content-center">
+								@((MarkupString)(item.status ? "<i class='bi bi-check-circle-fill text-success'></i>" : "<i class='bi bi-dash-circle text-danger'></i>"))
+								@(item.status ? "Licensed" : "Unlicensed")
+							</td>
+							<td class="align-content-center">
+								@(item.product_sync_status ? "Enabled" : "Disabled")
+								@((MarkupString)(item.product_sync_status ? "<i class='bi bi-check-circle-fill text-success'></i>" : "<i class='bi bi-dash-circle text-danger'></i>"))
+							</td>
+							<td class="align-content-center">
+								@(item.order_sync_status ? "Enabled" : "Disabled")
+								@((MarkupString)(item.order_sync_status ? "<i class='bi bi-check-circle-fill text-success'></i>" : "<i class='bi bi-dash-circle text-danger'></i>"))
+							</td>
+							<td class="align-content-center">
+								@(item.notification_sync_status ? "Enabled" : "Disabled")
+								@((MarkupString)(item.notification_sync_status ? "<i class='bi bi-check-circle-fill text-success'></i>" : "<i class='bi bi-dash-circle text-danger'></i>"))
+							</td>
+							<td class="align-content-center">
+								@(item.xml_sync_status ? "Enabled" : "Disabled")
+								@((MarkupString)(item.xml_sync_status ? "<i class='bi bi-check-circle-fill text-success'></i>" : "<i class='bi bi-dash-circle text-danger'></i>"))
+							</td>
+							<td class="align-content-center">
+								@(item.invoice_sync_status ? "Enabled" : "Disabled")
+								@((MarkupString)(item.invoice_sync_status ? "<i class='bi bi-check-circle-fill text-success'></i>" : "<i class='bi bi-dash-circle text-danger'></i>"))
+							</td>
+							<td class="align-content-center">
+								<a class="btn btn-outline-primary btn-sm shadow" href="@("Customer/" + item.customer_id.ToString())">Edit</a>
+							</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		}
+		else
+		{
+			<div class="container-fluid w-100">
+				<h3 class="text-center">@loading</h3>
+			</div>
+		}
+	</div>
+</div>
+
+@code {
+	private List<Merchanter.Classes.Customer>? customers { get; set; }
+	private string loading = "...LOADING...";
+	private string page_message = "";
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			await LoadCustomers();
+		}
+		StateHasChanged();
+	}
+
+	protected async Task LoadCustomers()
+	{
+		var response = await PostHelper.Request<List<Merchanter.Classes.Customer>?>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                    Classes.PostHelper.PostMethod.Get,
+					"api/Customer/GetCustomers");
+
+
+		if (response != null && response.Success && response.Data != null)
+		{
+			customers = response.Data;
+			if (customers != null && customers.Count == 0)
+				page_message = "No servers working.";
+			else
+				page_message = string.Empty;
+		}
+		else
+		{
+			page_message = "Merchanter Server ServiceAPI data response empty.";
+		}
+	}
+}

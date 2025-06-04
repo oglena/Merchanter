@@ -9,6 +9,7 @@ namespace Merchanter.Classes {
         [Required]
         public string user_name { get; set; }
         public string? person_name { get; set; } = null;
+        [EmailAddress]
         public string email { get; set; }
         //[JsonIgnore]
         public string? password { get; set; }
@@ -36,7 +37,6 @@ namespace Merchanter.Classes {
         public bool is_notificationsync_working { get; set; } = false;
 
         [System.Text.Json.Serialization.JsonConverter(typeof(JsonStringEnumConverter))]
-
         public enum Role {
             Admin = 0,
             User = 1

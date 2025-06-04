@@ -1,0 +1,397 @@
+﻿@rendermode InteractiveServer
+@using System.Text.Json.Serialization
+@using Newtonsoft.Json
+@using System.Text
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IPostHelper PostHelper
+
+<div class="container-fluid bg-rebeccapurple bg-gradient text-light rounded-2 p-3">
+	<div class="row mt-3">
+		<div class="col-12 ps-2">
+			<h2>
+				<i class="bi bi-hdd-stack bi-lg"></i>&nbsp;Integrations
+			</h2>
+		</div>
+	</div>
+</div>
+
+<div class="row mt-3 p-2">
+	<AlertComponent page_message="@page_message" message_status="@message_status" />
+	@if (settings != null && settings.integrations != null && settings.integrations.Count > 0)
+	{
+		<div class="accordion">
+			<div class="accordion-item">
+				<h2 class="accordion-header">
+					<button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-collapseOne" aria-expanded="true" aria-controls="panelsStayOpen-collapseOne">
+						<h4 class="title m-0"><span class="badge rounded-pill text-bg-primary">Product</span> Main Source&nbsp;&nbsp;</h4><small>(Allows single active)</small>
+					</button>
+				</h2>
+				<div id="panelsStayOpen-collapseOne" class="accordion-collapse collapse show">
+					<div class="accordion-body">
+						<div class="row row-cols-1 row-cols-sm-1 row-cols-md-2 row-cols-lg-2 row-cols-xl-3 row-cols-xxl-4 g-4">
+							@foreach (var item in settings.integrations.Where(x => x.work.type == Work.WorkType.PRODUCT && x.work.direction == Work.WorkDirection.MAIN_SOURCE).ToList())
+							{
+								@if (item.work != null)
+								{
+									<div class="col">
+										<div class="card text-center shadow" style='border-color:@(item.work.status ? "green" : "red");'>
+											<img src="platform_logos/@(item.work.platform.image)" class="card-img" alt="@item.work.platform.name">
+											<div class="card-body">
+												<h5 class="card-title">@item.work.platform.name</h5><hr />
+												<h4 class="card-text p-2">
+													<span class='badge text-bg-@(item.work.type == Work.WorkType.PRODUCT ? "primary" : item.work.type == Work.WorkType.ORDER ? "success" : item.work.type == Work.WorkType.SHIPMENT ? "warning" : "dark" )'>
+														@item.work.type
+													</span>
+												</h4>
+												<p class="card-text">
+													<span class="badge text-bg-dark">
+														@(item.work.direction == Work.WorkDirection.MAIN_SOURCE ? "Main Source" : item.work.direction == Work.WorkDirection.MAIN_TARGET ? "Main Target" : item.work.direction == Work.WorkDirection.SOURCE ? "Source" : item.work.direction == Work.WorkDirection.TARGET ? "Target" : item.work.direction == Work.WorkDirection.BOTH ? "Both" : "N/A")
+													</span>
+													<span class="badge text-bg-dark">
+														@item.work.version
+													</span>
+												</p>
+											</div>
+											<div class="card-footer">
+												<EditForm Model="@item">
+													<div class="form-check form-switch d-flex justify-content-center">
+														<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="item.work.status" @onchange="() => IntegrationChanged(item)"></InputCheckbox>
+														<label class="form-check-label ms-2">&nbsp;Status</label>
+													</div>
+												</EditForm>
+												<small class="text-center d-none"><span class="badge rounded-pill text-bg-secondary">Last Update:&nbsp;@item.work.platform.update_date.ToString("dd.MM.yyyy")</span></small>
+											</div>
+										</div>
+									</div>
+								}
+							}
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="accordion-item">
+				<h2 class="accordion-header">
+					<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-collapseThree" aria-expanded="false" aria-controls="panelsStayOpen-collapseThree">
+						<h4 class="title m-0"><span class="badge rounded-pill text-bg-primary">Product</span> Sources&nbsp;&nbsp;</h4><small>(Allows multiple actives)</small>
+					</button>
+				</h2>
+				<div id="panelsStayOpen-collapseThree" class="accordion-collapse collapse">
+					<div class="accordion-body">
+						<div class="row row-cols-1 row-cols-sm-1 row-cols-md-2 row-cols-lg-2 row-cols-xl-3 row-cols-xxl-4 g-4">
+							@foreach (var item in settings.integrations.Where(x => x.work.type == Work.WorkType.PRODUCT && x.work.direction == Work.WorkDirection.SOURCE).ToList())
+							{
+								@if (item.work != null)
+								{
+									<div class="col">
+										<div class="card text-center shadow" style='border-color:@(item.work.status ? "green" : "red");'>
+											<img src="platform_logos/@(item.work.platform.image)" class="card-img" alt="@item.work.platform.name">
+											<div class="card-body">
+												<h5 class="card-title">@item.work.platform.name</h5><hr />
+												<h4 class="card-text p-2">
+													<span class='badge text-bg-@(item.work.type == Work.WorkType.PRODUCT ? "primary" : item.work.type == Work.WorkType.ORDER ? "success" : item.work.type == Work.WorkType.SHIPMENT ? "warning" : "dark" )'>
+														@item.work.type
+													</span>
+												</h4>
+												<p class="card-text">
+													<span class="badge text-bg-dark">
+														@(item.work.direction == Work.WorkDirection.MAIN_SOURCE ? "Main Source" : item.work.direction == Work.WorkDirection.MAIN_TARGET ? "Main Target" : item.work.direction == Work.WorkDirection.SOURCE ? "Source" : item.work.direction == Work.WorkDirection.TARGET ? "Target" : item.work.direction == Work.WorkDirection.BOTH ? "Both" : "N/A")
+													</span>
+													<span class="badge text-bg-dark">
+														@item.work.version
+													</span>
+												</p>
+											</div>
+											<div class="card-footer">
+												<EditForm Model="@item">
+													<div class="form-check form-switch d-flex justify-content-center">
+														<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="item.work.status" @onchange="() => IntegrationChanged(item)"></InputCheckbox>
+														<label class="form-check-label ms-2">&nbsp;Status</label>
+													</div>
+												</EditForm>
+												<small class="text-center d-none"><span class="badge rounded-pill text-bg-secondary">Last Update:&nbsp;@item.work.platform.update_date.ToString("dd.MM.yyyy")</span></small>
+											</div>
+										</div>
+									</div>
+								}
+							}
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="accordion-item">
+				<h2 class="accordion-header">
+					<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-collapseSix" aria-expanded="false" aria-controls="panelsStayOpen-collapseSix">
+						<h4 class="title m-0"><span class="badge rounded-pill text-bg-primary">Product</span> Targets&nbsp;&nbsp;</h4><small>(Allows multiple actives)</small>
+					</button>
+				</h2>
+				<div id="panelsStayOpen-collapseSix" class="accordion-collapse collapse">
+					<div class="accordion-body">
+						<div class="row row-cols-1 row-cols-sm-1 row-cols-md-2 row-cols-lg-2 row-cols-xl-3 row-cols-xxl-4 g-4">
+							@foreach (var item in settings.integrations.Where(x => x.work.type == Work.WorkType.PRODUCT && x.work.direction == Work.WorkDirection.TARGET).ToList())
+							{
+								@if (item.work != null)
+								{
+									<div class="col">
+										<div class="card text-center shadow" style='border-color:@(item.work.status ? "green" : "red");'>
+											<img src="platform_logos/@(item.work.platform.image)" class="card-img" alt="@item.work.platform.name">
+											<div class="card-body">
+												<h5 class="card-title">@item.work.platform.name</h5><hr />
+												<h4 class="card-text p-2">
+													<span class='badge text-bg-@(item.work.type == Work.WorkType.PRODUCT ? "primary" : item.work.type == Work.WorkType.ORDER ? "success" : item.work.type == Work.WorkType.SHIPMENT ? "warning" : "dark" )'>
+														@item.work.type
+													</span>
+												</h4>
+												<p class="card-text">
+													<span class="badge text-bg-dark">
+														@(item.work.direction == Work.WorkDirection.MAIN_SOURCE ? "Main Source" : item.work.direction == Work.WorkDirection.MAIN_TARGET ? "Main Target" : item.work.direction == Work.WorkDirection.SOURCE ? "Source" : item.work.direction == Work.WorkDirection.TARGET ? "Target" : item.work.direction == Work.WorkDirection.BOTH ? "Both" : "N/A")
+													</span>
+													<span class="badge text-bg-dark">
+														@item.work.version
+													</span>
+												</p>
+											</div>
+											<div class="card-footer">
+												<EditForm Model="@item">
+													<div class="form-check form-switch d-flex justify-content-center">
+														<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="item.work.status" @onchange="() => IntegrationChanged(item)"></InputCheckbox>
+														<label class="form-check-label ms-2">&nbsp;Status</label>
+													</div>
+												</EditForm>
+												<small class="text-center d-none"><span class="badge rounded-pill text-bg-secondary">Last Update:&nbsp;@item.work.platform.update_date.ToString("dd.MM.yyyy")</span></small>
+											</div>
+										</div>
+									</div>
+								}
+							}
+						</div>
+					</div>
+				</div>
+			</div>
+			<hr />
+			<div class="accordion-item border-top">
+				<h2 class="accordion-header">
+					<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-collapseTwo" aria-expanded="false" aria-controls="panelsStayOpen-collapseTwo">
+						<h4 class="title m-0"><span class="badge rounded-pill text-bg-success">Order</span> Main Target&nbsp;&nbsp;</h4><small>(Allows single active)</small>
+					</button>
+				</h2>
+				<div id="panelsStayOpen-collapseTwo" class="accordion-collapse collapse">
+					<div class="accordion-body">
+						<div class="row row-cols-1 row-cols-sm-1 row-cols-md-2 row-cols-lg-2 row-cols-xl-3 row-cols-xxl-4 g-4">
+							@foreach (var item in settings.integrations.Where(x => x.work.type == Work.WorkType.ORDER && x.work.direction == Work.WorkDirection.MAIN_TARGET).ToList())
+							{
+								@if (item.work != null)
+								{
+									<div class="col">
+										<div class="card text-center shadow" style='border-color:@(item.work.status ? "green" : "red");'>
+											<img src="platform_logos/@(item.work.platform.image)" class="card-img" alt="@item.work.platform.name">
+											<div class="card-body">
+												<h5 class="card-title">@item.work.platform.name</h5><hr />
+												<h4 class="card-text p-2">
+													<span class='badge text-bg-@(item.work.type == Work.WorkType.PRODUCT ? "primary" : item.work.type == Work.WorkType.ORDER ? "success" : item.work.type == Work.WorkType.SHIPMENT ? "warning" : "dark" )'>
+														@item.work.type
+													</span>
+												</h4>
+												<p class="card-text">
+													<span class="badge text-bg-dark">
+														@(item.work.direction == Work.WorkDirection.MAIN_SOURCE ? "Main Source" : item.work.direction == Work.WorkDirection.MAIN_TARGET ? "Main Target" : item.work.direction == Work.WorkDirection.SOURCE ? "Source" : item.work.direction == Work.WorkDirection.TARGET ? "Target" : item.work.direction == Work.WorkDirection.BOTH ? "Both" : "N/A")
+													</span>
+													<span class="badge text-bg-dark">
+														@item.work.version
+													</span>
+												</p>
+											</div>
+											<div class="card-footer">
+												<EditForm Model="@item">
+													<div class="form-check form-switch d-flex justify-content-center">
+														<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="item.work.status" @onchange="() => IntegrationChanged(item)"></InputCheckbox>
+														<label class="form-check-label ms-2">&nbsp;Status</label>
+													</div>
+												</EditForm>
+												<small class="text-center d-none"><span class="badge rounded-pill text-bg-secondary">Last Update:&nbsp;@item.work.platform.update_date.ToString("dd.MM.yyyy")</span></small>
+											</div>
+										</div>
+									</div>
+								}
+							}
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="accordion-item">
+				<h2 class="accordion-header">
+					<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-collapseFour" aria-expanded="false" aria-controls="panelsStayOpen-collapseFour">
+						<h4 class="title m-0"><span class="badge rounded-pill text-bg-success">Order</span> Sources&nbsp;&nbsp;</h4><small>(Allows multiple actives)</small>
+					</button>
+				</h2>
+				<div id="panelsStayOpen-collapseFour" class="accordion-collapse collapse">
+					<div class="accordion-body">
+						<div class="row row-cols-1 row-cols-sm-1 row-cols-md-2 row-cols-lg-2 row-cols-xl-3 row-cols-xxl-4 g-4">
+							@foreach (var item in settings.integrations.Where(x => x.work.type == Work.WorkType.ORDER && x.work.direction == Work.WorkDirection.SOURCE).ToList())
+							{
+								@if (item.work != null)
+								{
+									<div class="col">
+										<div class="card text-center shadow" style='border-color:@(item.work.status ? "green" : "red");'>
+											<img src="platform_logos/@(item.work.platform.image)" class="card-img" alt="@item.work.platform.name">
+											<div class="card-body">
+												<h5 class="card-title">@item.work.platform.name</h5><hr />
+												<h4 class="card-text p-2">
+													<span class='badge text-bg-@(item.work.type == Work.WorkType.PRODUCT ? "primary" : item.work.type == Work.WorkType.ORDER ? "success" : item.work.type == Work.WorkType.SHIPMENT ? "warning" : "dark" )'>
+														@item.work.type
+													</span>
+												</h4>
+												<p class="card-text">
+													<span class="badge text-bg-dark">
+														@(item.work.direction == Work.WorkDirection.MAIN_SOURCE ? "Main Source" : item.work.direction == Work.WorkDirection.MAIN_TARGET ? "Main Target" : item.work.direction == Work.WorkDirection.SOURCE ? "Source" : item.work.direction == Work.WorkDirection.TARGET ? "Target" : item.work.direction == Work.WorkDirection.BOTH ? "Both" : "N/A")
+													</span>
+													<span class="badge text-bg-dark">
+														@item.work.version
+													</span>
+												</p>
+											</div>
+											<div class="card-footer">
+												<EditForm Model="@item">
+													<div class="form-check form-switch d-flex justify-content-center">
+														<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="item.work.status" @onchange="() => IntegrationChanged(item)"></InputCheckbox>
+														<label class="form-check-label ms-2">&nbsp;Status</label>
+													</div>
+												</EditForm>
+												<small class="text-center d-none"><span class="badge rounded-pill text-bg-secondary">Last Update:&nbsp;@item.work.platform.update_date.ToString("dd.MM.yyyy")</span></small>
+											</div>
+										</div>
+									</div>
+								}
+							}
+						</div>
+					</div>
+				</div>
+			</div>
+			<hr />
+			<div class="accordion-item border-top">
+				<h2 class="accordion-header">
+					<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-collapseFive" aria-expanded="false" aria-controls="panelsStayOpen-collapseFive">
+						<h4 class="title m-0">Shipments&nbsp;&nbsp;</h4><small>(Allows multiple actives)</small>
+					</button>
+				</h2>
+				<div id="panelsStayOpen-collapseFive" class="accordion-collapse collapse">
+					<div class="accordion-body">
+						<div class="row row-cols-1 row-cols-sm-1 row-cols-md-2 row-cols-lg-2 row-cols-xl-3 row-cols-xxl-4 g-4">
+							@foreach (var item in settings.integrations.Where(x => x.work.type == Work.WorkType.SHIPMENT).ToList())
+							{
+								@if (item.work != null)
+								{
+									<div class="col">
+										<div class="card text-center shadow" style='border-color:@(item.work.status ? "green" : "red");'>
+											<img src="platform_logos/@(item.work.platform.image)" class="card-img" alt="@item.work.platform.name">
+											<div class="card-body">
+												<h5 class="card-title">@item.work.platform.name</h5><hr />
+												<h4 class="card-text p-2">
+													<span class='badge text-bg-@(item.work.type == Work.WorkType.PRODUCT ? "primary" : item.work.type == Work.WorkType.ORDER ? "success" : item.work.type == Work.WorkType.SHIPMENT ? "warning" : "dark" )'>
+														@item.work.type
+													</span>
+												</h4>
+												<p class="card-text">
+													<span class="badge text-bg-dark">
+														@(item.work.direction == Work.WorkDirection.MAIN_SOURCE ? "Main Source" : item.work.direction == Work.WorkDirection.MAIN_TARGET ? "Main Target" : item.work.direction == Work.WorkDirection.SOURCE ? "Source" : item.work.direction == Work.WorkDirection.TARGET ? "Target" : item.work.direction == Work.WorkDirection.BOTH ? "Both" : "N/A")
+													</span>
+													<span class="badge text-bg-dark">
+														@item.work.version
+													</span>
+												</p>
+											</div>
+											<div class="card-footer">
+												<EditForm Model="@item">
+													<div class="form-check form-switch d-flex justify-content-center">
+														<InputCheckbox type="checkbox" class="form-check-input" role="switch" @bind-Value="item.work.status" @onchange="() => IntegrationChanged(item)"></InputCheckbox>
+														<label class="form-check-label ms-2">&nbsp;Status</label>
+													</div>
+												</EditForm>
+												<small class="text-center d-none"><span class="badge rounded-pill text-bg-secondary">Last Update:&nbsp;@item.work.platform.update_date.ToString("dd.MM.yyyy")</span></small>
+											</div>
+										</div>
+									</div>
+								}
+							}
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	}
+	else
+	{
+		<h1>No integrations found!!</h1>
+	}
+</div>
+
+@code {
+	[Parameter]
+	public string? CID { get; set; }
+	private bool is_refreshing = false;
+	private string loading = "Loading...";
+	private string page_message = "Integrations Loading...";
+	private string message_status = "dark";
+	Customer? customer { get; set; }
+	SettingsMerchanter? settings { get; set; }
+
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			int customer_id = 0;
+			if (!string.IsNullOrWhiteSpace(CID) && int.TryParse(CID, out customer_id))
+			{
+				//await LoadCustomer(customer_id);
+				await LoadCustomerSettings(customer_id);
+			}
+		}
+	}
+
+	public async Task LoadCustomerSettings(int _customer_id)
+	{
+		if (_customer_id > 0)
+		{
+			var response = await PostHelper.Request<SettingsMerchanter>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                Classes.PostHelper.PostMethod.Get,
+				"api/Settings/" + _customer_id.ToString() + "/GetCustomerSettings");
+
+			if (response != null && response.Success && response.Data != null)
+			{
+				settings = response.Data;
+				page_message = string.Empty;
+				StateHasChanged();
+			}
+			else
+			{
+				page_message = "Merchanter Server ServiceAPI data response empty.";
+			}
+		}
+	}
+
+	public async Task LoadCustomer(int _customer_id)
+	{
+		if (_customer_id > 0)
+		{
+			customer = null;
+			var response = await PostHelper.Request<Customer>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
+                Classes.PostHelper.PostMethod.Get,
+				"api/Customer/" + _customer_id.ToString() + "/GetCustomer");
+
+			if (response != null && response.Success && response.Data != null)
+			{
+				customer = response.Data;
+				StateHasChanged();
+			}
+			else
+			{
+				page_message = "Merchanter Server ServiceAPI data response empty.";
+			}
+		}
+	}
+
+	private void IntegrationChanged(Integration item)
+	{
+		// Handle the change event here
+	}
+}

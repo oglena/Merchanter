@@ -1,11 +1,10 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-var merchanter_api = builder.AddProject<Projects.MerchanterApp_ApiService>("MerchanterApi");
-var server_service = builder.AddProject<Projects.MerchanterApp_ServerService>("ServerService");
-builder.AddProject<Projects.MerchanterApp_CMS>("MerchanterCMS").WithReference(server_service).WaitFor(server_service);
 
-builder.AddProject<Projects.MerchanterFrontend>("MerchanterFrontend")
-    .WithReference(merchanter_api).WaitFor(merchanter_api)
-    .WithReference(server_service).WaitFor(server_service);
+builder.AddProject<Projects.MerchanterApp_ServerService>("ServerService");
+builder.AddProject<Projects.ApiService>("apiservice");
+builder.AddProject<Projects.CMS>("CMS");
+
+builder.AddProject<Projects.MerchanterFrontend>("MerchanterFrontend");
 
 builder.Build().Run();

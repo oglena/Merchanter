@@ -10,12 +10,14 @@ namespace Merchanter.Classes {
         public bool status { get; set; } = false;
         public string version { get; set; } = "v1";
 
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public enum WorkType {
             PRODUCT,
             ORDER,
             SHIPMENT
         }
 
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public enum WorkDirection {
             /// <summary>
             /// Only 1 accepted

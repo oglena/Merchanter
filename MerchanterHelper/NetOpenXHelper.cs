@@ -233,7 +233,7 @@ namespace MerchanterHelper {
                         CARI_ILCE = CheckNull(_billing_address.region).ToUpper(),
                         EMAIL = _email,
                         
-                        Grup_Kodu = DbHelper.GetSettingValue(Helper.global.netsis.cari_siparis_grupkodu, _payment_method),
+                        Grup_Kodu = DbHelperBase.GetSettingValue(Helper.global.netsis.cari_siparis_grupkodu, _payment_method),
                         M_KOD = Helper.global.netsis.siparis_muhasebekodu,
                         VERGI_DAIRESI = _billing_address.is_corporate ? _billing_address.firma_vergidairesi : string.Empty,
                         VERGI_NUMARASI = _billing_address.is_corporate ? _billing_address.firma_vergino : string.Empty,
@@ -282,14 +282,14 @@ namespace MerchanterHelper {
                     EKACK1 = _order.order_id.ToString(),
                     EKACK2 = _order.order_label,
                     EKACK3 = _order.shipping_address?.firstname + " " + _order.shipping_address?.lastname,
-                    EKACK4 = DbHelper.GetSettingValue(Helper.global.netsis.siparis_ekack4, _order.payment_method),
+                    EKACK4 = Merchanter.DbHelperBase.GetSettingValue(Helper.global.netsis.siparis_ekack4, _order.payment_method),
                     EKACK5 = _order.shipping_address?.telephone,
                     EKACK7 = _order.order_date.ToString(),
                     EKACK8 = _order_shipping_barcode,
-                    EKACK10 = DbHelper.GetSettingValue(Helper.global.netsis.siparis_ekack10, _order.shipment_method),
+                    EKACK10 = Merchanter.DbHelperBase.GetSettingValue(Helper.global.netsis.siparis_ekack10, _order.shipment_method),
                     EKACK11 = Helper.global.netsis.siparis_ekack11,
                     EKACK12 = _order.comment,
-                    EKACK15 = DbHelper.GetSettingValue(Helper.global.netsis.siparis_ekack15, _order.payment_method),
+                    EKACK15 = Merchanter.DbHelperBase.GetSettingValue(Helper.global.netsis.siparis_ekack15, _order.payment_method),
                 },
                 Kalems = []
             };

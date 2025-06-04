@@ -1,56 +1,90 @@
 ﻿using Merchanter.Classes;
 using Merchanter.Classes.Settings;
+using Merchanter.Responses;
 using MySql.Data.MySqlClient;
-using System.Text.Json.Serialization;
 using Attribute = Merchanter.Classes.Attribute;
 
 namespace Merchanter {
+
+    /// <summary>
+    /// Provides database-related operations and helper methods for managing customers, products, orders, and settings.
+    /// </summary>
     public class DbHelper {
 
         #region CORE
         private MySqlConnection connection = new();
-        public MySqlConnection Connection {
+        /// <summary>
+        /// Represents the MySQL database connection.
+        /// </summary>
+        private MySqlConnection Connection {
             get { return connection; }
             set { connection = value; }
         }
 
         private string server = string.Empty;
+        /// <summary>
+        /// Gets or sets the MySQL server address.
+        /// </summary>
         public string Server {
             get { return server; }
             set { server = value; }
         }
 
         private string user = string.Empty;
+        /// <summary>
+        /// Gets or sets the MySQL username.
+        /// </summary>
         public string User {
             get { return user; }
             set { user = value; }
         }
 
         private string password = string.Empty;
+        /// <summary>
+        /// Gets or sets the MySQL password.
+        /// </summary>
         public string Password {
             get { return password; }
             set { password = value; }
         }
 
         private int port;
+        /// <summary>
+        /// Gets or sets the MySQL server port.
+        /// </summary>
         public int Port {
             get { return port; }
             set { port = value; }
         }
 
         private string database = string.Empty;
+        /// <summary>
+        /// Gets or sets the MySQL database name.
+        /// </summary>
         public string Database {
             get { return database; }
             set { database = value; }
         }
 
         private string? connectionString { get; set; } = null;
+        /// <summary>
+        /// Gets or sets the connection state of the database.
+        /// </summary>
         public System.Data.ConnectionState state { get; set; }
         public List<DBSetting> DbSettings { get; set; } = [];
-        public DbHelper invoice_clone { get; set; }
-        public DbHelper xml_clone { get; set; }
-        public DbHelper notification_clone { get; set; }
+        public DbHelper? invoice_clone { get; set; } = null;
+        public DbHelper? xml_clone { get; set; } = null;
+        public DbHelper? notification_clone { get; set; } = null;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DbHelper"/> class with the specified database connection parameters.
+        /// </summary>
+        /// <param name="_server">The MySQL server address.</param>
+        /// <param name="_user">The MySQL username.</param>
+        /// <param name="_password">The MySQL password.</param>
+        /// <param name="_database">The MySQL database name.</param>
+        /// <param name="_port">The MySQL server port.</param>
+        /// <param name="_timeout">The connection timeout in seconds.</param>
         public DbHelper(string _server, string _user, string _password, string _database, int _port = 3306, int _timeout = 120) {
             try {
                 Server = _server; User = _user; Password = _password;
@@ -62,7 +96,7 @@ namespace Merchanter {
                 Connection.InfoMessage += Connection_InfoMessage;
             }
             catch {
-                PrintConsole("Error in DB Connection", ConsoleColor.Red);
+                DbHelperBase.PrintConsole("Error in DB Connection", ConsoleColor.Red);
             }
         }
         #endregion
@@ -71,10 +105,10 @@ namespace Merchanter {
         private void Connection_StateChange(object sender, System.Data.StateChangeEventArgs e) => state = e.CurrentState;
         private void Connection_InfoMessage(object sender, MySqlInfoMessageEventArgs e) {
             foreach (var item in e.errors) {
-                PrintConsole(item.Code + ":" + item.Level + ":" + item.Message, ConsoleColor.DarkYellow);
+                DbHelperBase.PrintConsole(item.Code + ":" + item.Level + ":" + item.Message, ConsoleColor.DarkYellow);
             }
         }
-        public event EventHandler<string> ErrorOccured;
+        public event EventHandler<string>? ErrorOccured;
         #endregion
 
         #region Events
@@ -84,6 +118,10 @@ namespace Merchanter {
         #endregion
 
         #region Connection Methods
+        /// <summary>
+        /// Opens the database connection.
+        /// </summary>
+        /// <returns>True if the connection is successfully opened; otherwise, false.</returns>
         public bool OpenConnection() {
             try {
                 connection.Open();
@@ -103,6 +141,10 @@ namespace Merchanter {
             }
         }
 
+        /// <summary>
+        /// Closes the database connection.
+        /// </summary>
+        /// <returns>True if the connection is successfully closed; otherwise, false.</returns>
         public bool CloseConnection() {
             try {
                 connection.Close();
@@ -113,14 +155,17 @@ namespace Merchanter {
                 return false;
             }
         }
+
+        #endregion
+        #region Helper Methods
         #endregion
 
         #region Customer
         /// <summary>
-        /// Gets the customer from the database
+        /// Retrieves a customer by their ID.
         /// </summary>
-        /// <param name="_customer_id">Customer ID</param>
-        /// <returns>[No data] or [Error] returns 'null'</returns>
+        /// <param name="_customer_id">The ID of the customer.</param>
+        /// <returns>The customer object, or null if not found.</returns>
         public Customer? GetCustomer(int _customer_id) {
             try {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
@@ -171,11 +216,11 @@ namespace Merchanter {
         }
 
         /// <summary>
-        /// Gets the customer from the database
+        /// Retrieves a customer by their username and password.
         /// </summary>
-        /// <param name="_username">Username</param>
-        /// <param name="_password">Password</param>
-        /// <returns>[No data] or [Error] returns 'null'</returns>
+        /// <param name="_username">The username of the customer.</param>
+        /// <param name="_password">The password of the customer.</param>
+        /// <returns>The customer object, or null if not found.</returns>
         public Customer? GetCustomer(string _username, string _password) {
             try {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
@@ -462,11 +507,11 @@ namespace Merchanter {
                 cmd.Parameters.Add(new MySqlParameter() { ParameterName = "customer_id", Value = _customer_id });
                 int value = cmd.ExecuteNonQuery();
                 if (state == System.Data.ConnectionState.Open) connection.Close();
-                PrintConsole("log|" + _title + ":" + _message, ConsoleColor.Yellow);
+                DbHelperBase.PrintConsole("log|" + _title + ":" + _message, ConsoleColor.Yellow);
                 return true;
             }
             catch (Exception ex) {
-                PrintConsole("LOG ERROR GG - " + ex.ToString(), ConsoleColor.Red);
+                DbHelperBase.PrintConsole("LOG ERROR GG - " + ex.ToString(), ConsoleColor.Red);
                 return false;
             }
         }
@@ -570,34 +615,12 @@ namespace Merchanter {
         /// <returns>[Error] returns 'null'</returns>
         public List<Log> GetLastLogs(int _customer_id, ApiFilter _filters) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                _filters.Pager ??= new Pager() { ItemsPerPage = 10, CurrentPageIndex = 0 };
-                string _query = "SELECT * FROM log WHERE customer_id=@customer_id";
-                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
-                    foreach (var filter in _filters.Filters) {
-                        if (filter.Value is null)
-                            _query += $" AND {filter.Field} {filter.Operator} NULL";
-                        else
-                            _query += $" AND {filter.Field} {filter.Operator} @{filter.Field}";
-                    }
-                }
-                if (_filters.Sort is not null)
-                    _query += " ORDER BY " + _filters.Sort.Field + " " + _filters.Sort.Direction + " LIMIT @start,@end;";
-                else {
-                    _filters.Sort = new Sort() { Field = "update_date", Direction = "DESC" };
-                    _query += " ORDER BY update_date DESC LIMIT @start,@end;";
-                }
                 List<Log> list = [];
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                string _query = "SELECT * FROM log WHERE customer_id=@customer_id";
+                MySqlCommand cmd = new() { Connection = connection };
+                cmd.CommandText = DbHelperBase.BuildDBQuery(_filters, ref _query, ref cmd, typeof(Log));
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("start", _filters.Pager.ItemsPerPage * _filters.Pager.CurrentPageIndex));
-                cmd.Parameters.Add(new MySqlParameter("end", _filters.Pager.ItemsPerPage));
-                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
-                    foreach (var filter in _filters.Filters) {
-                        if (filter.Value is not null)
-                            cmd.Parameters.Add(new MySqlParameter(filter.Field, filter.Value));
-                    }
-                }
+                if (state != System.Data.ConnectionState.Open) connection.Open();
                 MySqlDataReader dataReader = cmd.ExecuteReader();
                 while (dataReader.Read()) {
                     Log l = new() {
@@ -727,7 +750,7 @@ namespace Merchanter {
                 Helper.global = new SettingsMerchanter(_customer_id);
                 var customer = GetCustomer(_customer_id);
                 if (customer is not null) { Helper.global.customer = customer; }
-                else { PrintConsole("Customer not found!", ConsoleColor.Red); return null; }
+                else { DbHelperBase.PrintConsole("Customer not found!", ConsoleColor.Red); return null; }
 
                 #region Core Settings
                 Helper.global.platforms = LoadPlatforms();
@@ -811,7 +834,7 @@ namespace Merchanter {
                 #endregion
 
                 if (File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "local"))) {
-                    PrintConsole(Helper.global.settings.company_name + " local enabled!!!", ConsoleColor.Yellow);
+                    DbHelperBase.PrintConsole(Helper.global.settings.company_name + " local enabled!!!", ConsoleColor.Yellow);
                     //Console.Beep();
                     if (_customer_id == 1) {
                         if (Helper.global?.netsis is not null && Helper.global?.entegra is not null) {
@@ -910,21 +933,6 @@ namespace Merchanter {
                 OnError(ex.ToString());
                 return null;
             }
-        }
-
-        /// <summary>
-        /// Gets setting value from the database
-        /// </summary>
-        /// <param name="_setting">Setting</param>
-        /// <param name="_filter">Filter</param>
-        /// <returns>[No data] returns 'null'</returns>
-        public static string? GetSettingValue(string _setting, string _filter) {
-            var temp = _setting.Split('|');
-            foreach (var item in temp) {
-                if (item.Split('=')[0] == _filter)
-                    return item.Split('=')[1];
-            }
-            return temp[0].Split('=')[1];
         }
 
         #region Save Functions
@@ -2659,37 +2667,13 @@ namespace Merchanter {
                 List<Brand> brands = GetBrands(_customer_id);
                 List<Category> categories = GetCategories(_customer_id);
                 List<ProductSource>? product_other_sources = [];
-                _filters.Pager ??= new Pager() { ItemsPerPage = 10, CurrentPageIndex = 0 };
 
-                string _query = "SELECT * FROM products_with_mainsource WHERE p_customer_id=@customer_id";
-
-                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
-                    foreach (var filter in _filters.Filters) {
-                        if (filter.Value is null)
-                            _query += $" AND {filter.Field} {filter.Operator} NULL";
-                        else
-                            _query += $" AND {filter.Field} {filter.Operator} @{filter.Field}";
-                    }
-                }
-                if (_filters.Sort is not null)
-                    _query += " ORDER BY " + _filters.Sort.Field + " " + _filters.Sort.Direction + " LIMIT @start,@end;";
-                else {
-                    _filters.Sort = new Sort() { Field = "p_id", Direction = "DESC" };
-                    _query += " ORDER BY p_id DESC LIMIT @start,@end;";
-                }
-
-                if (state != System.Data.ConnectionState.Open) connection.Open();
                 List<Product> list = [];
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                string _query = "SELECT * FROM products_with_mainsource WHERE p_customer_id=@customer_id";
+                MySqlCommand cmd = new() { Connection = connection };
+                cmd.CommandText = DbHelperBase.BuildDBQuery(_filters, ref _query, ref cmd, typeof(Product));
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("start", _filters.Pager.ItemsPerPage * _filters.Pager.CurrentPageIndex));
-                cmd.Parameters.Add(new MySqlParameter("end", _filters.Pager.ItemsPerPage));
-                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
-                    foreach (var filter in _filters.Filters) {
-                        if (filter.Value is not null)
-                            cmd.Parameters.Add(new MySqlParameter(filter.Field, filter.Value));
-                    }
-                }
+                if (state != System.Data.ConnectionState.Open) connection.Open();
                 MySqlDataReader dataReader = cmd.ExecuteReader();
                 while (dataReader.Read()) {
                     Product p = new Product {
@@ -3467,42 +3451,88 @@ namespace Merchanter {
         }
 
         /// <summary>
-        /// Fills product list extended attributes from the database
+        /// Gets extended properties with filters of type from the database
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_filters">Api Filters</param>
-        public ApiFilter? GetProductsFilterProperties(int _customer_id, ApiFilter _filters) {
+        /// <param name="_type">Type of the object</param>
+        public Dictionary<string, dynamic> GetExtendedQuery(int _customer_id, ApiFilter _filters, Type _type) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT COUNT(*) AS count,MIN(p_price) AS min_price, MAX(p_price) AS max_price, MIN(p_total_qty) AS min_qty, MAX(p_total_qty) AS max_qty FROM products_with_mainsource WHERE p_customer_id=@customer_id";
-                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
-                    foreach (var filter in _filters.Filters) {
-                        if (filter.Value is null) {
-                            _query += $" AND {filter.Field} {filter.Operator} NULL";
+                Dictionary<string, dynamic> _result = [];
+                switch (_type) {
+                    case Type t when t == typeof(Product):
+                        string _query_product = "SELECT COUNT(*) AS count,MIN(p_price) AS min_price, MAX(p_price) AS max_price, MIN(p_total_qty) AS min_qty, MAX(p_total_qty) AS max_qty " +
+                            "FROM products_with_mainsource WHERE p_customer_id=@customer_id";
+                        MySqlCommand cmd_product = new() { Connection = connection };
+                        cmd_product.CommandText = DbHelperBase.BuildDBQuery(_filters, ref _query_product, ref cmd_product, _type, true);
+                        cmd_product.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                        if (state != System.Data.ConnectionState.Open) connection.Open();
+                        MySqlDataReader dataReader_product = cmd_product.ExecuteReader();
+                        if (dataReader_product.Read()) {
+                            _result["TotalCount"] = Convert.ToInt32(dataReader_product["count"].ToString());
+                            _result["MinPrice"] = decimal.Parse(dataReader_product["min_price"].ToString());
+                            _result["MaxPrice"] = decimal.Parse(dataReader_product["max_price"].ToString());
+                            _result["MinQty"] = Convert.ToInt32(dataReader_product["min_qty"].ToString());
+                            _result["MaxQty"] = Convert.ToInt32(dataReader_product["max_qty"].ToString());
                         }
-                        else {
-                            _query += $" AND {filter.Field} {filter.Operator} @{filter.Field}";
+                        if (state == System.Data.ConnectionState.Open) connection.Close();
+                        break;
+                    case Type t when t == typeof(Category):
+                        if (state != System.Data.ConnectionState.Open) connection.Open();
+                        string _query_category = "SELECT COUNT(*) AS count FROM categories WHERE customer_id=@customer_id";
+                        if (_filters.Filters is not null && _filters.Filters.Count > 0) {
+                            foreach (var filter in _filters.Filters) {
+                                if (filter.Value is null) {
+                                    _query_category += $" AND {filter.Field} {filter.Operator} NULL";
+                                }
+                                else {
+                                    _query_category += $" AND {filter.Field} {filter.Operator} @{filter.Field}";
+                                }
+                            }
                         }
-                    }
+                        MySqlCommand cmd_cat = new(_query_category, connection);
+                        cmd_cat.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                        if (_filters.Filters is not null && _filters.Filters.Count > 0) {
+                            foreach (var filter in _filters.Filters) {
+                                if (filter.Value is not null)
+                                    cmd_cat.Parameters.Add(new MySqlParameter(filter.Field, filter.Value));
+                            }
+                        }
+                        MySqlDataReader dataReader_cat = cmd_cat.ExecuteReader();
+                        if (dataReader_cat.Read()) {
+                            _result["TotalCount"] = Convert.ToInt32(dataReader_cat["count"].ToString());
+                        }
+                        if (state == System.Data.ConnectionState.Open) connection.Close();
+                        break;
+                    case Type t when t == typeof(Brand):
+                        if (state != System.Data.ConnectionState.Open) connection.Open();
+                        string _query_brand = "SELECT COUNT(*) AS count FROM brands WHERE customer_id=@customer_id";
+                        if (_filters.Filters is not null && _filters.Filters.Count > 0) {
+                            foreach (var filter in _filters.Filters) {
+                                if (filter.Value is null) {
+                                    _query_brand += $" AND {filter.Field} {filter.Operator} NULL";
+                                }
+                                else {
+                                    _query_brand += $" AND {filter.Field} {filter.Operator} @{filter.Field}";
+                                }
+                            }
+                        }
+                        MySqlCommand cmd_brand = new(_query_brand, connection);
+                        cmd_brand.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                        if (_filters.Filters is not null && _filters.Filters.Count > 0) {
+                            foreach (var filter in _filters.Filters) {
+                                if (filter.Value is not null)
+                                    cmd_brand.Parameters.Add(new MySqlParameter(filter.Field, filter.Value));
+                            }
+                        }
+                        MySqlDataReader dataReader_brand = cmd_brand.ExecuteReader();
+                        if (dataReader_brand.Read()) {
+                            _result["TotalCount"] = Convert.ToInt32(dataReader_brand["count"].ToString());
+                        }
+                        if (state == System.Data.ConnectionState.Open) connection.Close();
+                        break;
                 }
-                MySqlCommand cmd = new(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
-                    foreach (var filter in _filters.Filters) {
-                        if (filter.Value is not null)
-                            cmd.Parameters.Add(new MySqlParameter(filter.Field, filter.Value));
-                    }
-                }
-                MySqlDataReader dataReader = cmd.ExecuteReader();
-                if (dataReader.Read()) {
-                    _filters.TotalCount = Convert.ToInt32(dataReader["count"].ToString());
-                    _filters.MinPrice = decimal.Parse(dataReader["min_price"].ToString());
-                    _filters.MaxPrice = decimal.Parse(dataReader["max_price"].ToString());
-                    _filters.MinQty = Convert.ToInt32(dataReader["min_qty"].ToString());
-                    _filters.MaxQty = Convert.ToInt32(dataReader["max_qty"].ToString());
-                }
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return _filters;
+                return _result;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -5378,7 +5408,7 @@ namespace Merchanter {
                 if (_filters.Sort is not null)
                     _query += " ORDER BY " + _filters.Sort.Field + " " + _filters.Sort.Direction + " LIMIT @start,@end;";
                 else {
-                    _filters.Sort = new Sort() { Field = "id", Direction = "DESC" };
+                    _filters.Sort = new Sort() { Field = "id", Direction = Sort.SortDirection.Descending };
                     _query += " ORDER BY id DESC LIMIT @start,@end;";
                 }
                 List<Brand> list = new List<Brand>();
@@ -5818,7 +5848,7 @@ namespace Merchanter {
                 if (_filters.Sort is not null)
                     _query += " ORDER BY " + _filters.Sort.Field + " " + _filters.Sort.Direction + " LIMIT @start,@end;";
                 else {
-                    _filters.Sort = new Sort() { Field = "id", Direction = "DESC" };
+                    _filters.Sort = new Sort() { Field = "id", Direction = Sort.SortDirection.Descending };
                     _query += " ORDER BY id DESC LIMIT @start,@end;";
                 }
                 List<Category> categories = [];
@@ -8272,14 +8302,6 @@ namespace Merchanter {
                 OnError(ex.ToString());
                 return false;
             }
-        }
-        #endregion
-
-        #region Helper Methods
-        private static void PrintConsole(string value, ConsoleColor _color) {
-            Console.ForegroundColor = _color;
-            Console.WriteLine(value.PadRight(Console.WindowWidth - 1));
-            Console.ResetColor();
         }
         #endregion
     }
