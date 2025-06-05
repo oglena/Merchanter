@@ -72,9 +72,9 @@ namespace Merchanter {
         /// </summary>
         public System.Data.ConnectionState state { get; set; }
         public List<DBSetting> DbSettings { get; set; } = [];
-        public DbHelper? invoice_clone { get; set; } = null;
-        public DbHelper? xml_clone { get; set; } = null;
-        public DbHelper? notification_clone { get; set; } = null;
+        public DbHelper invoice_clone { get; set; } = null;
+        public DbHelper xml_clone { get; set; } = null;
+        public DbHelper notification_clone { get; set; } = null;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DbHelper"/> class with the specified database connection parameters.
@@ -85,7 +85,8 @@ namespace Merchanter {
         /// <param name="_database">The MySQL database name.</param>
         /// <param name="_port">The MySQL server port.</param>
         /// <param name="_timeout">The connection timeout in seconds.</param>
-        public DbHelper(string _server, string _user, string _password, string _database, int _port = 3306, int _timeout = 120) {
+        public DbHelper(string _server, string _user, string _password, string _database, 
+            int _port = 3306, int _timeout = 120) {
             try {
                 Server = _server; User = _user; Password = _password;
                 Database = _database; Port = _port;

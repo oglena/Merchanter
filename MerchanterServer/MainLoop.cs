@@ -1090,7 +1090,6 @@ internal class MainLoop {
         _health = true;
         try {
             #region Main Product Source
-            //product_main_source = Constants.NETSIS; //FOR TESTING 
             if (product_main_source is not null && product_main_source == Constants.ENTEGRA) {
                 PrintConsole("Started loading " + Constants.ENTEGRA + " sources.");
                 var ent_products = Helper.GetENTProducts();
@@ -1345,6 +1344,7 @@ internal class MainLoop {
                     #endregion
 
                     foreach (var item in ank_products) {
+                        #region Product Source Core
                         var p = new Product { //new product
                             customer_id = customer.customer_id,
                             property_mappings = Product.SetDefaultPropertyMappings_forANK_ERP(),
@@ -1358,12 +1358,18 @@ internal class MainLoop {
                                 categories = [root_category],
                             }
                         };
+                        #endregion
+
+                        #region Conditions
                         if (Helper.global.product.is_barcode_required) {
                             if (string.IsNullOrWhiteSpace(item.UrunTanim.BarkodKodu)) {
                                 PrintConsole(Constants.ANK_ERP + " " + item.UrunTanim.SicilKodu + " barcode missing, not sync.", false);
                                 continue;
                             }
                         }
+                        #endregion
+
+                        #region Product Extension and Property Mapping
                         if (!string.IsNullOrWhiteSpace(item.UrunTanim.SicilKodu)) {
                             foreach (var property_item in p.property_mappings) {
                                 if (property_item.source == Constants.ANK_ERP) {
@@ -1453,7 +1459,9 @@ internal class MainLoop {
                                     item.UrunTanim.StokMevcudu > 0 ? item.UrunTanim.StokMevcudu : 0,
                                     true, DateTime.Now) ];
                         }
+                        #endregion
 
+                        #region Product Image Mapping
                         if (p.property_mappings.FirstOrDefault(x => x.source == Constants.ANK_ERP && x.property == "images") is null) {
                             p.images = [.. product_images.Where(x => x.sku == p.sku)]; //take existing images
                         }
@@ -1492,18 +1500,23 @@ internal class MainLoop {
                                 }
                             }
                         }
+                        #endregion
 
+                        #region Product Attribute Mapping
                         if (p.property_mappings.FirstOrDefault(x => x.source == Constants.ANK_ERP && x.property == "attributes") is null) {
                             p.attributes = [.. product_attributes.Where(x => x.sku == p.sku)]; //take existing attributes
                         }
                         else { //attribute sync
                         }
+                        #endregion
 
+                        #region Product Target Price Mapping
                         if (p.property_mappings.FirstOrDefault(x => x.source == Constants.ANK_ERP && x.property == "target_prices") is null) {
                             p.target_prices = [.. product_target_prices.Where(x => x.sku == p.sku)]; //take existing target prices
                         }
                         else { //target price sync
                         }
+                        #endregion
 
                         live_products.Add(p);
                     }
@@ -1891,6 +1904,7 @@ internal class MainLoop {
                                                 if (!Equals(selected_value, item_value)) {
                                                     is_update = true;
                                                     //property_info.SetValue(item.extension, item_value);
+                                                    //no need to set value, just mark as updated
                                                     updated_attrs_new.Add(property_item.property);
                                                 }
                                                 break;
@@ -1898,6 +1912,7 @@ internal class MainLoop {
                                                 if (!Equals(selected_value, item_value)) {
                                                     is_update = true;
                                                     //property_info.SetValue(item.extension, item_value);
+                                                    //no need to set value, just mark as updated
                                                     updated_attrs_new.Add(property_item.property);
                                                 }
                                                 break;
@@ -1905,6 +1920,7 @@ internal class MainLoop {
                                                 if (!Equals(selected_value, item_value)) {
                                                     is_update = true;
                                                     //property_info.SetValue(item.extension, item_value);
+                                                    //no need to set value, just mark as updated
                                                     updated_attrs_new.Add(property_item.property);
                                                 }
                                                 break;
@@ -1925,6 +1941,7 @@ internal class MainLoop {
                                     foreach (var image_item in item.images) {
                                         if (selected_product.images?.FirstOrDefault(x => x.image_name == image_item.image_name) is null) {
                                             is_update = true;
+                                            //no need to set value, just mark as updated
                                             updated_attrs_new.Add("images");
                                         }
                                     }
@@ -1941,6 +1958,7 @@ internal class MainLoop {
                                             case "N11":
                                                 if (!Equals(selected_product.target_prices.FirstOrDefault(x => x.platform_name == "N11")?.price1, target_price_item.price1)) {
                                                     is_update = true;
+                                                    //no need to set value, just mark as updated
                                                     updated_attrs_new.Add("target_price_n11");
                                                 }
                                                 break;
@@ -2071,6 +2089,8 @@ internal class MainLoop {
                             var selected_live_magento_product = Helper.GetProductBySKU(item.sku);
                             if (selected_live_magento_product is not null) { //update magento2 product
                                 magento_product_id = selected_live_magento_product.id;
+
+                                #region Magento2 Product Update
                                 if (updated_attrs_new.Contains("total_qty")) {
                                     if (Helper.UpdateProductQty(item.sku, item.total_qty)) {
                                         is_processed = true;
@@ -2087,6 +2107,7 @@ internal class MainLoop {
                                         is_processed = null;
                                     }
                                 }
+                                #endregion
                             }
                             else { //insert magtento2 product
                                 if (is_update) {  //insert magento product and update product
@@ -2106,6 +2127,8 @@ internal class MainLoop {
                                         [.. category_target_relation.Where(x => x.target_name == Constants.MAGENTO2)], prepared_product.extension.categories);
                                     var m2_brand_id = Helper.GetM2BrandId(thread_id, db_helper, customer, ref live_m2_brands, prepared_product.extension.brand);
                                     #endregion
+
+                                    #region Magento2 Product Insert
                                     var currency_rate = rates.FirstOrDefault(x => x.currency.code == prepared_product.currency.code);
                                     if (currency_rate is not null && prepared_product.price > 0) { //item.price > 0
                                         var inserted_magento_product = Helper.InsertMagentoProduct(prepared_product, m2_brand_id, m2_category_ids, currency_rate);
@@ -2117,6 +2140,7 @@ internal class MainLoop {
                                             is_processed = null;
                                         }
                                     }
+                                    #endregion
                                 }
                             }
                         }
@@ -2138,6 +2162,8 @@ internal class MainLoop {
                                     category_target_relation, item.extension.categories);
                                 var idea_brand_id = Helper.GetIdeaBrandId(thread_id, db_helper, customer, ref live_idea_brands, item.extension.brand);
                                 #endregion
+
+                                #region Ideasoft Product Update
                                 idea_product_id = Helper.UpdateIdeaProduct(idea_product_id, item, idea_brand_id, idea_category_ids);
                                 if (idea_product_id > 0) {
                                     is_processed = true;
@@ -2149,6 +2175,7 @@ internal class MainLoop {
                                     PrintConsole("Sku:" + item.sku + " update error" + " ," + Constants.IDEASOFT, ConsoleColor.Red);
                                     db_helper.LogToServer(thread_id, "product_update_error", Helper.global.settings.company_name + " Sku:" + item.sku, customer.customer_id, "product");
                                 }
+                                #endregion
                             }
                             else { //insert ideasoft product
                                 if (is_update) {  //insert ideasoft product and update product
