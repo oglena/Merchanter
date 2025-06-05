@@ -3420,26 +3420,11 @@ namespace Merchanter {
         /// <returns>Error returns 'int:-1'</returns>
         public int GetProductsCount(int _customer_id, ApiFilter _filters) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
                 string _query = "SELECT COUNT(*) FROM products_with_mainsource WHERE p_customer_id=@customer_id";
-                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
-                    foreach (var filter in _filters.Filters) {
-                        if (filter.Value is null) {
-                            _query += $" AND {filter.Field} {filter.Operator} NULL";
-                        }
-                        else {
-                            _query += $" AND {filter.Field} {filter.Operator} @{filter.Field}";
-                        }
-                    }
-                }
-                MySqlCommand cmd = new(_query, connection);
+                MySqlCommand cmd = new() { Connection = connection };
+                cmd.CommandText = DbHelperBase.BuildDBQuery(_filters, ref _query, ref cmd, typeof(Product), true);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
-                    foreach (var filter in _filters.Filters) {
-                        if (filter.Value is not null)
-                            cmd.Parameters.Add(new MySqlParameter(filter.Field, filter.Value));
-                    }
-                }
+                if (state != System.Data.ConnectionState.Open) connection.Open();
                 int.TryParse(cmd.ExecuteScalar().ToString(), out int total_count);
                 if (state == System.Data.ConnectionState.Open) connection.Close();
                 return total_count;
@@ -3478,56 +3463,28 @@ namespace Merchanter {
                         if (state == System.Data.ConnectionState.Open) connection.Close();
                         break;
                     case Type t when t == typeof(Category):
-                        if (state != System.Data.ConnectionState.Open) connection.Open();
                         string _query_category = "SELECT COUNT(*) AS count FROM categories WHERE customer_id=@customer_id";
-                        if (_filters.Filters is not null && _filters.Filters.Count > 0) {
-                            foreach (var filter in _filters.Filters) {
-                                if (filter.Value is null) {
-                                    _query_category += $" AND {filter.Field} {filter.Operator} NULL";
-                                }
-                                else {
-                                    _query_category += $" AND {filter.Field} {filter.Operator} @{filter.Field}";
-                                }
-                            }
-                        }
-                        MySqlCommand cmd_cat = new(_query_category, connection);
+                        MySqlCommand cmd_cat = new() { Connection = connection };
+                        cmd_cat.CommandText = DbHelperBase.BuildDBQuery(_filters, ref _query_category, ref cmd_cat, _type, true);
                         cmd_cat.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                        if (_filters.Filters is not null && _filters.Filters.Count > 0) {
-                            foreach (var filter in _filters.Filters) {
-                                if (filter.Value is not null)
-                                    cmd_cat.Parameters.Add(new MySqlParameter(filter.Field, filter.Value));
-                            }
-                        }
+                        if (state != System.Data.ConnectionState.Open) connection.Open();
                         MySqlDataReader dataReader_cat = cmd_cat.ExecuteReader();
                         if (dataReader_cat.Read()) {
                             _result["TotalCount"] = Convert.ToInt32(dataReader_cat["count"].ToString());
+                            _result["RootCategory"] = GetRootCategory(_customer_id);
                         }
                         if (state == System.Data.ConnectionState.Open) connection.Close();
                         break;
                     case Type t when t == typeof(Brand):
-                        if (state != System.Data.ConnectionState.Open) connection.Open();
                         string _query_brand = "SELECT COUNT(*) AS count FROM brands WHERE customer_id=@customer_id";
-                        if (_filters.Filters is not null && _filters.Filters.Count > 0) {
-                            foreach (var filter in _filters.Filters) {
-                                if (filter.Value is null) {
-                                    _query_brand += $" AND {filter.Field} {filter.Operator} NULL";
-                                }
-                                else {
-                                    _query_brand += $" AND {filter.Field} {filter.Operator} @{filter.Field}";
-                                }
-                            }
-                        }
-                        MySqlCommand cmd_brand = new(_query_brand, connection);
+                        MySqlCommand cmd_brand = new() { Connection = connection };
+                        cmd_brand.CommandText = DbHelperBase.BuildDBQuery(_filters, ref _query_brand, ref cmd_brand, _type, true);
                         cmd_brand.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                        if (_filters.Filters is not null && _filters.Filters.Count > 0) {
-                            foreach (var filter in _filters.Filters) {
-                                if (filter.Value is not null)
-                                    cmd_brand.Parameters.Add(new MySqlParameter(filter.Field, filter.Value));
-                            }
-                        }
+                        if (state != System.Data.ConnectionState.Open) connection.Open();
                         MySqlDataReader dataReader_brand = cmd_brand.ExecuteReader();
                         if (dataReader_brand.Read()) {
                             _result["TotalCount"] = Convert.ToInt32(dataReader_brand["count"].ToString());
+                            _result["DefaultBrand"] = GetDefaultBrand(_customer_id);
                         }
                         if (state == System.Data.ConnectionState.Open) connection.Close();
                         break;
@@ -5651,24 +5608,11 @@ namespace Merchanter {
         /// <returns>Error returns 'int:-1'</returns>
         public int GetBrandsCount(int _customer_id, ApiFilter _filters) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
                 string _query = "SELECT COUNT(*) FROM brands WHERE customer_id=@customer_id";
-                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
-                    foreach (var filter in _filters.Filters) {
-                        if (filter.Value is null)
-                            _query += $" AND {filter.Field} {filter.Operator} NULL";
-                        else
-                            _query += $" AND {filter.Field} {filter.Operator} @{filter.Field}";
-                    }
-                }
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                MySqlCommand cmd = new() { Connection = connection };
+                cmd.CommandText = DbHelperBase.BuildDBQuery(_filters, ref _query, ref cmd, typeof(Brand), true);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
-                    foreach (var filter in _filters.Filters) {
-                        if (filter.Value is not null)
-                            cmd.Parameters.Add(new MySqlParameter(filter.Field, filter.Value));
-                    }
-                }
+                if (state != System.Data.ConnectionState.Open) connection.Open();
                 int.TryParse(cmd.ExecuteScalar().ToString(), out int total_count);
                 if (state == System.Data.ConnectionState.Open) connection.Close();
                 return total_count;
@@ -6044,24 +5988,11 @@ namespace Merchanter {
         /// <returns>Error returns 'int:-1'</returns>
         public int GetCategoryCount(int _customer_id, ApiFilter _filters) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
                 string _query = "SELECT COUNT(*) FROM categories WHERE customer_id=@customer_id";
-                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
-                    foreach (var filter in _filters.Filters) {
-                        if (filter.Value is null)
-                            _query += $" AND {filter.Field} {filter.Operator} NULL";
-                        else
-                            _query += $" AND {filter.Field} {filter.Operator} @{filter.Field}";
-                    }
-                }
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                MySqlCommand cmd = new() { Connection = connection };
+                cmd.CommandText = DbHelperBase.BuildDBQuery(_filters, ref _query, ref cmd, typeof(Category), true);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
-                    foreach (var filter in _filters.Filters) {
-                        if (filter.Value is not null)
-                            cmd.Parameters.Add(new MySqlParameter(filter.Field, filter.Value));
-                    }
-                }
+                if (state != System.Data.ConnectionState.Open) connection.Open();
                 int.TryParse(cmd.ExecuteScalar().ToString(), out int total_count);
                 if (state == System.Data.ConnectionState.Open) connection.Close();
                 return total_count;

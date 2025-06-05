@@ -78,62 +78,35 @@ namespace Merchanter {
         internal static string? TranslateToDatabase(string _column_name, Type _type) {
             switch (_type) {
                 case Type t when t == typeof(Product):
-                    switch (_column_name) {
-                        case "id":
-                            return "p_id";
-                        case "source_product_id":
-                            return "p_source_product_id";
-                        case "sku":
-                            return "p_sku";
-                        case "type":
-                            return "p_type";
-                        case "name":
-                            return "p_name";
-                        case "barcode":
-                            return "p_barcode";
-                        case "total_qty":
-                            return "p_total_qty";
-                        case "price":
-                            return "p_price";
-                        case "special_price":
-                            return "p_special_price";
-                        case "custom_price":
-                            return "p_custom_price";
-                        case "currency":
-                            return "p_currency";
-                        case "tax":
-                            return "p_tax";
-                        case "tax_included":
-                            return "p_tax_included";
-                        case "sources":
-                            return "p_sources";
-                        case "update_date":
-                            return "p_update_date";
-                        case "brand_id":
-                            return "pe_brand_id";
-                        case "brand_name":
-                            return "b_brand_name";
-                        case "category_ids":
-                            return "pe_category_ids";
-                        case "is_xml_enabled":
-                            return "pe_is_xml_enabled";
-                        case "xml_sources":
-                            return "pe_xml_sources";
-                        case "main_source_name":
-                            return "ps_name";
-                        case "main_source_update_date":
-                            return "ps_update_date";
-                        case "weight":
-                            return "pe_weight";
-                        case "volume":
-                            return "pe_volume";
-                        case "status":
-                            return "pe_is_enabled";
-                        case "description":
-                            return "pe_description";
-                        default:
-                            return _column_name;
-                    }
+                    return _column_name switch {
+                        "id" => "p_id",
+                        "source_product_id" => "p_source_product_id",
+                        "sku" => "p_sku",
+                        "type" => "p_type",
+                        "name" => "p_name",
+                        "barcode" => "p_barcode",
+                        "total_qty" => "p_total_qty",
+                        "price" => "p_price",
+                        "special_price" => "p_special_price",
+                        "custom_price" => "p_custom_price",
+                        "currency" => "p_currency",
+                        "tax" => "p_tax",
+                        "tax_included" => "p_tax_included",
+                        "sources" => "p_sources",
+                        "update_date" => "p_update_date",
+                        "brand_id" => "pe_brand_id",
+                        "brand_name" => "b_brand_name",
+                        "category_ids" => "pe_category_ids",
+                        "is_xml_enabled" => "pe_is_xml_enabled",
+                        "xml_sources" => "pe_xml_sources",
+                        "main_source_name" => "ps_name",
+                        "main_source_update_date" => "ps_update_date",
+                        "weight" => "pe_weight",
+                        "volume" => "pe_volume",
+                        "status" => "pe_is_enabled",
+                        "description" => "pe_description",
+                        _ => _column_name,
+                    };
                 case Type t when t == typeof(Category):
                     return _column_name;
                 case Type t when t == typeof(Brand):
@@ -146,6 +119,24 @@ namespace Merchanter {
             throw new Exception(_column_name + " cannot translate to database column!");
         }
 
+        /// <summary>
+        /// Builds a database query string based on the specified filters, type, and sorting options.
+        /// </summary>
+        /// <remarks>This method dynamically constructs a SQL query based on the provided filters, entity
+        /// type, and optional sorting and pagination. It also adds the necessary parameters to the <paramref
+        /// name="_cmd"/> object to prevent SQL injection.  The behavior of the query generation depends on the
+        /// specified <paramref name="_type"/>: - For <see cref="Product"/>, special handling is applied to prioritize
+        /// "pq" filters. - For other types, filters are applied directly without reordering.  If <paramref
+        /// name="_only_filters_active"/> is <see langword="true"/>, the query will not include sorting or
+        /// pagination.</remarks>
+        /// <param name="_filters">The <see cref="ApiFilter"/> object containing filter, sort, and pagination criteria.</param>
+        /// <param name="_query">A reference to the query string that will be modified to include the generated SQL conditions.</param>
+        /// <param name="_cmd">A reference to the <see cref="MySqlCommand"/> object that will be populated with parameters for the query.</param>
+        /// <param name="_type">The type of the entity (e.g., <see cref="Product"/>, <see cref="Category"/>, etc.) for which the query is
+        /// being built.</param>
+        /// <param name="_only_filters_active">A boolean value indicating whether to include only filter conditions in the query.  If <see
+        /// langword="true"/>, sorting and pagination are excluded from the query.</param>
+        /// <returns>A string representing the constructed SQL query with the applied filters, sorting, and pagination.</returns>
         internal static string BuildDBQuery(ApiFilter _filters, ref string _query, ref MySqlCommand _cmd, Type _type, bool _only_filters_active = false) {
             #region Filters
             if (_filters.Filters is not null && _filters.Filters.Count > 0) {
@@ -267,6 +258,20 @@ namespace Merchanter {
             return _query;
         }
 
+        /// <summary>
+        /// Creates a MySQL parameter for a database query based on the specified filter and type.
+        /// </summary>
+        /// <remarks>The method supports various filter operators, including <see
+        /// cref="IFilter.DBOperator.Like"/>, <see cref="IFilter.DBOperator.In"/>, and <see
+        /// cref="IFilter.DBOperator.NotIn"/>. For "In" and "NotIn" operators, the filter value must be an array of
+        /// values. String arrays are automatically formatted with single quotes around each value.</remarks>
+        /// <param name="_type">The type of the entity being filtered, used to translate the field name to a database-specific format.</param>
+        /// <param name="filter">The filter containing the field, operator, and value to construct the parameter.</param>
+        /// <param name="_index">An optional index used to ensure unique parameter names in cases where multiple filters are applied.
+        /// Defaults to 0.</param>
+        /// <returns>A <see cref="MySqlParameter"/> representing the filter condition, with the parameter name and value
+        /// formatted according to the filter's operator and value.</returns>
+        /// <exception cref="InvalidOperationException">Thrown if the filter value is invalid or missing, and a parameter cannot be created.</exception>
         private static MySqlParameter CreateFilterParameter(Type _type, Filter<dynamic> filter, int _index = 0) {
             switch (filter.Operator) {
                 case IFilter.DBOperator.Like:
