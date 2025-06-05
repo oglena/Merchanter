@@ -5394,34 +5394,12 @@ namespace Merchanter {
         /// <returns>[Error] returns 'null'</returns>
         public List<Brand> GetBrands(int _customer_id, ApiFilter _filters) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                _filters.Pager ??= new Pager() { ItemsPerPage = 10, CurrentPageIndex = 0 };
+                List<Brand> list = [];
                 string _query = "SELECT * FROM brands WHERE customer_id=@customer_id";
-                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
-                    foreach (var filter in _filters.Filters) {
-                        if (filter.Value is null)
-                            _query += $" AND {filter.Field} {filter.Operator} NULL";
-                        else
-                            _query += $" AND {filter.Field} {filter.Operator} @{filter.Field}";
-                    }
-                }
-                if (_filters.Sort is not null)
-                    _query += " ORDER BY " + _filters.Sort.Field + " " + _filters.Sort.Direction + " LIMIT @start,@end;";
-                else {
-                    _filters.Sort = new Sort() { Field = "id", Direction = Sort.SortDirection.Descending };
-                    _query += " ORDER BY id DESC LIMIT @start,@end;";
-                }
-                List<Brand> list = new List<Brand>();
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                MySqlCommand cmd = new() { Connection = connection };
+                cmd.CommandText = DbHelperBase.BuildDBQuery(_filters, ref _query, ref cmd, typeof(Brand));
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("start", _filters.Pager.ItemsPerPage * _filters.Pager.CurrentPageIndex));
-                cmd.Parameters.Add(new MySqlParameter("end", _filters.Pager.ItemsPerPage));
-                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
-                    foreach (var filter in _filters.Filters) {
-                        if (filter.Value is not null)
-                            cmd.Parameters.Add(new MySqlParameter(filter.Field, filter.Value));
-                    }
-                }
+                if (state != System.Data.ConnectionState.Open) connection.Open();
                 MySqlDataReader dataReader = cmd.ExecuteReader();
                 while (dataReader.Read()) {
                     Brand b = new Brand {
@@ -5834,34 +5812,12 @@ namespace Merchanter {
         /// <returns>[Error] returns 'null'</returns>
         public List<Category> GetCategories(int _customer_id, ApiFilter _filters) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                _filters.Pager ??= new Pager() { ItemsPerPage = 10, CurrentPageIndex = 0 };
-                string _query = "SELECT * FROM categories WHERE customer_id=@customer_id";
-                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
-                    foreach (var filter in _filters.Filters) {
-                        if (filter.Value is null)
-                            _query += $" AND {filter.Field} {filter.Operator} NULL";
-                        else
-                            _query += $" AND {filter.Field} {filter.Operator} @{filter.Field}";
-                    }
-                }
-                if (_filters.Sort is not null)
-                    _query += " ORDER BY " + _filters.Sort.Field + " " + _filters.Sort.Direction + " LIMIT @start,@end;";
-                else {
-                    _filters.Sort = new Sort() { Field = "id", Direction = Sort.SortDirection.Descending };
-                    _query += " ORDER BY id DESC LIMIT @start,@end;";
-                }
                 List<Category> categories = [];
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                string _query = "SELECT * FROM categories WHERE customer_id=@customer_id";
+                MySqlCommand cmd = new() { Connection = connection };
+                cmd.CommandText = DbHelperBase.BuildDBQuery(_filters, ref _query, ref cmd, typeof(Category));
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("start", _filters.Pager.ItemsPerPage * _filters.Pager.CurrentPageIndex));
-                cmd.Parameters.Add(new MySqlParameter("end", _filters.Pager.ItemsPerPage));
-                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
-                    foreach (var filter in _filters.Filters) {
-                        if (filter.Value is not null)
-                            cmd.Parameters.Add(new MySqlParameter(filter.Field, filter.Value));
-                    }
-                }
+                if (state != System.Data.ConnectionState.Open) connection.Open();
                 MySqlDataReader dataReader = cmd.ExecuteReader();
                 while (dataReader.Read()) {
                     Category c = new() {

@@ -130,7 +130,7 @@ app.MapControllers();
 app.MapSwagger("/swagger/{documentName}.json");
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment()) {
+//if (app.Environment.IsDevelopment()) {
     app.UseRouter(routes => {
         routes.MapGet("/", async context => {
             context.Response.ContentType = "text/html";
@@ -149,7 +149,7 @@ if (app.Environment.IsDevelopment()) {
         options.AddDocument("merchanter");
         options.WithOpenApiRoutePattern("/swagger/merchanter.json");
     });
-}
+//}
 
 // Configure the HTTP request pipeline.
 app.UseExceptionHandler();
