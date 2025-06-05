@@ -1,13 +1,9 @@
-﻿using Merchanter;
-using Merchanter.Classes;
-using Merchanter.Classes.Settings;
-using Merchanter.Responses;
+﻿using Merchanter.Classes;
 using MySql.Data.MySqlClient;
-using System.Text.Json;
-using Attribute = Merchanter.Classes.Attribute;
 
 namespace Merchanter {
     public static class DbHelperBase {
+        private static readonly string[] pq = ["sku", "barcode", "name", "brand_name", "type"];
 
         /// <summary>
         /// Gets setting value from the database
@@ -153,8 +149,16 @@ namespace Merchanter {
         internal static string BuildDBQuery(ApiFilter _filters, ref string _query, ref MySqlCommand _cmd, Type _type, bool _only_filters_active = false) {
             #region Filters
             if (_filters.Filters is not null && _filters.Filters.Count > 0) {
+                int index = 0;
                 switch (_type) {
                     case Type t when t == typeof(Product):
+                        index = 0;
+                        //move pq filter to top of the list if exists
+                        if (_filters.Filters.Any(x => x.Field == "pq")) {
+                            var pq_filter = _filters.Filters.FirstOrDefault(x => x.Field == "pq");
+                            _filters.Filters.Remove(pq_filter);
+                            _filters.Filters.Insert(0, pq_filter);
+                        }
                         foreach (var filter in _filters.Filters) {
                             if (Equals(filter.Field, "pq")) {
                                 _query += $" AND ( ";
@@ -169,142 +173,58 @@ namespace Merchanter {
                                 _query += TranslateToDatabase("type", _type) + " " + GetOperatorString(IFilter.DBOperator.Like) + " " +
                                     (filter.Value is not null ? $"@{TranslateToDatabase("type", _type)}" : "NULL");
                                 _query += $" )";
+                                _cmd.Parameters.Add(new MySqlParameter(TranslateToDatabase("sku", _type), "%" + filter.Value + "%"));
+                                _cmd.Parameters.Add(new MySqlParameter(TranslateToDatabase("barcode", _type), "%" + filter.Value + "%"));
+                                _cmd.Parameters.Add(new MySqlParameter(TranslateToDatabase("name", _type), "%" + filter.Value + "%"));
+                                _cmd.Parameters.Add(new MySqlParameter(TranslateToDatabase("brand_name", _type), "%" + filter.Value + "%"));
+                                _cmd.Parameters.Add(new MySqlParameter(TranslateToDatabase("type", _type), "%" + filter.Value + "%"));
+                                index++;
                             }
                             else {
                                 _query += $" AND " + TranslateToDatabase(filter.Field, _type) + " " + GetOperatorString(filter.Operator) + " " +
-                                    (filter.Value is not null ? $"@{TranslateToDatabase(filter.Field, _type)}" : "NULL");
-                            }
-                        }
-                        foreach (var filter in _filters.Filters) {
-                            if (filter.Value is not null) {
-                                if (filter.Field == "pq") {
-                                    _cmd.Parameters.Add(new MySqlParameter(TranslateToDatabase("sku", _type), "%" + filter.Value + "%"));
-                                    _cmd.Parameters.Add(new MySqlParameter(TranslateToDatabase("barcode", _type), "%" + filter.Value + "%"));
-                                    _cmd.Parameters.Add(new MySqlParameter(TranslateToDatabase("name", _type), "%" + filter.Value + "%"));
-                                    _cmd.Parameters.Add(new MySqlParameter(TranslateToDatabase("brand_name", _type), "%" + filter.Value + "%"));
-                                    _cmd.Parameters.Add(new MySqlParameter(TranslateToDatabase("type", _type), "%" + filter.Value + "%"));
+                                    (filter.Value is not null ? $"@{TranslateToDatabase(filter.Field, _type)}" + "_" + index.ToString() : "NULL");
+
+                                if (filter.Value is not null) {
+                                    _cmd.Parameters.Add(CreateFilterParameter(_type, filter, index));
                                 }
-                                else {
-                                    switch (filter.Operator) {
-                                        case IFilter.DBOperator.Like:
-                                            _cmd.Parameters.Add(new MySqlParameter(TranslateToDatabase(filter.Field, _type), "%" + filter.Value + "%"));
-                                            break;
-                                        case IFilter.DBOperator op when op == IFilter.DBOperator.In || op == IFilter.DBOperator.NotIn:
-                                            var filter_values = JsonSerializer.Deserialize<dynamic[]>(filter.Value);
-                                            if (filter_values is not null) {
-                                                for (int i = 0; i < filter_values.Length; i++) {
-                                                    if (filter_values[i] is JsonElement jsonElement1 && jsonElement1.ValueKind == JsonValueKind.String) {
-                                                        filter_values[i] = "'" + jsonElement1.GetString() + "'";
-                                                    }
-                                                    else if (filter_values[i] is JsonElement jsonElement2 && jsonElement2.ValueKind == JsonValueKind.Number) {
-                                                        filter_values[i] = jsonElement2.GetInt32(); // or GetInt32() based on your needs
-                                                    }
-                                                }
-                                                _query = _query.Replace("@" + TranslateToDatabase(filter.Field, _type), "(" + string.Join(",", filter_values) + ")");
-                                                //_cmd.Parameters.Add(new MySqlParameter(TranslateToDatabase(filter.Field, _type), "(" + string.Join(",", filter_values) + ")"));
-                                            }
-                                            break;
-                                        default:
-                                            _cmd.Parameters.Add(new MySqlParameter(TranslateToDatabase(filter.Field, _type), filter.Value));
-                                            break;
-                                    }
-                                }
+                                index++;
                             }
                         }
                         break;
                     case Type t when t == typeof(Category):
+                        index = 0;
                         foreach (var filter in _filters.Filters) {
                             _query += $" AND " + TranslateToDatabase(filter.Field, _type) + " " + GetOperatorString(filter.Operator) + " " +
-                                (filter.Value is not null ? $"@{TranslateToDatabase(filter.Field, _type)}" : "NULL");
-                        }
-                        foreach (var filter in _filters.Filters) {
+                                (filter.Value is not null ? $"@{TranslateToDatabase(filter.Field, _type)}" + "_" + index.ToString() : "NULL");
+
                             if (filter.Value is not null) {
-                                switch (filter.Operator) {
-                                    case IFilter.DBOperator.Like:
-                                        _cmd.Parameters.Add(new MySqlParameter(TranslateToDatabase(filter.Field, _type), "%" + filter.Value + "%"));
-                                        break;
-                                    case IFilter.DBOperator op when op == IFilter.DBOperator.In || op == IFilter.DBOperator.NotIn:
-                                        var filter_values = JsonSerializer.Deserialize<dynamic[]>(filter.Value);
-                                        if (filter_values is not null) {
-                                            for (int i = 0; i < filter_values.Length; i++) {
-                                                if (filter_values[i] is JsonElement jsonElement1 && jsonElement1.ValueKind == JsonValueKind.String) {
-                                                    filter_values[i] = "'" + jsonElement1.GetString() + "'";
-                                                }
-                                                else if (filter_values[i] is JsonElement jsonElement2 && jsonElement2.ValueKind == JsonValueKind.Number) {
-                                                    filter_values[i] = jsonElement2.GetInt32(); // or GetInt32() based on your needs
-                                                }
-                                            }
-                                            _query = _query.Replace("@" + TranslateToDatabase(filter.Field, _type), "(" + string.Join(",", filter_values) + ")");
-                                            //_cmd.Parameters.Add(new MySqlParameter(TranslateToDatabase(filter.Field, _type), "(" + string.Join(",", filter_values) + ")"));
-                                        }
-                                        break;
-                                    default:
-                                        _cmd.Parameters.Add(new MySqlParameter(TranslateToDatabase(filter.Field, _type), filter.Value));
-                                        break;
-                                }
+                                _cmd.Parameters.Add(CreateFilterParameter(_type, filter, index));
                             }
+                            index++;
                         }
                         break;
                     case Type t when t == typeof(Log):
+                        index = 0;
                         foreach (var filter in _filters.Filters) {
                             _query += $" AND " + TranslateToDatabase(filter.Field, _type) + " " + GetOperatorString(filter.Operator) + " " +
-                                (filter.Value is not null ? $"@{TranslateToDatabase(filter.Field, _type)}" : "NULL");
-                        }
-                        foreach (var filter in _filters.Filters) {
+                                (filter.Value is not null ? $"@{TranslateToDatabase(filter.Field, _type)}" + "_" + index.ToString() : "NULL");
+
                             if (filter.Value is not null) {
-                                switch (filter.Operator) {
-                                    case IFilter.DBOperator.Like:
-                                        _cmd.Parameters.Add(new MySqlParameter(TranslateToDatabase(filter.Field, _type), "%" + filter.Value + "%"));
-                                        break;
-                                    case IFilter.DBOperator op when op == IFilter.DBOperator.In || op == IFilter.DBOperator.NotIn:
-                                        var filter_values = JsonSerializer.Deserialize<dynamic[]>(filter.Value);
-                                        if (filter_values is not null) {
-                                            for (int i = 0; i < filter_values.Length; i++) {
-                                                if (filter_values[i] is JsonElement jsonElement1 && jsonElement1.ValueKind == JsonValueKind.String) {
-                                                    filter_values[i] = "'" + jsonElement1.GetString() + "'";
-                                                }
-                                                else if (filter_values[i] is JsonElement jsonElement2 && jsonElement2.ValueKind == JsonValueKind.Number) {
-                                                    filter_values[i] = jsonElement2.GetInt32(); // or GetInt32() based on your needs
-                                                }
-                                            }
-                                            _query = _query.Replace("@" + TranslateToDatabase(filter.Field, _type), "(" + string.Join(",", filter_values) + ")");
-                                            //_cmd.Parameters.Add(new MySqlParameter(TranslateToDatabase(filter.Field, _type), "(" + string.Join(",", filter_values) + ")"));
-                                        }
-                                        break;
-                                    default:
-                                        _cmd.Parameters.Add(new MySqlParameter(TranslateToDatabase(filter.Field, _type), filter.Value));
-                                        break;
-                                }
+                                _cmd.Parameters.Add(CreateFilterParameter(_type, filter, index));
                             }
+                            index++;
                         }
                         break;
                     case Type t when t == typeof(Brand):
+                        index = 0;
                         foreach (var filter in _filters.Filters) {
                             _query += $" AND " + TranslateToDatabase(filter.Field, _type) + " " + GetOperatorString(filter.Operator) + " " +
-                                (filter.Value is not null ? $"@{TranslateToDatabase(filter.Field, _type)}" : "NULL");
-                        }
-                        foreach (var filter in _filters.Filters) {
+                                (filter.Value is not null ? $"@{TranslateToDatabase(filter.Field, _type)}" + "_" + index.ToString() : "NULL");
+
                             if (filter.Value is not null) {
-                                switch (filter.Operator) {
-                                    case IFilter.DBOperator.Like:
-                                        _cmd.Parameters.Add(new MySqlParameter(TranslateToDatabase(filter.Field, _type), "%" + filter.Value + "%"));
-                                        break;
-                                    case IFilter.DBOperator op when op == IFilter.DBOperator.In || op == IFilter.DBOperator.NotIn:
-                                        dynamic[]? filter_values = filter.Value as dynamic[];
-                                        if (filter_values is not null) {
-                                            if (filter_values.GetType() == typeof(string[])) {
-                                                for (int i = 0; i < filter_values.Length; i++) {
-                                                    filter_values[i] = "'" + filter_values[i] + "'";
-                                                }
-                                            }
-                                            _cmd.Parameters.Add(new MySqlParameter(TranslateToDatabase(filter.Field, _type), string.Join(",", filter_values)));
-                                        }
-                                        break;
-                                    default:
-                                        _cmd.Parameters.Add(new MySqlParameter(TranslateToDatabase(filter.Field, _type), filter.Value));
-                                        break;
-                                }
+                                _cmd.Parameters.Add(CreateFilterParameter(_type, filter, index));
                             }
+                            index++;
                         }
                         break;
                 }
@@ -345,6 +265,31 @@ namespace Merchanter {
             }
 
             return _query;
+        }
+
+        private static MySqlParameter CreateFilterParameter(Type _type, Filter<dynamic> filter, int _index = 0) {
+            switch (filter.Operator) {
+                case IFilter.DBOperator.Like:
+                    return new MySqlParameter(TranslateToDatabase(filter.Field, _type) + "_" + _index.ToString(),
+                        "%" + filter.Value + "%");
+                case IFilter.DBOperator op when op == IFilter.DBOperator.In || op == IFilter.DBOperator.NotIn:
+                    dynamic[]? filter_values = filter.Value as dynamic[];
+                    if (filter_values is not null) {
+                        if (filter_values.GetType() == typeof(string[])) {
+                            for (int i = 0; i < filter_values.Length; i++) {
+                                filter_values[i] = "'" + filter_values[i] + "'";
+                            }
+                        }
+                        return new MySqlParameter(TranslateToDatabase(filter.Field, _type) + "_" + _index.ToString(),
+                            string.Join(",", filter_values));
+                    }
+                    break;
+                default:
+                    return new MySqlParameter(TranslateToDatabase(filter.Field, _type) + "_" + _index.ToString(),
+                        filter.Value);
+            }
+            // Add a default return statement to handle cases where no value is returned.  
+            throw new InvalidOperationException("Unable to create filter parameter due to invalid or missing filter value.");
         }
     }
 }
