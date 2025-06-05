@@ -131,8 +131,8 @@ else {
             if (!string.IsNullOrWhiteSpace(brand_name_filter)) {
                 apifilter.Filters.Add(new Filter<dynamic>() {
                         Field = "brand_name",
-                        Operator = "LIKE",
-                        Value = "%" + brand_name_filter + "%"
+                        Operator = IFilter.DBOperator.Like,
+                        Value = brand_name_filter
                     });
             }
             if (brand_is_active_filter != BrandStatus.All) {
@@ -153,7 +153,7 @@ else {
                 if (response.ApiFilter != null) {
                     page_message = "";
                     message_status = "";
-                    await pagination.SetTotalItemCountAsync(response.ApiFilter.TotalCount.GetValueOrDefault());
+                    await pagination.SetTotalItemCountAsync(((int)response.ApiFilter.ExtendedQueryResponses?["TotalCount"]));
                 }
             }
         }

@@ -13,17 +13,15 @@ namespace ApiService.Controllers {
     [Route("api/[controller]")]
     [SwaggerTag("Customer endpoint for Merchanter.")]
     [ApiController]
-    public class CustomerController(ICustomerService customerService) : ControllerBase {
+    public class CustomerController(ICustomerService customerService, ICatalogService catalogService) : ControllerBase {
         /// <summary>
-        /// Retrieves a single customer by ID.
+        /// Retrieves a single customer.
         /// </summary>
-        /// <param name="id">Customer ID.</param>
         /// <returns>Customer details wrapped in a BaseResponseModel.</returns>
-        [HttpGet("{id}/GetCustomer")]
+        [HttpGet("GetCustomer")]
         [Authorize]
-        public async Task<ActionResult<BaseResponseModel<Customer>>> GetCustomer(string id) {
-            int customer_id;
-            if (int.TryParse(id, out customer_id) && customer_id > 0) {
+        public async Task<ActionResult<BaseResponseModel<Customer>>> GetCustomer() {
+            if (int.TryParse(HttpContext.User.FindFirst("customerId")?.Value, out int customer_id) && customer_id > 0) {
                 Customer customer = await customerService.GetCustomer(customer_id);
                 if (customer != null) {
                     return Ok(new BaseResponseModel<Customer>() { Success = true, Data = customer, ErrorMessage = "" });
@@ -45,6 +43,7 @@ namespace ApiService.Controllers {
         public async Task<ActionResult<BaseResponseModel<List<Log>>>> GetCustomerLogs([FromBody] ApiFilter? _filters) {
             if (int.TryParse(HttpContext.User.FindFirst("customerId")?.Value, out int customer_id) && customer_id > 0) {
                 _filters ??= new ApiFilter() { Filters = null, Sort = null, Pager = null };
+                _filters.ExtendedQueryResponses = await catalogService.GetExtendedQuery(customer_id, _filters, typeof(Log));
                 var logs = await customerService.GetCustomerLogs(customer_id, _filters);
                 return Ok(new BaseResponseModel<List<Log>>() { Success = logs != null, Data = logs ?? [], ApiFilter = _filters, ErrorMessage = logs != null ? "" : "Error -1" });
             }
@@ -54,14 +53,12 @@ namespace ApiService.Controllers {
         /// <summary>
         /// Retrieves a list of customer notifications.
         /// </summary>
-        /// <param name="id">Customer ID.</param>
         /// <param name="_api_filter">Filtering options.</param>
         /// <returns>List of notifications wrapped in a BaseResponseModel.</returns>
-        [HttpPost("{id}/GetCustomerNotifications")]
+        [HttpPost("GetCustomerNotifications")]
         [Authorize]
-        public async Task<ActionResult<BaseResponseModel<List<Notification>>>> GetCustomerNotifications(string id, [FromBody] ApiFilter _api_filter) {
-            int customer_id;
-            if (int.TryParse(id, out customer_id) && customer_id > 0) {
+        public async Task<ActionResult<BaseResponseModel<List<Notification>>>> GetCustomerNotifications([FromBody] ApiFilter _api_filter) {
+            if (int.TryParse(HttpContext.User.FindFirst("customerId")?.Value, out int customer_id) && customer_id > 0) {
                 if (_api_filter.Pager != null && _api_filter.Filters != null) {
                     List<Notification> customer_notifications = await customerService.GetCustomerNotifications(customer_id, _api_filter);
                     if (customer_notifications != null) {
@@ -95,14 +92,12 @@ namespace ApiService.Controllers {
         /// <summary>
         /// Updates or creates a customer.
         /// </summary>
-        /// <param name="id">Customer ID.</param>
         /// <param name="customer">Customer object to save.</param>
         /// <returns>Saved customer wrapped in a BaseResponseModel.</returns>
-        [HttpPut("{id}/SaveCustomer")]
+        [HttpPut("SaveCustomer")]
         [Authorize]
-        public async Task<ActionResult<BaseResponseModel<Customer?>>> SaveCustomer(string id, [FromBody] Customer customer) {
-            int customer_id;
-            if (int.TryParse(id, out customer_id) && customer_id > 0 && customer.customer_id == customer_id) {
+        public async Task<ActionResult<BaseResponseModel<Customer?>>> SaveCustomer([FromBody] Customer customer) {
+            if (int.TryParse(HttpContext.User.FindFirst("customerId")?.Value, out int customer_id) && customer_id > 0) {
                 Customer? saved_customer = await customerService.SaveCustomer(customer_id, customer);
                 if (saved_customer != null) {
                     return Ok(new BaseResponseModel<Customer>() { Success = true, Data = saved_customer, ErrorMessage = "" });

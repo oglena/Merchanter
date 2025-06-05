@@ -179,7 +179,7 @@ else {
             await RefreshServers();
             var response = await PostHelper.Request<Customer>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
                         Classes.PostHelper.PostMethod.Get, Classes.PostHelper.PostDestination.Api,
-                        "api/Customer/" + customer_id.ToString() + "/GetCustomer");
+                        "api/Customer/GetCustomer");
             if (response != null && response.Success && response.Data != null) {
                 customer = response.Data;
             }

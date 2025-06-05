@@ -3471,7 +3471,6 @@ namespace Merchanter {
                         MySqlDataReader dataReader_cat = cmd_cat.ExecuteReader();
                         if (dataReader_cat.Read()) {
                             _result["TotalCount"] = Convert.ToInt32(dataReader_cat["count"].ToString());
-                            _result["RootCategory"] = GetRootCategory(_customer_id);
                         }
                         if (state == System.Data.ConnectionState.Open) connection.Close();
                         break;
@@ -3484,7 +3483,18 @@ namespace Merchanter {
                         MySqlDataReader dataReader_brand = cmd_brand.ExecuteReader();
                         if (dataReader_brand.Read()) {
                             _result["TotalCount"] = Convert.ToInt32(dataReader_brand["count"].ToString());
-                            _result["DefaultBrand"] = GetDefaultBrand(_customer_id);
+                        }
+                        if (state == System.Data.ConnectionState.Open) connection.Close();
+                        break;
+                    case Type t when t == typeof(Log):
+                        string _query_log = "SELECT COUNT(*) AS count FROM log WHERE customer_id=@customer_id";
+                        MySqlCommand cmd_log = new() { Connection = connection };
+                        cmd_log.CommandText = DbHelperBase.BuildDBQuery(_filters, ref _query_log, ref cmd_log, _type, true);
+                        cmd_log.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                        if (state != System.Data.ConnectionState.Open) connection.Open();
+                        MySqlDataReader dataReader_log = cmd_log.ExecuteReader();
+                        if (dataReader_log.Read()) {
+                            _result["TotalCount"] = Convert.ToInt32(dataReader_log["count"].ToString());
                         }
                         if (state == System.Data.ConnectionState.Open) connection.Close();
                         break;
@@ -5288,15 +5298,20 @@ namespace Merchanter {
         /// <returns>[Error] returns 'null'</returns>
         public Brand GetDefaultBrand(int _customer_id) {
             try {
-                if (Helper.global == null) return null;
-                var default_brand = GetBrandByName(_customer_id, Helper.global.product.default_brand);
-                if (default_brand == null) {
+                var test = GetProductSettings(_customer_id);
+                if (test is null) {
+                    OnError("GetDefaultBrand: Product Settings Not Found for Customer ID: " + _customer_id);
+                    return null;
+                }
+                var default_brand = GetBrandByName(_customer_id, test.default_brand);
+                if (default_brand is null) {
                     var inserted_default_brand = InsertBrand(_customer_id, new Brand() { customer_id = _customer_id, brand_name = Helper.global.product.default_brand, status = true });
                     if (inserted_default_brand is not null) {
                         return inserted_default_brand;
                     }
                     else {
-                        return new Brand() { customer_id = _customer_id, brand_name = Helper.global.product.default_brand, status = true };
+                        OnError("GetDefaultBrand: Default Brand Not Found for Customer ID: " + _customer_id);
+                        return null;
                     }
                 }
                 else {

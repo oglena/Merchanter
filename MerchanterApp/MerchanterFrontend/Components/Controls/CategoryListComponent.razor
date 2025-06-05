@@ -142,8 +142,8 @@ else {
             if (!string.IsNullOrWhiteSpace(category_name_filter)) {
                 apifilter.Filters.Add(new Filter<dynamic>() {
                         Field = "category_name",
-                        Operator = "LIKE",
-                        Value = "%" + category_name_filter + "%"
+                        Operator = IFilter.DBOperator.Like,
+                        Value = category_name_filter
                     });
             }
             if (category_is_active_filter != CategoryStatus.All) {
@@ -162,7 +162,7 @@ else {
             if (response != null && response.Success && response.Data != null) {
                 categories = response.Data.AsQueryable();
                 if (response.ApiFilter != null) {
-                    await pagination.SetTotalItemCountAsync(response.ApiFilter.TotalCount.GetValueOrDefault());
+                    await pagination.SetTotalItemCountAsync(((int)response.ApiFilter.ExtendedQueryResponses?["TotalCount"]));
                 }
             }
         }

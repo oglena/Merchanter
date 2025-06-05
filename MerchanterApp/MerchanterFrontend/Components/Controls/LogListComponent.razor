@@ -113,42 +113,42 @@ else {
             if (!string.IsNullOrWhiteSpace(messageFilter)) {
                 apifilter.Filters.Add(new Filter<dynamic>() {
                         Field = "message",
-                        Operator = "LIKE",
-                        Value = "%" + messageFilter + "%"
+                        Operator = IFilter.DBOperator.Like,
+                        Value =messageFilter
                     });
             }
             if (!string.IsNullOrWhiteSpace(titleFilter)) {
                 apifilter.Filters.Add(new Filter<dynamic>() {
                         Field = "title",
-                        Operator = "LIKE",
-                        Value = "%" + titleFilter + "%"
+                        Operator =  IFilter.DBOperator.Like,
+                        Value =  titleFilter
                     });
             }
             if (!string.IsNullOrWhiteSpace(workerFilter)) {
                 apifilter.Filters.Add(new Filter<dynamic>() {
                         Field = "worker",
-                        Operator = "LIKE",
-                        Value = "%" + workerFilter + "%"
+                        Operator = IFilter.DBOperator.Like,
+                        Value =  workerFilter
                     });
             }
             if (dateFilter != null) {
                 apifilter.Filters.Add(new Filter<dynamic>() {
-                        Field = "date",
-                        Operator = "=",
+                        Field = "update_date",
+                        Operator = IFilter.DBOperator.GreaterThan,
                         Value = dateFilter
                     });
             }
             string json = JsonConvert.SerializeObject(apifilter);
             var response = await PostHelper.Request<List<Log>>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
                 Classes.PostHelper.PostMethod.Post, Classes.PostHelper.PostDestination.Api,
-                "api/Customer/" + customer_id.ToString() + "/GetCustomerLogs",
+                "api/Customer/GetCustomerLogs",
                 new StringContent(json, Encoding.UTF8, "application/json")
                 );
 
             if (response != null && response.Success && response.Data != null) {
                 customer_logs = response.Data.AsQueryable();
                 if (response.ApiFilter != null) {
-                    await pagination.SetTotalItemCountAsync(response.ApiFilter.TotalCount.GetValueOrDefault());
+                    await pagination.SetTotalItemCountAsync(((int)response.ApiFilter.ExtendedQueryResponses?["TotalCount"]));
                 }
             }
             else {

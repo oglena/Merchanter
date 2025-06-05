@@ -288,7 +288,7 @@
             if (response != null && response.Success && response.Data != null) {
                 customer_logs = response.Data;
                 if (response.ApiFilter != null)
-                    pageCount = (response.ApiFilter.TotalCount.GetValueOrDefault() + pageItemsCount - 1) / pageItemsCount;
+                    pageCount = (response.ApiFilter.ExtendedQueryResponses?["TotalCount"].GetValueOrDefault() + pageItemsCount - 1) / pageItemsCount;
 
                 if (customer_logs != null && customer_logs.Count == 0)
                     page_message = "No servers working.";

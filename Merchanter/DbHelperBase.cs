@@ -238,7 +238,7 @@ namespace Merchanter {
                             break;
                         case Type t when t == typeof(Log):
                             _filters.Sort = new Sort() { Field = "update_date", Direction = Sort.SortDirection.Descending };
-                            _query += " ORDER BY " + "p_update_date" + " DESC LIMIT @start,@end;";
+                            _query += " ORDER BY " + "update_date" + " DESC LIMIT @start,@end;";
                             break;
                         case Type t when t == typeof(Brand):
                             _filters.Sort = new Sort() { Field = "id", Direction = Sort.SortDirection.Descending };

@@ -41,12 +41,11 @@ namespace MerchanterFrontend.Classes {
                         var request = new RestRequest(_url, Method.Post) {
                             Timeout = TimeSpan.FromSeconds(10)
                         };
-                        request.AddHeader("Authorization", "Bearer " + _token);
                         if (_body != null) {
                             var bodyContent = await _body.ReadAsStringAsync();
                             request.AddStringBody(bodyContent, DataFormat.Json);
                         }
-                        var response = client.ExecutePost<T>(request); 
+                        var response = await client.ExecuteAsync<T>(request);
                         var login_response = JsonConvert.DeserializeObject<UserLoginResponseModel>(response.Content);
                         if (login_response != null && login_response.AuthenticateResult && !string.IsNullOrWhiteSpace(login_response.AuthToken) &&
                             login_response.Settings != null && login_response.Settings.customer != null) {
@@ -65,7 +64,7 @@ namespace MerchanterFrontend.Classes {
                         logger.LogError(DateTime.UtcNow.ToString("HH:mm:ss") + " LOGIN: " + ex.Message + " " + _url, DateTime.UtcNow.ToLongTimeString());
                         model = new BaseResponseModel<T>() {
                             Success = false,
-                            ErrorMessage = ex.Message,
+                            ErrorMessage = "PostMethod.Login ERROR! " + "-" + ex.Message,
                             Data = default
                         };
                     }
@@ -97,7 +96,7 @@ namespace MerchanterFrontend.Classes {
                             logger.LogError(DateTime.UtcNow.ToString("HH:mm:ss") + " GET: " + ex.Message + " " + _url, DateTime.UtcNow.ToLongTimeString());
                             model = new BaseResponseModel<T>() {
                                 Success = false,
-                                ErrorMessage = ex.Message,
+                                ErrorMessage = "PostMethod.Get ERROR! " + "-" + ex.Message,
                                 Data = default
                             };
                         }
@@ -128,7 +127,7 @@ namespace MerchanterFrontend.Classes {
                         logger.LogError(DateTime.UtcNow.ToString("HH:mm:ss") + " LOCAL File ERROR: " + ex.Message + " " + _url, DateTime.UtcNow.ToLongTimeString());
                         model = new BaseResponseModel<T>() {
                             Success = false,
-                            ErrorMessage = ex.Message,
+                            ErrorMessage = "PostMethod.Local ERROR! " + "-" + ex.Message,
                             Data = default
                         };
                     }
@@ -162,7 +161,7 @@ namespace MerchanterFrontend.Classes {
                             logger.LogError(DateTime.UtcNow.ToString("HH:mm:ss") + " POST: " + ex.Message + " " + _url, DateTime.UtcNow.ToLongTimeString());
                             model = new BaseResponseModel<T>() {
                                 Success = false,
-                                ErrorMessage = ex.Message,
+                                ErrorMessage = "PostMethod.Post ERROR! " + "-" + ex.Message,
                                 Data = default
                             };
                         }
@@ -197,7 +196,7 @@ namespace MerchanterFrontend.Classes {
                             logger.LogError(DateTime.UtcNow.ToString("HH:mm:ss") + " PUT: " + ex.Message + " " + _url, DateTime.UtcNow.ToLongTimeString());
                             model = new BaseResponseModel<T>() {
                                 Success = false,
-                                ErrorMessage = ex.Message,
+                                ErrorMessage = "PostMethod.Put ERROR! " + "-" + ex.Message,
                                 Data = default
                             };
                         }
@@ -232,7 +231,7 @@ namespace MerchanterFrontend.Classes {
                             logger.LogError(DateTime.UtcNow.ToString("HH:mm:ss") + " DELETE: " + ex.Message + " " + _url, DateTime.UtcNow.ToLongTimeString());
                             model = new BaseResponseModel<T>() {
                                 Success = false,
-                                ErrorMessage = ex.Message,
+                                ErrorMessage = "PostMethod.Delete ERROR! " + "-" + ex.Message,
                                 Data = default
                             };
                         }

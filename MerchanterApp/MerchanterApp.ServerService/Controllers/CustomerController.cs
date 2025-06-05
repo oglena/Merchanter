@@ -31,7 +31,7 @@ namespace MerchanterApp.ServerService.Controllers {
             if (int.TryParse(CID, out customer_id) && customer_id > 0) {
                 if (_api_filter.Pager != null) {
                     List<Log> customer_logs = await customerService.GetCustomerLogs(customer_id, _api_filter);
-                    _api_filter.TotalCount = await customerService.GetCustomerLogCount(customer_id, _api_filter);
+                    //_api_filter.TotalCount = await customerService.GetCustomerLogCount(customer_id, _api_filter);
 
                     if (customer_logs != null) {
                         return Ok(new BaseResponseModel<List<Log>>() { ApiFilter = _api_filter, Success = true, Data = customer_logs, ErrorMessage = "" });

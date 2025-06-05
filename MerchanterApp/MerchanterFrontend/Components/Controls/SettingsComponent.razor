@@ -225,7 +225,7 @@ else {
     protected async Task LoadCustomerSettings() {
         var response = await PostHelper.Request<SettingsMerchanter>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
             Classes.PostHelper.PostMethod.Get, Classes.PostHelper.PostDestination.Api,
-        "api/Settings/" + customer_id.ToString() + "/GetCustomerSettings");
+        "api/Settings/GetCustomerSettings");
 
         if (response != null && response.Success && response.Data != null) {
             settings = response.Data;
@@ -242,7 +242,7 @@ else {
         customer = null;
         var response = await PostHelper.Request<Customer>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
             Classes.PostHelper.PostMethod.Get, Classes.PostHelper.PostDestination.Api,
-        "api/Customer/" + customer_id.ToString() + "/GetCustomer");
+        "api/Customer/GetCustomer");
 
         if (response != null && response.Success && response.Data != null) {
             customer = response.Data;
@@ -299,7 +299,7 @@ else {
             string json = JsonConvert.SerializeObject(_settings);
             var response = await PostHelper.Request<SettingsGeneral>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
                 Classes.PostHelper.PostMethod.Put, Classes.PostHelper.PostDestination.Api,
-                "api/Settings/" + customer_id + "/SaveGeneralSettings",
+                "api/Settings/SaveGeneralSettings",
                 new StringContent(json, Encoding.UTF8, "application/json"));
 
             if (response != null && response.Success && response.Data != null) {
@@ -321,7 +321,7 @@ else {
             string json = JsonConvert.SerializeObject(_settings);
             var response = await PostHelper.Request<SettingsOrder>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
                 Classes.PostHelper.PostMethod.Put, Classes.PostHelper.PostDestination.Api,
-                "api/Settings/" + customer_id + "/SaveOrderSettings",
+                "api/Settings/SaveOrderSettings",
                 new StringContent(json, Encoding.UTF8, "application/json"));
             if (response != null && response.Success && response.Data != null) {
                 settings.order = response.Data;
@@ -342,7 +342,7 @@ else {
             string json = JsonConvert.SerializeObject(_settings);
             var response = await PostHelper.Request<SettingsProduct>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
                 Classes.PostHelper.PostMethod.Put, Classes.PostHelper.PostDestination.Api,
-                "api/Settings/" + customer_id + "/SaveProductSettings",
+                "api/Settings/SaveProductSettings",
                 new StringContent(json, Encoding.UTF8, "application/json"));
             if (response != null && response.Success && response.Data != null) {
                 settings.product = response.Data;
@@ -363,7 +363,7 @@ else {
             string json = JsonConvert.SerializeObject(_settings);
             var response = await PostHelper.Request<SettingsInvoice>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
                 Classes.PostHelper.PostMethod.Put, Classes.PostHelper.PostDestination.Api,
-                "api/Settings/" + customer_id + "/SaveInvoiceSettings",
+                "api/Settings/SaveInvoiceSettings",
                 new StringContent(json, Encoding.UTF8, "application/json"));
             if (response != null && response.Success && response.Data != null) {
                 settings.invoice = response.Data;
@@ -384,7 +384,7 @@ else {
             string json = JsonConvert.SerializeObject(_settings);
             var response = await PostHelper.Request<SettingsGoogle>(HttpContextAccessor?.HttpContext?.User?.FindFirst(Variables.auth_token)?.Value,
                 Classes.PostHelper.PostMethod.Put, Classes.PostHelper.PostDestination.Api,
-                "api/Settings/" + customer_id + "/SaveGoogleSettings",
+                "api/Settings/SaveGoogleSettings",
                 new StringContent(json, Encoding.UTF8, "application/json"));
             if (response != null && response.Success && response.Data != null) {
                 settings.google = response.Data;

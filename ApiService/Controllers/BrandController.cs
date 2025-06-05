@@ -84,7 +84,7 @@ namespace ApiService.Controllers {
         }
 
         /// <summary>
-        /// Retrieves default brand for authenticated customer. (NOT WORKING)
+        /// Retrieves default brand for authenticated customer.
         /// </summary>
         /// <returns>Default brand wrapped in a BaseResponseModel.</returns>
         [HttpGet("GetDefaultBrand")]
