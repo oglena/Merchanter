@@ -88,7 +88,7 @@ internal class MainLoop {
     /// </summary>
     /// <remarks>This field is intended for internal use only and stores the list of active products. It
     /// should not be accessed or modified directly outside of the containing class.</remarks>
-    private List<Product> live_products = [];
+    private readonly List<Product> live_products = [];
 
     /// <summary>
     /// Represents the relationship between products and their associated targets.
@@ -134,7 +134,7 @@ internal class MainLoop {
     /// </summary>
     /// <remarks>This field is intended for internal use only and stores the active orders in the system. It
     /// should not be accessed or modified directly outside of the containing class.</remarks>
-    private List<Order> live_orders = [];
+    private readonly List<Order> live_orders = [];
 
     /// <summary>
     /// Represents a collection of <see cref="XProduct"/> objects.
@@ -297,8 +297,8 @@ internal class MainLoop {
             #endregion
             if (customer.xml_sync_status && !customer.is_xmlsync_working) {
                 db_helper.xml_clone.SetXmlSyncWorking(customer.customer_id, true);
-                if (health) { await this.XmlLoopAsync(Helper.global); }
-                //Task task = Task.Run(() => this.XmlLoop(Helper.global));
+                Task task = Task.Run(() => this.XmlLoopAsync(Helper.global));
+                // INFO: XML Loop is running in a separate thread
             }
         }
         #endregion
@@ -325,7 +325,7 @@ internal class MainLoop {
             products = db_helper.GetProducts(customer.customer_id, out brands, out categories, out product_attributes, out product_images, out product_target_prices);
             Console.WriteLine("Products:" + products.Count + "; Brands:" + brands.Count + "; Categories:" + categories.Count);
             Console.WriteLine("Attributes:" + product_attributes.Count + "; Images:" + product_images.Count + "; TargetPrices:" + product_target_prices.Count);
-            // Fixed the line to ensure proper handling of the asynchronous call and null safety.
+
             product_target_relation = await db_helper.GetProductTargets(customer.customer_id) ?? [];
             Console.Write("ProductTargets:" + product_target_relation.Count);
             category_target_relation = await db_helper.GetCategoryTargets(customer.customer_id) ?? [];
@@ -333,11 +333,35 @@ internal class MainLoop {
             if (products is null) { health = false; }
             #endregion
 
-            if (health) { health = await this.ProductLoopAsync(); }
+            if (!health) {
+                PrintConsole("Product sync failed due to missing data.", ConsoleColor.Red);
+                db_helper.SetProductSyncWorking(customer.customer_id, false);
+                return false;
+            }
 
-            if (health) { health = await this.ProductSourceLoopAsync(); }
+            PrintConsole("Product sync proceeding...", ConsoleColor.Yellow);
 
-            if (health) { health = await this.ProductSyncAsync(); }
+            if (await this.ProductLoopAsync()) {
+                PrintConsole("Product loop completed successfully.", ConsoleColor.Green);
+                if (await this.ProductSourceLoopAsync()) {
+                    PrintConsole("Product source loop completed successfully.", ConsoleColor.Green);
+                    if (await this.ProductSyncAsync()) {
+                        PrintConsole("Product sync completed successfully.", ConsoleColor.Green);
+                    }
+                    else {
+                        PrintConsole("Product sync encountered an error.", ConsoleColor.Red);
+                        health = false;
+                    }
+                }
+                else {
+                    PrintConsole("Product source loop encountered an error.", ConsoleColor.Red);
+                    return false;
+                }
+            }
+            else {
+                PrintConsole("Product loop encountered an error.", ConsoleColor.Red);
+                return false;
+            }
 
             if (customer.product_sync_status) {
                 db_helper.SetProductSyncDate(customer.customer_id);
@@ -386,17 +410,18 @@ internal class MainLoop {
 
     #region Individual Threads - XML, Invoice, Notification
     /// <summary>
-    /// Synchronizes XML-based product data for a customer by retrieving, updating, and managing product information 
-    /// from various XML sources. This method handles product additions, updates, removals, and notifications based  on
-    /// the customer's configuration and enabled XML sources.
+    /// Synchronizes XML-enabled products and updates their status, quantities, and prices based on data from external
+    /// XML sources.
     /// </summary>
     /// <remarks>This method performs the following operations: <list type="bullet"> <item>Retrieves
-    /// XML-enabled products for the customer.</item> <item>Processes product data from multiple XML sources, including
-    /// validation and updates.</item> <item>Generates notifications for product changes, such as additions, removals,
-    /// price changes, and quantity changes.</item> <item>Logs errors and updates synchronization status for the
-    /// customer.</item> </list> The method ensures that the customer's product data remains consistent with the latest
-    /// information from XML sources.</remarks>
-    /// <param name="_global">The global settings object containing configuration and connection details for XML sources.</param>
+    /// XML-enabled products for the specified customer.</item> <item>Fetches product data from various external XML
+    /// sources, such as FSP, PENTA, KOYUNCU, OKSID, and BOGAZICI.</item> <item>Compares the fetched data with existing
+    /// product records to identify changes in status, quantities, and prices.</item> <item>Updates the database with
+    /// new or modified product information and removes products no longer available in the sources.</item>
+    /// <item>Generates notifications for significant changes, such as product additions, removals, price changes, and
+    /// quantity changes.</item> </list> If an error occurs during synchronization, the method logs the error and
+    /// attempts to load products from the previous cache.</remarks>
+    /// <param name="_global">The global settings object containing configuration details for XML synchronization.</param>
     /// <returns></returns>
     private async Task XmlLoopAsync(SettingsMerchanter _global) {
         List<Notification> notifications = [];
@@ -409,57 +434,57 @@ internal class MainLoop {
             string info;
 
             #region Inject XML Sources for QP Bilisim
-            if (customer.customer_id == 1 && xml_enabled_products is not null) {
-                try {
-                    PrintConsole("Injecting XML Sources for " + customer.user_name);
-                    var xml_sources_1 = Helper.GetProductAttribute(_global.magento.xml_sources_attribute_code);
-                    var xml_enabled_products_1 = Helper.SearchProductByAttribute(_global.magento.is_xml_enabled_attribute_code, "1");
-                    if (xml_enabled_products_1 is not null) {
-                        foreach (var item in xml_enabled_products_1) {
-                            string? raw_sources_1 = item.custom_attributes.Where(x => x.attribute_code == _global.magento.xml_sources_attribute_code)?.First().value?.ToString();
-                            if (raw_sources_1 is not null && raw_sources_1.Length > 0) {
-                                var live_sources = xml_sources_1?.options.Where(x => raw_sources_1.Contains(x.value)).Where(x => !string.IsNullOrWhiteSpace(x.value)).ToList();
-                                if (live_sources?.Count > 0) {
-                                    var selected_xml_source_barcode = item.custom_attributes.Where(x => x.attribute_code == _global.magento.barcode_attribute_code).FirstOrDefault();
-                                    if (selected_xml_source_barcode is not null) {
-                                        if (selected_xml_source_barcode.value is not null) {
-                                            var x_enabled_product = xml_enabled_products.Where(x => x.barcode == selected_xml_source_barcode.value.ToString()).FirstOrDefault();
-                                            if (x_enabled_product is null) {
-                                                db_helper.xml_clone.UpdateXMLStatusByProductBarcode(customer.customer_id, selected_xml_source_barcode.value.ToString(), true, live_sources.Select(x => x.label).ToArray());
-                                            }
-                                            else {
-                                                if (x_enabled_product.extension is not null && string.Join(",", live_sources.Select(x => x.label).ToArray()).Trim() != string.Join(",", x_enabled_product.extension.xml_sources).Trim()) {
-                                                    db_helper.xml_clone.UpdateXMLStatusByProductBarcode(customer.customer_id, selected_xml_source_barcode.value.ToString(), true, live_sources.Select(x => x.label).ToArray());
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
+            //if (customer.customer_id == 1 && xml_enabled_products is not null) {
+            //    try {
+            //        PrintConsole("Injecting XML Sources for " + customer.user_name);
+            //        var xml_sources_1 = Helper.GetProductAttribute(_global.magento.xml_sources_attribute_code);
+            //        var xml_enabled_products_1 = Helper.SearchProductByAttribute(_global.magento.is_xml_enabled_attribute_code, "1");
+            //        if (xml_enabled_products_1 is not null) {
+            //            foreach (var item in xml_enabled_products_1) {
+            //                string? raw_sources_1 = item.custom_attributes.Where(x => x.attribute_code == _global.magento.xml_sources_attribute_code)?.First().value?.ToString();
+            //                if (raw_sources_1 is not null && raw_sources_1.Length > 0) {
+            //                    var live_sources = xml_sources_1?.options.Where(x => raw_sources_1.Contains(x.value)).Where(x => !string.IsNullOrWhiteSpace(x.value)).ToList();
+            //                    if (live_sources?.Count > 0) {
+            //                        var selected_xml_source_barcode = item.custom_attributes.Where(x => x.attribute_code == _global.magento.barcode_attribute_code).FirstOrDefault();
+            //                        if (selected_xml_source_barcode is not null) {
+            //                            if (selected_xml_source_barcode.value is not null) {
+            //                                var x_enabled_product = xml_enabled_products.Where(x => x.barcode == selected_xml_source_barcode.value.ToString()).FirstOrDefault();
+            //                                if (x_enabled_product is null) {
+            //                                    db_helper.xml_clone.UpdateXMLStatusByProductBarcode(customer.customer_id, selected_xml_source_barcode.value.ToString(), true, live_sources.Select(x => x.label).ToArray());
+            //                                }
+            //                                else {
+            //                                    if (x_enabled_product.extension is not null && string.Join(",", live_sources.Select(x => x.label).ToArray()).Trim() != string.Join(",", x_enabled_product.extension.xml_sources).Trim()) {
+            //                                        db_helper.xml_clone.UpdateXMLStatusByProductBarcode(customer.customer_id, selected_xml_source_barcode.value.ToString(), true, live_sources.Select(x => x.label).ToArray());
+            //                                    }
+            //                                }
+            //                            }
+            //                        }
+            //                    }
+            //                }
+            //            }
 
-                        foreach (var item in xml_enabled_products) {
-                            var xproduct = xml_enabled_products.Where(x => x.barcode == item.barcode).FirstOrDefault();
-                            if (xproduct is null) {
-                                db_helper.xml_clone.UpdateXMLStatusByProductBarcode(customer.customer_id, item.barcode, false, null);
+            //            foreach (var item in xml_enabled_products) {
+            //                var xproduct = xml_enabled_products.Where(x => x.barcode == item.barcode).FirstOrDefault();
+            //                if (xproduct is null) {
+            //                    db_helper.xml_clone.UpdateXMLStatusByProductBarcode(customer.customer_id, item.barcode, false, null);
 
-                                #region Notification of XML_PRODUCT_REMOVED_BY_USER
-                                _ = await db_helper.xml_clone.LogToServer(thread_id, "xml_product_removed_by_user", item.barcode, customer.customer_id, "xml");
-                                notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_PRODUCT_REMOVED_BY_USER, xproduct_barcode = item.barcode });
-                                #endregion
-                            }
-                        }
+            //                    #region Notification of XML_PRODUCT_REMOVED_BY_USER
+            //                    _ = await db_helper.xml_clone.LogToServer(thread_id, "xml_product_removed_by_user", item.barcode, customer.customer_id, "xml");
+            //                    notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_PRODUCT_REMOVED_BY_USER, xproduct_barcode = item.barcode });
+            //                    #endregion
+            //                }
+            //            }
 
-                        xml_enabled_products = await db_helper.xml_clone.GetProducts(customer.customer_id,
-                            new ApiFilter() { Filters = [new Filter<dynamic>() { Field = "is_xml_enabled", Value = true }] });
-                    }
-                    PrintConsole("Injecting XML Sources for " + customer.user_name + " Done.");
-                }
-                catch (Exception _ex) {
-                    _ = await db_helper.xml_clone.LogToServer(thread_id, "error", _ex.ToString(), customer.customer_id, "xml");
-                    _ = await db_helper.xml_clone.InsertNotification(customer.customer_id, new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_SYNC_ERROR, notification_content = _ex.ToString() });
-                }
-            }
+            //            xml_enabled_products = await db_helper.xml_clone.GetProducts(customer.customer_id,
+            //                new ApiFilter() { Filters = [new Filter<dynamic>() { Field = "is_xml_enabled", Value = true }] });
+            //        }
+            //        PrintConsole("Injecting XML Sources for " + customer.user_name + " Done.");
+            //    }
+            //    catch (Exception _ex) {
+            //        _ = await db_helper.xml_clone.LogToServer(thread_id, "error", _ex.ToString(), customer.customer_id, "xml");
+            //        _ = await db_helper.xml_clone.InsertNotification(customer.customer_id, new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_SYNC_ERROR, notification_content = _ex.ToString() });
+            //    }
+            //}
             #endregion
 
             if (other_product_sources.Contains(Constants.FSP)) {
@@ -512,7 +537,7 @@ internal class MainLoop {
                         XProduct xp = new() {
                             customer_id = customer.customer_id,
                             xml_source = Constants.PENTA,
-                            barcode = !string.IsNullOrWhiteSpace(item.UreticiBarkodNo) ? ((item.UreticiBarkodNo[0] == '0') ? item.UreticiBarkodNo.Remove(0, 1).Trim() : item.UreticiBarkodNo.Trim()) : string.Empty,
+                            barcode = !string.IsNullOrWhiteSpace(item.UreticiBarkodNo) ? ((item.UreticiBarkodNo[0] == '0') ? item.UreticiBarkodNo[1..].Trim() : item.UreticiBarkodNo.Trim()) : string.Empty,
                             source_brand = !string.IsNullOrWhiteSpace(item.MarkaIsim) ? item.MarkaIsim.Trim() : "MARKASIZ",
                             source_sku = item.Kod.ToString().Trim(),
                             source_product_group = item.AnaGrup_Ad,
@@ -785,7 +810,7 @@ internal class MainLoop {
                 if (invoices is not null && live_faturas is not null) {
                     foreach (var item in live_faturas) {
                         var selected_invoice = invoices.Where(x => x.invoice_no == item.FATURANO).FirstOrDefault();
-                        Invoice invoice = new Invoice() {
+                        Invoice invoice = new() {
                             customer_id = customer.customer_id,
                             order_id = item.EKACK1,
                             order_label = item.EKACK2 ?? "",
@@ -795,7 +820,7 @@ internal class MainLoop {
                             erp_customer_group = item.CARIGRUP,
                             gib_fatura_no = item.GIB_FATIRS_NO,
                             order_date = item.TARIH is not null ? item.TARIH.Value : DateTime.MinValue,
-                            items = new List<InvoiceItem>()
+                            items = []
                         };
                         foreach (var kalem in item.KALEMS) {
                             invoice.items.Add(new InvoiceItem() {
@@ -888,19 +913,23 @@ internal class MainLoop {
     }
 
     /// <summary>
-    /// Processes a collection of notifications asynchronously, sending emails and updating notification statuses based
-    /// on their types.
+    /// Processes and sends notifications asynchronously based on predefined notification types.
     /// </summary>
-    /// <remarks>This method iterates through a list of notifications and performs actions based on the
-    /// notification type, such as sending emails, updating notification statuses, and logging events. Supported
-    /// notification types include general notifications, order-related updates, product stock changes, XML
-    /// synchronization errors, and more. Exceptions are logged to the server, and notification synchronization status
-    /// is updated upon completion.</remarks>
+    /// <remarks>This method iterates through a collection of notifications and handles each notification type
+    /// accordingly. Notifications may include general updates, order statuses, product stock changes, and errors. The
+    /// method ensures that notifications are sent only if the required Google settings are properly configured. It also
+    /// updates the notification status in the database and logs relevant information to the server.</remarks>
     /// <returns>A task representing the asynchronous operation.</returns>
     private async Task NotificationLoopAsync() {
         try {
             if (notifications is null) return;
             if (notifications.Count == 0) return;
+            if (Helper.global.google is null || string.IsNullOrWhiteSpace(Helper.global.google.sender_name) ||
+                string.IsNullOrWhiteSpace(Helper.global.google.oauth2_clientid) || string.IsNullOrWhiteSpace(Helper.global.google.oauth2_clientsecret)) {
+                PrintConsole("Google settings are not configured properly. Notifications will not be sent.", true);
+                return;
+            }
+
             foreach (var item in notifications) {
                 Product? selected_product = null;
                 List<XProduct>? selected_xproducts = null;
@@ -954,19 +983,13 @@ internal class MainLoop {
                                                 (x.name == product_main_source ? "Price: " +
                                                 (selected_product.special_price != 0 ? Math.Round(selected_product.special_price * (1 + (selected_product.tax / 100)),2,MidpointRounding.AwayFromZero) + selected_product.currency.code :
                                                 Math.Round(selected_product.price * (1m + (selected_product.tax / 100m)),2,MidpointRounding.AwayFromZero) + selected_product.currency.code) :
-                                                ((selected_xproducts is not null && selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault() is not null) ?
-                                                "Price: " + Math.Round(selected_xproducts.FirstOrDefault( xp => xp.xml_source == x.name ).price2,2,MidpointRounding.AwayFromZero) + selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault()?.currency + "<br>" +
-                                                "MSRP: " + Math.Round(selected_xproducts.FirstOrDefault( xp => xp.xml_source == x.name ).price1,2,MidpointRounding.AwayFromZero) + selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault()?.currency : string.Empty)) +
+                                                ((selected_xproducts is not null && selected_xproducts.Any(xp => xp.xml_source == x.name)) ?
+                                                "Price: " + Math.Round(selected_xproducts.First( xp => xp.xml_source == x.name ).price2,2,MidpointRounding.AwayFromZero) + selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault()?.currency + "<br>" +
+                                                "MSRP: " + Math.Round(selected_xproducts.First( xp => xp.xml_source == x.name ).price1,2,MidpointRounding.AwayFromZero) + selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault()?.currency : string.Empty)) +
                                            "</td>" +
                                            "<td>" + (x.is_active ? "active" : "passive") + "</td>" +
                                            "</tr>"
                                    })));
-                            if (Helper.global.google is null) {
-                                Helper.global.google = new SettingsGoogle {
-                                    sender_name = Helper.global.settings.company_name,
-                                    is_enabled = true
-                                };
-                            }
                             if (GMailOAuth2.Send(customer.user_name, Helper.global.google.sender_name, Helper.global.google.oauth2_clientid, Helper.global.google.oauth2_clientsecret, Constants.QP_MailSender, Constants.QP_MailTo,
                                 mail_title,
                                 mail_body)) {
@@ -1008,18 +1031,13 @@ internal class MainLoop {
                                                 (x.name == product_main_source ? "Price: " +
                                                 (selected_product.special_price != 0 ? Math.Round(selected_product.special_price * (1 + (selected_product.tax / 100)),2,MidpointRounding.AwayFromZero) + selected_product.currency.code :
                                                 Math.Round(selected_product.price * (1m + (selected_product.tax / 100m)),2,MidpointRounding.AwayFromZero) + selected_product.currency.code) :
-                                                ((selected_xproducts is not null && selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault() is not null) ?
-                                                "Price: " + Math.Round(selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault().price2,2,MidpointRounding.AwayFromZero) + selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault()?.currency + "<br>" +
-                                                "MSRP: " + Math.Round(selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault().price1,2,MidpointRounding.AwayFromZero) + selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault()?.currency : string.Empty)) +
+                                                ((selected_xproducts is not null && selected_xproducts.Any(xp => xp.xml_source == x.name)) ?
+                                                "Price: " + Math.Round(selected_xproducts.First(xp => xp.xml_source == x.name).price2,2,MidpointRounding.AwayFromZero) + selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault()?.currency + "<br>" +
+                                                "MSRP: " + Math.Round(selected_xproducts.First(xp => xp.xml_source == x.name).price1,2,MidpointRounding.AwayFromZero) + selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault()?.currency : string.Empty)) +
                                            "</td>" +
                                            "<td>" + (x.is_active ? "active" : "passive") + "</td>" +
                                            "</tr>"
                                    })));
-                            if (Helper.global.google is null) {
-                                Helper.global.google = new SettingsGoogle {
-                                    sender_name = Helper.global.settings.company_name
-                                };
-                            }
                             if (GMailOAuth2.Send(customer.user_name, Helper.global.google.sender_name, Helper.global.google.oauth2_clientid, Helper.global.google.oauth2_clientsecret, Constants.QP_MailSender, Constants.QP_MailTo,
                                 mail_title,
                                 mail_body)) {
@@ -1061,18 +1079,13 @@ internal class MainLoop {
                                                 (x.name == product_main_source ? "Price: " +
                                                 (selected_product.special_price != 0 ? Math.Round(selected_product.special_price * (1 + (selected_product.tax / 100)),2,MidpointRounding.AwayFromZero) + selected_product.currency.code :
                                                 Math.Round(selected_product.price * (1m + (selected_product.tax / 100m)),2,MidpointRounding.AwayFromZero) + selected_product.currency.code) :
-                                                ((selected_xproducts is not null && selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault() is not null) ?
-                                                "Price: " + Math.Round(selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault().price2,2,MidpointRounding.AwayFromZero) + selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault()?.currency + "<br>" +
-                                                "MSRP: " + Math.Round(selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault().price1,2,MidpointRounding.AwayFromZero) + selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault()?.currency : string.Empty)) +
+                                                ((selected_xproducts is not null && selected_xproducts.Any(xp => xp.xml_source == x.name)) ?
+                                                "Price: " + Math.Round(selected_xproducts.First(xp => xp.xml_source == x.name).price2,2,MidpointRounding.AwayFromZero) + selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault()?.currency + "<br>" +
+                                                "MSRP: " + Math.Round(selected_xproducts.First(xp => xp.xml_source == x.name).price1,2,MidpointRounding.AwayFromZero) + selected_xproducts.Where(xp => xp.xml_source == x.name).FirstOrDefault()?.currency : string.Empty)) +
                                            "</td>" +
                                            "<td>" + (x.is_active ? "active" : "passive") + "</td>" +
                                            "</tr>"
                                    })));
-                            if (Helper.global.google is null) {
-                                Helper.global.google = new SettingsGoogle {
-                                    sender_name = Helper.global.settings.company_name
-                                };
-                            }
                             if (GMailOAuth2.Send(customer.user_name, Helper.global.google.sender_name, Helper.global.google.oauth2_clientid, Helper.global.google.oauth2_clientsecret, Constants.QP_MailSender, Constants.QP_MailTo,
                                 mail_title,
                                 mail_body)) {
@@ -1116,8 +1129,8 @@ internal class MainLoop {
 
                         if (selected_product is not null && xsource is not null && xprices is not null) {
                             string mail_title = string.Format("{0} - XML PRICE CHANGED", selected_product.sku);
-                            decimal.TryParse(xprices.Split("|")[0], out decimal new_price);
-                            decimal.TryParse(xprices.Split("|")[1], out decimal old_price);
+                            _ = decimal.TryParse(xprices.Split("|")[0], out decimal new_price);
+                            _ = decimal.TryParse(xprices.Split("|")[1], out decimal old_price);
                             if (old_price != 0 && new_price != 0) {
                                 string mail_body = string.Format("<strong>Product:</strong> {0}<br>" +
                                        (product_targets.Contains(Constants.MAGENTO2) && Helper.GetProductBySKU(selected_product.sku)?.status == 1 ? "<strong>Status:</strong> Enabled<br>" : "<strong>Status:</strong> Disabled<br>") +
@@ -1137,11 +1150,6 @@ internal class MainLoop {
                                        selected_xproducts?.Where(x => x.xml_source == xsource).FirstOrDefault()?.qty,
                                        Math.Round(old_price, 2, MidpointRounding.AwayFromZero) + selected_xproducts?.Where(x => x.xml_source == xsource).FirstOrDefault()?.currency,
                                        Math.Round(new_price, 2, MidpointRounding.AwayFromZero) + selected_xproducts?.Where(x => x.xml_source == xsource).FirstOrDefault()?.currency);
-                                if (Helper.global.google is null) {
-                                    Helper.global.google = new SettingsGoogle {
-                                        sender_name = Helper.global.settings.company_name
-                                    };
-                                }
                                 if (GMailOAuth2.Send(customer.user_name, Helper.global.google.sender_name, Helper.global.google.oauth2_clientid, Helper.global.google.oauth2_clientsecret, Constants.QP_MailSender, Constants.QP_MailTo,
                                        mail_title,
                                    mail_body)) {
@@ -1320,25 +1328,25 @@ internal class MainLoop {
 
     #region Product Threads - ProductLoop, ProductSourceLoop, ProductSync
     /// <summary>
-    /// Processes product data from various sources and initializes the product list for the current customer.
+    /// Executes the product synchronization process by loading product data from various sources.
     /// </summary>
-    /// <remarks>This method retrieves product data from multiple sources, including Entegra, Merchanter,
-    /// Netsis, and AnkaraERP. It performs various operations such as validating product attributes, mapping product
-    /// extensions, and synchronizing product categories, images, and attributes. The method also logs errors and
-    /// updates the product list accordingly.  Preconditions: - The global configuration for the selected product source
-    /// must be properly set. - Required fields such as SKU and barcode must be present for products to be synchronized.
-    /// Postconditions: - The <paramref name="_health"/> parameter reflects the success or failure of the operation. -
-    /// The product list is updated with the processed products from the selected source.  Note: This method is intended
-    /// for internal use and assumes that the necessary global and customer-specific configurations are already
-    /// initialized.</remarks>
-    /// <param name="_health">When the method returns, contains a value indicating whether the operation completed successfully. A value of
-    /// <see langword="true"/> indicates success; <see langword="false"/> indicates failure.</param>
+    /// <remarks>This method retrieves product information from configured sources, processes the data, and
+    /// updates the product list. Supported sources include Netsis, AnkaraERP, and others. The method ensures that
+    /// required connection settings are validated before attempting to load data. If a source is not properly
+    /// configured, the synchronization for that source will be skipped, and an error message will be logged.  The
+    /// method performs the following tasks: - Validates connection settings for each source. - Retrieves product and
+    /// category data from the source. - Maps the retrieved data to the application's product model. - Handles missing
+    /// or invalid data (e.g., missing barcodes). - Updates or inserts categories and products into the database. - Logs
+    /// synchronization results and errors.  This method is asynchronous and returns a boolean value indicating the
+    /// success or failure of the synchronization process.</remarks>
+    /// <returns><see langword="true"/> if the synchronization process completes successfully for all configured sources;
+    /// otherwise, <see langword="false"/>.</returns>
     private async Task<bool> ProductLoopAsync() {
         bool _health = true;
         try {
             #region Main Product Source
             if (product_main_source is not null && product_main_source == Constants.MERCHANTER) {
-                live_products = products ?? [];
+
             }
 
             if (product_main_source is not null && product_main_source == Constants.NETSIS) {
@@ -1693,7 +1701,6 @@ internal class MainLoop {
                 }
             }
 
-
             return _health;
             #endregion
         }
@@ -1707,16 +1714,13 @@ internal class MainLoop {
     }
 
     /// <summary>
-    /// Processes product sources and calculates total quantities for live products and their sources.
+    /// Processes product sources and calculates total quantities for active products.
     /// </summary>
-    /// <remarks>This method performs the following operations: <list type="bullet"> <item> <description>Loads
-    /// additional product sources for live products if XML sources are enabled and available.</description> </item>
-    /// <item> <description>Handles exceptions by logging errors and setting the health status to <see
-    /// langword="false"/>.</description> </item> <item> <description>Calculates the total quantity for all products and
-    /// their individual sources, grouping by source name.</description> </item> </list> The method assumes that the
-    /// necessary product and source data are preloaded and available in the relevant collections.</remarks>
-    /// <param name="_health">An output parameter that indicates the health status of the operation.  Set to <see langword="true"/> if the
-    /// operation completes successfully; otherwise, <see langword="false"/>.</param>
+    /// <remarks>This method performs the following operations: <list type="bullet"> <item>Loads additional
+    /// product sources from external XML sources if enabled.</item> <item>Updates product source information based on
+    /// external data.</item> <item>Calculates the total quantity of active products and aggregates quantities by
+    /// source.</item> </list> If an exception occurs during processing, the error is logged to the server.</remarks>
+    /// <returns><see langword="true"/> if the operation completes successfully; otherwise, <see langword="false"/>.</returns>
     private async Task<bool> ProductSourceLoopAsync() {
         bool _health = true;
         try {
@@ -1738,7 +1742,8 @@ internal class MainLoop {
                                     item.sku,
                                     item.barcode,
                                     xitem.qty,
-                                    (Helper.global.product.xml_qty_addictive_enable || item.sources[0].qty <= 0) && (xitem.is_active ? (item.extension.is_xml_enabled && item.extension.xml_sources.Contains(xitem.xml_source)) : false),
+                                    (Helper.global.product.xml_qty_addictive_enable || item.sources[0].qty <= 0) &&
+                                    xitem.is_active && (item.extension.is_xml_enabled && item.extension.xml_sources.Contains(xitem.xml_source)),
                                     DateTime.Now
                                 ));
                             }
@@ -1785,22 +1790,17 @@ internal class MainLoop {
     }
 
     /// <summary>
-    /// Synchronizes product data between the local database and external systems.
+    /// Synchronizes product data between the local database and external platforms.
     /// </summary>
-    /// <remarks>This method performs a comprehensive synchronization of product data, including updates and
-    /// inserts,  across multiple systems such as Magento2, Ideasoft, and N11. It ensures that product attributes, 
-    /// extensions, images, and target prices are aligned between the local database and external platforms.  The method
-    /// handles both existing products and new products, applying appropriate mappings and  synchronization rules. It
-    /// also logs errors and skips problematic products to ensure the process  continues for other items. The
-    /// synchronization process includes: <list type="bullet"> <item><description>Core and extension property mappings
-    /// for products.</description></item> <item><description>Image and target price
-    /// synchronization.</description></item> <item><description>Updates to external platforms such as Magento2 and
-    /// Ideasoft.</description></item> <item><description>Database updates for synchronized
-    /// products.</description></item> </list>  Exceptions and errors encountered during the process are logged, and the
-    /// method attempts to  continue processing other products. The output parameter <paramref name="_health"/> reflects
-    /// the overall success or failure of the synchronization.</remarks>
-    /// <param name="_health">An output parameter that indicates the health status of the synchronization process.  Set to <see
-    /// langword="true"/> if the process completes successfully; otherwise, <see langword="false"/>.</param>
+    /// <remarks>This method performs a comprehensive synchronization of product information, including
+    /// updates and inserts,  across multiple platforms such as Magento2, Ideasoft, and N11. It ensures that product
+    /// attributes, extensions,  images, and pricing are consistent between the local database and the target platforms.
+    /// The synchronization  process includes handling property mappings, category and brand associations, and
+    /// platform-specific requirements.  The method returns a boolean value indicating the health of the synchronization
+    /// process. If an exception occurs  during synchronization, the method logs the error and returns <see
+    /// langword="false"/>.</remarks>
+    /// <returns><see langword="true"/> if the synchronization process completes successfully; otherwise, <see
+    /// langword="false"/>.</returns>
     private async Task<bool> ProductSyncAsync() {
         bool _health = true;
         try {
@@ -2130,7 +2130,7 @@ internal class MainLoop {
                                 #region Ideasoft Refresh Token
                                 var temp_idea_settings = Helper.global.ideasoft;
                                 if (Helper.RefreshIdeaToken(ref temp_idea_settings).GetValueOrDefault()) {
-                                    db_helper.SaveIdeasoftSettings(customer.customer_id, temp_idea_settings);
+                                    await db_helper.SaveIdeasoftSettings(customer.customer_id, temp_idea_settings);
                                     Helper.global.ideasoft = temp_idea_settings;
                                 }
                                 #endregion
@@ -2295,7 +2295,7 @@ internal class MainLoop {
 
                 if (product_targets.Contains(Constants.N11)) {
                     if (Helper.global.n11 is not null && Helper.global.n11.appkey is not null && Helper.global.n11.appsecret is not null) {
-                        N11 n11 = new N11(Helper.global.n11.appkey, Helper.global.n11.appsecret);
+                        N11 n11 = new(Helper.global.n11.appkey, Helper.global.n11.appsecret);
                         var live_n11_categories = n11.GetN11Categories();
 
 
@@ -2373,7 +2373,7 @@ internal class MainLoop {
                                 region = item.extension_attributes.shipping_assignments[0].shipping.address.region,
                                 city = item.extension_attributes.shipping_assignments[0].shipping.address.city
                             },
-                            order_items = new List<OrderItem>()
+                            order_items = []
                         };
 
                         float calculated_grand_total = 0;
@@ -2878,7 +2878,7 @@ internal class MainLoop {
                                     List<string> tracking_codes = [];
                                     if (Helper.global.shipment.yurtici_kargo && available_shipments.Contains(Constants.YURTICI)) {
                                         if (Helper.global.shipment.yurtici_kargo_user_name is not null && Helper.global.shipment.yurtici_kargo_password is not null) {
-                                            YK yk = new YK(Helper.global.shipment.yurtici_kargo_user_name, Helper.global.shipment.yurtici_kargo_password);
+                                            YK yk = new(Helper.global.shipment.yurtici_kargo_user_name, Helper.global.shipment.yurtici_kargo_password);
                                             List<string>? tk = yk.GetShipment(selected_order.order_shipping_barcode);
                                             if (tk is not null) {
                                                 tracking_codes.AddRange(tk);
@@ -2937,7 +2937,7 @@ internal class MainLoop {
                         else {  //insert shipment barcodes
                             if (Helper.global.shipment.yurtici_kargo && available_shipments.Contains(Constants.YURTICI)) {
                                 if (Helper.global.shipment.yurtici_kargo_user_name is not null && Helper.global.shipment.yurtici_kargo_password is not null) {
-                                    YK yk = new YK(Helper.global.shipment.yurtici_kargo_user_name, Helper.global.shipment.yurtici_kargo_password);
+                                    YK yk = new(Helper.global.shipment.yurtici_kargo_user_name, Helper.global.shipment.yurtici_kargo_password);
                                     order_item.order_shipping_barcode ??= yk.InsertShipment(order_item.order_source, order_item.order_label, order_item.shipping_address.firstname + " " + order_item.shipping_address.lastname, order_item.shipping_address.street, order_item.shipping_address.telephone, order_item.shipping_address.city, order_item.shipping_address.region);
                                 }
                                 if (order_item.order_shipping_barcode is not null) {
@@ -2984,7 +2984,7 @@ internal class MainLoop {
 
                 if (notifications.Count > 0) {
                     foreach (var item in notifications) {
-                        db_helper.InsertNotification(customer.customer_id, item);
+                        _ = db_helper.InsertNotification(customer.customer_id, item).Result;
                     }
                 }
             }
