@@ -12,7 +12,7 @@ namespace ApiService.Services {
         /// <param name="_customer_id">The ID of the customer.</param>
         /// <param name="_filters">Filter criteria for the products.</param>
         /// <returns>A list of products.</returns>
-        Task<List<Product>> GetProducts(int _customer_id, ApiFilter _filters);
+        Task<List<Product>?> GetProducts(int _customer_id, ApiFilter _filters);
 
         /// <summary>
         /// Retrieves the count of products based on customer ID and filters.
@@ -52,7 +52,7 @@ namespace ApiService.Services {
         /// <param name="_customer_id">The ID of the customer.</param>
         /// <param name="_product_id">The ID of the product.</param>
         /// <returns>A list of product targets.</returns>
-        Task<List<ProductTarget>> GetProductTargets(int _customer_id, int _product_id);
+        Task<List<ProductTarget>?> GetProductTargets(int _customer_id, int _product_id);
     }
 
     /// <summary>
@@ -74,7 +74,7 @@ namespace ApiService.Services {
         /// <param name="_customer_id">The ID of the customer.</param>
         /// <param name="_filters">Filter criteria for the products.</param>
         /// <returns>A list of products.</returns>
-        public Task<List<Product>> GetProducts(int _customer_id, ApiFilter _filters) {
+        public Task<List<Product>?> GetProducts(int _customer_id, ApiFilter _filters) {
             return productRepository.GetProducts(_customer_id, _filters);
         }
 
@@ -132,7 +132,7 @@ namespace ApiService.Services {
         /// <param name="_customer_id">The ID of the customer.</param>
         /// <param name="_product_id">The ID of the product.</param>
         /// <returns>A list of product targets.</returns>
-        public Task<List<ProductTarget>> GetProductTargets(int _customer_id, int _product_id) {
+        public Task<List<ProductTarget>?> GetProductTargets(int _customer_id, int _product_id) {
             return productRepository.GetProductTargets(_customer_id, _product_id);
         }
     }

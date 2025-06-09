@@ -82,37 +82,37 @@ namespace ApiService.Repositories {
 
         /// <inheritdoc />
         private async Task<Product?> GetProductAsync(int _customer_id, int _product_id) {
-            return await merchanterService.helper.GetProduct(_customer_id, _product_id);
+            return await merchanterService.Helper.GetProduct(_customer_id, _product_id);
         }
 
         /// <inheritdoc />
         private async Task<List<Product>?> GetProductsAsync(int _customer_id, ApiFilter _filters) {
-            return await merchanterService.helper.GetProducts(_customer_id, _filters);
+            return await merchanterService.Helper.GetProducts(_customer_id, _filters);
         }
 
         /// <inheritdoc />
         private async Task<int> GetProductsCountAsync(int _customer_id, ApiFilter _filters) {
-            return await merchanterService.helper.GetProductsCount(_customer_id, _filters);
+            return await merchanterService.Helper.GetProductsCount(_customer_id, _filters);
         }
 
         /// <inheritdoc />
         public async Task<Product?> UpdateProduct(int _customer_id, Product product) {
-            return await merchanterService.helper.UpdateProduct(_customer_id, product);
+            return await merchanterService.Helper.UpdateProduct(_customer_id, product);
         }
 
         /// <inheritdoc />
         public async Task<Product?> InsertProduct(int _customer_id, Product product) {
-            return await merchanterService.helper.InsertProduct(_customer_id, product);
+            return await merchanterService.Helper.InsertProduct(_customer_id, product);
         }
 
         /// <inheritdoc />
         public async Task<bool> DeleteProductImage(int _customer_id, ProductImage _product_image) {
-            return await merchanterService.helper.DeleteProductImage(_customer_id, _product_image);
+            return await merchanterService.Helper.DeleteProductImage(_customer_id, _product_image);
         }
 
         /// <inheritdoc />
         public async Task<List<ProductTarget>?> GetProductTargets(int _customer_id, int _product_id) {
-            return await merchanterService.helper.GetProductTargets(_customer_id, _product_id);
+            return await merchanterService.Helper.GetProductTargets(_customer_id, _product_id);
         }
     }
 }

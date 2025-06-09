@@ -21,14 +21,14 @@ namespace ApiService.Controllers {
         /// <returns>List of products wrapped in a BaseResponseModel.</returns>
         [HttpPost("GetProducts")]
         [Authorize]
-        public async Task<ActionResult<BaseResponseModel<List<Product>>>> GetProducts([FromBody] ApiFilter? _filters) {
+        public async Task<ActionResult<BaseResponseModel<List<Product>?>>> GetProducts([FromBody] ApiFilter? _filters) {
             if (int.TryParse(HttpContext.User.FindFirst("customerId")?.Value, out int customer_id) && customer_id > 0) {
                 _filters ??= new ApiFilter() { Filters = null, Sort = null, Pager = null };
                 _filters.ExtendedQueryResponses = await catalogService.GetExtendedQuery(customer_id, _filters, typeof(Product));
                 var products = await productService.GetProducts(customer_id, _filters);
-                return Ok(new BaseResponseModel<List<Product>>() { Success = products != null, Data = products ?? [], ApiFilter = _filters, ErrorMessage = products != null ? "" : "Error -1" });
+                return Ok(new BaseResponseModel<List<Product>?>() { Success = products != null, Data = products ?? [], ApiFilter = _filters, ErrorMessage = products != null ? "" : "Error -1" });
             }
-            return BadRequest();
+            return BadRequest("Invalid customer ID.");
         }
 
         /// <summary>
@@ -39,12 +39,12 @@ namespace ApiService.Controllers {
         [HttpPost("GetProductsCount")]
         [Authorize]
         public async Task<ActionResult<BaseResponseModel<int>>> GetProductsCount([FromBody] ApiFilter _filters) {
-            int.TryParse(HttpContext.User.FindFirst("customerId")?.Value, out int customer_id);
+            _ = int.TryParse(HttpContext.User.FindFirst("customerId")?.Value, out int customer_id);
             if (customer_id > 0) {
                 var count = await productService.GetProductsCount(customer_id, _filters);
                 return Ok(new BaseResponseModel<int>() { Success = count >= 0, Data = count, ApiFilter = _filters, ErrorMessage = count >= 0 ? "" : "Error -1" });
             }
-            return BadRequest();
+            return BadRequest("Invalid customer ID.");
         }
 
         /// <summary>
@@ -55,14 +55,14 @@ namespace ApiService.Controllers {
         [HttpGet("GetProduct/{id}")]
         [Authorize]
         public async Task<ActionResult<BaseResponseModel<Product?>>> GetProduct(string id) {
-            int.TryParse(HttpContext.User.FindFirst("customerId")?.Value, out int customer_id);
+            _ = int.TryParse(HttpContext.User.FindFirst("customerId")?.Value, out int customer_id);
             if (customer_id > 0) {
                 if (int.TryParse(id, out int product_id) && product_id > 0) {
                     var product = await productService.GetProduct(customer_id, product_id);
                     return Ok(new BaseResponseModel<Product?>() { Success = product != null, Data = product ?? null, ErrorMessage = product != null ? "" : "Error -1", ApiFilter = null });
                 }
             }
-            return BadRequest();
+            return BadRequest("Invalid product ID.");
         }
 
         /// <summary>
@@ -73,14 +73,14 @@ namespace ApiService.Controllers {
         [HttpPut("SaveProduct")]
         [Authorize]
         public async Task<ActionResult<BaseResponseModel<Product?>>> SaveProduct([FromBody] Product product) {
-            int.TryParse(HttpContext.User.FindFirst("customerId")?.Value, out int customer_id);
+            _ = int.TryParse(HttpContext.User.FindFirst("customerId")?.Value, out int customer_id);
             if (customer_id > 0) {
                 if (product != null) {
                     var updatedProduct = await productService.SaveProduct(customer_id, product);
                     return Ok(new BaseResponseModel<Product?>() { Success = updatedProduct != null, Data = updatedProduct ?? null, ErrorMessage = updatedProduct != null ? "" : "Error -1", ApiFilter = null });
                 }
             }
-            return BadRequest();
+            return BadRequest("Invalid customer ID.");
         }
 
         /// <summary>
@@ -91,8 +91,7 @@ namespace ApiService.Controllers {
         [HttpDelete("DeleteProductImage")]
         [Authorize]
         public async Task<ActionResult<BaseResponseModel<bool>>> DeleteProductImage([FromBody] ProductImage _product_image) {
-            int customer_id;
-            if (int.TryParse(_product_image.customer_id.ToString(), out customer_id) && customer_id > 0) {
+            if (int.TryParse(_product_image.customer_id.ToString(), out int customer_id) && customer_id > 0) {
                 bool result = await productService.DeleteProductImage(customer_id, _product_image);
                 return Ok(new BaseResponseModel<bool>() { Success = result, Data = result, ErrorMessage = result ? "" : "Error delete product image" });
             }
@@ -105,14 +104,14 @@ namespace ApiService.Controllers {
         /// <returns>Product Targets wrapped in a BaseResponseMode.</returns>
         [HttpGet("GetProductTargets/{id}")]
         [Authorize]
-        public async Task<ActionResult<BaseResponseModel<List<ProductTarget>>>> GetProductTargets(int id) {
-            int.TryParse(HttpContext.User.FindFirst("customerId")?.Value, out int customer_id);
+        public async Task<ActionResult<BaseResponseModel<List<ProductTarget>?>>> GetProductTargets(int id) {
+            _ = int.TryParse(HttpContext.User.FindFirst("customerId")?.Value, out int customer_id);
             if (customer_id > 0) {
                 var targets = await productService.GetProductTargets(customer_id, id);
-                return Ok(new BaseResponseModel<List<ProductTarget>>() { Success = targets != null, Data = targets ?? [], ErrorMessage = targets != null ? "" : "Error -1" });
+                return Ok(new BaseResponseModel<List<ProductTarget>?>() { Success = targets != null, Data = targets ?? [], ErrorMessage = targets != null ? "" : "Error -1" });
 
             }
-            return BadRequest();
+            return BadRequest("Invalid customer ID.");
         }
     }
 }

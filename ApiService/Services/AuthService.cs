@@ -30,21 +30,16 @@ namespace ApiService.Services {
     /// and generating authentication tokens. It interacts with the <see cref="MerchanterService"/> to retrieve customer
     /// information and settings, and with the <see cref="ITokenService"/> to generate tokens for authenticated
     /// users.</remarks>
-    public class AuthService : IAuthService {
-        readonly ITokenService tokenService;
-        readonly MerchanterService merchanterService;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="AuthService"/> class.
-        /// </summary>
-        /// <param name="merchanterService">The service responsible for managing merchant-related operations.  This is required to perform
-        /// authentication tasks related to merchants.</param>
-        /// <param name="tokenService">The service responsible for generating and validating authentication tokens. This is required to handle
-        /// token-based authentication.</param>
-        public AuthService(MerchanterService merchanterService, ITokenService tokenService) {
-            this.tokenService = tokenService;
-            this.merchanterService = merchanterService;
-        }
+    /// <remarks>
+    /// Initializes a new instance of the <see cref="AuthService"/> class.
+    /// </remarks>
+    /// <param name="merchanterService">The service responsible for managing merchant-related operations.  This is required to perform
+    /// authentication tasks related to merchants.</param>
+    /// <param name="tokenService">The service responsible for generating and validating authentication tokens. This is required to handle
+    /// token-based authentication.</param>
+    public class AuthService(MerchanterService merchanterService, ITokenService tokenService) : IAuthService {
+        readonly ITokenService tokenService = tokenService;
+        readonly MerchanterService merchanterService = merchanterService;
 
         /// <summary>
         /// Authenticates a user based on the provided login request and returns authentication details.
@@ -64,11 +59,11 @@ namespace ApiService.Services {
                 throw new ArgumentNullException(nameof(request));
             }
 
-            var customer = await merchanterService.helper.GetCustomerByMail(request.Email, request.Password);
+            var customer = await merchanterService.Helper.GetCustomerByMail(request.Email, request.Password);
 
             if (customer != null) {
                 if (int.TryParse(customer.customer_id.ToString(), out int customer_id)) {
-                    var settings = await merchanterService.helper.LoadSettings(customer_id);
+                    var settings = await merchanterService.Helper.LoadSettings(customer_id);
                     var generatedTokenInformation = await tokenService.GenerateToken(
                         new GenerateTokenRequest {
                             CustomerID = customer_id,

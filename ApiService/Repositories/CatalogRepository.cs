@@ -22,7 +22,7 @@ namespace ApiService.Repositories {
 
         /// <inheritdoc />
         public async Task<Dictionary<string, dynamic>> GetExtendedQuery(int _customer_id, ApiFilter _filters, Type _type) {
-            return await Task.Run(() => merchanterService.helper.GetExtendedQuery(_customer_id, _filters, _type));
+            return await Task.Run(() => merchanterService.Helper.GetExtendedQuery(_customer_id, _filters, _type));
         }
     }
 }

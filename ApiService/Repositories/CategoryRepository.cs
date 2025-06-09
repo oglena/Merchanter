@@ -84,42 +84,42 @@ namespace ApiService.Repositories {
 
         /// <inheritdoc />
         private async Task<List<Category>> GetCategoriesAsync(int _customer_id, ApiFilter _filters) {
-            return await Task.Run(() => merchanterService.helper.GetCategories(_customer_id, _filters));
+            return await Task.Run(() => merchanterService.Helper.GetCategories(_customer_id, _filters));
         }
 
         /// <inheritdoc />
         private async Task<int> GetCategoriesCountAsync(int _customer_id, ApiFilter _filters) {
-            return await Task.Run(() => merchanterService.helper.GetCategoryCount(_customer_id, _filters));
+            return await Task.Run(() => merchanterService.Helper.GetCategoryCount(_customer_id, _filters));
         }
 
         /// <inheritdoc />
         public async Task<Category?> CreateCategory(int _customer_id, Category _category) {
-            return await Task.Run(() => merchanterService.helper.InsertCategory(_customer_id, _category));
+            return await Task.Run(() => merchanterService.Helper.InsertCategory(_customer_id, _category));
         }
 
         /// <inheritdoc />
         public async Task<Category?> UpdateCategory(int _customer_id, Category _category) {
-            return await Task.Run(() => merchanterService.helper.UpdateCategory(_customer_id, _category));
+            return await Task.Run(() => merchanterService.Helper.UpdateCategory(_customer_id, _category));
         }
 
         /// <inheritdoc />
         public async Task<bool> DeleteCategory(int _customer_id, Category _category) {
-            return await Task.Run(() => merchanterService.helper.DeleteCategory(_customer_id, _category.id));
+            return await Task.Run(() => merchanterService.Helper.DeleteCategory(_customer_id, _category.id));
         }
 
         /// <inheritdoc />
         public async Task<Category> GetDefaultCategory(int _customer_id) {
-            return await Task.Run(() => merchanterService.helper.GetRootCategory(_customer_id));
+            return await Task.Run(() => merchanterService.Helper.GetRootCategory(_customer_id));
         }
 
         /// <inheritdoc />
         public async Task<Category?> GetCategory(int _customer_id, int _category_id) {
-            return await Task.Run(() => merchanterService.helper.GetCategory(_customer_id, _category_id));
+            return await Task.Run(() => merchanterService.Helper.GetCategory(_customer_id, _category_id));
         }
 
         /// <inheritdoc />
         public async Task<List<CategoryTarget>> GetCategoryTargets(int _customer_id, int _category_id) {
-            return await Task.Run(() => merchanterService.helper.GetCategoryTargets(_customer_id, _category_id));
+            return await Task.Run(() => merchanterService.Helper.GetCategoryTargets(_customer_id, _category_id));
         }
     }
 }

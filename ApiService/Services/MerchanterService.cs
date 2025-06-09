@@ -12,17 +12,17 @@ namespace ApiService.Services {
         /// <summary>
         /// Gets or sets the database helper instance used for database operations.
         /// </summary>
-        public DbHelper helper { get; set; }
+        public DbHelper Helper { get; set; }
 
         /// <summary>
         /// Gets or sets the global settings for the merchanter configuration.
         /// </summary>
-        public SettingsMerchanter? global { get; set; }
+        public SettingsMerchanter? Global { get; set; }
         
         /// <summary>
         /// Gets or sets the unique identifier for a customer.
         /// </summary>
-        public int customer_id { get; set; }
+        public int CustomerId { get; set; }
     }
 
     /// <summary>
@@ -34,11 +34,11 @@ namespace ApiService.Services {
     /// database and exposes properties for customer identification and global settings.</remarks>
     public class MerchanterService :IMerchanterService {
         /// <inheritdoc />
-        public int customer_id { get; set; }
+        public int CustomerId { get; set; }
         /// <inheritdoc />
-        public DbHelper helper { get; set; }
+        public DbHelper Helper { get; set; }
         /// <inheritdoc />
-        public SettingsMerchanter? global { get; set; }
+        public SettingsMerchanter? Global { get; set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MerchanterService"/> class.
@@ -46,7 +46,7 @@ namespace ApiService.Services {
         /// <remarks>This constructor sets up the service by initializing a helper object with the
         /// required server,  user credentials, database information, and port configuration.</remarks>
         public MerchanterService() {
-            this.helper = new(Constants.Server, Constants.User, Constants.Password, Constants.Database, Constants.Port);
+            this.Helper = new(Constants.Server, Constants.User, Constants.Password, Constants.Database, Constants.Port);
         }
     }
 }

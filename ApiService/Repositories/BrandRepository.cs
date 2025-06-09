@@ -20,24 +20,24 @@ namespace ApiService.Repositories {
         }
 
         private async Task<List<Brand>> GetBrandsAsync(int _customer_id, ApiFilter _filters) {
-            return await Task.Run(() => merchanterService.helper.GetBrands(_customer_id, _filters));
+            return await Task.Run(() => merchanterService.Helper.GetBrands(_customer_id, _filters));
         }
 
         private async Task<int> GetBrandsCountAsync(int _customer_id, ApiFilter _filters) {
-            return await Task.Run(() => merchanterService.helper.GetBrandsCount(_customer_id, _filters));
+            return await Task.Run(() => merchanterService.Helper.GetBrandsCount(_customer_id, _filters));
         }
         public async Task<Brand?> CreateBrand(int _customer_id, Brand _brand) {
-            return await Task.Run(() => merchanterService.helper.InsertBrand(_customer_id, _brand));
+            return await Task.Run(() => merchanterService.Helper.InsertBrand(_customer_id, _brand));
         }
         public async Task<Brand?> UpdateBrand(int _customer_id, Brand _brand) {
-            return await Task.Run(() => merchanterService.helper.UpdateBrand(_customer_id, _brand));
+            return await Task.Run(() => merchanterService.Helper.UpdateBrand(_customer_id, _brand));
         }
         public async Task<bool> DeleteBrand(int _customer_id, Brand _brand) {
-            return await Task.Run(() => merchanterService.helper.DeleteBrand(_customer_id, _brand.id));
+            return await Task.Run(() => merchanterService.Helper.DeleteBrand(_customer_id, _brand.id));
         }
 
         public async Task<Brand> GetDefaultBrand(int _customer_id) {
-            return await Task.Run(() => merchanterService.helper.GetDefaultBrand(_customer_id));
+            return await Task.Run(() => merchanterService.Helper.GetDefaultBrand(_customer_id));
         }
     }
 }

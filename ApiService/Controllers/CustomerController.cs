@@ -1,7 +1,6 @@
 ﻿using ApiService.Models;
 using ApiService.Services;
 using Merchanter.Classes;
-using Merchanter.Responses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -26,7 +25,7 @@ namespace ApiService.Controllers {
                 if (customer != null) {
                     return Ok(new BaseResponseModel<Customer>() { Success = true, Data = customer, ErrorMessage = "" });
                 }
-                else {
+                else { //this should never happen, but just in case
                     return Ok(new BaseResponseModel<Customer>() { Success = false, Data = null, ErrorMessage = "Customer not found." });
                 }
             }
@@ -40,12 +39,12 @@ namespace ApiService.Controllers {
         /// <returns>List of logs wrapped in a BaseResponseModel.</returns>
         [HttpPost("GetCustomerLogs")]
         [Authorize]
-        public async Task<ActionResult<BaseResponseModel<List<Log>>>> GetCustomerLogs([FromBody] ApiFilter? _filters) {
+        public async Task<ActionResult<BaseResponseModel<List<Log>?>>> GetCustomerLogs([FromBody] ApiFilter? _filters) {
             if (int.TryParse(HttpContext.User.FindFirst("customerId")?.Value, out int customer_id) && customer_id > 0) {
                 _filters ??= new ApiFilter() { Filters = null, Sort = null, Pager = null };
                 _filters.ExtendedQueryResponses = await catalogService.GetExtendedQuery(customer_id, _filters, typeof(Log));
                 var logs = await customerService.GetCustomerLogs(customer_id, _filters);
-                return Ok(new BaseResponseModel<List<Log>>() { Success = logs != null, Data = logs ?? [], ApiFilter = _filters, ErrorMessage = logs != null ? "" : "Error -1" });
+                return Ok(new BaseResponseModel<List<Log>?>() { Success = logs != null, Data = logs ?? [], ApiFilter = _filters, ErrorMessage = logs != null ? "" : "Error -1" });
             }
             return BadRequest();
         }
@@ -53,22 +52,16 @@ namespace ApiService.Controllers {
         /// <summary>
         /// Retrieves a list of customer notifications.
         /// </summary>
-        /// <param name="_api_filter">Filtering options.</param>
+        /// <param name="_filters">Filtering options.</param>
         /// <returns>List of notifications wrapped in a BaseResponseModel.</returns>
         [HttpPost("GetCustomerNotifications")]
         [Authorize]
-        public async Task<ActionResult<BaseResponseModel<List<Notification>>>> GetCustomerNotifications([FromBody] ApiFilter _api_filter) {
+        public async Task<ActionResult<BaseResponseModel<List<Notification>?>>> GetCustomerNotifications([FromBody] ApiFilter? _filters) {
             if (int.TryParse(HttpContext.User.FindFirst("customerId")?.Value, out int customer_id) && customer_id > 0) {
-                if (_api_filter.Pager != null && _api_filter.Filters != null) {
-                    List<Notification> customer_notifications = await customerService.GetCustomerNotifications(customer_id, _api_filter);
-                    if (customer_notifications != null) {
-                        return Ok(new BaseResponseModel<List<Notification>>() { Success = true, ErrorMessage = "", Data = customer_notifications ?? [] });
-                    }
-                    else {
-                        return Ok(new BaseResponseModel<List<Notification>>() { Success = false, Data = null, ErrorMessage = "Error getting customer notifications." });
-                    }
-                }
-                return StatusCode(500);
+                _filters ??= new ApiFilter() { Filters = null, Sort = null, Pager = null };
+                _filters.ExtendedQueryResponses = await catalogService.GetExtendedQuery(customer_id, _filters, typeof(Notification));
+                var customer_notifications = await customerService.GetCustomerNotifications(customer_id, _filters);
+                return Ok(new BaseResponseModel<List<Notification>?>() { Success = customer_notifications != null, Data = customer_notifications ?? [], ApiFilter = _filters, ErrorMessage = customer_notifications != null ? "" : "Error -1" });
             }
             return BadRequest("Invalid customer ID.");
         }
@@ -79,13 +72,13 @@ namespace ApiService.Controllers {
         /// <returns>List of customers wrapped in a BaseResponseModel.</returns>
         [HttpGet("GetCustomers")]
         [Authorize]
-        public async Task<ActionResult<BaseResponseModel<List<Customer>>>> GetCustomers() {
-            List<Customer> customers = await customerService.GetCustomers();
+        public async Task<ActionResult<BaseResponseModel<List<Customer>?>>> GetCustomers() {
+            var customers = await customerService.GetCustomers();
             if (customers != null) {
-                return Ok(new BaseResponseModel<List<Customer>>() { Success = true, Data = customers, ErrorMessage = "" });
+                return Ok(new BaseResponseModel<List<Customer>?>() { Success = true, Data = customers, ErrorMessage = "" });
             }
             else {
-                return Ok(new BaseResponseModel<List<Customer>>() { Success = false, Data = null, ErrorMessage = "Error getting customers" });
+                return Ok(new BaseResponseModel<List<Customer>?>() { Success = false, Data = null, ErrorMessage = "Error getting customers" });
             }
         }
 
@@ -100,10 +93,10 @@ namespace ApiService.Controllers {
             if (int.TryParse(HttpContext.User.FindFirst("customerId")?.Value, out int customer_id) && customer_id > 0) {
                 Customer? saved_customer = await customerService.SaveCustomer(customer_id, customer);
                 if (saved_customer != null) {
-                    return Ok(new BaseResponseModel<Customer>() { Success = true, Data = saved_customer, ErrorMessage = "" });
+                    return Ok(new BaseResponseModel<Customer?>() { Success = true, Data = saved_customer, ErrorMessage = "" });
                 }
                 else {
-                    return Ok(new BaseResponseModel<Customer>() { Success = false, Data = null, ErrorMessage = "Error save customer" });
+                    return Ok(new BaseResponseModel<Customer?>() { Success = false, Data = null, ErrorMessage = "Error save customer" });
                 }
             }
             return BadRequest("Invalid customer ID.");
