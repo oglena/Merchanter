@@ -4,7 +4,7 @@ using Merchanter.Classes.Settings;
 
 namespace ApiService.Services {
     public interface ISettingsService {
-        Task<SettingsMerchanter> GetCustomerSettings(int _customer_id);
+        Task<SettingsMerchanter?> GetCustomerSettings(int _customer_id);
         Task<List<ActiveIntegration>?> GetActiveIntegrations(int _customer_id);
         Task<bool> SaveGeneralSettings(int _customer_id, SettingsGeneral _settings);
         Task<bool> SaveEntegraSettings(int _customer_id, SettingsEntegra _settings);
@@ -22,7 +22,7 @@ namespace ApiService.Services {
         Task<bool> SaveGoogleSettings(int _customer_id, SettingsGoogle _settings);
     }
     public class SettingsService(ISettingsRepository settingsRepository) : ISettingsService {
-        public Task<SettingsMerchanter> GetCustomerSettings(int _customer_id) {
+        public Task<SettingsMerchanter?> GetCustomerSettings(int _customer_id) {
             return settingsRepository.GetSettings(_customer_id);
         }
 

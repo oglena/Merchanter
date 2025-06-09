@@ -12,7 +12,7 @@ namespace ApiService.Repositories {
         /// <param name="_customer_id">The ID of the customer.</param>
         /// <param name="_filters">Filter criteria for the products.</param>
         /// <returns>A list of products.</returns>
-        Task<List<Product>> GetProducts(int _customer_id, ApiFilter _filters);
+        Task<List<Product>?> GetProducts(int _customer_id, ApiFilter _filters);
 
         /// <summary>
         /// Retrieves the count of products based on customer ID and filters.
@@ -60,13 +60,13 @@ namespace ApiService.Repositories {
         /// <param name="_customer_id">The ID of the customer.</param>
         /// <param name="_product_id">The ID of the product.</param>
         /// <returns>A list of product targets.</returns>
-        Task<List<ProductTarget>> GetProductTargets(int _customer_id, int _product_id);
+        Task<List<ProductTarget>?> GetProductTargets(int _customer_id, int _product_id);
     }
 
     /// <inheritdoc />
     public class ProductRepository(MerchanterService merchanterService) : IProductRepository {
         /// <inheritdoc />
-        public async Task<List<Product>> GetProducts(int _customer_id, ApiFilter _filters) {
+        public async Task<List<Product>?> GetProducts(int _customer_id, ApiFilter _filters) {
             return await GetProductsAsync(_customer_id, _filters);
         }
 
@@ -82,37 +82,37 @@ namespace ApiService.Repositories {
 
         /// <inheritdoc />
         private async Task<Product?> GetProductAsync(int _customer_id, int _product_id) {
-            return await Task.Run(() => merchanterService.helper.GetProduct(_customer_id, _product_id));
+            return await merchanterService.helper.GetProduct(_customer_id, _product_id);
         }
 
         /// <inheritdoc />
-        private async Task<List<Product>> GetProductsAsync(int _customer_id, ApiFilter _filters) {
-            return await Task.Run(() => merchanterService.helper.GetProducts(_customer_id, _filters));
+        private async Task<List<Product>?> GetProductsAsync(int _customer_id, ApiFilter _filters) {
+            return await merchanterService.helper.GetProducts(_customer_id, _filters);
         }
 
         /// <inheritdoc />
         private async Task<int> GetProductsCountAsync(int _customer_id, ApiFilter _filters) {
-            return await Task.Run(() => merchanterService.helper.GetProductsCount(_customer_id, _filters));
+            return await merchanterService.helper.GetProductsCount(_customer_id, _filters);
         }
 
         /// <inheritdoc />
         public async Task<Product?> UpdateProduct(int _customer_id, Product product) {
-            return await Task.Run(() => merchanterService.helper.UpdateProduct(_customer_id, product));
+            return await merchanterService.helper.UpdateProduct(_customer_id, product);
         }
 
         /// <inheritdoc />
         public async Task<Product?> InsertProduct(int _customer_id, Product product) {
-            return await Task.Run(() => merchanterService.helper.InsertProduct(_customer_id, product));
+            return await merchanterService.helper.InsertProduct(_customer_id, product);
         }
 
         /// <inheritdoc />
         public async Task<bool> DeleteProductImage(int _customer_id, ProductImage _product_image) {
-            return await Task.Run(() => merchanterService.helper.DeleteProductImage(_customer_id, _product_image));
+            return await merchanterService.helper.DeleteProductImage(_customer_id, _product_image);
         }
 
         /// <inheritdoc />
-        public async Task<List<ProductTarget>> GetProductTargets(int _customer_id, int _product_id) {
-            return await Task.Run(() => merchanterService.helper.GetProductTargets(_customer_id, _product_id));
+        public async Task<List<ProductTarget>?> GetProductTargets(int _customer_id, int _product_id) {
+            return await merchanterService.helper.GetProductTargets(_customer_id, _product_id);
         }
     }
 }

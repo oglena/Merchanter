@@ -1,6 +1,5 @@
 ﻿using Merchanter.Classes;
 using Merchanter.Classes.Settings;
-using Merchanter.Responses;
 using MySql.Data.MySqlClient;
 using Attribute = Merchanter.Classes.Attribute;
 
@@ -85,7 +84,7 @@ namespace Merchanter {
         /// <param name="_database">The MySQL database name.</param>
         /// <param name="_port">The MySQL server port.</param>
         /// <param name="_timeout">The connection timeout in seconds.</param>
-        public DbHelper(string _server, string _user, string _password, string _database, 
+        public DbHelper(string _server, string _user, string _password, string _database,
             int _port = 3306, int _timeout = 120) {
             try {
                 Server = _server; User = _user; Password = _password;
@@ -123,9 +122,9 @@ namespace Merchanter {
         /// Opens the database connection.
         /// </summary>
         /// <returns>True if the connection is successfully opened; otherwise, false.</returns>
-        public bool OpenConnection() {
+        public async Task<bool> OpenConnection() {
             try {
-                connection.Open();
+                await connection.OpenAsync();
                 return true;
             }
             catch (MySqlException ex) {
@@ -146,9 +145,9 @@ namespace Merchanter {
         /// Closes the database connection.
         /// </summary>
         /// <returns>True if the connection is successfully closed; otherwise, false.</returns>
-        public bool CloseConnection() {
+        public async Task<bool> CloseConnection() {
             try {
-                connection.Close();
+                await connection.CloseAsync();
                 return true;
             }
             catch (MySqlException ex) {
@@ -158,8 +157,6 @@ namespace Merchanter {
         }
 
         #endregion
-        #region Helper Methods
-        #endregion
 
         #region Customer
         /// <summary>
@@ -167,104 +164,50 @@ namespace Merchanter {
         /// </summary>
         /// <param name="_customer_id">The ID of the customer.</param>
         /// <returns>The customer object, or null if not found.</returns>
-        public Customer? GetCustomer(int _customer_id) {
+        public async Task<Customer?> GetCustomer(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM customer WHERE customer_id=@customer_id";
-                Customer? c = null;
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                MySqlDataReader dataReader = cmd.ExecuteReader(System.Data.CommandBehavior.CloseConnection);
-                while (dataReader.Read()) {
-                    c = new Customer {
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        user_name = dataReader["user_name"].ToString(),
-                        person_name = dataReader["person_name"].ToString(),
-                        email = dataReader["email"].ToString(),
-                        password = dataReader["password"].ToString(),
-                        role = (Customer.Role)Convert.ToInt32(dataReader["role"].ToString()),
-                        status = Convert.ToBoolean(Convert.ToInt32(dataReader["status"]?.ToString())),
-                        product_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["product_sync_status"].ToString())),
-                        order_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["order_sync_status"].ToString())),
-                        xml_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["xml_sync_status"].ToString())),
-                        invoice_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["invoice_sync_status"].ToString())),
-                        notification_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["notification_sync_status"].ToString())),
-                        product_sync_timer = Convert.ToInt32(dataReader["product_sync_timer"].ToString()),
-                        order_sync_timer = Convert.ToInt32(dataReader["order_sync_timer"].ToString()),
-                        xml_sync_timer = Convert.ToInt32(dataReader["xml_sync_timer"].ToString()),
-                        invoice_sync_timer = Convert.ToInt32(dataReader["invoice_sync_timer"].ToString()),
-                        notification_sync_timer = Convert.ToInt32(dataReader["notification_sync_timer"].ToString()),
-                        last_product_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_product_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_product_sync_date"].ToString()) : null,
-                        last_order_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_order_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_order_sync_date"].ToString()) : null,
-                        last_xml_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_xml_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_xml_sync_date"].ToString()) : null,
-                        last_invoice_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_invoice_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_invoice_sync_date"].ToString()) : null,
-                        last_notification_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_notification_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_notification_sync_date"].ToString()) : null,
-                        is_productsync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_productsync_working"].ToString())),
-                        is_ordersync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_ordersync_working"].ToString())),
-                        is_xmlsync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_xmlsync_working"].ToString())),
-                        is_invoicesync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_invoicesync_working"].ToString())),
-                        is_notificationsync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_notificationsync_working"].ToString())),
-                    };
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM customer WHERE customer_id=@customer_id;";
+                    Customer? c = null;
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    while (await dataReader.ReadAsync()) {
+                        c = new Customer {
+                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            user_name = dataReader["user_name"].ToString(),
+                            person_name = dataReader["person_name"].ToString(),
+                            email = dataReader["email"].ToString(),
+                            password = dataReader["password"].ToString(),
+                            role = (Customer.Role)Convert.ToInt32(dataReader["role"].ToString()),
+                            status = Convert.ToBoolean(Convert.ToInt32(dataReader["status"]?.ToString())),
+                            product_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["product_sync_status"].ToString())),
+                            order_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["order_sync_status"].ToString())),
+                            xml_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["xml_sync_status"].ToString())),
+                            invoice_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["invoice_sync_status"].ToString())),
+                            notification_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["notification_sync_status"].ToString())),
+                            product_sync_timer = Convert.ToInt32(dataReader["product_sync_timer"].ToString()),
+                            order_sync_timer = Convert.ToInt32(dataReader["order_sync_timer"].ToString()),
+                            xml_sync_timer = Convert.ToInt32(dataReader["xml_sync_timer"].ToString()),
+                            invoice_sync_timer = Convert.ToInt32(dataReader["invoice_sync_timer"].ToString()),
+                            notification_sync_timer = Convert.ToInt32(dataReader["notification_sync_timer"].ToString()),
+                            last_product_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_product_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_product_sync_date"].ToString()) : null,
+                            last_order_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_order_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_order_sync_date"].ToString()) : null,
+                            last_xml_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_xml_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_xml_sync_date"].ToString()) : null,
+                            last_invoice_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_invoice_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_invoice_sync_date"].ToString()) : null,
+                            last_notification_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_notification_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_notification_sync_date"].ToString()) : null,
+                            is_productsync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_productsync_working"].ToString())),
+                            is_ordersync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_ordersync_working"].ToString())),
+                            is_xmlsync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_xmlsync_working"].ToString())),
+                            is_invoicesync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_invoicesync_working"].ToString())),
+                            is_notificationsync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_notificationsync_working"].ToString())),
+                        };
+                    }
+                    await dataReader.CloseAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return c;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return c;
-            }
-            catch (Exception ex) {
-                OnError(ex.ToString());
                 return null;
-            }
-        }
-
-        /// <summary>
-        /// Retrieves a customer by their username and password.
-        /// </summary>
-        /// <param name="_username">The username of the customer.</param>
-        /// <param name="_password">The password of the customer.</param>
-        /// <returns>The customer object, or null if not found.</returns>
-        public Customer? GetCustomer(string _username, string _password) {
-            try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM customer WHERE user_name=@user_name AND password=@password;";
-                Customer? c = null;
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("user_name", _username));
-                cmd.Parameters.Add(new MySqlParameter("password", _password));
-                MySqlDataReader dataReader = cmd.ExecuteReader(System.Data.CommandBehavior.CloseConnection);
-                while (dataReader.Read()) {
-                    c = new Customer {
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        user_name = dataReader["user_name"].ToString(),
-                        person_name = dataReader["person_name"].ToString(),
-                        email = dataReader["email"].ToString(),
-                        password = dataReader["password"].ToString(),
-                        role = (Customer.Role)Convert.ToInt32(dataReader["role"].ToString()),
-                        status = Convert.ToBoolean(Convert.ToInt32(dataReader["status"].ToString())),
-                        product_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["product_sync_status"].ToString())),
-                        order_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["order_sync_status"].ToString())),
-                        xml_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["xml_sync_status"].ToString())),
-                        invoice_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["invoice_sync_status"].ToString())),
-                        notification_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["notification_sync_status"].ToString())),
-                        product_sync_timer = Convert.ToInt32(dataReader["product_sync_timer"].ToString()),
-                        order_sync_timer = Convert.ToInt32(dataReader["order_sync_timer"].ToString()),
-                        xml_sync_timer = Convert.ToInt32(dataReader["xml_sync_timer"].ToString()),
-                        invoice_sync_timer = Convert.ToInt32(dataReader["invoice_sync_timer"].ToString()),
-                        notification_sync_timer = Convert.ToInt32(dataReader["notification_sync_timer"].ToString()),
-                        last_product_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_product_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_product_sync_date"].ToString()) : null,
-                        last_order_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_order_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_order_sync_date"].ToString()) : null,
-                        last_xml_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_xml_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_xml_sync_date"].ToString()) : null,
-                        last_invoice_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_invoice_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_invoice_sync_date"].ToString()) : null,
-                        last_notification_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_notification_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_notification_sync_date"].ToString()) : null,
-                        is_productsync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_productsync_working"].ToString())),
-                        is_ordersync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_ordersync_working"].ToString())),
-                        is_xmlsync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_xmlsync_working"].ToString())),
-                        is_invoicesync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_invoicesync_working"].ToString())),
-                        is_notificationsync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_notificationsync_working"].ToString())),
-                    };
-                }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return c;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -278,49 +221,51 @@ namespace Merchanter {
         /// <param name="_email">E-mail</param>
         /// <param name="_password">Password</param>
         /// <returns>[No data] or [Error] returns 'null'</returns>
-        public Customer? GetCustomerByMail(string _email, string _password) {
+        public async Task<Customer?> GetCustomerByMail(string _email, string _password) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM customer WHERE email=@email AND password=@password;";
-                Customer? c = null;
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("email", _email));
-                cmd.Parameters.Add(new MySqlParameter("password", _password));
-                MySqlDataReader dataReader = cmd.ExecuteReader(System.Data.CommandBehavior.CloseConnection);
-                while (dataReader.Read()) {
-                    c = new Customer {
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        user_name = dataReader["user_name"].ToString(),
-                        person_name = dataReader["person_name"].ToString(),
-                        email = dataReader["email"].ToString(),
-                        password = dataReader["password"].ToString(),
-                        role = (Customer.Role)Convert.ToInt32(dataReader["role"].ToString()),
-                        status = Convert.ToBoolean(Convert.ToInt32(dataReader["status"].ToString())),
-                        product_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["product_sync_status"].ToString())),
-                        order_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["order_sync_status"].ToString())),
-                        xml_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["xml_sync_status"].ToString())),
-                        invoice_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["invoice_sync_status"].ToString())),
-                        notification_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["notification_sync_status"].ToString())),
-                        product_sync_timer = Convert.ToInt32(dataReader["product_sync_timer"].ToString()),
-                        order_sync_timer = Convert.ToInt32(dataReader["order_sync_timer"].ToString()),
-                        xml_sync_timer = Convert.ToInt32(dataReader["xml_sync_timer"].ToString()),
-                        invoice_sync_timer = Convert.ToInt32(dataReader["invoice_sync_timer"].ToString()),
-                        notification_sync_timer = Convert.ToInt32(dataReader["notification_sync_timer"].ToString()),
-                        last_product_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_product_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_product_sync_date"].ToString()) : null,
-                        last_order_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_order_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_order_sync_date"].ToString()) : null,
-                        last_xml_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_xml_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_xml_sync_date"].ToString()) : null,
-                        last_invoice_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_invoice_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_invoice_sync_date"].ToString()) : null,
-                        last_notification_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_notification_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_notification_sync_date"].ToString()) : null,
-                        is_productsync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_productsync_working"].ToString())),
-                        is_ordersync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_ordersync_working"].ToString())),
-                        is_xmlsync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_xmlsync_working"].ToString())),
-                        is_invoicesync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_invoicesync_working"].ToString())),
-                        is_notificationsync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_notificationsync_working"].ToString())),
-                    };
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM customer WHERE email=@email AND password=@password;";
+                    Customer? c = null;
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("email", _email));
+                    cmd.Parameters.Add(new MySqlParameter("password", _password));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    while (await dataReader.ReadAsync()) {
+                        c = new Customer {
+                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            user_name = dataReader["user_name"].ToString(),
+                            person_name = dataReader["person_name"].ToString(),
+                            email = dataReader["email"].ToString(),
+                            password = dataReader["password"].ToString(),
+                            role = (Customer.Role)Convert.ToInt32(dataReader["role"].ToString()),
+                            status = Convert.ToBoolean(Convert.ToInt32(dataReader["status"].ToString())),
+                            product_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["product_sync_status"].ToString())),
+                            order_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["order_sync_status"].ToString())),
+                            xml_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["xml_sync_status"].ToString())),
+                            invoice_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["invoice_sync_status"].ToString())),
+                            notification_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["notification_sync_status"].ToString())),
+                            product_sync_timer = Convert.ToInt32(dataReader["product_sync_timer"].ToString()),
+                            order_sync_timer = Convert.ToInt32(dataReader["order_sync_timer"].ToString()),
+                            xml_sync_timer = Convert.ToInt32(dataReader["xml_sync_timer"].ToString()),
+                            invoice_sync_timer = Convert.ToInt32(dataReader["invoice_sync_timer"].ToString()),
+                            notification_sync_timer = Convert.ToInt32(dataReader["notification_sync_timer"].ToString()),
+                            last_product_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_product_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_product_sync_date"].ToString()) : null,
+                            last_order_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_order_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_order_sync_date"].ToString()) : null,
+                            last_xml_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_xml_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_xml_sync_date"].ToString()) : null,
+                            last_invoice_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_invoice_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_invoice_sync_date"].ToString()) : null,
+                            last_notification_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_notification_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_notification_sync_date"].ToString()) : null,
+                            is_productsync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_productsync_working"].ToString())),
+                            is_ordersync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_ordersync_working"].ToString())),
+                            is_xmlsync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_xmlsync_working"].ToString())),
+                            is_invoicesync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_invoicesync_working"].ToString())),
+                            is_notificationsync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_notificationsync_working"].ToString())),
+                        };
+                    }
+                    await dataReader.CloseAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return c;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return c;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -332,47 +277,49 @@ namespace Merchanter {
         /// Gets the customers from the database
         /// </summary>
         /// <returns>[Error] returns 'null'</returns>
-        public List<Customer> GetCustomers() {
+        public async Task<List<Customer>?> GetCustomers() {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM customer";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                MySqlDataReader dataReader = cmd.ExecuteReader(System.Data.CommandBehavior.CloseConnection);
-                List<Customer> customers = [];
-                while (dataReader.Read()) {
-                    customers.Add(new Customer {
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        user_name = dataReader["user_name"].ToString(),
-                        person_name = dataReader["person_name"].ToString(),
-                        email = dataReader["email"].ToString(),
-                        password = dataReader["password"].ToString(),
-                        role = (Customer.Role)Convert.ToInt32(dataReader["role"].ToString()),
-                        status = Convert.ToBoolean(Convert.ToInt32(dataReader["status"].ToString())),
-                        product_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["product_sync_status"].ToString())),
-                        order_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["order_sync_status"].ToString())),
-                        xml_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["xml_sync_status"].ToString())),
-                        invoice_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["invoice_sync_status"].ToString())),
-                        notification_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["notification_sync_status"].ToString())),
-                        product_sync_timer = Convert.ToInt32(dataReader["product_sync_timer"].ToString()),
-                        order_sync_timer = Convert.ToInt32(dataReader["order_sync_timer"].ToString()),
-                        xml_sync_timer = Convert.ToInt32(dataReader["xml_sync_timer"].ToString()),
-                        invoice_sync_timer = Convert.ToInt32(dataReader["invoice_sync_timer"].ToString()),
-                        notification_sync_timer = Convert.ToInt32(dataReader["notification_sync_timer"].ToString()),
-                        last_product_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_product_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_product_sync_date"].ToString()) : null,
-                        last_order_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_order_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_order_sync_date"].ToString()) : null,
-                        last_xml_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_xml_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_xml_sync_date"].ToString()) : null,
-                        last_invoice_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_invoice_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_invoice_sync_date"].ToString()) : null,
-                        last_notification_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_notification_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_notification_sync_date"].ToString()) : null,
-                        is_productsync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_productsync_working"].ToString())),
-                        is_ordersync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_ordersync_working"].ToString())),
-                        is_xmlsync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_xmlsync_working"].ToString())),
-                        is_invoicesync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_invoicesync_working"].ToString())),
-                        is_notificationsync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_notificationsync_working"].ToString())),
-                    });
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM customer;";
+                    MySqlCommand cmd = new(_query, connection);
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    List<Customer> customers = [];
+                    while (await dataReader.ReadAsync()) {
+                        customers.Add(new Customer {
+                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            user_name = dataReader["user_name"].ToString(),
+                            person_name = dataReader["person_name"].ToString(),
+                            email = dataReader["email"].ToString(),
+                            password = dataReader["password"].ToString(),
+                            role = (Customer.Role)Convert.ToInt32(dataReader["role"].ToString()),
+                            status = Convert.ToBoolean(Convert.ToInt32(dataReader["status"].ToString())),
+                            product_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["product_sync_status"].ToString())),
+                            order_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["order_sync_status"].ToString())),
+                            xml_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["xml_sync_status"].ToString())),
+                            invoice_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["invoice_sync_status"].ToString())),
+                            notification_sync_status = Convert.ToBoolean(Convert.ToInt32(dataReader["notification_sync_status"].ToString())),
+                            product_sync_timer = Convert.ToInt32(dataReader["product_sync_timer"].ToString()),
+                            order_sync_timer = Convert.ToInt32(dataReader["order_sync_timer"].ToString()),
+                            xml_sync_timer = Convert.ToInt32(dataReader["xml_sync_timer"].ToString()),
+                            invoice_sync_timer = Convert.ToInt32(dataReader["invoice_sync_timer"].ToString()),
+                            notification_sync_timer = Convert.ToInt32(dataReader["notification_sync_timer"].ToString()),
+                            last_product_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_product_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_product_sync_date"].ToString()) : null,
+                            last_order_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_order_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_order_sync_date"].ToString()) : null,
+                            last_xml_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_xml_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_xml_sync_date"].ToString()) : null,
+                            last_invoice_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_invoice_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_invoice_sync_date"].ToString()) : null,
+                            last_notification_sync_date = !string.IsNullOrWhiteSpace(dataReader["last_notification_sync_date"].ToString()) ? Convert.ToDateTime(dataReader["last_notification_sync_date"].ToString()) : null,
+                            is_productsync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_productsync_working"].ToString())),
+                            is_ordersync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_ordersync_working"].ToString())),
+                            is_xmlsync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_xmlsync_working"].ToString())),
+                            is_invoicesync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_invoicesync_working"].ToString())),
+                            is_notificationsync_working = Convert.ToBoolean(Convert.ToInt32(dataReader["is_notificationsync_working"].ToString())),
+                        });
+                    }
+                    await dataReader.CloseAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return customers;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return customers;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -381,53 +328,60 @@ namespace Merchanter {
         }
 
         /// <summary>
-        /// Saves the customer to the database
+        /// Saves the specified customer to the database and updates their information.
         /// </summary>
-        /// <param name="_customer_id">Customer ID</param>
-        /// <param name="_customer">Customer</param>
-        /// <param name="_with_parameters">With working parameters</param>
-        /// <returns>[Error] returns 'null'</returns>
-        public Customer? SaveCustomer(int _customer_id, Customer _customer, bool _with_working_parameters = true) {
+        /// <remarks>This method performs an update operation on the customer record in the database. If
+        /// the customer does not exist,  it inserts a new record and retrieves the updated customer details. The
+        /// operation is wrapped in a transaction to  ensure data consistency. Optionally, additional fields related to
+        /// synchronization and password can be updated  based on the <paramref name="_WWP"/> parameter.</remarks>
+        /// <param name="_customer_id">The unique identifier of the customer to be updated or inserted.</param>
+        /// <param name="_customer">An instance of the <see cref="Customer"/> class containing the customer's details to be saved.</param>
+        /// <param name="_WWP">With working parameters. A boolean value indicating whether to update synchronization-related fields and the password. If <see
+        /// langword="true"/>, these fields are included in the update; otherwise, they are excluded.</param>
+        /// <returns>A <see cref="Customer"/> object representing the updated customer, or <see langword="null"/> if the
+        /// operation fails.</returns>
+        public async Task<Customer?> SaveCustomer(int _customer_id, Customer _customer, bool _WWP = true) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                object val; int inserted_id;
-                string _query = "START TRANSACTION;" +
-                    "UPDATE customer SET customer_id=LAST_INSERT_ID(@customer_id),user_name=@user_name,person_name=@person_name,email=@email,role=@role,status=@status,product_sync_status=@product_sync_status,order_sync_status=@order_sync_status,xml_sync_status=@xml_sync_status,invoice_sync_status=@invoice_sync_status,notification_sync_status=@notification_sync_status" +
-                    ",product_sync_timer=@product_sync_timer,order_sync_timer=@order_sync_timer,xml_sync_timer=@xml_sync_timer,invoice_sync_timer=@invoice_sync_timer,notification_sync_timer=@notification_sync_timer" +
-                    (_with_working_parameters ? ",password=@password,is_productsync_working=@is_productsync_working,is_ordersync_working=@is_ordersync_working,is_xmlsync_working=@is_xmlsync_working,is_invoicesync_working=@is_invoicesync_working,is_notificationsync_working=@is_notificationsync_working" : "") + " WHERE customer_id=@customer_id;" +
-                    "SELECT LAST_INSERT_ID();" +
-                    "COMMIT;";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("user_name", _customer.user_name));
-                cmd.Parameters.Add(new MySqlParameter("person_name", _customer.person_name));
-                cmd.Parameters.Add(new MySqlParameter("email", _customer.email));
-                cmd.Parameters.Add(new MySqlParameter("role", (int)_customer.role));
-                cmd.Parameters.Add(new MySqlParameter("status", _customer.status));
-                cmd.Parameters.Add(new MySqlParameter("product_sync_status", _customer.product_sync_status));
-                cmd.Parameters.Add(new MySqlParameter("order_sync_status", _customer.order_sync_status));
-                cmd.Parameters.Add(new MySqlParameter("xml_sync_status", _customer.xml_sync_status));
-                cmd.Parameters.Add(new MySqlParameter("invoice_sync_status", _customer.invoice_sync_status));
-                cmd.Parameters.Add(new MySqlParameter("notification_sync_status", _customer.notification_sync_status));
-                cmd.Parameters.Add(new MySqlParameter("product_sync_timer", _customer.product_sync_timer));
-                cmd.Parameters.Add(new MySqlParameter("order_sync_timer", _customer.order_sync_timer));
-                cmd.Parameters.Add(new MySqlParameter("xml_sync_timer", _customer.xml_sync_timer));
-                cmd.Parameters.Add(new MySqlParameter("invoice_sync_timer", _customer.invoice_sync_timer));
-                cmd.Parameters.Add(new MySqlParameter("notification_sync_timer", _customer.notification_sync_timer));
-                if (_with_working_parameters) {
-                    cmd.Parameters.Add(new MySqlParameter("is_productsync_working", _customer.is_productsync_working));
-                    cmd.Parameters.Add(new MySqlParameter("is_ordersync_working", _customer.is_ordersync_working));
-                    cmd.Parameters.Add(new MySqlParameter("is_xmlsync_working", _customer.is_xmlsync_working));
-                    cmd.Parameters.Add(new MySqlParameter("is_invoicesync_working", _customer.is_invoicesync_working));
-                    cmd.Parameters.Add(new MySqlParameter("is_notificationsync_working", _customer.is_notificationsync_working));
-                    cmd.Parameters.Add(new MySqlParameter("password", _customer.password));
-                }
-                val = cmd.ExecuteScalar();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    object? val;
+                    string _query = "START TRANSACTION;" +
+                        "UPDATE customer SET customer_id=LAST_INSERT_ID(@customer_id),user_name=@user_name,person_name=@person_name,email=@email,role=@role,status=@status,product_sync_status=@product_sync_status,order_sync_status=@order_sync_status,xml_sync_status=@xml_sync_status,invoice_sync_status=@invoice_sync_status,notification_sync_status=@notification_sync_status" +
+                        ",product_sync_timer=@product_sync_timer,order_sync_timer=@order_sync_timer,xml_sync_timer=@xml_sync_timer,invoice_sync_timer=@invoice_sync_timer,notification_sync_timer=@notification_sync_timer" +
+                        (_WWP ? ",password=@password,is_productsync_working=@is_productsync_working,is_ordersync_working=@is_ordersync_working,is_xmlsync_working=@is_xmlsync_working,is_invoicesync_working=@is_invoicesync_working,is_notificationsync_working=@is_notificationsync_working" : "") + " WHERE customer_id=@customer_id;" +
+                        "SELECT LAST_INSERT_ID();" +
+                        "COMMIT;";
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    cmd.Parameters.Add(new MySqlParameter("user_name", _customer.user_name));
+                    cmd.Parameters.Add(new MySqlParameter("person_name", _customer.person_name));
+                    cmd.Parameters.Add(new MySqlParameter("email", _customer.email));
+                    cmd.Parameters.Add(new MySqlParameter("role", (int)_customer.role));
+                    cmd.Parameters.Add(new MySqlParameter("status", _customer.status));
+                    cmd.Parameters.Add(new MySqlParameter("product_sync_status", _customer.product_sync_status));
+                    cmd.Parameters.Add(new MySqlParameter("order_sync_status", _customer.order_sync_status));
+                    cmd.Parameters.Add(new MySqlParameter("xml_sync_status", _customer.xml_sync_status));
+                    cmd.Parameters.Add(new MySqlParameter("invoice_sync_status", _customer.invoice_sync_status));
+                    cmd.Parameters.Add(new MySqlParameter("notification_sync_status", _customer.notification_sync_status));
+                    cmd.Parameters.Add(new MySqlParameter("product_sync_timer", _customer.product_sync_timer));
+                    cmd.Parameters.Add(new MySqlParameter("order_sync_timer", _customer.order_sync_timer));
+                    cmd.Parameters.Add(new MySqlParameter("xml_sync_timer", _customer.xml_sync_timer));
+                    cmd.Parameters.Add(new MySqlParameter("invoice_sync_timer", _customer.invoice_sync_timer));
+                    cmd.Parameters.Add(new MySqlParameter("notification_sync_timer", _customer.notification_sync_timer));
+                    if (_WWP) {
+                        cmd.Parameters.Add(new MySqlParameter("is_productsync_working", _customer.is_productsync_working));
+                        cmd.Parameters.Add(new MySqlParameter("is_ordersync_working", _customer.is_ordersync_working));
+                        cmd.Parameters.Add(new MySqlParameter("is_xmlsync_working", _customer.is_xmlsync_working));
+                        cmd.Parameters.Add(new MySqlParameter("is_invoicesync_working", _customer.is_invoicesync_working));
+                        cmd.Parameters.Add(new MySqlParameter("is_notificationsync_working", _customer.is_notificationsync_working));
+                        cmd.Parameters.Add(new MySqlParameter("password", _customer.password));
+                    }
+                    val = await cmd.ExecuteScalarAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
 
-                if (val is not null) {
-                    if (int.TryParse(val.ToString(), out inserted_id)) {
-                        return GetCustomer(inserted_id);
+                    if (val is not null) {
+                        if (int.TryParse(val.ToString(), out int inserted_id)) {
+                            return await GetCustomer(inserted_id);
+                        }
                     }
                 }
                 return null;
@@ -443,7 +397,7 @@ namespace Merchanter {
         /// </summary>
         /// <param name="_new_customer">New Customer</param>
         /// <returns></returns>
-        public Customer? CreateCustomer(Customer _new_customer) {
+        public async Task<Customer?> CreateCustomer(Customer _customer) {
             return null;
         }
         #endregion
@@ -455,30 +409,29 @@ namespace Merchanter {
         /// <param name="_name">Admin Username</param>
         /// <param name="_password">Admin Password</param>
         /// <returns>[No data] or [Error] returns 'null'</returns>
-        public Admin? GetAdmin(string _name, string _password) {
+        public async Task<Admin?> GetAdmin(string _name, string _password) {
             try {
-                if (state != System.Data.ConnectionState.Open)
-                    connection.Open();
-                //string _query = "SELECT * FROM admin WHERE name=@name AND password=@password AND id=@id";
-                string _query = "SELECT * FROM admin WHERE name=@name AND password=@password";
-                Admin? a = null;
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                //cmd.Parameters.Add( new MySqlParameter( "id", _admin_id ) );
-                cmd.Parameters.Add(new MySqlParameter("name", _name));
-                cmd.Parameters.Add(new MySqlParameter("password", _password));
-                MySqlDataReader dataReader = cmd.ExecuteReader(System.Data.CommandBehavior.CloseConnection);
-                while (dataReader.Read()) {
-                    a = new Admin {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        name = dataReader["name"].ToString(),
-                        password = dataReader["password"].ToString(),
-                        type = Convert.ToInt32(dataReader["type"].ToString())
-                    };
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM admin WHERE name=@name AND password=@password;";
+                    Admin? a = null;
+                    MySqlCommand cmd = new(_query, connection);
+                    //cmd.Parameters.Add( new MySqlParameter( "id", _admin_id ) );
+                    cmd.Parameters.Add(new MySqlParameter("name", _name));
+                    cmd.Parameters.Add(new MySqlParameter("password", _password));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    while (await dataReader.ReadAsync()) {
+                        a = new Admin {
+                            id = Convert.ToInt32(dataReader["id"].ToString()),
+                            name = dataReader["name"].ToString(),
+                            password = dataReader["password"].ToString(),
+                            type = Convert.ToInt32(dataReader["type"].ToString())
+                        };
+                    }
+                    await dataReader.CloseAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return a;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
-                return a;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -496,20 +449,22 @@ namespace Merchanter {
         /// <param name="_message">Message</param>
         /// <param name="_worker">Worker</param>
         /// <returns>[No change] or [Error] returns 'false'</returns>
-        public bool LogToServer(string? _thread_id, string _title, string _message, int _customer_id, string _worker = "general") {
+        public async Task<bool> LogToServer(string? _thread_id, string _title, string _message, int _customer_id, string _worker = "general") {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string query = "INSERT INTO log (thread_id,title,message,worker,customer_id) VALUES (@thread_id,@title,@message,@worker,@customer_id);";
-                MySqlCommand cmd = new MySqlCommand(query, connection);
-                cmd.Parameters.Add(new MySqlParameter() { ParameterName = "thread_id", Value = _thread_id });
-                cmd.Parameters.Add(new MySqlParameter() { ParameterName = "title", Value = _title });
-                cmd.Parameters.Add(new MySqlParameter() { ParameterName = "message", Value = _message });
-                cmd.Parameters.Add(new MySqlParameter() { ParameterName = "worker", Value = _worker });
-                cmd.Parameters.Add(new MySqlParameter() { ParameterName = "customer_id", Value = _customer_id });
-                int value = cmd.ExecuteNonQuery();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                DbHelperBase.PrintConsole("log|" + _title + ":" + _message, ConsoleColor.Yellow);
-                return true;
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string query = "INSERT INTO log (thread_id,title,message,worker,customer_id) VALUES (@thread_id,@title,@message,@worker,@customer_id);";
+                    MySqlCommand cmd = new(query, connection);
+                    cmd.Parameters.Add(new MySqlParameter() { ParameterName = "thread_id", Value = _thread_id });
+                    cmd.Parameters.Add(new MySqlParameter() { ParameterName = "title", Value = _title });
+                    cmd.Parameters.Add(new MySqlParameter() { ParameterName = "message", Value = _message });
+                    cmd.Parameters.Add(new MySqlParameter() { ParameterName = "worker", Value = _worker });
+                    cmd.Parameters.Add(new MySqlParameter() { ParameterName = "customer_id", Value = _customer_id });
+                    int value = await cmd.ExecuteNonQueryAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    DbHelperBase.PrintConsole("log|" + _title + ":" + _message, ConsoleColor.Yellow);
+                    return true;
+                }
+                return false;
             }
             catch (Exception ex) {
                 DbHelperBase.PrintConsole("LOG ERROR GG - " + ex.ToString(), ConsoleColor.Red);
@@ -521,69 +476,18 @@ namespace Merchanter {
         /// Gets the last logs from the database
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
-        /// <param name="_items_per_page">Items per page</param>
-        /// <param name="_current_page_index">Current page index</param>
+        /// <param name="_filters">Api Filters</param>
         /// <returns>[Error] returns 'null'</returns>
-        public List<Log> GetLastLogs(int _customer_id, int _items_per_page = 20, int _current_page_index = 0) {
+        public async Task<List<Log>?> GetLastLogs(int _customer_id, ApiFilter _filters) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM log WHERE customer_id=@customer_id ORDER BY id DESC LIMIT @start,@end";
-                List<Log> list = new List<Log>();
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("start", _items_per_page * _current_page_index));
-                cmd.Parameters.Add(new MySqlParameter("end", _items_per_page));
-                MySqlDataReader dataReader = cmd.ExecuteReader();
-                while (dataReader.Read()) {
-                    Log l = new Log {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        worker = dataReader["worker"]?.ToString() ?? string.Empty,
-                        title = dataReader["title"].ToString() ?? string.Empty,
-                        message = dataReader["message"]?.ToString() ?? string.Empty,
-                        thread_id = dataReader["thread_id"]?.ToString(),
-                        update_date = Convert.ToDateTime(dataReader["update_date"].ToString()),
-                    };
-                    list.Add(l);
-                }
-                dataReader.Close();
-                return list;
-            }
-            catch (Exception ex) {
-                OnError(ex.ToString());
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Gets the last logs from the database
-        /// </summary>
-        /// <param name="_customer_id">Customer ID</param>
-        /// <param name="_filters">Filters</param>
-        /// <param name="_items_per_page">Items per page</param>
-        /// <param name="_current_page_index">Current page index</param>
-        /// <returns>[Error] returns 'null'</returns>
-        public List<Log> GetLastLogs(int _customer_id, Dictionary<string, string?> _filters, int _items_per_page = 20, int _current_page_index = 0) {
-            try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM log WHERE customer_id=@customer_id";
-                string? filtered_worker = _filters.ContainsKey("worker") ? _filters["worker"] : null;
-                string? filtered_title = _filters.ContainsKey("title") ? _filters["title"] : null;
-                string? filtered_message = _filters.ContainsKey("message") ? _filters["message"] : null;
-                string? filtered_date = _filters.ContainsKey("date") ? _filters["date"] : null;
                 List<Log> list = [];
-                if (filtered_worker is not null || filtered_title is not null || filtered_message is not null || filtered_date is not null) {
-                    _query += !string.IsNullOrWhiteSpace(filtered_worker) && filtered_worker != "0" ? " AND worker='" + filtered_worker + "'" : string.Empty;
-                    _query += !string.IsNullOrWhiteSpace(filtered_title) && filtered_title != "0" ? " AND title='" + filtered_title + "'" : string.Empty;
-                    _query += !string.IsNullOrWhiteSpace(filtered_message) && filtered_message != "0" ? " AND message LIKE '%" + filtered_message + "%'" : string.Empty;
-                    //_query += !string.IsNullOrWhiteSpace( filtered_date ) && filtered_worker != "0" ? " AND update_date='" + filtered_date + "'" : string.Empty; TODO: Date filter in GetLastLogs
-                    _query += " ORDER BY id DESC LIMIT @start,@end";
-                    MySqlCommand cmd = new MySqlCommand(_query, connection);
-                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                    cmd.Parameters.Add(new MySqlParameter("start", _items_per_page * _current_page_index));
-                    cmd.Parameters.Add(new MySqlParameter("end", _items_per_page));
-                    MySqlDataReader dataReader = cmd.ExecuteReader();
-                    while (dataReader.Read()) {
+                string _query = "SELECT * FROM log WHERE customer_id=@customer_id";
+                MySqlCommand cmd = new() { Connection = connection };
+                cmd.CommandText = DbHelperBase.BuildDBQuery(_filters, ref _query, ref cmd, typeof(Log));
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    while (await dataReader.ReadAsync()) {
                         Log l = new() {
                             id = Convert.ToInt32(dataReader["id"].ToString()),
                             customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
@@ -595,12 +499,11 @@ namespace Merchanter {
                         };
                         list.Add(l);
                     }
-                    dataReader.Close();
+                    await dataReader.CloseAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return list;
                 }
-                else {
-                    list = GetLastLogs(_customer_id, _items_per_page, _current_page_index);
-                }
-                return list;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -609,128 +512,25 @@ namespace Merchanter {
         }
 
         /// <summary>
-        /// Gets the last logs from the database
+        /// Gets log count from the database
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_filters">Api Filters</param>
-        /// <returns>[Error] returns 'null'</returns>
-        public List<Log> GetLastLogs(int _customer_id, ApiFilter _filters) {
+        /// <returns>Error returns 'int:-1'</returns>
+        public async Task<int> GetLogsCount(int _customer_id, ApiFilter _filters) {
             try {
-                List<Log> list = [];
-                string _query = "SELECT * FROM log WHERE customer_id=@customer_id";
+                string _query = "SELECT COUNT(*) FROM log WHERE customer_id=@customer_id";
                 MySqlCommand cmd = new() { Connection = connection };
-                cmd.CommandText = DbHelperBase.BuildDBQuery(_filters, ref _query, ref cmd, typeof(Log));
+                cmd.CommandText = DbHelperBase.BuildDBQuery(_filters, ref _query, ref cmd, typeof(Log), true);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                MySqlDataReader dataReader = cmd.ExecuteReader();
-                while (dataReader.Read()) {
-                    Log l = new() {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        worker = dataReader["worker"]?.ToString() ?? string.Empty,
-                        title = dataReader["title"].ToString() ?? string.Empty,
-                        message = dataReader["message"]?.ToString() ?? string.Empty,
-                        thread_id = dataReader["thread_id"]?.ToString(),
-                        update_date = Convert.ToDateTime(dataReader["update_date"].ToString()),
-                    };
-                    list.Add(l);
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    object? val = await cmd.ExecuteScalarAsync();
+                    if (val is null) return -1;
+                    _ = int.TryParse(val.ToString(), out int total_count);
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return total_count;
                 }
-                dataReader.Close();
-                return list;
-            }
-            catch (Exception ex) {
-                OnError(ex.ToString());
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Gets log count from the database
-        /// </summary>
-        /// <param name="_customer_id">Customer ID</param>
-        /// <returns>Error returns 'int:-1'</returns>
-        public int GetLogsCount(int _customer_id) {
-            try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT COUNT(*) FROM log WHERE customer_id=@customer_id";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                int.TryParse(cmd.ExecuteScalar().ToString(), out int total_count);
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return total_count;
-            }
-            catch (Exception ex) {
-                OnError(ex.ToString());
                 return -1;
-            }
-        }
-
-        /// <summary>
-        /// Gets log count from the database
-        /// </summary>
-        /// <param name="_customer_id">Customer ID</param>
-        /// <param name="_filters">Filters</param>
-        /// <param name="_items_per_page">Items Per Page</param>
-        /// <param name="_current_page_index">Current Page Index</param>
-        /// <returns>Error returns 'int:-1'</returns>
-        public int GetLogsCount(int _customer_id, Dictionary<string, string?> _filters) {
-            try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT COUNT(*) FROM log WHERE customer_id=@customer_id";
-                string? filtered_worker = _filters.ContainsKey("worker") ? _filters["worker"] : null;
-                string? filtered_title = _filters.ContainsKey("title") ? _filters["title"] : null;
-                string? filtered_message = _filters.ContainsKey("message") ? _filters["message"] : null;
-                string? filtered_date = _filters.ContainsKey("date") ? _filters["date"] : null;
-                int total_count = 0;
-                if (filtered_worker is not null || filtered_title is not null || filtered_message is not null || filtered_date is not null) {
-                    _query += !string.IsNullOrWhiteSpace(filtered_worker) && filtered_worker != "0" ? " AND worker='" + filtered_worker + "'" : string.Empty;
-                    _query += !string.IsNullOrWhiteSpace(filtered_title) && filtered_title != "0" ? " AND title='" + filtered_title + "'" : string.Empty;
-                    _query += !string.IsNullOrWhiteSpace(filtered_message) && filtered_message != "0" ? " AND message LIKE '%" + filtered_message + "%'" : string.Empty;
-                    //_query += !string.IsNullOrWhiteSpace( filtered_date ) && filtered_worker != "0" ? " AND update_date='" + filtered_date + "'" : string.Empty; TODO: Date filter in GetLastLogs
-                    MySqlCommand cmd = new MySqlCommand(_query, connection);
-                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                    int.TryParse(cmd.ExecuteScalar().ToString(), out total_count);
-                }
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return total_count;
-            }
-            catch (Exception ex) {
-                OnError(ex.ToString());
-                return -1;
-            }
-        }
-
-        /// <summary>
-        /// Gets log count from the database
-        /// </summary>
-        /// <param name="_customer_id">Customer ID</param>
-        /// <param name="_filters">Api Filters</param>
-        /// <returns>Error returns 'int:-1'</returns>
-        public int GetLogsCount(int _customer_id, ApiFilter _filters) {
-            try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                _filters.Pager ??= new Pager() { ItemsPerPage = 10, CurrentPageIndex = 0 };
-                string _query = "SELECT COUNT(*) FROM log WHERE customer_id=@customer_id";
-                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
-                    foreach (var filter in _filters.Filters) {
-                        if (filter.Value is null)
-                            _query += $" AND {filter.Field} {filter.Operator} NULL";
-                        else
-                            _query += $" AND {filter.Field} {filter.Operator} @{filter.Field}";
-                    }
-                }
-                int total_count = 0;
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                if (_filters.Filters is not null && _filters.Filters.Count > 0) {
-                    foreach (var filter in _filters.Filters) {
-                        if (filter.Value is not null)
-                            cmd.Parameters.Add(new MySqlParameter(filter.Field, filter.Value));
-                    }
-                }
-                int.TryParse(cmd.ExecuteScalar().ToString(), out total_count);
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return total_count;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -745,56 +545,56 @@ namespace Merchanter {
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public SettingsMerchanter LoadSettings(int _customer_id) {
+        public async Task<SettingsMerchanter?> LoadSettings(int _customer_id) {
             try {
-                DbSettings = this.GetSettings(_customer_id);
+                this.DbSettings = await GetSettings(_customer_id);
                 Helper.global = new SettingsMerchanter(_customer_id);
-                var customer = GetCustomer(_customer_id);
+                var customer = await GetCustomer(_customer_id);
                 if (customer is not null) { Helper.global.customer = customer; }
                 else { DbHelperBase.PrintConsole("Customer not found!", ConsoleColor.Red); return null; }
 
                 #region Core Settings
-                Helper.global.platforms = LoadPlatforms();
-                Helper.global.works = LoadWorks();
-                Helper.global.integrations = LoadIntegrations(_customer_id);
+                Helper.global.platforms = await LoadPlatforms();
+                Helper.global.works = await LoadWorks();
+                Helper.global.integrations = await LoadIntegrations(_customer_id);
                 #endregion
 
                 #region Customer Settings
-                Helper.global.settings = GetCustomerSettings(_customer_id);
-                Helper.global.product = GetProductSettings(_customer_id);
-                Helper.global.invoice = GetInvoiceSettings(_customer_id);
-                Helper.global.order = GetOrderSettings(_customer_id);
-                Helper.global.shipment = GetShipmentSettings(_customer_id);
-                Helper.global.order_statuses = LoadOrderStatuses(_customer_id);
-                Helper.global.payment_methods = LoadPaymentMethods(_customer_id);
-                Helper.global.shipment_methods = LoadShipmentMethods(_customer_id);
+                Helper.global.settings = await GetCustomerSettings(_customer_id);
+                Helper.global.product = await GetProductSettings(_customer_id);
+                Helper.global.invoice = await GetInvoiceSettings(_customer_id);
+                Helper.global.order = await GetOrderSettings(_customer_id);
+                Helper.global.shipment = await GetShipmentSettings(_customer_id);
+                Helper.global.order_statuses = await LoadOrderStatuses(_customer_id);
+                Helper.global.payment_methods = await LoadPaymentMethods(_customer_id);
+                Helper.global.shipment_methods = await LoadShipmentMethods(_customer_id);
                 Helper.global.sync_mappings = GetCustomerSyncMappings(_customer_id);
                 #endregion
 
                 #region Integration Settings
                 //TODO: Could check if integration exists
-                Helper.global.entegra = GetEntegraSettings(_customer_id);
-                Helper.global.netsis = GetNetsisSettings(_customer_id);
-                Helper.global.magento = GetMagentoSettings(_customer_id);
-                Helper.global.n11 = GetN11Settings(_customer_id);
-                Helper.global.hb = GetHBSettings(_customer_id);
-                Helper.global.ty = GetTYSettings(_customer_id);
-                Helper.global.ank_erp = GetAnkERPSettings(_customer_id);
-                Helper.global.ideasoft = GetIdeasoftSettings(_customer_id);
-                Helper.global.google = GetGoogleSettings(_customer_id);
+                Helper.global.entegra = await GetEntegraSettings(_customer_id);
+                Helper.global.netsis = await GetNetsisSettings(_customer_id);
+                Helper.global.magento = await GetMagentoSettings(_customer_id);
+                Helper.global.n11 = await GetN11Settings(_customer_id);
+                Helper.global.hb = await GetHBSettings(_customer_id);
+                Helper.global.ty = await GetTYSettings(_customer_id);
+                Helper.global.ank_erp = await GetAnkERPSettings(_customer_id);
+                Helper.global.ideasoft = await GetIdeasoftSettings(_customer_id);
+                Helper.global.google = await GetGoogleSettings(_customer_id);
                 #endregion
 
-                Helper.global.erp_invoice_ftp_username = DbSettings.Where(x => x.name == "erp_invoice_ftp_username").FirstOrDefault()?.value ?? string.Empty;
-                Helper.global.erp_invoice_ftp_password = DbSettings.Where(x => x.name == "erp_invoice_ftp_password").FirstOrDefault()?.value ?? string.Empty;
-                Helper.global.erp_invoice_ftp_url = DbSettings.Where(x => x.name == "erp_invoice_ftp_url").FirstOrDefault()?.value ?? string.Empty;
-                Helper.global.xml_bogazici_bayikodu = DbSettings.Where(x => x.name == "xml_bogazici_bayikodu").FirstOrDefault()?.value ?? string.Empty;
-                Helper.global.xml_bogazici_email = DbSettings.Where(x => x.name == "xml_bogazici_email").FirstOrDefault()?.value ?? string.Empty;
-                Helper.global.xml_bogazici_sifre = DbSettings.Where(x => x.name == "xml_bogazici_sifre").FirstOrDefault()?.value ?? string.Empty;
-                Helper.global.xml_fsp_url = DbSettings.Where(x => x.name == "xml_fsp_url").FirstOrDefault()?.value ?? string.Empty;
-                Helper.global.xml_koyuncu_url = DbSettings.Where(x => x.name == "xml_koyuncu_url").FirstOrDefault()?.value ?? string.Empty;
-                Helper.global.xml_oksid_url = DbSettings.Where(x => x.name == "xml_oksid_url").FirstOrDefault()?.value ?? string.Empty;
-                Helper.global.xml_penta_base_url = DbSettings.Where(x => x.name == "xml_penta_base_url").FirstOrDefault()?.value ?? string.Empty;
-                Helper.global.xml_penta_customerid = DbSettings.Where(x => x.name == "xml_penta_customerid").FirstOrDefault()?.value ?? string.Empty;
+                Helper.global.erp_invoice_ftp_username = DbSettings?.Where(x => x.name == "erp_invoice_ftp_username").FirstOrDefault()?.value ?? string.Empty;
+                Helper.global.erp_invoice_ftp_password = DbSettings?.Where(x => x.name == "erp_invoice_ftp_password").FirstOrDefault()?.value ?? string.Empty;
+                Helper.global.erp_invoice_ftp_url = DbSettings?.Where(x => x.name == "erp_invoice_ftp_url").FirstOrDefault()?.value ?? string.Empty;
+                Helper.global.xml_bogazici_bayikodu = DbSettings?.Where(x => x.name == "xml_bogazici_bayikodu").FirstOrDefault()?.value ?? string.Empty;
+                Helper.global.xml_bogazici_email = DbSettings?.Where(x => x.name == "xml_bogazici_email").FirstOrDefault()?.value ?? string.Empty;
+                Helper.global.xml_bogazici_sifre = DbSettings?.Where(x => x.name == "xml_bogazici_sifre").FirstOrDefault()?.value ?? string.Empty;
+                Helper.global.xml_fsp_url = DbSettings?.Where(x => x.name == "xml_fsp_url").FirstOrDefault()?.value ?? string.Empty;
+                Helper.global.xml_koyuncu_url = DbSettings?.Where(x => x.name == "xml_koyuncu_url").FirstOrDefault()?.value ?? string.Empty;
+                Helper.global.xml_oksid_url = DbSettings?.Where(x => x.name == "xml_oksid_url").FirstOrDefault()?.value ?? string.Empty;
+                Helper.global.xml_penta_base_url = DbSettings?.Where(x => x.name == "xml_penta_base_url").FirstOrDefault()?.value ?? string.Empty;
+                Helper.global.xml_penta_customerid = DbSettings?.Where(x => x.name == "xml_penta_customerid").FirstOrDefault()?.value ?? string.Empty;
 
 
                 #region Decyrption
@@ -835,7 +635,7 @@ namespace Merchanter {
                 #endregion
 
                 if (File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "local"))) {
-                    DbHelperBase.PrintConsole(Helper.global.settings.company_name + " local enabled!!!", ConsoleColor.Yellow);
+                    DbHelperBase.PrintConsole(Helper.global.settings?.company_name + " local enabled!!!", ConsoleColor.Yellow);
                     //Console.Beep();
                     if (_customer_id == 1) {
                         if (Helper.global?.netsis is not null && Helper.global?.entegra is not null) {
@@ -854,41 +654,39 @@ namespace Merchanter {
             }
         }
 
-        public List<ActiveIntegration>? LoadActiveIntegrations(int _customer_id) {
+        public async Task<List<ActiveIntegration>?> LoadActiveIntegrations(int _customer_id) {
             try {
-                var integrations = LoadIntegrations(_customer_id);
-                var platforms = LoadPlatforms();
-                var works = LoadWorks();
-                if (this.state != System.Data.ConnectionState.Open)
-                    if (this.OpenConnection()) {
-                        string _query = "SELECT * FROM active_integrations WHERE customer_id=@customer_id";
-                        MySqlCommand cmd = new MySqlCommand(_query, Connection);
-                        cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id.ToString()));
-                        MySqlDataReader dataReader = cmd.ExecuteReader();
-                        List<ActiveIntegration> list = [];
-                        while (dataReader.Read()) {
-                            list.Add(new ActiveIntegration() {
-                                customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                                work = works.Where(x => x.id == Convert.ToInt32(dataReader["WID"].ToString())).FirstOrDefault(),
-                                platform = platforms.Where(x => x.id == Convert.ToInt32(dataReader["PID"].ToString())).FirstOrDefault(),
-                                integration = integrations.Where(x => x.id == Convert.ToInt32(dataReader["IID"].ToString())).FirstOrDefault(),
-                                platform_name = dataReader["platform_name"].ToString(),
-                                work_name = dataReader["work_name"].ToString(),
-                                platform_work_type = dataReader["platform_work_type"] is string workTypeStr && Enum.TryParse(workTypeStr, out Merchanter.Classes.Work.WorkType workType) ? workType : default,
-                                available_platform_types = dataReader["available_platform_types"] is string availableTypesStr ? [.. availableTypesStr.Split(',').Select(type => Enum.TryParse(type, out Merchanter.Classes.Platform.PlatformType platformType) ? platformType : default)] : [],
-                                platform_status = Convert.ToBoolean(Convert.ToInt32(dataReader["platform_status"].ToString())),
-                                work_type = dataReader["work_type"] is string workType1Str && Enum.TryParse(workType1Str, out Merchanter.Classes.Work.WorkType workType1) ? workType1 : default,
-                                work_direction = dataReader["work_direction"] is string workDirectionStr && Enum.TryParse(workDirectionStr, out Merchanter.Classes.Work.WorkDirection workDirection) ? workDirection : default,
-                                work_status = Convert.ToBoolean(Convert.ToInt32(dataReader["work_status"].ToString())),
-                                version = dataReader["version"].ToString(),
-                                integration_status = Convert.ToBoolean(Convert.ToInt32(dataReader["integration_status"].ToString())),
-                            });
-                        }
-                        dataReader.Close();
-                        if (state == System.Data.ConnectionState.Open) this.CloseConnection();
-                        return list;
+                var integrations = await LoadIntegrations(_customer_id);
+                var platforms = await LoadPlatforms();
+                var works = await LoadWorks();
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM active_integrations WHERE customer_id=@customer_id;";
+                    MySqlCommand cmd = new(_query, Connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id.ToString()));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    List<ActiveIntegration> list = [];
+                    while (await dataReader.ReadAsync()) {
+                        list.Add(new ActiveIntegration() {
+                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            work = works.Where(x => x.id == Convert.ToInt32(dataReader["WID"].ToString())).FirstOrDefault(),
+                            platform = platforms.Where(x => x.id == Convert.ToInt32(dataReader["PID"].ToString())).FirstOrDefault(),
+                            integration = integrations.Where(x => x.id == Convert.ToInt32(dataReader["IID"].ToString())).FirstOrDefault(),
+                            platform_name = dataReader["platform_name"].ToString(),
+                            work_name = dataReader["work_name"].ToString(),
+                            platform_work_type = dataReader["platform_work_type"] is string workTypeStr && Enum.TryParse(workTypeStr, out Merchanter.Classes.Work.WorkType workType) ? workType : default,
+                            available_platform_types = dataReader["available_platform_types"] is string availableTypesStr ? [.. availableTypesStr.Split(',').Select(type => Enum.TryParse(type, out Merchanter.Classes.Platform.PlatformType platformType) ? platformType : default)] : [],
+                            platform_status = Convert.ToBoolean(Convert.ToInt32(dataReader["platform_status"].ToString())),
+                            work_type = dataReader["work_type"] is string workType1Str && Enum.TryParse(workType1Str, out Merchanter.Classes.Work.WorkType workType1) ? workType1 : default,
+                            work_direction = dataReader["work_direction"] is string workDirectionStr && Enum.TryParse(workDirectionStr, out Merchanter.Classes.Work.WorkDirection workDirection) ? workDirection : default,
+                            work_status = Convert.ToBoolean(Convert.ToInt32(dataReader["work_status"].ToString())),
+                            version = dataReader["version"].ToString(),
+                            integration_status = Convert.ToBoolean(Convert.ToInt32(dataReader["integration_status"].ToString())),
+                        });
                     }
-
+                    await dataReader.CloseAsync();
+                    if (state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return list;
+                }
                 return null;
             }
             catch (Exception ex) {
@@ -902,96 +700,60 @@ namespace Merchanter {
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public List<DBSetting> GetSettings(int _customer_id) {
+        public async Task<List<DBSetting>?> GetSettings(int _customer_id) {
             try {
-                if (this.state != System.Data.ConnectionState.Open)
-                    if (this.OpenConnection()) {
-                        string _query = "SELECT * FROM db_settings WHERE customer_id=@customer_id";
-                        MySqlCommand cmd = new MySqlCommand(_query, Connection);
-                        cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id.ToString()));
-                        MySqlDataReader dataReader = cmd.ExecuteReader();
-                        List<DBSetting> list = new List<DBSetting>();
-                        while (dataReader.Read()) {
-                            list.Add(new DBSetting() {
-                                id = Convert.ToInt32(dataReader["id"].ToString()),
-                                customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                                name = dataReader["name"].ToString(),
-                                value = dataReader["value"].ToString(),
-                                group_name = dataReader["group_name"].ToString(),
-                                description = dataReader["description"].ToString(),
-                                update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
-                            });
-                        }
-                        dataReader.Close();
-                        if (state == System.Data.ConnectionState.Open)
-                            this.CloseConnection();
-                        return list;
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM db_settings WHERE customer_id=@customer_id;";
+                    MySqlCommand cmd = new(_query, Connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id.ToString()));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    List<DBSetting> list = [];
+                    while (await dataReader.ReadAsync()) {
+                        list.Add(new DBSetting() {
+                            id = Convert.ToInt32(dataReader["id"].ToString()),
+                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            name = dataReader["name"].ToString(),
+                            value = dataReader["value"].ToString(),
+                            group_name = dataReader["group_name"].ToString(),
+                            description = dataReader["description"].ToString(),
+                            update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
+                        });
                     }
-
+                    await dataReader.CloseAsync();
+                    if (state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return list;
+                }
                 return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
                 return null;
             }
-        }
+        }  //TODO: remove this pls
 
         #region Save Functions
-        /// <summary>
-        /// Saves the setting to the database
-        /// </summary>
-        /// <param name="_customer_id">Customer ID</param>
-        /// <param name="_name">Setting Name</param>
-        /// <param name="_value">Setting Value</param>
-        /// <returns>[Error] returns 'false'</returns>
-        public bool SaveSetting(int _customer_id, string _name, string _value) {
-            try {
-                if (this.state != System.Data.ConnectionState.Open)
-                    if (this.OpenConnection()) {
-                        string _query = "UPDATE db_settings SET value=@value, update_date=@update_date WHERE customer_id=@customer_id AND name=@name";
-                        MySqlCommand cmd = new MySqlCommand(_query, Connection);
-                        cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                        cmd.Parameters.Add(new MySqlParameter("name", _name));
-                        cmd.Parameters.Add(new MySqlParameter("value", _value));
-                        cmd.Parameters.Add(new MySqlParameter("update_date", DateTime.Now));
-
-                        int val = cmd.ExecuteNonQuery();
-
-                        if (state == System.Data.ConnectionState.Open)
-                            this.CloseConnection();
-
-                        return val > 0;
-                    }
-                return false;
-            }
-            catch (Exception ex) {
-                OnError(ex.ToString());
-                return false;
-            }
-        }
-
         /// <summary>
         /// Saves the customer settings to the database
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_settings">Settings General</param>
         /// <returns>[No change] or [Error] returns 'false'</returns>
-        public bool SaveCustomerSettings(int _customer_id, SettingsGeneral _settings) {
+        public async Task<bool> SaveCustomerSettings(int _customer_id, SettingsGeneral _settings) {
             try {
                 int val = 0;
-                string _query = "UPDATE settings SET company_name=@company_name,rate_TL=@rate_TL,rate_USD=@rate_USD,rate_EUR=@rate_EUR WHERE customer_id=@customer_id";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                string _query = "UPDATE settings SET company_name=@company_name,rate_TL=@rate_TL,rate_USD=@rate_USD,rate_EUR=@rate_EUR WHERE customer_id=@customer_id;";
+                MySqlCommand cmd = new(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("company_name", _settings.company_name));
                 cmd.Parameters.Add(new MySqlParameter("rate_TL", _settings.rate_TL));
                 cmd.Parameters.Add(new MySqlParameter("rate_USD", _settings.rate_USD));
                 cmd.Parameters.Add(new MySqlParameter("rate_EUR", _settings.rate_EUR));
-
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                val = cmd.ExecuteNonQuery();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-
-                return val > 0;
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    val = await cmd.ExecuteNonQueryAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return val > 0;
+                }
+                return false;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -1005,22 +767,22 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_settings">Settings Invoice</param>
         /// <returns>[No change] or [Error] returns 'false'</returns>
-        public bool SaveInvoiceSettings(int _customer_id, SettingsInvoice _settings) {
+        public async Task<bool> SaveInvoiceSettings(int _customer_id, SettingsInvoice _settings) {
             try {
                 int val = 0;
-                string _query = "UPDATE settings_invoice SET daysto_invoicesync=@daysto_invoicesync,erp_invoice_ftp_username=@erp_invoice_ftp_username,erp_invoice_ftp_password=@erp_invoice_ftp_password,erp_invoice_ftp_url=@erp_invoice_ftp_url WHERE customer_id=@customer_id";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                string _query = "UPDATE settings_invoice SET daysto_invoicesync=@daysto_invoicesync,erp_invoice_ftp_username=@erp_invoice_ftp_username,erp_invoice_ftp_password=@erp_invoice_ftp_password,erp_invoice_ftp_url=@erp_invoice_ftp_url WHERE customer_id=@customer_id;";
+                MySqlCommand cmd = new(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("daysto_invoicesync", _settings.daysto_invoicesync));
                 cmd.Parameters.Add(new MySqlParameter("erp_invoice_ftp_username", _settings.erp_invoice_ftp_username));
                 cmd.Parameters.Add(new MySqlParameter("erp_invoice_ftp_password", !string.IsNullOrWhiteSpace(_settings.erp_invoice_ftp_password) ? DBSetting.Encrypt(_settings.erp_invoice_ftp_password) : null));
                 cmd.Parameters.Add(new MySqlParameter("erp_invoice_ftp_url", _settings.erp_invoice_ftp_url));
-
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                val = cmd.ExecuteNonQuery();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-
-                return val > 0;
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    val = await cmd.ExecuteNonQueryAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return val > 0;
+                }
+                return false;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -1034,23 +796,23 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_settings">Settings Product</param>
         /// <returns>[No change] or [Error] returns 'false'</returns>
-        public bool SaveProductSettings(int _customer_id, SettingsProduct _settings) {
+        public async Task<bool> SaveProductSettings(int _customer_id, SettingsProduct _settings) {
             try {
                 int val = 0;
-                string _query = "UPDATE settings_product SET default_brand=@default_brand,customer_root_category_id=@customer_root_category_id,product_list_filter_source_products=@product_list_filter_source_products,is_barcode_required=@is_barcode_required,xml_qty_addictive_enable=@xml_qty_addictive_enable WHERE customer_id=@customer_id";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                string _query = "UPDATE settings_product SET default_brand=@default_brand,customer_root_category_id=@customer_root_category_id,product_list_filter_source_products=@product_list_filter_source_products,is_barcode_required=@is_barcode_required,xml_qty_addictive_enable=@xml_qty_addictive_enable WHERE customer_id=@customer_id;";
+                MySqlCommand cmd = new(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("default_brand", _settings.default_brand));
                 cmd.Parameters.Add(new MySqlParameter("customer_root_category_id", _settings.customer_root_category_id));
                 cmd.Parameters.Add(new MySqlParameter("product_list_filter_source_products", _settings.product_list_filter_source_products));
                 cmd.Parameters.Add(new MySqlParameter("is_barcode_required", _settings.is_barcode_required));
                 cmd.Parameters.Add(new MySqlParameter("xml_qty_addictive_enable", _settings.xml_qty_addictive_enable));
-
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                val = cmd.ExecuteNonQuery();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-
-                return val > 0;
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    val = await cmd.ExecuteNonQueryAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return val > 0;
+                }
+                return false;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -1064,21 +826,21 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_settings">Settings Entegra</param>
         /// <returns>[No change] or [Error] returns 'false'</returns>
-        public bool SaveEntegraSettings(int _customer_id, SettingsEntegra _settings) {
+        public async Task<bool> SaveEntegraSettings(int _customer_id, SettingsEntegra _settings) {
             try {
                 int val = 0;
-                string _query = "UPDATE settings_entegra SET api_url=@api_url,api_username=@api_username,api_password=@api_password WHERE customer_id=@customer_id";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                string _query = "UPDATE settings_entegra SET api_url=@api_url,api_username=@api_username,api_password=@api_password WHERE customer_id=@customer_id;";
+                MySqlCommand cmd = new(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("api_url", _settings.api_url));
                 cmd.Parameters.Add(new MySqlParameter("api_username", _settings.api_username));
                 cmd.Parameters.Add(new MySqlParameter("api_password", !string.IsNullOrWhiteSpace(_settings.api_password) ? DBSetting.Encrypt(_settings.api_password) : null));
-
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                val = cmd.ExecuteNonQuery();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-
-                return val > 0;
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    val = await cmd.ExecuteNonQueryAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return val > 0;
+                }
+                return false;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -1092,11 +854,11 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_settings">Settings Shipment</param>
         /// <returns>[No change] or [Error] returns 'false'</returns>
-        public bool SaveShipmentSettings(int _customer_id, SettingsShipment _settings) {
+        public async Task<bool> SaveShipmentSettings(int _customer_id, SettingsShipment _settings) {
             try {
                 int val = 0;
-                string _query = "UPDATE settings_shipment SET yurtici_kargo=@yurtici_kargo,mng_kargo=@mng_kargo,aras_kargo=@aras_kargo,yurtici_kargo_user_name=@yurtici_kargo_user_name,yurtici_kargo_password=@yurtici_kargo_password,mng_kargo_customer_number=@mng_kargo_customer_number,mng_kargo_password=@mng_kargo_password,mng_kargo_client_id=@mng_kargo_client_id,mng_kargo_client_secret=@mng_kargo_client_secret WHERE customer_id=@customer_id";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                string _query = "UPDATE settings_shipment SET yurtici_kargo=@yurtici_kargo,mng_kargo=@mng_kargo,aras_kargo=@aras_kargo,yurtici_kargo_user_name=@yurtici_kargo_user_name,yurtici_kargo_password=@yurtici_kargo_password,mng_kargo_customer_number=@mng_kargo_customer_number,mng_kargo_password=@mng_kargo_password,mng_kargo_client_id=@mng_kargo_client_id,mng_kargo_client_secret=@mng_kargo_client_secret WHERE customer_id=@customer_id;";
+                MySqlCommand cmd = new(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("yurtici_kargo", _settings.yurtici_kargo));
                 cmd.Parameters.Add(new MySqlParameter("mng_kargo", _settings.mng_kargo));
@@ -1107,11 +869,12 @@ namespace Merchanter {
                 cmd.Parameters.Add(new MySqlParameter("mng_kargo_password", !string.IsNullOrWhiteSpace(_settings.mng_kargo_password) ? DBSetting.Encrypt(_settings.mng_kargo_password) : null));
                 cmd.Parameters.Add(new MySqlParameter("mng_kargo_client_id", _settings.mng_kargo_client_id));
                 cmd.Parameters.Add(new MySqlParameter("mng_kargo_client_secret", !string.IsNullOrWhiteSpace(_settings.mng_kargo_client_secret) ? DBSetting.Encrypt(_settings.mng_kargo_client_secret) : null));
-
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                val = cmd.ExecuteNonQuery();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return val > 0;
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    val = await cmd.ExecuteNonQueryAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return val > 0;
+                }
+                return false;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -1125,19 +888,20 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_settings">Settings N11</param>
         /// <returns>[No change] or [Error] returns 'false'</returns>
-        public bool SaveN11Settings(int _customer_id, SettingsN11 _settings) {
+        public async Task<bool> SaveN11Settings(int _customer_id, SettingsN11 _settings) {
             try {
                 int val = 0;
-                string _query = "UPDATE settings_n11 SET appkey=@appkey,appsecret=@appsecret WHERE customer_id=@customer_id";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                string _query = "UPDATE settings_n11 SET appkey=@appkey,appsecret=@appsecret WHERE customer_id=@customer_id;";
+                MySqlCommand cmd = new(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("appkey", _settings.appkey));
                 cmd.Parameters.Add(new MySqlParameter("appsecret", !string.IsNullOrWhiteSpace(_settings.appsecret) ? DBSetting.Encrypt(_settings.appsecret) : null));
-
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                val = cmd.ExecuteNonQuery();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return val > 0;
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    val = await cmd.ExecuteNonQueryAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return val > 0;
+                }
+                return false;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -1151,21 +915,22 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_settings">Settings HB</param>
         /// <returns>[No change] or [Error] returns 'false'</returns>
-        public bool SaveHBSettings(int _customer_id, SettingsHB _settings) {
+        public async Task<bool> SaveHBSettings(int _customer_id, SettingsHB _settings) {
             try {
                 int val = 0;
-                string _query = "UPDATE settings_hb SET merchant_id=@merchant_id,token=@token,user_name=@user_name,password=@password WHERE customer_id=@customer_id";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                string _query = "UPDATE settings_hb SET merchant_id=@merchant_id,token=@token,user_name=@user_name,password=@password WHERE customer_id=@customer_id;";
+                MySqlCommand cmd = new(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("merchant_id", _settings.merchant_id));
                 cmd.Parameters.Add(new MySqlParameter("token", !string.IsNullOrWhiteSpace(_settings.token) ? DBSetting.Encrypt(_settings.token) : null));
                 cmd.Parameters.Add(new MySqlParameter("user_name", _settings.user_name));
                 cmd.Parameters.Add(new MySqlParameter("password", !string.IsNullOrWhiteSpace(_settings.password) ? DBSetting.Encrypt(_settings.password) : null));
-
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                val = cmd.ExecuteNonQuery();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return val > 0;
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    val = await cmd.ExecuteNonQueryAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return val > 0;
+                }
+                return false;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -1179,20 +944,21 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_settings">Settings TY</param>
         /// <returns>[No change] or [Error] returns 'false'</returns>
-        public bool SaveTYSettings(int _customer_id, SettingsTY _settings) {
+        public async Task<bool> SaveTYSettings(int _customer_id, SettingsTY _settings) {
             try {
                 int val = 0;
-                string _query = "UPDATE settings_ty SET seller_id=@seller_id,api_key=@api_key,api_secret=@api_secret WHERE customer_id=@customer_id";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                string _query = "UPDATE settings_ty SET seller_id=@seller_id,api_key=@api_key,api_secret=@api_secret WHERE customer_id=@customer_id;";
+                MySqlCommand cmd = new(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("seller_id", _settings.seller_id));
                 cmd.Parameters.Add(new MySqlParameter("api_key", _settings.api_key));
                 cmd.Parameters.Add(new MySqlParameter("api_secret", !string.IsNullOrWhiteSpace(_settings.api_secret) ? DBSetting.Encrypt(_settings.api_secret) : null));
-
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                val = cmd.ExecuteNonQuery();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return val > 0;
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    val = await cmd.ExecuteNonQueryAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return val > 0;
+                }
+                return false;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -1206,22 +972,23 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_settings">Settings ANK_ERP</param>
         /// <returns>[No change] or [Error] returns 'false'</returns>
-        public bool SaveAnkERPSettings(int _customer_id, SettingsAnkaraErp _settings) {
+        public async Task<bool> SaveAnkERPSettings(int _customer_id, SettingsAnkaraErp _settings) {
             try {
                 int val = 0;
-                string _query = "UPDATE settings_ank_erp SET company_code=@company_code,user_name=@user_name,password=@password,work_year=@work_year,url=@url WHERE customer_id=@customer_id";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                string _query = "UPDATE settings_ank_erp SET company_code=@company_code,user_name=@user_name,password=@password,work_year=@work_year,url=@url WHERE customer_id=@customer_id;";
+                MySqlCommand cmd = new(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("company_code", _settings.company_code));
                 cmd.Parameters.Add(new MySqlParameter("user_name", _settings.user_name));
                 cmd.Parameters.Add(new MySqlParameter("work_year", _settings.work_year));
                 cmd.Parameters.Add(new MySqlParameter("url", _settings.url));
                 cmd.Parameters.Add(new MySqlParameter("password", !string.IsNullOrWhiteSpace(_settings.password) ? DBSetting.Encrypt(_settings.password) : null));
-
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                val = cmd.ExecuteNonQuery();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return val > 0;
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    val = await cmd.ExecuteNonQueryAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return val > 0;
+                }
+                return false;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -1235,21 +1002,22 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_settings">Settings IDEASOFT</param>
         /// <returns>[No change] or [Error] returns 'false'</returns>
-        public bool SaveIdeasoftSettings(int _customer_id, SettingsIdeasoft _settings) {
+        public async Task<bool> SaveIdeasoftSettings(int _customer_id, SettingsIdeasoft _settings) {
             try {
                 int val = 0;
-                string _query = "UPDATE settings_ideasoft SET store_url=@store_url,client_id=@client_id,client_secret=@client_secret,refresh_token=@refresh_token WHERE customer_id=@customer_id";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                string _query = "UPDATE settings_ideasoft SET store_url=@store_url,client_id=@client_id,client_secret=@client_secret,refresh_token=@refresh_token WHERE customer_id=@customer_id;";
+                MySqlCommand cmd = new(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("store_url", _settings.store_url));
                 cmd.Parameters.Add(new MySqlParameter("client_id", _settings.client_id));
                 cmd.Parameters.Add(new MySqlParameter("client_secret", !string.IsNullOrWhiteSpace(_settings.client_secret) ? DBSetting.Encrypt(_settings.client_secret) : null));
                 cmd.Parameters.Add(new MySqlParameter("refresh_token", !string.IsNullOrWhiteSpace(_settings.refresh_token) ? DBSetting.Encrypt(_settings.refresh_token) : null));
-
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                val = cmd.ExecuteNonQuery();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return val > 0;
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    val = await cmd.ExecuteNonQueryAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return val > 0;
+                }
+                return false;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -1263,22 +1031,23 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_settings">Settings Google</param>
         /// <returns>[No change] or [Error] returns 'false'</returns>
-        public bool SaveGoogleSettings(int _customer_id, SettingsGoogle _settings) {
+        public async Task<bool> SaveGoogleSettings(int _customer_id, SettingsGoogle _settings) {
             try {
                 int val = 0;
-                string _query = "UPDATE settings_google SET email=@email,oauth2_clientid=@oauth2_clientid,oauth2_clientsecret=@oauth2_clientsecret,sender_name=@sender_name,is_enabled=@is_enabled WHERE customer_id=@customer_id";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                string _query = "UPDATE settings_google SET email=@email,oauth2_clientid=@oauth2_clientid,oauth2_clientsecret=@oauth2_clientsecret,sender_name=@sender_name,is_enabled=@is_enabled WHERE customer_id=@customer_id;";
+                MySqlCommand cmd = new(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("email", _settings.email));
                 cmd.Parameters.Add(new MySqlParameter("oauth2_clientid", _settings.oauth2_clientid));
                 cmd.Parameters.Add(new MySqlParameter("sender_name", _settings.sender_name));
                 cmd.Parameters.Add(new MySqlParameter("is_enabled", _settings.is_enabled));
                 cmd.Parameters.Add(new MySqlParameter("oauth2_clientsecret", !string.IsNullOrWhiteSpace(_settings.oauth2_clientsecret) ? DBSetting.Encrypt(_settings.oauth2_clientsecret) : null));
-
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                val = cmd.ExecuteNonQuery();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return val > 0;
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    val = await cmd.ExecuteNonQueryAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return val > 0;
+                }
+                return false;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -1292,11 +1061,11 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_settings">Settings Magento</param>
         /// <returns>[No change] or [Error] returns 'false'</returns>
-        public bool SaveMagentoSettings(int _customer_id, SettingsMagento _settings) {
+        public async Task<bool> SaveMagentoSettings(int _customer_id, SettingsMagento _settings) {
             try {
                 int val = 0;
-                string _query = "UPDATE settings_magento SET base_url=@base_url,token=@token,root_category_id=@root_category_id,order_processing_comment=@order_processing_comment,barcode_attribute_code=@barcode_attribute_code,brand_attribute_code=@brand_attribute_code,is_xml_enabled_attribute_code=@is_xml_enabled_attribute_code,xml_sources_attribute_code=@xml_sources_attribute_code,customer_tc_no_attribute_code=@customer_tc_no_attribute_code,customer_firma_ismi_attribute_code=@customer_firma_ismi_attribute_code,customer_firma_vergidairesi_attribute_code=@customer_firma_vergidairesi_attribute_code,customer_firma_vergino_attribute_code=@customer_firma_vergino_attribute_code WHERE customer_id=@customer_id";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                string _query = "UPDATE settings_magento SET base_url=@base_url,token=@token,root_category_id=@root_category_id,order_processing_comment=@order_processing_comment,barcode_attribute_code=@barcode_attribute_code,brand_attribute_code=@brand_attribute_code,is_xml_enabled_attribute_code=@is_xml_enabled_attribute_code,xml_sources_attribute_code=@xml_sources_attribute_code,customer_tc_no_attribute_code=@customer_tc_no_attribute_code,customer_firma_ismi_attribute_code=@customer_firma_ismi_attribute_code,customer_firma_vergidairesi_attribute_code=@customer_firma_vergidairesi_attribute_code,customer_firma_vergino_attribute_code=@customer_firma_vergino_attribute_code WHERE customer_id=@customer_id;";
+                MySqlCommand cmd = new(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("base_url", _settings.base_url));
                 cmd.Parameters.Add(new MySqlParameter("token", !string.IsNullOrWhiteSpace(_settings.token) ? DBSetting.Encrypt(_settings.token) : null));
@@ -1310,12 +1079,12 @@ namespace Merchanter {
                 cmd.Parameters.Add(new MySqlParameter("customer_firma_ismi_attribute_code", _settings.customer_firma_ismi_attribute_code));
                 cmd.Parameters.Add(new MySqlParameter("customer_firma_vergidairesi_attribute_code", _settings.customer_firma_vergidairesi_attribute_code));
                 cmd.Parameters.Add(new MySqlParameter("customer_firma_vergino_attribute_code", _settings.customer_firma_vergino_attribute_code));
-
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                val = cmd.ExecuteNonQuery();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-
-                return val > 0;
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    val = await cmd.ExecuteNonQueryAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return val > 0;
+                }
+                return false;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -1329,23 +1098,23 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_settings">Settings Order</param>
         /// <returns>[No change] or [Error] returns 'false'</returns>
-        public bool SaveOrderSettings(int _customer_id, SettingsOrder _settings) {
+        public async Task<bool> SaveOrderSettings(int _customer_id, SettingsOrder _settings) {
             try {
                 int val = 0;
-                string _query = "UPDATE settings_order SET daysto_ordersync=@daysto_ordersync,siparis_kargo_sku=@siparis_kargo_sku,siparis_taksitkomisyon_sku=@siparis_taksitkomisyon_sku,is_rewrite_siparis=@is_rewrite_siparis,siparis_kdvdahilmi=@siparis_kdvdahilmi WHERE customer_id=@customer_id";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                string _query = "UPDATE settings_order SET daysto_ordersync=@daysto_ordersync,siparis_kargo_sku=@siparis_kargo_sku,siparis_taksitkomisyon_sku=@siparis_taksitkomisyon_sku,is_rewrite_siparis=@is_rewrite_siparis,siparis_kdvdahilmi=@siparis_kdvdahilmi WHERE customer_id=@customer_id;";
+                MySqlCommand cmd = new(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("daysto_ordersync", _settings.daysto_ordersync));
                 cmd.Parameters.Add(new MySqlParameter("siparis_kargo_sku", _settings.siparis_kargo_sku));
                 cmd.Parameters.Add(new MySqlParameter("siparis_taksitkomisyon_sku", _settings.siparis_taksitkomisyon_sku));
                 cmd.Parameters.Add(new MySqlParameter("is_rewrite_siparis", _settings.is_rewrite_siparis));
                 cmd.Parameters.Add(new MySqlParameter("siparis_kdvdahilmi", _settings.siparis_kdvdahilmi));
-
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                val = cmd.ExecuteNonQuery();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-
-                return val > 0;
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    val = await cmd.ExecuteNonQueryAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return val > 0;
+                }
+                return false;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -1359,10 +1128,10 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_settings">Settings Netsis</param>
         /// <returns>[No change] or [Error] returns 'false'</returns>
-        public bool SaveNetsisSettings(int _customer_id, SettingsNetsis _settings) {
+        public async Task<bool> SaveNetsisSettings(int _customer_id, SettingsNetsis _settings) {
             try {
                 int val = 0;
-                string _query = "UPDATE settings_netsis SET rest_url=@rest_url,netopenx_user=@netopenx_user,netopenx_password=@netopenx_password,dbname=@dbname,dbuser=@dbuser,dbpassword=@dbpassword,belgeonek_musterisiparisi=@belgeonek_musterisiparisi,siparis_carionek=@siparis_carionek,cari_siparis_grupkodu=@cari_siparis_grupkodu,sipari_caritip=@sipari_caritip,siparis_muhasebekodu=@siparis_muhasebekodu,siparis_subekodu=@siparis_subekodu,siparis_depokodu=@siparis_depokodu,ebelge_dizayn_earsiv=@ebelge_dizayn_earsiv,ebelge_dizayn_efatura=@ebelge_dizayn_efatura,ebelge_klasorismi=@ebelge_klasorismi,efatura_belge_onek=@efatura_belge_onek,earsiv_belge_onek=@earsiv_belge_onek,fatura_cari_gruplari=@fatura_cari_gruplari,siparis_kod2=@siparis_kod2,siparis_cyedek1=@siparis_cyedek1,siparis_ekack15=@siparis_ekack15,siparis_ekack10=@siparis_ekack10,siparis_ekack11=@siparis_ekack11,siparis_ekack4=@siparis_ekack4 WHERE customer_id=@customer_id";
+                string _query = "UPDATE settings_netsis SET rest_url=@rest_url,netopenx_user=@netopenx_user,netopenx_password=@netopenx_password,dbname=@dbname,dbuser=@dbuser,dbpassword=@dbpassword,belgeonek_musterisiparisi=@belgeonek_musterisiparisi,siparis_carionek=@siparis_carionek,cari_siparis_grupkodu=@cari_siparis_grupkodu,sipari_caritip=@sipari_caritip,siparis_muhasebekodu=@siparis_muhasebekodu,siparis_subekodu=@siparis_subekodu,siparis_depokodu=@siparis_depokodu,ebelge_dizayn_earsiv=@ebelge_dizayn_earsiv,ebelge_dizayn_efatura=@ebelge_dizayn_efatura,ebelge_klasorismi=@ebelge_klasorismi,efatura_belge_onek=@efatura_belge_onek,earsiv_belge_onek=@earsiv_belge_onek,fatura_cari_gruplari=@fatura_cari_gruplari,siparis_kod2=@siparis_kod2,siparis_cyedek1=@siparis_cyedek1,siparis_ekack15=@siparis_ekack15,siparis_ekack10=@siparis_ekack10,siparis_ekack11=@siparis_ekack11,siparis_ekack4=@siparis_ekack4 WHERE customer_id=@customer_id;";
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("rest_url", _settings.rest_url));
@@ -1390,12 +1159,12 @@ namespace Merchanter {
                 cmd.Parameters.Add(new MySqlParameter("siparis_ekack10", _settings.siparis_ekack10));
                 cmd.Parameters.Add(new MySqlParameter("siparis_ekack11", _settings.siparis_ekack11));
                 cmd.Parameters.Add(new MySqlParameter("siparis_ekack4", _settings.siparis_ekack4));
-
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                val = cmd.ExecuteNonQuery();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-
-                return val > 0;
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    val = await cmd.ExecuteNonQueryAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return val > 0;
+                }
+                return false;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -1409,24 +1178,21 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_settings">Work Sources</param>
         /// <returns>[No change] or [Error] returns 'false'</returns>
-        public bool SaveCustomerIntegrations(int _customer_id, List<Integration> _settings) {
+        public async Task<bool> SaveCustomerIntegration(int _customer_id, Integration _setting) {
             try {
                 int val = 0;
-                foreach (Integration item in _settings) {
-                    string _query = "UPDATE integrations SET work_id=@work_id,is_active=@is_active WHERE id=@id AND customer_id=@customer_id";
-                    MySqlCommand cmd = new MySqlCommand(_query, connection);
-                    cmd.Parameters.Add(new MySqlParameter("id", item.id));
-                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                    cmd.Parameters.Add(new MySqlParameter("work_id", item.work.id));
-                    cmd.Parameters.Add(new MySqlParameter("is_active", item.is_active));
-                    if (state != System.Data.ConnectionState.Open) connection.Open();
-                    val += cmd.ExecuteNonQuery();
-                    if (state == System.Data.ConnectionState.Open) connection.Close();
+                string _query = "UPDATE integrations SET work_id=@work_id,is_active=@is_active WHERE id=@id AND customer_id=@customer_id;";
+                MySqlCommand cmd = new(_query, connection);
+                cmd.Parameters.Add(new MySqlParameter("id", _setting.id));
+                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                cmd.Parameters.Add(new MySqlParameter("work_id", _setting.work.id));
+                cmd.Parameters.Add(new MySqlParameter("is_active", _setting.is_active));
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    val = await cmd.ExecuteNonQueryAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return val > 0;
                 }
-
-                if (val > 0)
-                    return true;
-                else return false;
+                return false;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -1441,27 +1207,29 @@ namespace Merchanter {
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public SettingsGeneral GetCustomerSettings(int _customer_id) {
+        public async Task<SettingsGeneral?> GetCustomerSettings(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM settings WHERE customer_id=@customer_id";
-                SettingsGeneral? cs = null;
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                MySqlDataReader dataReader = cmd.ExecuteReader(System.Data.CommandBehavior.CloseConnection);
-                while (dataReader.Read()) {
-                    cs = new SettingsGeneral {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        company_name = dataReader["company_name"].ToString(),
-                        rate_TL = Convert.ToDecimal(dataReader["rate_TL"].ToString()),
-                        rate_USD = Convert.ToDecimal(dataReader["rate_USD"].ToString()),
-                        rate_EUR = Convert.ToDecimal(dataReader["rate_EUR"].ToString())
-                    };
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM settings WHERE customer_id=@customer_id;";
+                    SettingsGeneral? cs = null;
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    while (await dataReader.ReadAsync()) {
+                        cs = new SettingsGeneral {
+                            id = Convert.ToInt32(dataReader["id"].ToString()),
+                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            company_name = dataReader["company_name"].ToString(),
+                            rate_TL = Convert.ToDecimal(dataReader["rate_TL"].ToString()),
+                            rate_USD = Convert.ToDecimal(dataReader["rate_USD"].ToString()),
+                            rate_EUR = Convert.ToDecimal(dataReader["rate_EUR"].ToString())
+                        };
+                    }
+                    await dataReader.CloseAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return cs;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return cs;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -1474,27 +1242,29 @@ namespace Merchanter {
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public SettingsInvoice GetInvoiceSettings(int _customer_id) {
+        public async Task<SettingsInvoice?> GetInvoiceSettings(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM settings_invoice WHERE customer_id=@customer_id";
-                SettingsInvoice? inv_s = null;
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                MySqlDataReader dataReader = cmd.ExecuteReader(System.Data.CommandBehavior.CloseConnection);
-                while (dataReader.Read()) {
-                    inv_s = new SettingsInvoice {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        daysto_invoicesync = Convert.ToInt32(dataReader["daysto_invoicesync"].ToString()),
-                        erp_invoice_ftp_password = dataReader["erp_invoice_ftp_password"].ToString(),
-                        erp_invoice_ftp_url = dataReader["erp_invoice_ftp_url"].ToString(),
-                        erp_invoice_ftp_username = dataReader["erp_invoice_ftp_username"].ToString()
-                    };
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM settings_invoice WHERE customer_id=@customer_id;";
+                    SettingsInvoice? inv_s = null;
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    while (await dataReader.ReadAsync()) {
+                        inv_s = new SettingsInvoice {
+                            id = Convert.ToInt32(dataReader["id"].ToString()),
+                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            daysto_invoicesync = Convert.ToInt32(dataReader["daysto_invoicesync"].ToString()),
+                            erp_invoice_ftp_password = dataReader["erp_invoice_ftp_password"].ToString(),
+                            erp_invoice_ftp_url = dataReader["erp_invoice_ftp_url"].ToString(),
+                            erp_invoice_ftp_username = dataReader["erp_invoice_ftp_username"].ToString()
+                        };
+                    }
+                    await dataReader.CloseAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return inv_s;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return inv_s;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -1507,28 +1277,30 @@ namespace Merchanter {
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public SettingsProduct GetProductSettings(int _customer_id) {
+        public async Task<SettingsProduct?> GetProductSettings(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM settings_product WHERE customer_id=@customer_id";
-                SettingsProduct? ps = null;
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                MySqlDataReader dataReader = cmd.ExecuteReader(System.Data.CommandBehavior.CloseConnection);
-                while (dataReader.Read()) {
-                    ps = new SettingsProduct {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        default_brand = dataReader["default_brand"].ToString(),
-                        customer_root_category_id = Convert.ToInt32(dataReader["customer_root_category_id"].ToString()),
-                        product_list_filter_source_products = Convert.ToBoolean(Convert.ToInt32(dataReader["product_list_filter_source_products"].ToString())),
-                        is_barcode_required = Convert.ToBoolean(Convert.ToInt32(dataReader["is_barcode_required"].ToString())),
-                        xml_qty_addictive_enable = Convert.ToBoolean(Convert.ToInt32(dataReader["xml_qty_addictive_enable"].ToString()))
-                    };
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM settings_product WHERE customer_id=@customer_id;";
+                    SettingsProduct? ps = null;
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    while (await dataReader.ReadAsync()) {
+                        ps = new SettingsProduct {
+                            id = Convert.ToInt32(dataReader["id"].ToString()),
+                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            default_brand = dataReader["default_brand"].ToString(),
+                            customer_root_category_id = Convert.ToInt32(dataReader["customer_root_category_id"].ToString()),
+                            product_list_filter_source_products = Convert.ToBoolean(Convert.ToInt32(dataReader["product_list_filter_source_products"].ToString())),
+                            is_barcode_required = Convert.ToBoolean(Convert.ToInt32(dataReader["is_barcode_required"].ToString())),
+                            xml_qty_addictive_enable = Convert.ToBoolean(Convert.ToInt32(dataReader["xml_qty_addictive_enable"].ToString()))
+                        };
+                    }
+                    await dataReader.CloseAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return ps;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return ps;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -1541,26 +1313,28 @@ namespace Merchanter {
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public SettingsEntegra GetEntegraSettings(int _customer_id) {
+        public async Task<SettingsEntegra?> GetEntegraSettings(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM settings_entegra WHERE customer_id=@customer_id";
-                SettingsEntegra? es = null;
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                MySqlDataReader dataReader = cmd.ExecuteReader(System.Data.CommandBehavior.CloseConnection);
-                while (dataReader.Read()) {
-                    es = new SettingsEntegra {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        api_url = dataReader["api_url"].ToString(),
-                        api_username = dataReader["api_username"].ToString(),
-                        api_password = dataReader["api_password"].ToString()
-                    };
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM settings_entegra WHERE customer_id=@customer_id;";
+                    SettingsEntegra? es = null;
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    while (await dataReader.ReadAsync()) {
+                        es = new SettingsEntegra {
+                            id = Convert.ToInt32(dataReader["id"].ToString()),
+                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            api_url = dataReader["api_url"].ToString(),
+                            api_username = dataReader["api_username"].ToString(),
+                            api_password = dataReader["api_password"].ToString()
+                        };
+                    }
+                    await dataReader.CloseAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return es;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return es;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -1573,35 +1347,37 @@ namespace Merchanter {
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public SettingsMagento GetMagentoSettings(int _customer_id) {
+        public async Task<SettingsMagento?> GetMagentoSettings(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM settings_magento WHERE customer_id=@customer_id";
-                SettingsMagento? ms = null;
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                MySqlDataReader dataReader = cmd.ExecuteReader(System.Data.CommandBehavior.CloseConnection);
-                while (dataReader.Read()) {
-                    ms = new SettingsMagento {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        base_url = dataReader["base_url"].ToString(),
-                        token = dataReader["token"].ToString(),
-                        root_category_id = Convert.ToInt32(dataReader["root_category_id"].ToString()),
-                        brand_attribute_code = dataReader["brand_attribute_code"].ToString(),
-                        barcode_attribute_code = dataReader["barcode_attribute_code"].ToString(),
-                        is_xml_enabled_attribute_code = dataReader["is_xml_enabled_attribute_code"].ToString(),
-                        xml_sources_attribute_code = dataReader["xml_sources_attribute_code"].ToString(),
-                        customer_tc_no_attribute_code = dataReader["customer_tc_no_attribute_code"].ToString(),
-                        customer_firma_ismi_attribute_code = dataReader["customer_firma_ismi_attribute_code"].ToString(),
-                        customer_firma_vergidairesi_attribute_code = dataReader["customer_firma_vergidairesi_attribute_code"].ToString(),
-                        customer_firma_vergino_attribute_code = dataReader["customer_firma_vergino_attribute_code"].ToString(),
-                        order_processing_comment = dataReader["order_processing_comment"].ToString()
-                    };
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM settings_magento WHERE customer_id=@customer_id;";
+                    SettingsMagento? ms = null;
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    while (await dataReader.ReadAsync()) {
+                        ms = new SettingsMagento {
+                            id = Convert.ToInt32(dataReader["id"].ToString()),
+                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            base_url = dataReader["base_url"].ToString(),
+                            token = dataReader["token"].ToString(),
+                            root_category_id = Convert.ToInt32(dataReader["root_category_id"].ToString()),
+                            brand_attribute_code = dataReader["brand_attribute_code"].ToString(),
+                            barcode_attribute_code = dataReader["barcode_attribute_code"].ToString(),
+                            is_xml_enabled_attribute_code = dataReader["is_xml_enabled_attribute_code"].ToString(),
+                            xml_sources_attribute_code = dataReader["xml_sources_attribute_code"].ToString(),
+                            customer_tc_no_attribute_code = dataReader["customer_tc_no_attribute_code"].ToString(),
+                            customer_firma_ismi_attribute_code = dataReader["customer_firma_ismi_attribute_code"].ToString(),
+                            customer_firma_vergidairesi_attribute_code = dataReader["customer_firma_vergidairesi_attribute_code"].ToString(),
+                            customer_firma_vergino_attribute_code = dataReader["customer_firma_vergino_attribute_code"].ToString(),
+                            order_processing_comment = dataReader["order_processing_comment"].ToString()
+                        };
+                    }
+                    await dataReader.CloseAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return ms;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return ms;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -1614,28 +1390,30 @@ namespace Merchanter {
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public SettingsOrder GetOrderSettings(int _customer_id) {
+        public async Task<SettingsOrder?> GetOrderSettings(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM settings_order WHERE customer_id=@customer_id";
-                SettingsOrder? os = null;
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                MySqlDataReader dataReader = cmd.ExecuteReader(System.Data.CommandBehavior.CloseConnection);
-                while (dataReader.Read()) {
-                    os = new SettingsOrder {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        daysto_ordersync = Convert.ToInt32(dataReader["daysto_ordersync"].ToString()),
-                        siparis_kargo_sku = dataReader["siparis_kargo_sku"].ToString(),
-                        siparis_taksitkomisyon_sku = dataReader["siparis_taksitkomisyon_sku"].ToString(),
-                        is_rewrite_siparis = Convert.ToBoolean(Convert.ToInt32(dataReader["is_rewrite_siparis"].ToString())),
-                        siparis_kdvdahilmi = Convert.ToBoolean(Convert.ToInt32(dataReader["siparis_kdvdahilmi"].ToString())),
-                    };
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM settings_order WHERE customer_id=@customer_id;";
+                    SettingsOrder? os = null;
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    while (await dataReader.ReadAsync()) {
+                        os = new SettingsOrder {
+                            id = Convert.ToInt32(dataReader["id"].ToString()),
+                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            daysto_ordersync = Convert.ToInt32(dataReader["daysto_ordersync"].ToString()),
+                            siparis_kargo_sku = dataReader["siparis_kargo_sku"].ToString(),
+                            siparis_taksitkomisyon_sku = dataReader["siparis_taksitkomisyon_sku"].ToString(),
+                            is_rewrite_siparis = Convert.ToBoolean(Convert.ToInt32(dataReader["is_rewrite_siparis"].ToString())),
+                            siparis_kdvdahilmi = Convert.ToBoolean(Convert.ToInt32(dataReader["siparis_kdvdahilmi"].ToString())),
+                        };
+                    }
+                    await dataReader.CloseAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return os;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return os;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -1648,28 +1426,30 @@ namespace Merchanter {
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public SettingsGoogle GetGoogleSettings(int _customer_id) {
+        public async Task<SettingsGoogle?> GetGoogleSettings(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM settings_google WHERE customer_id=@customer_id";
-                SettingsGoogle? gs = null;
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                MySqlDataReader dataReader = cmd.ExecuteReader(System.Data.CommandBehavior.CloseConnection);
-                while (dataReader.Read()) {
-                    gs = new SettingsGoogle {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        email = dataReader["email"].ToString(),
-                        oauth2_clientid = dataReader["oauth2_clientid"].ToString(),
-                        oauth2_clientsecret = dataReader["oauth2_clientsecret"].ToString(),
-                        sender_name = dataReader["sender_name"].ToString(),
-                        is_enabled = Convert.ToBoolean(Convert.ToInt32(dataReader["is_enabled"].ToString())),
-                    };
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM settings_google WHERE customer_id=@customer_id;";
+                    SettingsGoogle? gs = null;
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    while (await dataReader.ReadAsync()) {
+                        gs = new SettingsGoogle {
+                            id = Convert.ToInt32(dataReader["id"].ToString()),
+                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            email = dataReader["email"].ToString(),
+                            oauth2_clientid = dataReader["oauth2_clientid"].ToString(),
+                            oauth2_clientsecret = dataReader["oauth2_clientsecret"].ToString(),
+                            sender_name = dataReader["sender_name"].ToString(),
+                            is_enabled = Convert.ToBoolean(Convert.ToInt32(dataReader["is_enabled"].ToString())),
+                        };
+                    }
+                    await dataReader.CloseAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return gs;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return gs;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -1682,48 +1462,50 @@ namespace Merchanter {
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public SettingsNetsis GetNetsisSettings(int _customer_id) {
+        public async Task<SettingsNetsis?> GetNetsisSettings(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM settings_netsis WHERE customer_id=@customer_id";
-                SettingsNetsis? ns = null;
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                MySqlDataReader dataReader = cmd.ExecuteReader(System.Data.CommandBehavior.CloseConnection);
-                while (dataReader.Read()) {
-                    ns = new SettingsNetsis {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        netopenx_user = dataReader["netopenx_user"].ToString(),
-                        netopenx_password = dataReader["netopenx_password"].ToString(),
-                        dbname = dataReader["dbname"].ToString(),
-                        dbuser = dataReader["dbuser"].ToString(),
-                        dbpassword = dataReader["dbpassword"].ToString(),
-                        rest_url = dataReader["rest_url"].ToString(),
-                        belgeonek_musterisiparisi = dataReader["belgeonek_musterisiparisi"].ToString(),
-                        siparis_carionek = dataReader["siparis_carionek"].ToString(),
-                        cari_siparis_grupkodu = dataReader["cari_siparis_grupkodu"].ToString(),
-                        sipari_caritip = dataReader["sipari_caritip"].ToString(),
-                        siparis_muhasebekodu = dataReader["siparis_muhasebekodu"].ToString(),
-                        siparis_subekodu = Convert.ToInt32(dataReader["siparis_subekodu"].ToString()),
-                        siparis_depokodu = Convert.ToInt32(dataReader["siparis_depokodu"].ToString()),
-                        ebelge_dizayn_earsiv = dataReader["ebelge_dizayn_earsiv"].ToString(),
-                        ebelge_dizayn_efatura = dataReader["ebelge_dizayn_efatura"].ToString(),
-                        ebelge_klasorismi = dataReader["ebelge_klasorismi"].ToString(),
-                        efatura_belge_onek = dataReader["efatura_belge_onek"].ToString(),
-                        earsiv_belge_onek = dataReader["earsiv_belge_onek"].ToString(),
-                        fatura_cari_gruplari = dataReader["fatura_cari_gruplari"].ToString(),
-                        siparis_kod2 = dataReader["siparis_kod2"].ToString(),
-                        siparis_cyedek1 = dataReader["siparis_cyedek1"].ToString(),
-                        siparis_ekack15 = dataReader["siparis_ekack15"].ToString(),
-                        siparis_ekack10 = dataReader["siparis_ekack10"].ToString(),
-                        siparis_ekack11 = dataReader["siparis_ekack11"].ToString(),
-                        siparis_ekack4 = dataReader["siparis_ekack4"].ToString()
-                    };
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM settings_netsis WHERE customer_id=@customer_id;";
+                    SettingsNetsis? ns = null;
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    while (await dataReader.ReadAsync()) {
+                        ns = new SettingsNetsis {
+                            id = Convert.ToInt32(dataReader["id"].ToString()),
+                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            netopenx_user = dataReader["netopenx_user"].ToString(),
+                            netopenx_password = dataReader["netopenx_password"].ToString(),
+                            dbname = dataReader["dbname"].ToString(),
+                            dbuser = dataReader["dbuser"].ToString(),
+                            dbpassword = dataReader["dbpassword"].ToString(),
+                            rest_url = dataReader["rest_url"].ToString(),
+                            belgeonek_musterisiparisi = dataReader["belgeonek_musterisiparisi"].ToString(),
+                            siparis_carionek = dataReader["siparis_carionek"].ToString(),
+                            cari_siparis_grupkodu = dataReader["cari_siparis_grupkodu"].ToString(),
+                            sipari_caritip = dataReader["sipari_caritip"].ToString(),
+                            siparis_muhasebekodu = dataReader["siparis_muhasebekodu"].ToString(),
+                            siparis_subekodu = Convert.ToInt32(dataReader["siparis_subekodu"].ToString()),
+                            siparis_depokodu = Convert.ToInt32(dataReader["siparis_depokodu"].ToString()),
+                            ebelge_dizayn_earsiv = dataReader["ebelge_dizayn_earsiv"].ToString(),
+                            ebelge_dizayn_efatura = dataReader["ebelge_dizayn_efatura"].ToString(),
+                            ebelge_klasorismi = dataReader["ebelge_klasorismi"].ToString(),
+                            efatura_belge_onek = dataReader["efatura_belge_onek"].ToString(),
+                            earsiv_belge_onek = dataReader["earsiv_belge_onek"].ToString(),
+                            fatura_cari_gruplari = dataReader["fatura_cari_gruplari"].ToString(),
+                            siparis_kod2 = dataReader["siparis_kod2"].ToString(),
+                            siparis_cyedek1 = dataReader["siparis_cyedek1"].ToString(),
+                            siparis_ekack15 = dataReader["siparis_ekack15"].ToString(),
+                            siparis_ekack10 = dataReader["siparis_ekack10"].ToString(),
+                            siparis_ekack11 = dataReader["siparis_ekack11"].ToString(),
+                            siparis_ekack4 = dataReader["siparis_ekack4"].ToString()
+                        };
+                    }
+                    await dataReader.CloseAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return ns;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return ns;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -1736,32 +1518,34 @@ namespace Merchanter {
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public SettingsShipment GetShipmentSettings(int _customer_id) {
+        public async Task<SettingsShipment?> GetShipmentSettings(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM settings_shipment WHERE customer_id=@customer_id";
-                SettingsShipment? ss = null;
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                MySqlDataReader dataReader = cmd.ExecuteReader(System.Data.CommandBehavior.CloseConnection);
-                while (dataReader.Read()) {
-                    ss = new SettingsShipment {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        yurtici_kargo = Convert.ToBoolean(Convert.ToInt32(dataReader["yurtici_kargo"].ToString())),
-                        mng_kargo = Convert.ToBoolean(Convert.ToInt32(dataReader["mng_kargo"].ToString())),
-                        aras_kargo = Convert.ToBoolean(Convert.ToInt32(dataReader["aras_kargo"].ToString())),
-                        yurtici_kargo_user_name = dataReader["yurtici_kargo_user_name"].ToString(),
-                        yurtici_kargo_password = dataReader["yurtici_kargo_password"].ToString(),
-                        mng_kargo_customer_number = dataReader["mng_kargo_customer_number"].ToString(),
-                        mng_kargo_password = dataReader["mng_kargo_password"].ToString(),
-                        mng_kargo_client_id = dataReader["mng_kargo_client_id"].ToString(),
-                        mng_kargo_client_secret = dataReader["mng_kargo_client_secret"].ToString(),
-                    };
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM settings_shipment WHERE customer_id=@customer_id;";
+                    SettingsShipment? ss = null;
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    while (await dataReader.ReadAsync()) {
+                        ss = new SettingsShipment {
+                            id = Convert.ToInt32(dataReader["id"].ToString()),
+                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            yurtici_kargo = Convert.ToBoolean(Convert.ToInt32(dataReader["yurtici_kargo"].ToString())),
+                            mng_kargo = Convert.ToBoolean(Convert.ToInt32(dataReader["mng_kargo"].ToString())),
+                            aras_kargo = Convert.ToBoolean(Convert.ToInt32(dataReader["aras_kargo"].ToString())),
+                            yurtici_kargo_user_name = dataReader["yurtici_kargo_user_name"].ToString(),
+                            yurtici_kargo_password = dataReader["yurtici_kargo_password"].ToString(),
+                            mng_kargo_customer_number = dataReader["mng_kargo_customer_number"].ToString(),
+                            mng_kargo_password = dataReader["mng_kargo_password"].ToString(),
+                            mng_kargo_client_id = dataReader["mng_kargo_client_id"].ToString(),
+                            mng_kargo_client_secret = dataReader["mng_kargo_client_secret"].ToString(),
+                        };
+                    }
+                    await dataReader.CloseAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return ss;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return ss;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -1774,25 +1558,27 @@ namespace Merchanter {
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public SettingsN11 GetN11Settings(int _customer_id) {
+        public async Task<SettingsN11?> GetN11Settings(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM settings_n11 WHERE customer_id=@customer_id";
-                SettingsN11? sn11 = null;
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                MySqlDataReader dataReader = cmd.ExecuteReader(System.Data.CommandBehavior.CloseConnection);
-                while (dataReader.Read()) {
-                    sn11 = new SettingsN11 {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        appkey = dataReader["appkey"].ToString(),
-                        appsecret = dataReader["appsecret"].ToString(),
-                    };
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM settings_n11 WHERE customer_id=@customer_id;";
+                    SettingsN11? sn11 = null;
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    while (await dataReader.ReadAsync()) {
+                        sn11 = new SettingsN11 {
+                            id = Convert.ToInt32(dataReader["id"].ToString()),
+                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            appkey = dataReader["appkey"].ToString(),
+                            appsecret = dataReader["appsecret"].ToString(),
+                        };
+                    }
+                    await dataReader.CloseAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return sn11;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return sn11;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -1805,27 +1591,29 @@ namespace Merchanter {
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public SettingsHB GetHBSettings(int _customer_id) {
+        public async Task<SettingsHB?> GetHBSettings(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM settings_hb WHERE customer_id=@customer_id";
-                SettingsHB? shb = null;
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                MySqlDataReader dataReader = cmd.ExecuteReader(System.Data.CommandBehavior.CloseConnection);
-                while (dataReader.Read()) {
-                    shb = new SettingsHB {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        merchant_id = dataReader["merchant_id"].ToString(),
-                        token = dataReader["token"].ToString(),
-                        user_name = dataReader["user_name"].ToString(),
-                        password = dataReader["password"].ToString(),
-                    };
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM settings_hb WHERE customer_id=@customer_id;";
+                    SettingsHB? shb = null;
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    while (await dataReader.ReadAsync()) {
+                        shb = new SettingsHB {
+                            id = Convert.ToInt32(dataReader["id"].ToString()),
+                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            merchant_id = dataReader["merchant_id"].ToString(),
+                            token = dataReader["token"].ToString(),
+                            user_name = dataReader["user_name"].ToString(),
+                            password = dataReader["password"].ToString(),
+                        };
+                    }
+                    await dataReader.CloseAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return shb;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return shb;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -1838,26 +1626,28 @@ namespace Merchanter {
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public SettingsTY GetTYSettings(int _customer_id) {
+        public async Task<SettingsTY?> GetTYSettings(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM settings_ty WHERE customer_id=@customer_id";
-                SettingsTY? sty = null;
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                MySqlDataReader dataReader = cmd.ExecuteReader(System.Data.CommandBehavior.CloseConnection);
-                while (dataReader.Read()) {
-                    sty = new SettingsTY {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        seller_id = dataReader["seller_id"].ToString(),
-                        api_key = dataReader["api_key"].ToString(),
-                        api_secret = dataReader["api_secret"].ToString(),
-                    };
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM settings_ty WHERE customer_id=@customer_id;";
+                    SettingsTY? sty = null;
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    while (await dataReader.ReadAsync()) {
+                        sty = new SettingsTY {
+                            id = Convert.ToInt32(dataReader["id"].ToString()),
+                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            seller_id = dataReader["seller_id"].ToString(),
+                            api_key = dataReader["api_key"].ToString(),
+                            api_secret = dataReader["api_secret"].ToString(),
+                        };
+                    }
+                    await dataReader.CloseAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return sty;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return sty;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -1870,28 +1660,30 @@ namespace Merchanter {
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public SettingsAnkaraErp GetAnkERPSettings(int _customer_id) {
+        public async Task<SettingsAnkaraErp?> GetAnkERPSettings(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM settings_ank_erp WHERE customer_id=@customer_id";
-                SettingsAnkaraErp? ank = null;
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                MySqlDataReader dataReader = cmd.ExecuteReader(System.Data.CommandBehavior.CloseConnection);
-                while (dataReader.Read()) {
-                    ank = new SettingsAnkaraErp {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        company_code = dataReader["company_code"].ToString(),
-                        user_name = dataReader["user_name"].ToString(),
-                        password = dataReader["password"].ToString(),
-                        work_year = dataReader["work_year"].ToString(),
-                        url = dataReader["url"].ToString(),
-                    };
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM settings_ank_erp WHERE customer_id=@customer_id;";
+                    SettingsAnkaraErp? ank = null;
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    while (await dataReader.ReadAsync()) {
+                        ank = new SettingsAnkaraErp {
+                            id = Convert.ToInt32(dataReader["id"].ToString()),
+                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            company_code = dataReader["company_code"].ToString(),
+                            user_name = dataReader["user_name"].ToString(),
+                            password = dataReader["password"].ToString(),
+                            work_year = dataReader["work_year"].ToString(),
+                            url = dataReader["url"].ToString(),
+                        };
+                    }
+                    await dataReader.CloseAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return ank;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return ank;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -1904,29 +1696,31 @@ namespace Merchanter {
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public SettingsIdeasoft GetIdeasoftSettings(int _customer_id) {
+        public async Task<SettingsIdeasoft?> GetIdeasoftSettings(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM settings_ideasoft WHERE customer_id=@customer_id";
-                SettingsIdeasoft? idea = null;
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                MySqlDataReader dataReader = cmd.ExecuteReader(System.Data.CommandBehavior.CloseConnection);
-                while (dataReader.Read()) {
-                    idea = new SettingsIdeasoft {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        store_url = dataReader["store_url"].ToString(),
-                        client_id = dataReader["client_id"].ToString(),
-                        client_secret = dataReader["client_secret"].ToString(),
-                        refresh_token = dataReader["refresh_token"].ToString(),
-                        access_token = dataReader["access_token"].ToString(),
-                        update_date = !string.IsNullOrWhiteSpace(dataReader["update_date"].ToString()) ? Convert.ToDateTime(dataReader["update_date"].ToString()) : null
-                    };
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM settings_ideasoft WHERE customer_id=@customer_id;";
+                    SettingsIdeasoft? idea = null;
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    while (await dataReader.ReadAsync()) {
+                        idea = new SettingsIdeasoft {
+                            id = Convert.ToInt32(dataReader["id"].ToString()),
+                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            store_url = dataReader["store_url"].ToString(),
+                            client_id = dataReader["client_id"].ToString(),
+                            client_secret = dataReader["client_secret"].ToString(),
+                            refresh_token = dataReader["refresh_token"].ToString(),
+                            access_token = dataReader["access_token"].ToString(),
+                            update_date = !string.IsNullOrWhiteSpace(dataReader["update_date"].ToString()) ? Convert.ToDateTime(dataReader["update_date"].ToString()) : null
+                        };
+                    }
+                    await dataReader.CloseAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return idea;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return idea;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -1941,33 +1735,30 @@ namespace Merchanter {
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public List<OrderStatus> LoadOrderStatuses(int _customer_id) {
+        public async Task<List<OrderStatus>?> LoadOrderStatuses(int _customer_id) {
             try {
-                if (this.state != System.Data.ConnectionState.Open)
-                    if (this.OpenConnection()) {
-                        string _query = "SELECT * FROM order_statuses WHERE customer_id=@customer_id";
-                        MySqlCommand cmd = new MySqlCommand(_query, Connection);
-                        cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id.ToString()));
-                        MySqlDataReader dataReader = cmd.ExecuteReader();
-                        List<OrderStatus> list = [];
-                        while (dataReader.Read()) {
-                            list.Add(new OrderStatus(
-                                Convert.ToInt32(dataReader["id"].ToString()),
-                                 Convert.ToInt32(dataReader["customer_id"].ToString()),
-                                 dataReader["status_name"].ToString(),
-                                 dataReader["status_code"].ToString(),
-                                 dataReader["platform"].ToString(),
-                                 dataReader["platform_status_code"].ToString(),
-                                 Convert.ToBoolean(Convert.ToInt32(dataReader["sync_status"].ToString())),
-                                 Convert.ToBoolean(Convert.ToInt32(dataReader["process_status"].ToString()))
-                            ));
-                        }
-                        dataReader.Close();
-                        if (state == System.Data.ConnectionState.Open)
-                            this.CloseConnection();
-                        return list;
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM order_statuses WHERE customer_id=@customer_id;";
+                    MySqlCommand cmd = new(_query, Connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id.ToString()));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    List<OrderStatus> list = [];
+                    while (await dataReader.ReadAsync()) {
+                        list.Add(new OrderStatus(
+                            Convert.ToInt32(dataReader["id"].ToString()),
+                             Convert.ToInt32(dataReader["customer_id"].ToString()),
+                             dataReader["status_name"].ToString(),
+                             dataReader["status_code"].ToString(),
+                             dataReader["platform"].ToString(),
+                             dataReader["platform_status_code"].ToString(),
+                             Convert.ToBoolean(Convert.ToInt32(dataReader["sync_status"].ToString())),
+                             Convert.ToBoolean(Convert.ToInt32(dataReader["process_status"].ToString()))
+                        ));
                     }
-
+                    await dataReader.CloseAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return list;
+                }
                 return null;
             }
             catch (Exception ex) {
@@ -1981,30 +1772,28 @@ namespace Merchanter {
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public List<PaymentMethod> LoadPaymentMethods(int _customer_id) {
+        public async Task<List<PaymentMethod>?> LoadPaymentMethods(int _customer_id) {
             try {
-                if (this.state != System.Data.ConnectionState.Open)
-                    if (this.OpenConnection()) {
-                        string _query = "SELECT * FROM payment_methods WHERE customer_id=@customer_id";
-                        MySqlCommand cmd = new MySqlCommand(_query, Connection);
-                        cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id.ToString()));
-                        MySqlDataReader dataReader = cmd.ExecuteReader();
-                        List<PaymentMethod> list = [];
-                        while (dataReader.Read()) {
-                            list.Add(new PaymentMethod(
-                                Convert.ToInt32(dataReader["id"].ToString()),
-                                Convert.ToInt32(dataReader["customer_id"].ToString()),
-                                dataReader["payment_name"].ToString(),
-                                dataReader["payment_code"].ToString(),
-                                dataReader["platform"].ToString(),
-                                dataReader["platform_payment_code"].ToString()
-                            ));
-                        }
-                        dataReader.Close();
-                        if (state == System.Data.ConnectionState.Open)
-                            this.CloseConnection();
-                        return list;
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM payment_methods WHERE customer_id=@customer_id;";
+                    MySqlCommand cmd = new(_query, Connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id.ToString()));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    List<PaymentMethod> list = [];
+                    while (await dataReader.ReadAsync()) {
+                        list.Add(new PaymentMethod(
+                            Convert.ToInt32(dataReader["id"].ToString()),
+                            Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            dataReader["payment_name"].ToString(),
+                            dataReader["payment_code"].ToString(),
+                            dataReader["platform"].ToString(),
+                            dataReader["platform_payment_code"].ToString()
+                        ));
                     }
+                    await dataReader.CloseAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return list;
+                }
 
                 return null;
             }
@@ -2019,30 +1808,28 @@ namespace Merchanter {
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public List<ShipmentMethod> LoadShipmentMethods(int _customer_id) {
+        public async Task<List<ShipmentMethod>?> LoadShipmentMethods(int _customer_id) {
             try {
-                if (this.state != System.Data.ConnectionState.Open)
-                    if (this.OpenConnection()) {
-                        string _query = "SELECT * FROM shipment_methods WHERE customer_id=@customer_id";
-                        MySqlCommand cmd = new MySqlCommand(_query, Connection);
-                        cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id.ToString()));
-                        MySqlDataReader dataReader = cmd.ExecuteReader();
-                        List<ShipmentMethod> list = [];
-                        while (dataReader.Read()) {
-                            list.Add(new ShipmentMethod(
-                                Convert.ToInt32(dataReader["id"].ToString()),
-                                Convert.ToInt32(dataReader["customer_id"].ToString()),
-                                dataReader["shipment_name"].ToString(),
-                                dataReader["shipment_code"].ToString(),
-                                dataReader["platform"].ToString(),
-                                dataReader["platform_shipment_code"].ToString()
-                            ));
-                        }
-                        dataReader.Close();
-                        if (state == System.Data.ConnectionState.Open)
-                            this.CloseConnection();
-                        return list;
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM shipment_methods WHERE customer_id=@customer_id;";
+                    MySqlCommand cmd = new(_query, Connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id.ToString()));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    List<ShipmentMethod> list = [];
+                    while (await dataReader.ReadAsync()) {
+                        list.Add(new ShipmentMethod(
+                            Convert.ToInt32(dataReader["id"].ToString()),
+                            Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            dataReader["shipment_name"].ToString(),
+                            dataReader["shipment_code"].ToString(),
+                            dataReader["platform"].ToString(),
+                            dataReader["platform_shipment_code"].ToString()
+                        ));
                     }
+                    await dataReader.CloseAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return list;
+                }
 
                 return null;
             }
@@ -2057,29 +1844,27 @@ namespace Merchanter {
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public List<Integration> LoadIntegrations(int _customer_id) {
+        public async Task<List<Integration>?> LoadIntegrations(int _customer_id) {
             try {
-                var works = LoadWorks();
-                if (this.state != System.Data.ConnectionState.Open)
-                    if (this.OpenConnection()) {
-                        string _query = "SELECT * FROM integrations WHERE customer_id=@customer_id;";
-                        MySqlCommand cmd = new MySqlCommand(_query, Connection);
-                        cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id.ToString()));
-                        MySqlDataReader dataReader = cmd.ExecuteReader();
-                        List<Integration> list = new List<Integration>();
-                        while (dataReader.Read()) {
-                            list.Add(new Integration(
-                                Convert.ToInt32(dataReader["id"].ToString()),
-                                Convert.ToInt32(dataReader["customer_id"].ToString()),
-                                Convert.ToBoolean(Convert.ToInt32(dataReader["is_active"].ToString())),
-                                works.FirstOrDefault(x => x.id == Convert.ToInt32(dataReader["work_id"].ToString()))
-                            ));
-                        }
-                        dataReader.Close();
-                        if (state == System.Data.ConnectionState.Open)
-                            this.CloseConnection();
-                        return list;
+                var works = await LoadWorks();
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM integrations WHERE customer_id=@customer_id;";
+                    MySqlCommand cmd = new(_query, Connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id.ToString()));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    List<Integration> list = [];
+                    while (await dataReader.ReadAsync()) {
+                        list.Add(new Integration(
+                            Convert.ToInt32(dataReader["id"].ToString()),
+                            Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            Convert.ToBoolean(Convert.ToInt32(dataReader["is_active"].ToString())),
+                            works.FirstOrDefault(x => x.id == Convert.ToInt32(dataReader["work_id"].ToString()))
+                        ));
                     }
+                    await dataReader.CloseAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return list;
+                }
 
                 return null;
             }
@@ -2093,30 +1878,28 @@ namespace Merchanter {
         /// Gets platforms from the database
         /// </summary>
         /// <returns>[Error] returns 'null'</returns>
-        public List<Platform> LoadPlatforms() {
+        public async Task<List<Platform>?> LoadPlatforms() {
             try {
-                if (this.state != System.Data.ConnectionState.Open)
-                    if (this.OpenConnection()) {
-                        string _query = "SELECT * FROM platforms;";
-                        MySqlCommand cmd = new MySqlCommand(_query, Connection);
-                        MySqlDataReader dataReader = cmd.ExecuteReader();
-                        List<Platform> list = [];
-                        while (dataReader.Read()) {
-                            list.Add(new Platform(
-                                Convert.ToInt32(dataReader["id"].ToString()),
-                                dataReader["name"].ToString(),
-                                dataReader["work_type"] is string workTypeStr && Enum.TryParse(workTypeStr, out Merchanter.Classes.Work.WorkType workType) ? workType : default,
-                                dataReader["available_types"] is string availableTypesStr ? [.. availableTypesStr.Split(',').Select(type => Enum.TryParse(type, out Merchanter.Classes.Platform.PlatformType platformType) ? platformType : default)] : [],
-                                Convert.ToBoolean(Convert.ToInt32(dataReader["status"].ToString())),
-                                Convert.ToDateTime(dataReader["update_date"].ToString()),
-                                dataReader["image"].ToString()
-                            ));
-                        }
-                        dataReader.Close();
-                        if (state == System.Data.ConnectionState.Open)
-                            this.CloseConnection();
-                        return list;
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM platforms;";
+                    MySqlCommand cmd = new(_query, Connection);
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    List<Platform> list = [];
+                    while (await dataReader.ReadAsync()) {
+                        list.Add(new Platform(
+                            Convert.ToInt32(dataReader["id"].ToString()),
+                            dataReader["name"].ToString(),
+                            dataReader["work_type"] is string workTypeStr && Enum.TryParse(workTypeStr, out Merchanter.Classes.Work.WorkType workType) ? workType : default,
+                            dataReader["available_types"] is string availableTypesStr ? [.. availableTypesStr.Split(',').Select(type => Enum.TryParse(type, out Merchanter.Classes.Platform.PlatformType platformType) ? platformType : default)] : [],
+                            Convert.ToBoolean(Convert.ToInt32(dataReader["status"].ToString())),
+                            Convert.ToDateTime(dataReader["update_date"].ToString()),
+                            dataReader["image"].ToString()
+                        ));
                     }
+                    await dataReader.CloseAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return list;
+                }
 
                 return null;
             }
@@ -2130,31 +1913,29 @@ namespace Merchanter {
         /// Gets works from the database
         /// </summary>
         /// <returns>[Error] returns 'null'</returns>
-        public List<Work> LoadWorks() {
+        public async Task<List<Work>?> LoadWorks() {
             try {
-                var platforms = LoadPlatforms();
-                if (this.state != System.Data.ConnectionState.Open)
-                    if (this.OpenConnection()) {
-                        string _query = "SELECT * FROM works;";
-                        MySqlCommand cmd = new MySqlCommand(_query, Connection);
-                        MySqlDataReader dataReader = cmd.ExecuteReader();
-                        List<Work> list = [];
-                        while (dataReader.Read()) {
-                            list.Add(new Work(
-                                Convert.ToInt32(dataReader["id"].ToString()),
-                                platforms.FirstOrDefault(x => x.id == Convert.ToInt32(dataReader["platform_id"].ToString())),
-                                dataReader["name"].ToString(),
-                                dataReader["type"] is string workTypeStr && Enum.TryParse(workTypeStr, out Merchanter.Classes.Work.WorkType workType) ? workType : default,
-                                dataReader["direction"] is string workDirectionStr && Enum.TryParse(workDirectionStr, out Merchanter.Classes.Work.WorkDirection workDirection) ? workDirection : default,
-                                Convert.ToBoolean(Convert.ToInt32(dataReader["status"].ToString())),
-                                dataReader["version"].ToString()
-                            ));
-                        }
-                        dataReader.Close();
-                        if (state == System.Data.ConnectionState.Open)
-                            this.CloseConnection();
-                        return list;
+                var platforms = await LoadPlatforms();
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM works;";
+                    MySqlCommand cmd = new(_query, Connection);
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    List<Work> list = [];
+                    while (await dataReader.ReadAsync()) {
+                        list.Add(new Work(
+                            Convert.ToInt32(dataReader["id"].ToString()),
+                            platforms.FirstOrDefault(x => x.id == Convert.ToInt32(dataReader["platform_id"].ToString())),
+                            dataReader["name"].ToString(),
+                            dataReader["type"] is string workTypeStr && Enum.TryParse(workTypeStr, out Merchanter.Classes.Work.WorkType workType) ? workType : default,
+                            dataReader["direction"] is string workDirectionStr && Enum.TryParse(workDirectionStr, out Merchanter.Classes.Work.WorkDirection workDirection) ? workDirection : default,
+                            Convert.ToBoolean(Convert.ToInt32(dataReader["status"].ToString())),
+                            dataReader["version"].ToString()
+                        ));
                     }
+                    await dataReader.CloseAsync();
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return list;
+                }
 
                 return null;
             }
@@ -2173,27 +1954,24 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_notifications">Notifications</param>
         /// <returns>[No change] or [Error] returns 'false'</returns>
-        public bool InsertNotifications(int _customer_id, List<Notification> _notifications) {
+        public async Task<bool> InsertNotification(int _customer_id, Notification _notification) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                int val = 0;
-                foreach (Notification item in _notifications) {
-                    string _query = "INSERT INTO notifications (customer_id,type,order_label,product_sku,xproduct_barcode,invoice_no,notification_content) VALUES (@customer_id,@type,@order_label,@product_sku,@xproduct_barcode,@invoice_no,@notification_content)";
-                    MySqlCommand cmd = new MySqlCommand(_query, connection);
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "INSERT INTO notifications (customer_id,type,order_label,product_sku,xproduct_barcode,invoice_no,notification_content) VALUES (@customer_id,@type,@order_label,@product_sku,@xproduct_barcode,@invoice_no,@notification_content);";
+                    MySqlCommand cmd = new(_query, connection);
                     cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                    cmd.Parameters.Add(new MySqlParameter("type", item.type));
-                    cmd.Parameters.Add(new MySqlParameter("is_notification_sent", item.is_notification_sent));
-                    cmd.Parameters.Add(new MySqlParameter("notification_content", item.notification_content));
-                    cmd.Parameters.Add(new MySqlParameter("order_label", item.order_label));
-                    cmd.Parameters.Add(new MySqlParameter("product_sku", item.product_sku));
-                    cmd.Parameters.Add(new MySqlParameter("xproduct_barcode", item.xproduct_barcode));
-                    cmd.Parameters.Add(new MySqlParameter("invoice_no", item.invoice_no));
-                    val += cmd.ExecuteNonQuery();
+                    cmd.Parameters.Add(new MySqlParameter("type", _notification.type));
+                    cmd.Parameters.Add(new MySqlParameter("is_notification_sent", _notification.is_notification_sent));
+                    cmd.Parameters.Add(new MySqlParameter("notification_content", _notification.notification_content));
+                    cmd.Parameters.Add(new MySqlParameter("order_label", _notification.order_label));
+                    cmd.Parameters.Add(new MySqlParameter("product_sku", _notification.product_sku));
+                    cmd.Parameters.Add(new MySqlParameter("xproduct_barcode", _notification.xproduct_barcode));
+                    cmd.Parameters.Add(new MySqlParameter("invoice_no", _notification.invoice_no));
+                    int val = await cmd.ExecuteNonQueryAsync();
+                    if (state == System.Data.ConnectionState.Open) await connection.CloseAsync();
+                    return val > 0;
                 }
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                if (val > 0)
-                    return true;
-                else return false;
+                return false;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -2207,24 +1985,21 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_notifications">Notifications</param>
         /// <returns>[No change] or [Error] returns 'false'</returns>
-        public bool UpdateNotifications(int _customer_id, List<Notification> _notifications) {
+        public async Task<bool> UpdateNotification(int _customer_id, Notification _notification) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                int val = 0;
-                foreach (Notification item in _notifications) {
-                    string _query = "UPDATE notifications SET notification_content=@notification_content,is_notification_sent=@is_notification_sent,notification_date=@notification_date WHERE id=@id AND customer_id=@customer_id";
-                    MySqlCommand cmd = new MySqlCommand(_query, connection);
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "UPDATE notifications SET notification_content=@notification_content,is_notification_sent=@is_notification_sent,notification_date=@notification_date WHERE id=@id AND customer_id=@customer_id;";
+                    MySqlCommand cmd = new(_query, connection);
                     cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                    cmd.Parameters.Add(new MySqlParameter("id", item.id));
-                    cmd.Parameters.Add(new MySqlParameter("notification_content", item.notification_content));
-                    cmd.Parameters.Add(new MySqlParameter("is_notification_sent", item.is_notification_sent));
+                    cmd.Parameters.Add(new MySqlParameter("id", _notification.id));
+                    cmd.Parameters.Add(new MySqlParameter("notification_content", _notification.notification_content));
+                    cmd.Parameters.Add(new MySqlParameter("is_notification_sent", _notification.is_notification_sent));
                     cmd.Parameters.Add(new MySqlParameter("notification_date", DateTime.Now));
-                    val += cmd.ExecuteNonQuery();
+                    int val = await cmd.ExecuteNonQueryAsync();
+                    if (state == System.Data.ConnectionState.Open) await connection.CloseAsync();
+                    return val > 0;
                 }
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                if (val > 0)
-                    return true;
-                else return false;
+                return false;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -2238,79 +2013,37 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_is_notification_sent">Is Notification Sent</param>
         /// <returns>[Error] returns 'null'</returns>
-        public List<Notification> GetNotifications(int _customer_id, bool? _is_notification_sent) {
+        public async Task<List<Notification>?> GetNotifications(int _customer_id, bool? _is_notification_sent, ApiFilter _filters) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
+                List<Notification> list = [];
                 string _query = (!_is_notification_sent.HasValue ? "SELECT * FROM notifications WHERE customer_id=@customer_id" :
-                    "SELECT * FROM notifications WHERE is_notification_sent = " + (_is_notification_sent.Value ? "1" : "0") + " AND customer_id=@customer_id");
-                List<Notification> list = [];
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                "SELECT * FROM notifications WHERE is_notification_sent = " + (_is_notification_sent.Value ? "1" : "0") + " AND customer_id=@customer_id");
+                MySqlCommand cmd = new() { Connection = connection };
+                cmd.CommandText = DbHelperBase.BuildDBQuery(_filters, ref _query, ref cmd, typeof(Notification));
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                MySqlDataReader dataReader = cmd.ExecuteReader();
-                while (dataReader.Read()) {
-                    Notification n = new Notification {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        type = (Notification.NotificationTypes)Convert.ToInt32(dataReader["type"].ToString()),
-                        order_label = dataReader["order_label"].ToString(),
-                        product_sku = dataReader["product_sku"].ToString(),
-                        xproduct_barcode = dataReader["xproduct_barcode"].ToString(),
-                        invoice_no = dataReader["invoice_no"].ToString(),
-                        notification_content = dataReader["notification_content"].ToString(),
-                        is_notification_sent = Convert.ToBoolean(Convert.ToInt32(dataReader["is_notification_sent"].ToString())),
-                        create_date = Convert.ToDateTime(dataReader["create_date"].ToString()),
-                        notification_date = !string.IsNullOrWhiteSpace(dataReader["notification_date"].ToString()) ? Convert.ToDateTime(dataReader["notification_date"].ToString()) : null,
-                    };
-                    list.Add(n);
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    while (await dataReader.ReadAsync()) {
+                        Notification n = new Notification {
+                            id = Convert.ToInt32(dataReader["id"].ToString()),
+                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            type = (Notification.NotificationTypes)Convert.ToInt32(dataReader["type"].ToString()),
+                            order_label = dataReader["order_label"].ToString(),
+                            product_sku = dataReader["product_sku"].ToString(),
+                            xproduct_barcode = dataReader["xproduct_barcode"].ToString(),
+                            invoice_no = dataReader["invoice_no"].ToString(),
+                            notification_content = dataReader["notification_content"].ToString(),
+                            is_notification_sent = Convert.ToBoolean(Convert.ToInt32(dataReader["is_notification_sent"].ToString())),
+                            create_date = Convert.ToDateTime(dataReader["create_date"].ToString()),
+                            notification_date = !string.IsNullOrWhiteSpace(dataReader["notification_date"].ToString()) ? Convert.ToDateTime(dataReader["notification_date"].ToString()) : null,
+                        };
+                        list.Add(n);
+                    }
+                    await dataReader.CloseAsync();
+                    if (state == System.Data.ConnectionState.Open) await connection.CloseAsync();
+                    return list;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return list;
-            }
-            catch (Exception ex) {
-                OnError(ex.ToString());
                 return null;
-            }
-        }
-
-        /// <summary>
-        /// Gets the notifications from the database
-        /// </summary>
-        /// <param name="_customer_id">Customer ID</param>
-        /// <param name="_is_notification_sent">Is Notification Sent</param>
-        /// <param name="_items_per_page">Items Per Page</param>
-        /// <param name="_current_page_index">Current Page Index</param>
-        /// <returns>[Error] returns 'null'</returns>
-        public List<Notification> GetNotifications(int _customer_id, bool? _is_notification_sent, int _items_per_page = 20, int _current_page_index = 0) {
-            try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = (!_is_notification_sent.HasValue ? "SELECT * FROM notifications WHERE customer_id=@customer_id ORDER BY id DESC LIMIT @start,@end" :
-                    "SELECT * FROM notifications WHERE is_notification_sent = " + (_is_notification_sent.Value ? "1" : "0") + " AND customer_id=@customer_id ORDER BY id DESC LIMIT @start,@end");
-                List<Notification> list = [];
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("start", _items_per_page * (_current_page_index)));
-                cmd.Parameters.Add(new MySqlParameter("end", _items_per_page));
-                MySqlDataReader dataReader = cmd.ExecuteReader();
-                while (dataReader.Read()) {
-                    Notification n = new Notification {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        type = (Notification.NotificationTypes)Convert.ToInt32(dataReader["type"].ToString()),
-                        order_label = dataReader["order_label"].ToString(),
-                        product_sku = dataReader["product_sku"].ToString(),
-                        xproduct_barcode = dataReader["xproduct_barcode"].ToString(),
-                        invoice_no = dataReader["invoice_no"].ToString(),
-                        notification_content = dataReader["notification_content"].ToString(),
-                        is_notification_sent = Convert.ToBoolean(Convert.ToInt32(dataReader["is_notification_sent"].ToString())),
-                        create_date = Convert.ToDateTime(dataReader["create_date"].ToString()),
-                        notification_date = !string.IsNullOrWhiteSpace(dataReader["notification_date"].ToString()) ? Convert.ToDateTime(dataReader["notification_date"].ToString()) : null,
-                    };
-                    list.Add(n);
-                }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return list;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -2369,76 +2102,77 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_id">ID</param>
         /// <returns>[No data] or [Error] returns 'null'</returns>
-        public Product? GetProduct(int _customer_id, int _id) {
+        public async Task<Product?> GetProduct(int _customer_id, int _id) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM products WHERE id=@id AND customer_id=@customer_id;";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("id", _id));
-                MySqlDataReader dataReader = cmd.ExecuteReader();
-                Product? p = null;
-                if (dataReader.Read()) {
-                    p = new Product {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        source_product_id = Convert.ToInt32(dataReader["source_product_id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        update_date = Convert.ToDateTime(dataReader["update_date"].ToString()),
-                        sku = dataReader["sku"].ToString(),
-                        type = (Product.ProductTypes)Convert.ToInt32(dataReader["type"].ToString()),
-                        total_qty = Convert.ToInt32(dataReader["total_qty"].ToString()),
-                        name = dataReader["name"].ToString(),
-                        barcode = dataReader["barcode"].ToString(),
-                        price = decimal.Parse(dataReader["price"].ToString()),
-                        special_price = decimal.Parse(dataReader["special_price"].ToString()),
-                        custom_price = decimal.Parse(dataReader["custom_price"].ToString()),
-                        currency = Currency.GetCurrency(dataReader["currency"].ToString()),
-                        tax = Convert.ToInt32(dataReader["tax"].ToString()),
-                        tax_included = Convert.ToBoolean(Convert.ToInt32(dataReader["tax_included"].ToString()))
-                    };
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM products WHERE id=@id AND customer_id=@customer_id;";
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    cmd.Parameters.Add(new MySqlParameter("id", _id));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    Product? p = null;
+                    if (await dataReader.ReadAsync()) {
+                        p = new Product {
+                            id = Convert.ToInt32(dataReader["id"].ToString()),
+                            source_product_id = Convert.ToInt32(dataReader["source_product_id"].ToString()),
+                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            update_date = Convert.ToDateTime(dataReader["update_date"].ToString()),
+                            sku = dataReader["sku"].ToString(),
+                            type = (Product.ProductTypes)Convert.ToInt32(dataReader["type"].ToString()),
+                            total_qty = Convert.ToInt32(dataReader["total_qty"].ToString()),
+                            name = dataReader["name"].ToString(),
+                            barcode = dataReader["barcode"].ToString(),
+                            price = decimal.Parse(dataReader["price"].ToString()),
+                            special_price = decimal.Parse(dataReader["special_price"].ToString()),
+                            custom_price = decimal.Parse(dataReader["custom_price"].ToString()),
+                            currency = Currency.GetCurrency(dataReader["currency"].ToString()),
+                            tax = Convert.ToInt32(dataReader["tax"].ToString()),
+                            tax_included = Convert.ToBoolean(Convert.ToInt32(dataReader["tax_included"].ToString()))
+                        };
+                    }
+                    await dataReader.CloseAsync();
+                    if (state == System.Data.ConnectionState.Open) await connection.CloseAsync();
+
+                    if (p is not null && !string.IsNullOrWhiteSpace(p.sku)) {
+                        var ext = await GetProductExt(_customer_id, p.sku);
+                        if (ext is not null) {
+                            p.extension = ext;
+                        }
+                        else {
+                            OnError("GetProduct: " + p.sku + " - Product Extension Not Found");
+                            return null;
+                        }
+
+                        var pas = GetProductAttributes(_customer_id, p.id);
+                        if (pas is not null) {
+                            p.attributes = [.. pas];
+                        }
+                        else {
+                            OnError("GetProduct: " + p.sku + " - Product Attributes Not Found");
+                            return null;
+                        }
+
+                        var ss = await GetProductSources(_customer_id, p.sku);
+                        if (ss is not null && ss.Count > 0) {
+                            p.sources = [.. ss];
+                        }
+                        else {
+                            OnError("GetProduct: " + p.sku + " - Product Source Not Found");
+                            return null;
+                        }
+
+                        var images = await GetProductImages(_customer_id, p.sku);
+                        if (images is not null) {
+                            p.images = [.. images];
+                        }
+                        else {
+                            OnError("GetProduct: " + p.sku + " - Product Images Not Found");
+                            return null;
+                        }
+                    }
+                    return p;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-
-                if (p is not null && !string.IsNullOrWhiteSpace(p.sku)) {
-                    var ext = GetProductExt(_customer_id, p.sku);
-                    if (ext is not null) {
-                        p.extension = ext;
-                    }
-                    else {
-                        OnError("GetProduct: " + p.sku + " - Product Extension Not Found");
-                        return null;
-                    }
-
-                    var pas = GetProductAttributes(_customer_id, p.id);
-                    if (pas is not null) {
-                        p.attributes = [.. pas];
-                    }
-                    else {
-                        OnError("GetProduct: " + p.sku + " - Product Attributes Not Found");
-                        return null;
-                    }
-
-                    var ss = GetProductSources(_customer_id, p.sku);
-                    if (ss is not null && ss.Count > 0) {
-                        p.sources = [.. ss];
-                    }
-                    else {
-                        OnError("GetProduct: " + p.sku + " - Product Source Not Found");
-                        return null;
-                    }
-
-                    var images = GetProductImages(_customer_id, p.sku);
-                    if (images is not null) {
-                        p.images = [.. images];
-                    }
-                    else {
-                        OnError("GetProduct: " + p.sku + " - Product Images Not Found");
-                        return null;
-                    }
-                }
-
-                return p;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -2452,76 +2186,77 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_sku">SKU</param>
         /// <returns>[No data] or [Error] returns 'null'</returns>
-        public Product? GetProductBySku(int _customer_id, string _sku) {
+        public async Task<Product?> GetProductBySku(int _customer_id, string _sku) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM products WHERE sku=@sku AND customer_id=@customer_id;";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("sku", _sku));
-                MySqlDataReader dataReader = cmd.ExecuteReader();
-                Product? p = null;
-                if (dataReader.Read()) {
-                    p = new Product {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        source_product_id = Convert.ToInt32(dataReader["source_product_id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        update_date = Convert.ToDateTime(dataReader["update_date"].ToString()),
-                        sku = dataReader["sku"].ToString(),
-                        type = (Product.ProductTypes)Convert.ToInt32(dataReader["type"].ToString()),
-                        total_qty = Convert.ToInt32(dataReader["total_qty"].ToString()),
-                        name = dataReader["name"].ToString(),
-                        barcode = dataReader["barcode"].ToString(),
-                        price = decimal.Parse(dataReader["price"].ToString()),
-                        special_price = decimal.Parse(dataReader["special_price"].ToString()),
-                        custom_price = decimal.Parse(dataReader["custom_price"].ToString()),
-                        currency = Currency.GetCurrency(dataReader["currency"].ToString()),
-                        tax = Convert.ToInt32(dataReader["tax"].ToString()),
-                        tax_included = Convert.ToBoolean(Convert.ToInt32(dataReader["tax_included"].ToString()))
-                    };
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM products WHERE sku=@sku AND customer_id=@customer_id;";
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    cmd.Parameters.Add(new MySqlParameter("sku", _sku));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    Product? p = null;
+                    if (await dataReader.ReadAsync()) {
+                        p = new Product {
+                            id = Convert.ToInt32(dataReader["id"].ToString()),
+                            source_product_id = Convert.ToInt32(dataReader["source_product_id"].ToString()),
+                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            update_date = Convert.ToDateTime(dataReader["update_date"].ToString()),
+                            sku = dataReader["sku"].ToString(),
+                            type = (Product.ProductTypes)Convert.ToInt32(dataReader["type"].ToString()),
+                            total_qty = Convert.ToInt32(dataReader["total_qty"].ToString()),
+                            name = dataReader["name"].ToString(),
+                            barcode = dataReader["barcode"].ToString(),
+                            price = decimal.Parse(dataReader["price"].ToString()),
+                            special_price = decimal.Parse(dataReader["special_price"].ToString()),
+                            custom_price = decimal.Parse(dataReader["custom_price"].ToString()),
+                            currency = Currency.GetCurrency(dataReader["currency"].ToString()),
+                            tax = Convert.ToInt32(dataReader["tax"].ToString()),
+                            tax_included = Convert.ToBoolean(Convert.ToInt32(dataReader["tax_included"].ToString()))
+                        };
+                    }
+                    await dataReader.CloseAsync();
+                    if (state == System.Data.ConnectionState.Open) await connection.CloseAsync();
+
+                    if (p is not null && !string.IsNullOrWhiteSpace(p.sku)) {
+                        var ext = await GetProductExt(_customer_id, p.sku);
+                        if (ext is not null) {
+                            p.extension = ext;
+                        }
+                        else {
+                            OnError("GetProductBySku: " + p.sku + " - Product Extension Not Found");
+                            return null;
+                        }
+
+                        var pas = GetProductAttributes(_customer_id, p.id);
+                        if (pas is not null) {
+                            p.attributes = [.. pas];
+                        }
+                        else {
+                            OnError("GetProduct: " + p.sku + " - Product Attributes Not Found");
+                            return null;
+                        }
+
+                        var ss = await GetProductSources(_customer_id, p.sku);
+                        if (ss is not null && ss.Count > 0) {
+                            p.sources = [.. ss];
+                        }
+                        else {
+                            OnError("GetProductBySku: " + p.sku + " - Product Source Not Found");
+                            return null;
+                        }
+
+                        var imgs = await GetProductImages(_customer_id, p.id);
+                        if (imgs is not null) {
+                            p.images = [.. imgs];
+                        }
+                        else {
+                            OnError("GetProductBySku: " + p.sku + " - Product Images Not Found");
+                            return null;
+                        }
+                    }
+                    return p;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-
-                if (p is not null && !string.IsNullOrWhiteSpace(p.sku)) {
-                    var ext = GetProductExt(_customer_id, p.sku);
-                    if (ext is not null) {
-                        p.extension = ext;
-                    }
-                    else {
-                        OnError("GetProductBySku: " + p.sku + " - Product Extension Not Found");
-                        return null;
-                    }
-
-                    var pas = GetProductAttributes(_customer_id, p.id);
-                    if (pas is not null) {
-                        p.attributes = [.. pas];
-                    }
-                    else {
-                        OnError("GetProduct: " + p.sku + " - Product Attributes Not Found");
-                        return null;
-                    }
-
-                    var ss = GetProductSources(_customer_id, p.sku);
-                    if (ss is not null && ss.Count > 0) {
-                        p.sources = [.. ss];
-                    }
-                    else {
-                        OnError("GetProductBySku: " + p.sku + " - Product Source Not Found");
-                        return null;
-                    }
-
-                    var imgs = GetProductImages(_customer_id, p.id);
-                    if (imgs is not null) {
-                        p.images = [.. imgs];
-                    }
-                    else {
-                        OnError("GetProductBySku: " + p.sku + " - Product Images Not Found");
-                        return null;
-                    }
-                }
-
-                return p;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -2598,8 +2333,8 @@ namespace Merchanter {
                 _brands = GetBrands(_customer_id);
                 _categories = GetCategories(_customer_id);
                 _product_attributes = GetProductAttributes(_customer_id);
-                _product_images = GetProductImages(_customer_id);
-                _product_prices = GetProductPrices(_customer_id);
+                _product_images = GetProductImages(_customer_id).Result;
+                _product_prices = GetProductPrices(_customer_id).Result;
 
                 // Attach brands and categories
                 for (int i = 0; i < list.Count; i++) {
@@ -2610,14 +2345,14 @@ namespace Merchanter {
                 }
 
                 // Load other product sources
-                var ai = LoadActiveIntegrations(_customer_id);
+                var ai = LoadActiveIntegrations(_customer_id).Result;
                 if (ai is null || ai.Count == 0) {
                     OnError("GetProducts: Active Integrations Not Found");
                     return [];
                 }
                 var main_source = ai.FirstOrDefault(x => x.work_status && x.work_type == Work.WorkType.PRODUCT && x.work_direction == Work.WorkDirection.MAIN_SOURCE);
                 if (main_source is not null) {
-                    _product_other_sources = GetProductOtherSources(_customer_id, main_source.work_name);
+                    _product_other_sources = GetProductOtherSources(_customer_id, main_source.work_name).Result;
                     if (_product_other_sources is not null && _product_other_sources.Count > 0) {
                         foreach (var item in list) {
                             var selected_product_source = _product_other_sources?.FindAll(x => x.sku == item.sku);
@@ -2663,7 +2398,7 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_filters">Api Filters</param>
         /// <returns>[Error] returns 'null'</returns>
-        public List<Product> GetProducts(int _customer_id, ApiFilter _filters) {
+        public async Task<List<Product>?> GetProducts(int _customer_id, ApiFilter _filters) {
             try {
                 List<Brand> brands = GetBrands(_customer_id);
                 List<Category> categories = GetCategories(_customer_id);
@@ -2674,42 +2409,42 @@ namespace Merchanter {
                 MySqlCommand cmd = new() { Connection = connection };
                 cmd.CommandText = DbHelperBase.BuildDBQuery(_filters, ref _query, ref cmd, typeof(Product));
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                MySqlDataReader dataReader = cmd.ExecuteReader();
-                while (dataReader.Read()) {
-                    Product p = new Product {
-                        id = Convert.ToInt32(dataReader["p_id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["p_customer_id"].ToString()),
-                        source_product_id = Convert.ToInt32(dataReader["p_source_product_id"].ToString()),
-                        update_date = Convert.ToDateTime(dataReader["p_update_date"].ToString()),
-                        sku = dataReader["p_sku"].ToString(),
-                        type = (Product.ProductTypes)Convert.ToInt32(dataReader["p_type"].ToString()),
-                        total_qty = Convert.ToInt32(dataReader["p_total_qty"].ToString()),
-                        name = dataReader["p_name"].ToString(),
-                        barcode = dataReader["p_barcode"].ToString(),
-                        price = decimal.Parse(dataReader["p_price"].ToString()),
-                        special_price = decimal.Parse(dataReader["p_special_price"].ToString()),
-                        custom_price = decimal.Parse(dataReader["p_custom_price"].ToString()),
-                        currency = Currency.GetCurrency(dataReader["p_currency"].ToString()),
-                        tax = Convert.ToInt32(dataReader["p_tax"].ToString()),
-                        tax_included = Convert.ToBoolean(Convert.ToInt32(dataReader["p_tax_included"].ToString()))
-                    };
-                    p.extension = new ProductExtension() {
-                        id = Convert.ToInt32(dataReader["pe_id"].ToString()),
-                        customer_id = p.customer_id,
-                        is_enabled = dataReader["pe_is_enabled"].ToString() == "1",
-                        sku = p.sku,
-                        barcode = p.barcode,
-                        brand_id = Convert.ToInt32(dataReader["pe_brand_id"].ToString()),
-                        category_ids = dataReader["pe_category_ids"].ToString(),
-                        is_xml_enabled = dataReader["pe_is_xml_enabled"].ToString() == "1",
-                        xml_sources = dataReader["pe_xml_sources"]?.ToString()?.Split(','),
-                        weight = Convert.ToDecimal(dataReader["pe_weight"].ToString()),
-                        volume = Convert.ToDecimal(dataReader["pe_volume"].ToString()),
-                        description = dataReader["pe_description"].ToString(),
-                        update_date = Convert.ToDateTime(dataReader["pe_update_date"].ToString())
-                    };
-                    p.sources = [new ProductSource(_customer_id,
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    while (await dataReader.ReadAsync()) {
+                        Product p = new Product {
+                            id = Convert.ToInt32(dataReader["p_id"].ToString()),
+                            customer_id = Convert.ToInt32(dataReader["p_customer_id"].ToString()),
+                            source_product_id = Convert.ToInt32(dataReader["p_source_product_id"].ToString()),
+                            update_date = Convert.ToDateTime(dataReader["p_update_date"].ToString()),
+                            sku = dataReader["p_sku"].ToString(),
+                            type = (Product.ProductTypes)Convert.ToInt32(dataReader["p_type"].ToString()),
+                            total_qty = Convert.ToInt32(dataReader["p_total_qty"].ToString()),
+                            name = dataReader["p_name"].ToString(),
+                            barcode = dataReader["p_barcode"].ToString(),
+                            price = decimal.Parse(dataReader["p_price"].ToString()),
+                            special_price = decimal.Parse(dataReader["p_special_price"].ToString()),
+                            custom_price = decimal.Parse(dataReader["p_custom_price"].ToString()),
+                            currency = Currency.GetCurrency(dataReader["p_currency"].ToString()),
+                            tax = Convert.ToInt32(dataReader["p_tax"].ToString()),
+                            tax_included = Convert.ToBoolean(Convert.ToInt32(dataReader["p_tax_included"].ToString()))
+                        };
+                        p.extension = new ProductExtension() {
+                            id = Convert.ToInt32(dataReader["pe_id"].ToString()),
+                            customer_id = p.customer_id,
+                            is_enabled = dataReader["pe_is_enabled"].ToString() == "1",
+                            sku = p.sku,
+                            barcode = p.barcode,
+                            brand_id = Convert.ToInt32(dataReader["pe_brand_id"].ToString()),
+                            category_ids = dataReader["pe_category_ids"].ToString(),
+                            is_xml_enabled = dataReader["pe_is_xml_enabled"].ToString() == "1",
+                            xml_sources = dataReader["pe_xml_sources"]?.ToString()?.Split(','),
+                            weight = Convert.ToDecimal(dataReader["pe_weight"].ToString()),
+                            volume = Convert.ToDecimal(dataReader["pe_volume"].ToString()),
+                            description = dataReader["pe_description"].ToString(),
+                            update_date = Convert.ToDateTime(dataReader["pe_update_date"].ToString())
+                        };
+                        p.sources = [new ProductSource(_customer_id,
                         Convert.ToInt32(dataReader["ps_id"].ToString()),
                         dataReader["ps_name"].ToString(),
                         p.sku, p.barcode, Convert.ToInt32(dataReader["ps_qty"].ToString()),
@@ -2717,240 +2452,65 @@ namespace Merchanter {
                         Convert.ToDateTime(dataReader["ps_update_date"].ToString())
 
                     )];
-                    p.target_prices = [];
-                    p.attributes = [];
-                    p.images = [];
-                    list.Add(p);
-                }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-
-                // Attach brands and categories
-                for (int i = 0; i < list.Count; i++) {
-                    if (list[i].extension.brand_id > 0)
-                        list[i].extension.brand = brands.FirstOrDefault(x => x.id == list[i].extension.brand_id);
-                    if (!string.IsNullOrWhiteSpace(list[i].extension.category_ids))
-                        list[i].extension.categories = categories?.Where(x => list[i].extension.category_ids.Split(",").Contains(x.id.ToString())).ToList();
-                }
-
-                // Load other product sources
-                var ai = LoadActiveIntegrations(_customer_id);
-                if (ai == null || ai.Count == 0) {
-                    OnError("GetProducts: Active Integrations Not Found");
-                    return [];
-                }
-                var main_source = ai.FirstOrDefault(x => x.work_status && x.work_type == Work.WorkType.PRODUCT && x.work_direction == Work.WorkDirection.MAIN_SOURCE);
-                if (main_source is not null)
-                    product_other_sources = GetProductOtherSources(_customer_id, main_source.work_name);
-                if (product_other_sources is not null && product_other_sources.Count > 0) {
-                    foreach (var item in list) {
-                        var selected_product_source = product_other_sources?.FindAll(x => x.sku == item.sku);
-                        if (selected_product_source is not null && selected_product_source.Count > 0)
-                            item.sources.AddRange(selected_product_source);
+                        p.target_prices = [];
+                        p.attributes = [];
+                        p.images = [];
+                        list.Add(p);
                     }
-                }
+                    await dataReader.CloseAsync();
+                    if (state == System.Data.ConnectionState.Open) await connection.CloseAsync();
 
-                // Load product prices
-                var product_prices = GetProductPrices(_customer_id);
-                if (product_prices is not null && product_prices.Count > 0) {
-                    foreach (var item in list) {
-                        item.target_prices = [.. product_prices.Where(x => x.product_id == item.id)];
+                    // Attach brands and categories
+                    for (int i = 0; i < list.Count; i++) {
+                        if (list[i].extension.brand_id > 0)
+                            list[i].extension.brand = brands.FirstOrDefault(x => x.id == list[i].extension.brand_id);
+                        if (!string.IsNullOrWhiteSpace(list[i].extension.category_ids))
+                            list[i].extension.categories = categories?.Where(x => list[i].extension.category_ids.Split(",").Contains(x.id.ToString())).ToList();
                     }
-                }
 
-                // Get product attributes
-                var attrs = GetProductAttributes(_customer_id);
-                if (attrs is not null && attrs.Count > 0) {
-                    foreach (var item in list) {
-                        item.attributes = [.. attrs.Where(x => x.product_id == item.id)];
+                    // Load other product sources
+                    var ai = await LoadActiveIntegrations(_customer_id);
+                    if (ai == null || ai.Count == 0) {
+                        OnError("GetProducts: Active Integrations Not Found");
+                        return [];
                     }
-                }
-
-                // Get product images
-                var images = GetProductImages(_customer_id);
-                if (images is not null && images.Count > 0) {
-                    foreach (var item in list) {
-                        item.images = [.. images.Where(x => x.product_id == item.id)];
-                    }
-                }
-
-                return list;
-            }
-            catch (Exception ex) {
-                OnError(ex.ToString());
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Gets products from the database
-        /// </summary>
-        /// <param name="_customer_id">Customer ID</param>
-        /// <param name="_keyword">Keyword</param>
-        /// <param name="_with_ext">Get with extension</param>
-        /// <returns>[Error] returns 'null'</returns>
-        public List<Product> SearchProducts(int _customer_id, string[] _skus, bool _with_attr = false, bool _with_ext = true) {
-            try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string skus = string.Empty;
-                for (int i = 0; i < _skus.Length; i++) {
-                    if (i == 0)
-                        skus += "@sku" + i.ToString();
-                    else
-                        skus += "," + "@sku" + i.ToString();
-                }
-                string _query = "SELECT * FROM products WHERE sku IN (" + skus + ") AND customer_id=@customer_id ORDER BY id DESC";
-                List<Product> list = new List<Product>();
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                for (int i = 0; i < _skus.Length; i++) {
-                    cmd.Parameters.Add(new MySqlParameter("sku" + i.ToString(), _skus[i]));
-                }
-                //cmd.Parameters.Add(new MySqlParameter("keyword", string.Format("%{0}%", _keyword)));
-                MySqlDataReader dataReader = cmd.ExecuteReader();
-                while (dataReader.Read()) {
-                    Product p = new Product {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        source_product_id = Convert.ToInt32(dataReader["source_product_id"].ToString()),
-                        update_date = Convert.ToDateTime(dataReader["update_date"].ToString()),
-                        sku = dataReader["sku"].ToString(),
-                        type = (Product.ProductTypes)Convert.ToInt32(dataReader["type"].ToString()),
-                        total_qty = Convert.ToInt32(dataReader["total_qty"].ToString()),
-                        name = dataReader["name"].ToString(),
-                        barcode = dataReader["barcode"].ToString(),
-                        price = decimal.Parse(dataReader["price"].ToString()),
-                        special_price = decimal.Parse(dataReader["special_price"].ToString()),
-                        custom_price = decimal.Parse(dataReader["custom_price"].ToString()),
-                        currency = Currency.GetCurrency(dataReader["currency"].ToString()),
-                        tax = Convert.ToInt32(dataReader["tax"].ToString()),
-                        tax_included = Convert.ToBoolean(Convert.ToInt32(dataReader["tax_included"].ToString())),
-                    };
-                    list.Add(p);
-                }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                if (_with_ext) {
-                    var exts = GetProductExts(_customer_id);
-                    foreach (var item in list) {
-                        var selected_ext = exts?.Where(x => x.sku == item.sku).FirstOrDefault();
-                        if (selected_ext is not null)
-                            item.extension = selected_ext;
-                        else {
-                            OnError("SearchProducts: " + item.sku + " - Product Extension Not Found");
-                            return null;
+                    var main_source = ai.FirstOrDefault(x => x.work_status && x.work_type == Work.WorkType.PRODUCT && x.work_direction == Work.WorkDirection.MAIN_SOURCE);
+                    if (main_source is not null)
+                        product_other_sources = await GetProductOtherSources(_customer_id, main_source.work_name);
+                    if (product_other_sources is not null && product_other_sources.Count > 0) {
+                        foreach (var item in list) {
+                            var selected_product_source = product_other_sources?.FindAll(x => x.sku == item.sku);
+                            if (selected_product_source is not null && selected_product_source.Count > 0)
+                                item.sources.AddRange(selected_product_source);
                         }
                     }
-                }
 
-                if (_with_attr) {
+                    // Load product prices
+                    var product_prices = await GetProductPrices(_customer_id);
+                    if (product_prices is not null && product_prices.Count > 0) {
+                        foreach (var item in list) {
+                            item.target_prices = [.. product_prices.Where(x => x.product_id == item.id)];
+                        }
+                    }
+
+                    // Get product attributes
                     var attrs = GetProductAttributes(_customer_id);
-                    if (attrs is not null) {
+                    if (attrs is not null && attrs.Count > 0) {
                         foreach (var item in list) {
                             item.attributes = [.. attrs.Where(x => x.product_id == item.id)];
                         }
                     }
-                    else {
-                        OnError("GetProducts: Product Attributes Not Found");
-                        return null;
-                    }
-                }
 
-                var product_sources = GetProductSources(_customer_id);
-                foreach (var item in list) {
-                    var selected_product_source = product_sources?.Where(x => x.sku == item.sku).ToList();
-                    if (selected_product_source is not null)
-                        item.sources = selected_product_source;
-                    else {
-                        OnError("SearchProducts: " + item.sku + " - Product Source Not Found");
-                        return null;
-                    }
-                }
-
-                return list;
-            }
-            catch (Exception ex) {
-                OnError(ex.ToString());
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Gets products from the database
-        /// </summary>
-        /// <param name="_customer_id">Customer ID</param>
-        /// <param name="_keyword">Keyword</param>
-        /// <param name="_with_ext">Get with extension</param>
-        /// <returns>[Error] returns 'null'</returns>
-        public List<Product> SearchProducts(int _customer_id, string _keyword, bool _with_attr = false, bool _with_ext = true) {
-            try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM products WHERE (sku LIKE @keyword OR name LIKE @keyword OR barcode LIKE @keyword) AND customer_id=@customer_id ORDER BY id DESC";
-                List<Product> list = new List<Product>();
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("keyword", string.Format("%{0}%", _keyword)));
-                MySqlDataReader dataReader = cmd.ExecuteReader();
-                while (dataReader.Read()) {
-                    Product p = new Product {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        source_product_id = Convert.ToInt32(dataReader["source_product_id"].ToString()),
-                        update_date = Convert.ToDateTime(dataReader["update_date"].ToString()),
-                        sku = dataReader["sku"].ToString(),
-                        type = (Product.ProductTypes)Convert.ToInt32(dataReader["type"].ToString()),
-                        total_qty = Convert.ToInt32(dataReader["total_qty"].ToString()),
-                        name = dataReader["name"].ToString(),
-                        barcode = dataReader["barcode"].ToString(),
-                        price = decimal.Parse(dataReader["price"].ToString()),
-                        special_price = decimal.Parse(dataReader["special_price"].ToString()),
-                        custom_price = decimal.Parse(dataReader["custom_price"].ToString()),
-                        currency = Currency.GetCurrency(dataReader["currency"].ToString()),
-                        tax = Convert.ToInt32(dataReader["tax"].ToString()),
-                        tax_included = Convert.ToBoolean(Convert.ToInt32(dataReader["tax_included"].ToString())),
-                    };
-                    list.Add(p);
-                }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                if (_with_ext) {
-                    var exts = GetProductExts(_customer_id);
-                    foreach (var item in list) {
-                        var selected_ext = exts?.Where(x => x.sku == item.sku).FirstOrDefault();
-                        if (selected_ext is not null)
-                            item.extension = selected_ext;
-                        else {
-                            OnError("SearchProducts: " + item.sku + " - Product Extension Not Found");
-                            return null;
-                        }
-                    }
-                }
-
-                if (_with_attr) {
-                    var attrs = GetProductAttributes(_customer_id);
-                    if (attrs is not null) {
+                    // Get product images
+                    var images = await GetProductImages(_customer_id);
+                    if (images is not null && images.Count > 0) {
                         foreach (var item in list) {
-                            item.attributes = attrs.Where(x => x.product_id == item.id).ToList();
+                            item.images = [.. images.Where(x => x.product_id == item.id)];
                         }
                     }
-                    else {
-                        OnError("GetProducts: Product Attributes Not Found");
-                        return null;
-                    }
+                    return list;
                 }
-
-                var product_sources = GetProductSources(_customer_id);
-                foreach (var item in list) {
-                    var selected_product_source = product_sources?.Where(x => x.sku == item.sku).ToList();
-                    if (selected_product_source is not null)
-                        item.sources = selected_product_source;
-                    else {
-                        OnError("SearchProducts: " + item.sku + " - Product Source Not Found");
-                        return null;
-                    }
-                }
-
-                return list;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -2958,99 +2518,19 @@ namespace Merchanter {
             }
         }
 
-        /// <summary>
-        /// Inserts the products to the database
-        /// </summary>
-        /// <param name="_customer_id">Customer ID</param>
-        /// <param name="_products">Products</param>
-        /// <param name="_with_ext">Insert with extension</param>
-        public int InsertProducts(int _customer_id, List<Product> _products) {
+        public async Task<Product?> InsertProduct(int _customer_id, Product _product) {
             try {
-                UInt64 inserted_id = 0;
-                foreach (Product item in _products) {
-                    if (this.IsProductExists(_customer_id, item.sku)) {
-                        OnError("InsertProducts: " + item.sku + " - Product Already Exists");
-                        return 0;
-                    }
-
-                    string _query = "START TRANSACTION;" +
-                        "INSERT INTO products (customer_id,source_product_id,sku,type,barcode,total_qty,price,special_price,custom_price,currency,tax,tax_included,name,sources) VALUES (@customer_id,@source_product_id,@sku,@type,@barcode,@total_qty,@price,@special_price,@custom_price,@currency,@tax,@tax_included,@name,@sources);" +
-                        "SELECT LAST_INSERT_ID();" +
-                        "COMMIT;";
-                    MySqlCommand cmd = new MySqlCommand(_query, connection);
-                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                    cmd.Parameters.Add(new MySqlParameter("source_product_id", item.source_product_id));
-                    cmd.Parameters.Add(new MySqlParameter("sku", item.sku));
-                    cmd.Parameters.Add(new MySqlParameter("type", item.type));
-                    cmd.Parameters.Add(new MySqlParameter("barcode", item.barcode));
-                    cmd.Parameters.Add(new MySqlParameter("total_qty", item.sources.Where(x => x.is_active).Sum(x => x.qty)));
-                    cmd.Parameters.Add(new MySqlParameter("price", item.price));
-                    cmd.Parameters.Add(new MySqlParameter("special_price", item.special_price));
-                    cmd.Parameters.Add(new MySqlParameter("custom_price", item.custom_price));
-                    cmd.Parameters.Add(new MySqlParameter("currency", item.currency.code));
-                    cmd.Parameters.Add(new MySqlParameter("tax", item.tax));
-                    cmd.Parameters.Add(new MySqlParameter("tax_included", item.tax_included));
-                    cmd.Parameters.Add(new MySqlParameter("name", item.name));
-                    cmd.Parameters.Add(new MySqlParameter("sources", string.Join(",", item.sources.Where(x => x.is_active).Select(x => x.name))));
-                    if (state != System.Data.ConnectionState.Open) connection.Open();
-                    inserted_id += (UInt64)cmd.ExecuteScalar();
-                    if (state == System.Data.ConnectionState.Open) connection.Close();
-
-                    if (!InsertProductExt(_customer_id, item.extension)) {
-                        OnError("InsertProducts: " + item.sku + " - Product Extension Insert Error");
-                        return 0;
-                    }
-
-                    if (!UpdateProductSources(_customer_id, item.sources, item.sku)) {
-                        OnError("InsertProducts: " + item.sku + " - Product Source Insert Error");
-                        return 0;
-                    }
-
-                    if (item.attributes is not null && item.attributes.Count > 0) {
-                        if (!UpdateProductAttributes(_customer_id, item.attributes, (int)inserted_id)) {
-                            OnError("InsertProducts: " + item.sku + " - Product Attributes Insert Error");
-                            return 0;
-                        }
-                    }
-
-                    if (item.target_prices is not null && item.target_prices.Count > 0) {
-                        if (!UpdateProductPrices(_customer_id, item.target_prices, (int)inserted_id)) {
-                            OnError("InsertProducts: " + item.sku + " - Product Prices Insert Error");
-                            return 0;
-                        }
-                    }
-
-                    if (item.images is not null && item.images.Count > 0) {
-                        if (!UpdateProductImages(_customer_id, item.images, (int)inserted_id)) {
-                            OnError("InsertProducts: " + item.sku + " - Product Images Insert Error");
-                            return 0;
-                        }
-                    }
-                }
-
-                if (inserted_id > 0)
-                    return (int)inserted_id;
-                else return 0;
-            }
-            catch (Exception ex) {
-                OnError(ex.ToString());
-                return 0;
-            }
-        }
-
-        public Product? InsertProduct(int _customer_id, Product _product) {
-            try {
-                if (this.IsProductExists(_customer_id, _product.sku)) {
+                if (await IsProductExists(_customer_id, _product.sku)) {
                     OnError("InsertProducts: " + _product.sku + " - Product Already Exists");
                     return null;
                 }
 
-                UInt64 inserted_id = 0;
+                ulong inserted_id = 0;
                 string _query = "START TRANSACTION;" +
                     "INSERT INTO products (customer_id,source_product_id,sku,type,barcode,total_qty,price,special_price,custom_price,currency,tax,tax_included,name,sources) VALUES (@customer_id,@source_product_id,@sku,@type,@barcode,@total_qty,@price,@special_price,@custom_price,@currency,@tax,@tax_included,@name,@sources);" +
                     "SELECT LAST_INSERT_ID();" +
                     "COMMIT;";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                MySqlCommand cmd = new(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("source_product_id", _product.source_product_id));
                 cmd.Parameters.Add(new MySqlParameter("sku", _product.sku));
@@ -3065,45 +2545,47 @@ namespace Merchanter {
                 cmd.Parameters.Add(new MySqlParameter("tax_included", _product.tax_included));
                 cmd.Parameters.Add(new MySqlParameter("name", _product.name));
                 cmd.Parameters.Add(new MySqlParameter("sources", string.Join(",", _product.sources.Where(x => x.is_active).Select(x => x.name))));
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                inserted_id = (UInt64)cmd.ExecuteScalar();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    inserted_id = (ulong)await cmd.ExecuteScalarAsync();
+                    if (state == System.Data.ConnectionState.Open) await CloseConnection();
 
-                if (!InsertProductExt(_customer_id, _product.extension)) {
-                    OnError("InsertProducts: " + _product.sku + " - Product Extension Insert Error");
-                    return null;
-                }
-
-                if (!UpdateProductSources(_customer_id, _product.sources, _product.sku)) {
-                    OnError("InsertProducts: " + _product.sku + " - Product Source Insert Error");
-                    return null;
-                }
-
-                if (_product.attributes is not null && _product.attributes.Count > 0) {
-                    if (!UpdateProductAttributes(_customer_id, _product.attributes, (int)inserted_id)) {
-                        OnError("InsertProducts: " + _product.sku + " - Product Attributes Insert Error");
+                    if (!await InsertProductExt(_customer_id, _product.extension)) {
+                        OnError("InsertProducts: " + _product.sku + " - Product Extension Insert Error");
                         return null;
                     }
-                }
 
-                if (_product.target_prices is not null && _product.target_prices.Count > 0) {
-                    if (!UpdateProductPrices(_customer_id, _product.target_prices, (int)inserted_id)) {
-                        OnError("InsertProducts: " + _product.sku + " - Product Prices Insert Error");
+                    if (!await UpdateProductSources(_customer_id, _product.sources, _product.sku)) {
+                        OnError("InsertProducts: " + _product.sku + " - Product Source Insert Error");
                         return null;
                     }
-                }
 
-                if (_product.images is not null && _product.images.Count > 0) {
-                    if (!UpdateProductImages(_customer_id, _product.images, (int)inserted_id)) {
-                        OnError("InsertProducts: " + _product.sku + " - Product Images Insert Error");
-                        return null;
+                    if (_product.attributes is not null && _product.attributes.Count > 0) {
+                        if (!UpdateProductAttributes(_customer_id, _product.attributes, (int)inserted_id)) {
+                            OnError("InsertProducts: " + _product.sku + " - Product Attributes Insert Error");
+                            return null;
+                        }
                     }
-                }
 
-                if (inserted_id > 0) {
-                    return GetProduct(_customer_id, (int)inserted_id);
+                    if (_product.target_prices is not null && _product.target_prices.Count > 0) {
+                        if (!await UpdateProductPrices(_customer_id, _product.target_prices, (int)inserted_id)) {
+                            OnError("InsertProducts: " + _product.sku + " - Product Prices Insert Error");
+                            return null;
+                        }
+                    }
+
+                    if (_product.images is not null && _product.images.Count > 0) {
+                        if (!await UpdateProductImages(_customer_id, _product.images, (int)inserted_id)) {
+                            OnError("InsertProducts: " + _product.sku + " - Product Images Insert Error");
+                            return null;
+                        }
+                    }
+
+                    if (inserted_id > 0) {
+                        return await GetProduct(_customer_id, (int)inserted_id);
+                    }
+                    else return null;
                 }
-                else return null;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -3112,113 +2594,19 @@ namespace Merchanter {
         }
 
         /// <summary>
-        /// Updates the products in the database
+        /// Updates the specified product in the database for the given customer.
         /// </summary>
-        /// <param name="_customer_id">Customer ID</param>
-        /// <param name="_products">Products</param>
-        /// <returns>[No change] or [Error] returns 'false'</returns>
-        public bool UpdateProducts(int _customer_id, List<Product> _products) {
+        /// <remarks>This method updates the product's details, including its attributes, prices, images,
+        /// and sources, in the database. If the product does not exist or any associated updates fail, the method
+        /// returns <see langword="null"/>.</remarks>
+        /// <param name="_customer_id">The unique identifier of the customer associated with the product.</param>
+        /// <param name="_product">The product object containing updated information to be saved.</param>
+        /// <param name="_INCS">Include sources. A flag indicating whether to include associated sources in the update. Defaults to <see langword="false"/>.</param>
+        /// <returns>The updated <see cref="Product"/> object if the operation is successful; otherwise, <see langword="null"/>.</returns>
+        public async Task<Product?> UpdateProduct(int _customer_id, Product _product, bool _INCS = false) {
             try {
-                int val = 0;
-                foreach (Product item in _products) {
-                    string _query = "UPDATE products SET type=@type,barcode=@barcode,total_qty=@total_qty,price=@price,special_price=@special_price,custom_price=@custom_price,currency=@currency,tax=@tax,tax_included=@tax_included,update_date=@update_date,name=@name,sources=@sources,source_product_id=@source_product_id WHERE id=@id AND sku=@sku AND customer_id=@customer_id";
-                    MySqlCommand cmd = new MySqlCommand(_query, connection);
-                    cmd.Parameters.Add(new MySqlParameter("id", item.id));
-                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                    cmd.Parameters.Add(new MySqlParameter("source_product_id", item.source_product_id));
-                    cmd.Parameters.Add(new MySqlParameter("update_date", DateTime.Now));
-                    cmd.Parameters.Add(new MySqlParameter("sku", item.sku));
-                    cmd.Parameters.Add(new MySqlParameter("type", item.type));
-                    cmd.Parameters.Add(new MySqlParameter("barcode", item.barcode));
-                    cmd.Parameters.Add(new MySqlParameter("price", item.price));
-                    cmd.Parameters.Add(new MySqlParameter("special_price", item.special_price));
-                    cmd.Parameters.Add(new MySqlParameter("custom_price", item.custom_price));
-                    cmd.Parameters.Add(new MySqlParameter("currency", item.currency.code));
-                    cmd.Parameters.Add(new MySqlParameter("tax", item.tax));
-                    cmd.Parameters.Add(new MySqlParameter("tax_included", item.tax_included));
-                    cmd.Parameters.Add(new MySqlParameter("name", item.name));
-                    cmd.Parameters.Add(new MySqlParameter("total_qty", item.sources.Where(x => x.is_active).Sum(x => x.qty)));
-                    cmd.Parameters.Add(new MySqlParameter("sources", string.Join(",", item.sources.Where(x => x.is_active).Select(x => x.name).ToArray())));
-                    if (state != System.Data.ConnectionState.Open) connection.Open();
-                    val += cmd.ExecuteNonQuery();
-                    if (state == System.Data.ConnectionState.Open) connection.Close();
-
-                    if (!UpdateProductExt(_customer_id, item.extension)) {
-                        OnError("UpdateProducts: " + item.sku + " - Product Extension Update Error");
-                        return false;
-                    }
-
-                    var deleted_sources = GetProductSources(_customer_id, item.sku)
-                        .ExceptBy(item.sources.Select(s => s.name) ?? [], s => s.name).ToList();
-                    foreach (var ditem in deleted_sources) {
-                        if (!DeleteProductSource(_customer_id, ditem)) {
-                            OnError("UpdateProduct: " + item.sku + " - Product Source Delete Error");
-                            return false;
-                        }
-                    }
-                    if (!UpdateProductSources(_customer_id, item.sources, item.sku)) {
-                        OnError("UpdateProducts: " + item.sku + " - Product Source Insert Error");
-                        return false;
-                    }
-
-                    var deleted_prices = GetProductPrices(_customer_id, item.id)
-                        .ExceptBy(item.target_prices?.Select(tp => tp.id) ?? [], tp => tp.id).ToList();
-                    foreach (var ditem in deleted_prices) {
-                        if (!DeleteProductPrice(_customer_id, ditem)) {
-                            OnError("UpdateProduct: " + item.sku + " - Product Price Delete Error");
-                            return false;
-                        }
-                    }
-                    if (item.target_prices is not null && item.target_prices.Count > 0) {
-                        if (!UpdateProductPrices(_customer_id, item.target_prices, item.id)) {
-                            OnError("UpdateProducts: " + item.sku + " - Product Prices Insert Error");
-                            return false;
-                        }
-                    }
-
-                    var deleted_images = GetProductImages(_customer_id, item.id)
-                        .ExceptBy(item.images?.Select(img => img.id) ?? [], img => img.id).ToList();
-                    foreach (var ditem in deleted_images) {
-                        if (!DeleteProductImage(_customer_id, ditem)) {
-                            OnError("UpdateProduct: " + item.sku + " - Product Image Delete Error");
-                            return false;
-                        }
-                    }
-                    if (item.images is not null && item.images.Count > 0) {
-                        if (!UpdateProductImages(_customer_id, item.images, item.id)) {
-                            OnError("UpdateProducts: " + item.sku + " - Product Images Insert Error");
-                            return false;
-                        }
-                    }
-
-                    if (item.attributes is not null && item.attributes.Count > 0) {
-                        if (!UpdateProductAttributes(_customer_id, item.attributes, item.id)) {
-                            OnError("UpdateProducts: " + item.sku + " - Product Attributes Update Error");
-                            return false;
-                        }
-                    }
-                }
-
-                if (val > 0)
-                    return true;
-                else return false;
-            }
-            catch (Exception ex) {
-                OnError(ex.ToString());
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Updates the products in the database
-        /// </summary>
-        /// <param name="_customer_id">Customer ID</param>
-        /// <param name="_product">Product</param>
-        /// <returns>[Error] returns 'null'</returns>
-        public Product? UpdateProduct(int _customer_id, Product _product, bool _include_sources = false) {
-            try {
-                string _query = "UPDATE products SET type=@type,barcode=@barcode,total_qty=@total_qty,price=@price,special_price=@special_price,custom_price=@custom_price,currency=@currency,tax=@tax,tax_included=@tax_included,update_date=@update_date,name=@name,sources=@sources,source_product_id=@source_product_id WHERE id=@id AND sku=@sku AND customer_id=@customer_id";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                string _query = "UPDATE products SET type=@type,barcode=@barcode,total_qty=@total_qty,price=@price,special_price=@special_price,custom_price=@custom_price,currency=@currency,tax=@tax,tax_included=@tax_included,update_date=@update_date,name=@name,sources=@sources,source_product_id=@source_product_id WHERE id=@id AND sku=@sku AND customer_id=@customer_id;";
+                MySqlCommand cmd = new(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("id", _product.id));
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("source_product_id", _product.source_product_id));
@@ -3235,72 +2623,74 @@ namespace Merchanter {
                 cmd.Parameters.Add(new MySqlParameter("name", _product.name));
                 cmd.Parameters.Add(new MySqlParameter("total_qty", _product.sources.Where(x => x.is_active).Sum(x => x.qty)));
                 cmd.Parameters.Add(new MySqlParameter("sources", string.Join(",", _product.sources.Where(x => x.is_active).Select(x => x.name).ToArray())));
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                int val = cmd.ExecuteNonQuery();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    int val = await cmd.ExecuteNonQueryAsync();
+                    if (state == System.Data.ConnectionState.Open) await CloseConnection();
 
-                if (val == 0) {
-                    OnError("UpdateProduct: " + _product.sku + " - Product Not Found");
-                    return null;
-                }
+                    if (val == 0) {
+                        OnError("UpdateProduct: " + _product.sku + " - Product Not Found");
+                        return null;
+                    }
 
-                if (!UpdateProductExt(_customer_id, _product.extension)) {
-                    OnError("UpdateProduct: " + _product.sku + " - Product Extension Update Error");
-                    return null;
-                }
+                    if (!await UpdateProductExt(_customer_id, _product.extension)) {
+                        OnError("UpdateProduct: " + _product.sku + " - Product Extension Update Error");
+                        return null;
+                    }
 
-                if (_include_sources) {
-                    var deleted_sources = GetProductSources(_customer_id, _product.sku)
-                        .ExceptBy(_product.sources.Select(s => s.name) ?? [], s => s.name).ToList();
-                    foreach (var ditem in deleted_sources) {
-                        if (!DeleteProductSource(_customer_id, ditem)) {
-                            OnError("UpdateProduct: " + _product.sku + " - Product Source Delete Error");
+                    if (_INCS) {
+                        var deleted_sources = (await GetProductSources(_customer_id, _product.sku))
+                            .ExceptBy(_product.sources.Select(s => s.name) ?? [], s => s.name).ToList();
+                        foreach (var ditem in deleted_sources) {
+                            if (!await DeleteProductSource(_customer_id, ditem)) {
+                                OnError("UpdateProduct: " + _product.sku + " - Product Source Delete Error");
+                                return null;
+                            }
+                        }
+                        if (!await UpdateProductSources(_customer_id, _product.sources, _product.sku)) {
+                            OnError("UpdateProducts: " + _product.sku + " - Product Source Insert Error");
                             return null;
                         }
                     }
-                    if (!UpdateProductSources(_customer_id, _product.sources, _product.sku)) {
-                        OnError("UpdateProducts: " + _product.sku + " - Product Source Insert Error");
-                        return null;
-                    }
-                }
 
-                var deleted_prices = GetProductPrices(_customer_id, _product.id)
-                    .ExceptBy(_product.target_prices.Select(tp => tp.id), tp => tp.id).ToList();
-                foreach (var ditem in deleted_prices) {
-                    if (!DeleteProductPrice(_customer_id, ditem)) {
-                        OnError("UpdateProduct: " + _product.sku + " - Product Price Delete Error");
-                        return null;
+                    var deleted_prices = (await GetProductPrices(_customer_id, _product.id))
+                        .ExceptBy(_product.target_prices.Select(tp => tp.id), tp => tp.id).ToList();
+                    foreach (var ditem in deleted_prices) {
+                        if (!await DeleteProductPrice(_customer_id, ditem)) {
+                            OnError("UpdateProduct: " + _product.sku + " - Product Price Delete Error");
+                            return null;
+                        }
                     }
-                }
-                if (_product.target_prices is not null && _product.target_prices.Count > 0) {
-                    if (!UpdateProductPrices(_customer_id, _product.target_prices, _product.id)) {
-                        OnError("UpdateProduct: " + _product.sku + " - Product Prices Update Error");
-                        return null;
+                    if (_product.target_prices is not null && _product.target_prices.Count > 0) {
+                        if (!await UpdateProductPrices(_customer_id, _product.target_prices, _product.id)) {
+                            OnError("UpdateProduct: " + _product.sku + " - Product Prices Update Error");
+                            return null;
+                        }
                     }
-                }
 
-                var deleted_images = GetProductImages(_customer_id, _product.id)
-                    .ExceptBy(_product.images.Select(img => img.id), img => img.id).ToList();
-                foreach (var ditem in deleted_images) {
-                    if (!DeleteProductImage(_customer_id, ditem)) {
-                        OnError("UpdateProduct: " + _product.sku + " - Product Image Delete Error");
-                        return null;
+                    var deleted_images = (await GetProductImages(_customer_id, _product.id))
+                        .ExceptBy(_product.images.Select(img => img.id), img => img.id).ToList();
+                    foreach (var ditem in deleted_images) {
+                        if (!await DeleteProductImage(_customer_id, ditem)) {
+                            OnError("UpdateProduct: " + _product.sku + " - Product Image Delete Error");
+                            return null;
+                        }
                     }
-                }
-                if (_product.images is not null && _product.images.Count > 0) {
-                    if (!UpdateProductImages(_customer_id, _product.images, _product.id)) {
-                        OnError("UpdateProduct: " + _product.sku + " - Product Images Update Error");
-                        return null;
+                    if (_product.images is not null && _product.images.Count > 0) {
+                        if (!await UpdateProductImages(_customer_id, _product.images, _product.id)) {
+                            OnError("UpdateProduct: " + _product.sku + " - Product Images Update Error");
+                            return null;
+                        }
                     }
-                }
 
-                if (_product.attributes is not null && _product.attributes.Count > 0) {
-                    if (!UpdateProductAttributes(_customer_id, _product.attributes, _product.id)) {
-                        OnError("UpdateProduct: " + _product.sku + " - Product Attributes Update Error");
-                        return null;
+                    if (_product.attributes is not null && _product.attributes.Count > 0) {
+                        if (!UpdateProductAttributes(_customer_id, _product.attributes, _product.id)) {
+                            OnError("UpdateProduct: " + _product.sku + " - Product Attributes Update Error");
+                            return null;
+                        }
                     }
+                    return await GetProduct(_customer_id, _product.id);
                 }
-                return GetProduct(_customer_id, _product.id);
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -3315,80 +2705,92 @@ namespace Merchanter {
         /// <param name="_val">Value</param>
         /// <param name="_with_ext">Get with extension</param>
         /// <returns>[Error] returns 'null'</returns>
-        public List<Product> GetXMLEnabledProducts(int _customer_id, bool _val = true, bool _with_ext = true) {
+        //public List<Product> GetXMLEnabledProducts(int _customer_id, bool _val = true, bool _with_ext = true) {
+        //    try {
+        //        if (state != System.Data.ConnectionState.Open) connection.Open();
+        //        string _query = "SELECT p.id,p.customer_id,p.source_product_id,p.update_date,p.sku,p.type,p.total_qty,p.name,p.barcode,p.price,p.special_price,p.custom_price,p.currency,p.tax,p.tax_included " +
+        //            "FROM products_ext AS ext INNER JOIN products AS p ON ext.sku=p.sku WHERE ext.is_xml_enabled=@is_xml_enabled AND ext.customer_id=@customer_id";
+        //        List<Product> list = [];
+        //        MySqlCommand cmd = new MySqlCommand(_query, connection);
+        //        cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+        //        cmd.Parameters.Add(new MySqlParameter("is_xml_enabled", _val ? 1 : 0));
+        //        MySqlDataReader dataReader = cmd.ExecuteReader();
+        //        while (dataReader.Read()) {
+        //            Product p = new Product {
+        //                id = Convert.ToInt32(dataReader["id"].ToString()),
+        //                customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+        //                source_product_id = Convert.ToInt32(dataReader["source_product_id"].ToString()),
+        //                update_date = Convert.ToDateTime(dataReader["update_date"].ToString()),
+        //                sku = dataReader["sku"].ToString(),
+        //                type = (Product.ProductTypes)Convert.ToInt32(dataReader["type"].ToString()),
+        //                total_qty = Convert.ToInt32(dataReader["total_qty"].ToString()),
+        //                name = dataReader["name"].ToString(),
+        //                barcode = dataReader["barcode"].ToString(),
+        //                price = decimal.Parse(dataReader["price"].ToString()),
+        //                special_price = decimal.Parse(dataReader["special_price"].ToString()),
+        //                custom_price = decimal.Parse(dataReader["custom_price"].ToString()),
+        //                currency = Currency.GetCurrency(dataReader["currency"].ToString()),
+        //                tax = Convert.ToInt32(dataReader["tax"].ToString()),
+        //                tax_included = Convert.ToBoolean(Convert.ToInt32(dataReader["tax_included"].ToString())),
+        //            };
+        //            list.Add(p);
+        //        }
+        //        dataReader.Close();
+        //        if (state == System.Data.ConnectionState.Open) connection.Close();
+        //        if (_with_ext) {
+        //            var exts = GetProductExts(_customer_id).Result;
+        //            foreach (var item in list) {
+        //                var selected_ext = exts?.Where(x => x.sku == item.sku).FirstOrDefault();
+        //                if (selected_ext is not null)
+        //                    item.extension = selected_ext;
+        //                else {
+        //                    OnError("GetXMLEnabledProducts: " + item.sku + " - Product Extension Not Found");
+        //                    return null;
+        //                }
+        //            }
+        //        }
+
+        //        var product_sources = GetProductSources(_customer_id).Result;
+        //        foreach (var item in list) {
+        //            var selected_product_source = product_sources?.Where(x => x.sku == item.sku).ToList();
+        //            if (selected_product_source is not null)
+        //                item.sources = selected_product_source;
+        //            else {
+        //                OnError("GetXMLEnabledProducts: " + item.sku + " - Product Source Not Found");
+        //                return null;
+        //            }
+        //        }
+
+        //        return list;
+        //    }
+        //    catch (Exception ex) {
+        //        OnError(ex.ToString());
+        //        return null;
+        //    }
+        //}
+
+        /// <summary>
+        /// Determines whether a product extension exists for the specified customer and SKU.
+        /// </summary>
+        /// <remarks>This method queries the database to check for the existence of a product extension
+        /// associated with the given customer ID and SKU. Ensure that the database connection is properly configured
+        /// before calling this method.</remarks>
+        /// <param name="_customer_id">The unique identifier of the customer. Must be a valid customer ID.</param>
+        /// <param name="_sku">The stock keeping unit (SKU) of the product extension. Cannot be null or empty.</param>
+        /// <returns><see langword="true"/> if a product extension exists for the specified customer and SKU; otherwise, <see
+        /// langword="false"/>.</returns>
+        public async Task<bool> IsProductExtExists(int _customer_id, string _sku) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT p.id,p.customer_id,p.source_product_id,p.update_date,p.sku,p.type,p.total_qty,p.name,p.barcode,p.price,p.special_price,p.custom_price,p.currency,p.tax,p.tax_included " +
-                    "FROM products_ext AS ext INNER JOIN products AS p ON ext.sku=p.sku WHERE ext.is_xml_enabled=@is_xml_enabled AND ext.customer_id=@customer_id";
-                List<Product> list = [];
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("is_xml_enabled", _val ? 1 : 0));
-                MySqlDataReader dataReader = cmd.ExecuteReader();
-                while (dataReader.Read()) {
-                    Product p = new Product {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        source_product_id = Convert.ToInt32(dataReader["source_product_id"].ToString()),
-                        update_date = Convert.ToDateTime(dataReader["update_date"].ToString()),
-                        sku = dataReader["sku"].ToString(),
-                        type = (Product.ProductTypes)Convert.ToInt32(dataReader["type"].ToString()),
-                        total_qty = Convert.ToInt32(dataReader["total_qty"].ToString()),
-                        name = dataReader["name"].ToString(),
-                        barcode = dataReader["barcode"].ToString(),
-                        price = decimal.Parse(dataReader["price"].ToString()),
-                        special_price = decimal.Parse(dataReader["special_price"].ToString()),
-                        custom_price = decimal.Parse(dataReader["custom_price"].ToString()),
-                        currency = Currency.GetCurrency(dataReader["currency"].ToString()),
-                        tax = Convert.ToInt32(dataReader["tax"].ToString()),
-                        tax_included = Convert.ToBoolean(Convert.ToInt32(dataReader["tax_included"].ToString())),
-                    };
-                    list.Add(p);
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT COUNT(*) FROM products_ext WHERE sku=@sku AND customer_id=@customer_id;";
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    cmd.Parameters.Add(new MySqlParameter("sku", _sku));
+                    _ = int.TryParse(s: (await cmd.ExecuteScalarAsync()).ToString(), result: out int total_count);
+                    if (state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return total_count > 0;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                if (_with_ext) {
-                    var exts = GetProductExts(_customer_id);
-                    foreach (var item in list) {
-                        var selected_ext = exts?.Where(x => x.sku == item.sku).FirstOrDefault();
-                        if (selected_ext is not null)
-                            item.extension = selected_ext;
-                        else {
-                            OnError("GetXMLEnabledProducts: " + item.sku + " - Product Extension Not Found");
-                            return null;
-                        }
-                    }
-                }
-
-                var product_sources = GetProductSources(_customer_id);
-                foreach (var item in list) {
-                    var selected_product_source = product_sources?.Where(x => x.sku == item.sku).ToList();
-                    if (selected_product_source is not null)
-                        item.sources = selected_product_source;
-                    else {
-                        OnError("GetXMLEnabledProducts: " + item.sku + " - Product Source Not Found");
-                        return null;
-                    }
-                }
-
-                return list;
-            }
-            catch (Exception ex) {
-                OnError(ex.ToString());
-                return null;
-            }
-        }
-
-        public bool IsProductExtExists(int _customer_id, string _sku) {
-            try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT COUNT(*) FROM products_ext WHERE sku=@sku AND customer_id=@customer_id";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("sku", _sku));
-                int.TryParse(cmd.ExecuteScalar().ToString(), out int total_count);
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return total_count > 0;
+                return false;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -3396,16 +2798,28 @@ namespace Merchanter {
             }
         }
 
-        public bool IsProductExists(int _customer_id, string _sku) {
+        /// <summary>
+        /// Determines whether a product exists in the database for the specified customer and SKU.
+        /// </summary>
+        /// <remarks>This method queries the database to check for the existence of a product based on the
+        /// provided customer ID and SKU. Ensure that the database connection is properly configured and accessible
+        /// before calling this method.</remarks>
+        /// <param name="_customer_id">The unique identifier of the customer. Must be a valid customer ID.</param>
+        /// <param name="_sku">The SKU (Stock Keeping Unit) of the product to check. Cannot be null or empty.</param>
+        /// <returns><see langword="true"/> if a product with the specified customer ID and SKU exists in the database;
+        /// otherwise, <see langword="false"/>.</returns>
+        public async Task<bool> IsProductExists(int _customer_id, string _sku) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT COUNT(*) FROM products WHERE sku=@sku AND customer_id=@customer_id";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("sku", _sku));
-                int.TryParse(cmd.ExecuteScalar().ToString(), out int total_count);
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return total_count > 0;
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT COUNT(*) FROM products WHERE sku=@sku AND customer_id=@customer_id;";
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    cmd.Parameters.Add(new MySqlParameter("sku", _sku));
+                    _ = int.TryParse(s: (await cmd.ExecuteScalarAsync()).ToString(), out int total_count);
+                    if (state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return total_count > 0;
+                }
+                return false;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -3419,16 +2833,20 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_filters">Api Filters</param>
         /// <returns>Error returns 'int:-1'</returns>
-        public int GetProductsCount(int _customer_id, ApiFilter _filters) {
+        public async Task<int> GetProductsCount(int _customer_id, ApiFilter _filters) {
             try {
                 string _query = "SELECT COUNT(*) FROM products_with_mainsource WHERE p_customer_id=@customer_id";
                 MySqlCommand cmd = new() { Connection = connection };
                 cmd.CommandText = DbHelperBase.BuildDBQuery(_filters, ref _query, ref cmd, typeof(Product), true);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                int.TryParse(cmd.ExecuteScalar().ToString(), out int total_count);
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return total_count;
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    object? val = await cmd.ExecuteScalarAsync();
+                    if (val is null) return -1;
+                    _ = int.TryParse(val.ToString(), out int total_count);
+                    if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return total_count;
+                }
+                return -1;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -3442,90 +2860,81 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_filters">Api Filters</param>
         /// <param name="_type">Type of the object</param>
-        public Dictionary<string, dynamic> GetExtendedQuery(int _customer_id, ApiFilter _filters, Type _type) {
+        public async Task<Dictionary<string, dynamic>> GetExtendedQuery(int _customer_id, ApiFilter _filters, Type _type) {
             try {
                 Dictionary<string, dynamic> _result = [];
                 switch (_type) {
                     case Type t when t == typeof(Product):
                         string _query_product = "SELECT COUNT(*) AS count,MIN(p_price) AS min_price, MAX(p_price) AS max_price, MIN(p_total_qty) AS min_qty, MAX(p_total_qty) AS max_qty " +
-                            "FROM products_with_mainsource WHERE p_customer_id=@customer_id";
+                            "FROM products_with_mainsource WHERE p_customer_id=@customer_id;";
                         MySqlCommand cmd_product = new() { Connection = connection };
                         cmd_product.CommandText = DbHelperBase.BuildDBQuery(_filters, ref _query_product, ref cmd_product, _type, true);
                         cmd_product.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                        if (state != System.Data.ConnectionState.Open) connection.Open();
-                        MySqlDataReader dataReader_product = cmd_product.ExecuteReader();
-                        if (dataReader_product.Read()) {
+                        if (state != System.Data.ConnectionState.Open) await OpenConnection();
+                        MySqlDataReader dataReader_product = await cmd_product.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                        if (await dataReader_product.ReadAsync()) {
                             _result["TotalCount"] = Convert.ToInt32(dataReader_product["count"].ToString());
                             _result["MinPrice"] = decimal.Parse(dataReader_product["min_price"].ToString());
                             _result["MaxPrice"] = decimal.Parse(dataReader_product["max_price"].ToString());
                             _result["MinQty"] = Convert.ToInt32(dataReader_product["min_qty"].ToString());
                             _result["MaxQty"] = Convert.ToInt32(dataReader_product["max_qty"].ToString());
                         }
-                        if (state == System.Data.ConnectionState.Open) connection.Close();
+                        if (state == System.Data.ConnectionState.Open) await connection.CloseAsync();
                         break;
                     case Type t when t == typeof(Category):
-                        string _query_category = "SELECT COUNT(*) AS count FROM categories WHERE customer_id=@customer_id";
+                        string _query_category = "SELECT COUNT(*) AS count FROM categories WHERE customer_id=@customer_id;";
                         MySqlCommand cmd_cat = new() { Connection = connection };
                         cmd_cat.CommandText = DbHelperBase.BuildDBQuery(_filters, ref _query_category, ref cmd_cat, _type, true);
                         cmd_cat.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                        if (state != System.Data.ConnectionState.Open) connection.Open();
-                        MySqlDataReader dataReader_cat = cmd_cat.ExecuteReader();
-                        if (dataReader_cat.Read()) {
+                        if (state != System.Data.ConnectionState.Open) await OpenConnection();
+                        MySqlDataReader dataReader_cat = await cmd_cat.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                        if (await dataReader_cat.ReadAsync()) {
                             _result["TotalCount"] = Convert.ToInt32(dataReader_cat["count"].ToString());
                         }
-                        if (state == System.Data.ConnectionState.Open) connection.Close();
+                        if (state == System.Data.ConnectionState.Open) await connection.CloseAsync();
                         break;
                     case Type t when t == typeof(Brand):
-                        string _query_brand = "SELECT COUNT(*) AS count FROM brands WHERE customer_id=@customer_id";
+                        string _query_brand = "SELECT COUNT(*) AS count FROM brands WHERE customer_id=@customer_id;";
                         MySqlCommand cmd_brand = new() { Connection = connection };
                         cmd_brand.CommandText = DbHelperBase.BuildDBQuery(_filters, ref _query_brand, ref cmd_brand, _type, true);
                         cmd_brand.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                        if (state != System.Data.ConnectionState.Open) connection.Open();
-                        MySqlDataReader dataReader_brand = cmd_brand.ExecuteReader();
-                        if (dataReader_brand.Read()) {
+                        if (state != System.Data.ConnectionState.Open) await OpenConnection();
+                        MySqlDataReader dataReader_brand = await cmd_brand.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                        if (await dataReader_brand.ReadAsync()) {
                             _result["TotalCount"] = Convert.ToInt32(dataReader_brand["count"].ToString());
                         }
-                        if (state == System.Data.ConnectionState.Open) connection.Close();
+                        if (state == System.Data.ConnectionState.Open) await connection.CloseAsync();
                         break;
                     case Type t when t == typeof(Log):
-                        string _query_log = "SELECT COUNT(*) AS count FROM log WHERE customer_id=@customer_id";
+                        string _query_log = "SELECT COUNT(*) AS count FROM log WHERE customer_id=@customer_id;";
                         MySqlCommand cmd_log = new() { Connection = connection };
                         cmd_log.CommandText = DbHelperBase.BuildDBQuery(_filters, ref _query_log, ref cmd_log, _type, true);
                         cmd_log.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                        if (state != System.Data.ConnectionState.Open) connection.Open();
-                        MySqlDataReader dataReader_log = cmd_log.ExecuteReader();
-                        if (dataReader_log.Read()) {
+                        if (state != System.Data.ConnectionState.Open) await OpenConnection();
+                        MySqlDataReader dataReader_log = await cmd_log.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                        if (await dataReader_log.ReadAsync()) {
                             _result["TotalCount"] = Convert.ToInt32(dataReader_log["count"].ToString());
                         }
-                        if (state == System.Data.ConnectionState.Open) connection.Close();
+                        if (state == System.Data.ConnectionState.Open) await connection.CloseAsync();
+                        break;
+                    case Type t when t == typeof(Notification):
+                        string _query_notification = "SELECT COUNT(*) AS count FROM notifications WHERE customer_id=@customer_id;";
+                        MySqlCommand cmd_notification = new() { Connection = connection };
+                        cmd_notification.CommandText = DbHelperBase.BuildDBQuery(_filters, ref _query_notification, ref cmd_notification, _type, true);
+                        cmd_notification.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                        if (state != System.Data.ConnectionState.Open) await OpenConnection();
+                        MySqlDataReader dataReader_notification = await cmd_notification.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                        if (await dataReader_notification.ReadAsync()) {
+                            _result["TotalCount"] = Convert.ToInt32(dataReader_notification["count"].ToString());
+                        }
+                        if (state == System.Data.ConnectionState.Open) await connection.CloseAsync();
                         break;
                 }
                 return _result;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Gets product count from the database
-        /// </summary>
-        /// <param name="_customer_id">Customer ID</param>
-        /// <returns>Error returns 'int:-1'</returns>
-        public int GetProductsCount(int _customer_id) {
-            try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT COUNT(*) FROM products WHERE customer_id=@customer_id";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                int.TryParse(cmd.ExecuteScalar().ToString(), out int total_count);
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return total_count;
-            }
-            catch (Exception ex) {
-                OnError(ex.ToString());
-                return -1;
+                return [];
             }
         }
 
@@ -3572,57 +2981,56 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_sku">SKU</param>
         /// <returns>[No data] or [Error] returns 'null'</returns>
-        public ProductExtension? GetProductExt(int _customer_id, string _sku) {
+        public async Task<ProductExtension?> GetProductExt(int _customer_id, string _sku) {
             try {
-                if (state != System.Data.ConnectionState.Open)
-                    connection.Open();
-                string _query = "SELECT * FROM products_ext WHERE sku=@sku AND customer_id=@customer_id";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("sku", _sku));
-                MySqlDataReader dataReader = cmd.ExecuteReader();
-                ProductExtension? px = null;
-                if (dataReader.Read()) {
-                    px = new ProductExtension();
-                    px.id = Convert.ToInt32(dataReader["id"].ToString());
-                    px.customer_id = Convert.ToInt32(dataReader["customer_id"].ToString());
-                    px.brand_id = Convert.ToInt32(dataReader["brand_id"].ToString());
-                    px.category_ids = dataReader["category_ids"].ToString();
-                    px.sku = dataReader["sku"].ToString();
-                    px.barcode = dataReader["barcode"].ToString();
-                    px.is_xml_enabled = Convert.ToBoolean(Convert.ToInt32(dataReader["is_xml_enabled"].ToString()));
-                    px.xml_sources = dataReader["xml_sources"]?.ToString()?.Split(',');
-                    px.description = dataReader["description"].ToString();
-                    px.weight = decimal.Parse(dataReader["weight"].ToString());
-                    px.volume = decimal.Parse(dataReader["volume"].ToString());
-                    px.is_enabled = Convert.ToBoolean(Convert.ToInt32(dataReader["is_enabled"].ToString()));
-                    px.update_date = Convert.ToDateTime(dataReader["update_date"].ToString());
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM products_ext WHERE sku=@sku AND customer_id=@customer_id;";
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    cmd.Parameters.Add(new MySqlParameter("sku", _sku));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    ProductExtension? px = null;
+                    if (await dataReader.ReadAsync()) {
+                        px = new ProductExtension();
+                        px.id = Convert.ToInt32(dataReader["id"].ToString());
+                        px.customer_id = Convert.ToInt32(dataReader["customer_id"].ToString());
+                        px.brand_id = Convert.ToInt32(dataReader["brand_id"].ToString());
+                        px.category_ids = dataReader["category_ids"].ToString();
+                        px.sku = dataReader["sku"].ToString();
+                        px.barcode = dataReader["barcode"].ToString();
+                        px.is_xml_enabled = Convert.ToBoolean(Convert.ToInt32(dataReader["is_xml_enabled"].ToString()));
+                        px.xml_sources = dataReader["xml_sources"]?.ToString()?.Split(',');
+                        px.description = dataReader["description"].ToString();
+                        px.weight = decimal.Parse(dataReader["weight"].ToString());
+                        px.volume = decimal.Parse(dataReader["volume"].ToString());
+                        px.is_enabled = Convert.ToBoolean(Convert.ToInt32(dataReader["is_enabled"].ToString()));
+                        px.update_date = Convert.ToDateTime(dataReader["update_date"].ToString());
+                    }
+                    await dataReader.CloseAsync();
+                    if (state == System.Data.ConnectionState.Open) await connection.CloseAsync();
+
+                    if (px is not null && px.brand_id > 0) {
+                        var b = GetBrand(_customer_id, px.brand_id);
+                        if (b is not null) {
+                            px.brand = b;
+                        }
+                        else {
+                            OnError("GetProductExt: " + px.sku + " - Product Brand Not Found");
+                            return null;
+                        }
+
+                        var cats = GetProductCategories(_customer_id, _sku);
+                        if (cats is not null && cats.Count > 0) {
+                            px.categories = [.. cats];
+                        }
+                        else {
+                            OnError("GetProductExt: " + px.sku + " - Product Categories Not Found");
+                            return null;
+                        }
+                    }
+                    return px;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
-
-                if (px is not null && px.brand_id > 0) {
-                    var b = GetBrand(_customer_id, px.brand_id);
-                    if (b is not null) {
-                        px.brand = b;
-                    }
-                    else {
-                        OnError("GetProductExt: " + px.sku + " - Product Brand Not Found");
-                        return null;
-                    }
-
-                    var cats = GetProductCategories(_customer_id, _sku);
-                    if (cats is not null && cats.Count > 0) {
-                        px.categories = [.. cats];
-                    }
-                    else {
-                        OnError("GetProductExt: " + px.sku + " - Product Categories Not Found");
-                        return null;
-                    }
-                }
-
-                return px;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -3635,131 +3043,64 @@ namespace Merchanter {
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public List<ProductExtension> GetProductExts(int _customer_id, ref List<Brand> brands, ref List<Category> categories) {
+        public async Task<List<ProductExtension>?> GetProductExts(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-
-                string _query = "SELECT * FROM products_ext WHERE customer_id=@customer_id";
-                List<ProductExtension> list = [];
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                MySqlDataReader dataReader = cmd.ExecuteReader();
-                while (dataReader.Read()) {
-                    ProductExtension s = new ProductExtension {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        brand_id = Convert.ToInt32(dataReader["brand_id"].ToString()),
-                        category_ids = dataReader["category_ids"].ToString(),
-                        sku = dataReader["sku"].ToString(),
-                        barcode = dataReader["barcode"].ToString(),
-                        is_xml_enabled = dataReader["is_xml_enabled"] is not null && dataReader["is_xml_enabled"].ToString() == "1",
-                        xml_sources = dataReader["xml_sources"]?.ToString()?.Split(','),
-                        description = dataReader["description"].ToString(),
-                        weight = decimal.Parse(dataReader["weight"].ToString()),
-                        volume = decimal.Parse(dataReader["volume"].ToString()),
-                        is_enabled = dataReader["is_enabled"] is not null && dataReader["is_enabled"].ToString() == "1",
-                        update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
-                    };
-                    list.Add(s);
-                }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-
-                //brands = GetBrands(_customer_id);
-                //categories = GetCategories(_customer_id);
-                if (brands == null || categories == null) {
-                    OnError("GetProductExts: Brands or Categories Not Found");
-                    return null;
-                }
-
-                foreach (var item in list) {
-                    var b = brands.FirstOrDefault(x => x.id == item.brand_id);
-                    if (b is not null) {
-                        item.brand = b;
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM products_ext WHERE customer_id=@customer_id";
+                    List<ProductExtension> list = [];
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    while (await dataReader.ReadAsync()) {
+                        ProductExtension s = new ProductExtension {
+                            id = Convert.ToInt32(dataReader["id"].ToString()),
+                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            brand_id = Convert.ToInt32(dataReader["brand_id"].ToString()),
+                            category_ids = dataReader["category_ids"].ToString(),
+                            sku = dataReader["sku"].ToString(),
+                            barcode = dataReader["barcode"].ToString(),
+                            is_xml_enabled = dataReader["is_xml_enabled"] is not null && dataReader["is_xml_enabled"].ToString() == "1",
+                            xml_sources = dataReader["xml_sources"]?.ToString()?.Split(','),
+                            description = dataReader["description"].ToString(),
+                            weight = decimal.Parse(dataReader["weight"].ToString()),
+                            volume = decimal.Parse(dataReader["volume"].ToString()),
+                            is_enabled = dataReader["is_enabled"] is not null && dataReader["is_enabled"].ToString() == "1",
+                            update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
+                        };
+                        list.Add(s);
                     }
-                    else {
-                        OnError("GetProductExts: " + item.sku + " - Product Brand Not Found");
+                    await dataReader.CloseAsync();
+                    if (state == System.Data.ConnectionState.Open) await CloseConnection();
+
+                    var brands = GetBrands(_customer_id);
+                    var categories = GetCategories(_customer_id);
+                    if (brands == null || categories == null) {
+                        OnError("GetProductExts: Brands or Categories Not Found");
                         return null;
                     }
 
-                    var c = categories.Where(x => item.category_ids.Split(',').Contains(x.id.ToString())).ToList();
-                    if (c is not null && c.Count > 0) {
-                        item.categories = [.. c];
+                    foreach (var item in list) {
+                        var b = brands.FirstOrDefault(x => x.id == item.brand_id);
+                        if (b is not null) {
+                            item.brand = b;
+                        }
+                        else {
+                            OnError("GetProductExts: " + item.sku + " - Product Brand Not Found");
+                            return null;
+                        }
+
+                        var c = categories.Where(x => item.category_ids.Split(',').Contains(x.id.ToString())).ToList();
+                        if (c is not null && c.Count > 0) {
+                            item.categories = [.. c];
+                        }
+                        else {
+                            OnError("GetProductExts: " + item.sku + " - Product Categories Not Found");
+                            return null;
+                        }
                     }
-                    else {
-                        OnError("GetProductExts: " + item.sku + " - Product Categories Not Found");
-                        return null;
-                    }
+                    return list;
                 }
-                return list;
-            }
-            catch (Exception ex) {
-                OnError(ex.ToString());
                 return null;
-            }
-        }
-
-        /// <summary>
-        /// Gets the product extensions from the database
-        /// </summary>
-        /// <param name="_customer_id">Customer ID</param>
-        /// <returns>[Error] returns 'null'</returns>
-        public List<ProductExtension> GetProductExts(int _customer_id) {
-            try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM products_ext WHERE customer_id=@customer_id";
-                List<ProductExtension> list = [];
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                MySqlDataReader dataReader = cmd.ExecuteReader();
-                while (dataReader.Read()) {
-                    ProductExtension s = new ProductExtension {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        brand_id = Convert.ToInt32(dataReader["brand_id"].ToString()),
-                        category_ids = dataReader["category_ids"].ToString(),
-                        sku = dataReader["sku"].ToString(),
-                        barcode = dataReader["barcode"].ToString(),
-                        is_xml_enabled = dataReader["is_xml_enabled"] is not null && dataReader["is_xml_enabled"].ToString() == "1",
-                        xml_sources = dataReader["xml_sources"]?.ToString()?.Split(','),
-                        description = dataReader["description"].ToString(),
-                        weight = decimal.Parse(dataReader["weight"].ToString()),
-                        volume = decimal.Parse(dataReader["volume"].ToString()),
-                        is_enabled = dataReader["is_enabled"] is not null && dataReader["is_enabled"].ToString() == "1",
-                        update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
-                    };
-                    list.Add(s);
-                }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-
-                var brands = GetBrands(_customer_id);
-                var categories = GetCategories(_customer_id);
-                if (brands == null || categories == null) {
-                    OnError("GetProductExts: Brands or Categories Not Found");
-                    return null;
-                }
-
-                foreach (var item in list) {
-                    var b = brands.FirstOrDefault(x => x.id == item.brand_id);
-                    if (b is not null) {
-                        item.brand = b;
-                    }
-                    else {
-                        OnError("GetProductExts: " + item.sku + " - Product Brand Not Found");
-                        return null;
-                    }
-
-                    var c = categories.Where(x => item.category_ids.Split(',').Contains(x.id.ToString())).ToList();
-                    if (c is not null && c.Count > 0) {
-                        item.categories = [.. c];
-                    }
-                    else {
-                        OnError("GetProductExts: " + item.sku + " - Product Categories Not Found");
-                        return null;
-                    }
-                }
-                return list;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -3773,17 +3114,17 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_source">Product Extension</param>
         /// <returns>[No change] or [Error] returns 'false'</returns>
-        public bool InsertProductExt(int _customer_id, ProductExtension _source) {
+        public async Task<bool> InsertProductExt(int _customer_id, ProductExtension _source) {
             try {
-                if (this.IsProductExtExists(_customer_id, _source.sku)) {
+                if (await this.IsProductExtExists(_customer_id, _source.sku)) {
                     OnError("Sku is already in table.");
                     return false;
                 }
 
                 int val = 0;
                 string _query = "INSERT INTO products_ext (customer_id,brand_id,category_ids,sku,barcode,weight,volume,description,is_enabled,is_xml_enabled,xml_sources) VALUES " +
-                    "(@customer_id,@brand_id,@category_ids,@sku,@barcode,@weight,@volume,@description,@is_enabled,@is_xml_enabled,@xml_sources)";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                    "(@customer_id,@brand_id,@category_ids,@sku,@barcode,@weight,@volume,@description,@is_enabled,@is_xml_enabled,@xml_sources);";
+                MySqlCommand cmd = new(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("brand_id", _source.brand_id));
                 cmd.Parameters.Add(new MySqlParameter("category_ids", _source.category_ids));
@@ -3795,13 +3136,10 @@ namespace Merchanter {
                 cmd.Parameters.Add(new MySqlParameter("is_enabled", _source.is_enabled ? 1 : 0));
                 cmd.Parameters.Add(new MySqlParameter("is_xml_enabled", _source.is_xml_enabled));
                 cmd.Parameters.Add(new MySqlParameter("xml_sources", _source.xml_sources is not null ? string.Join(",", _source.xml_sources) : null));
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                val = cmd.ExecuteNonQuery();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-
-                if (val > 0)
-                    return true;
-                else return false;
+                if (state != System.Data.ConnectionState.Open) await OpenConnection();
+                val = await cmd.ExecuteNonQueryAsync();
+                if (state == System.Data.ConnectionState.Open) await CloseConnection();
+                return val > 0;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -3815,35 +3153,30 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_source">Product Extension</param>
         /// <returns>[No change] or [Error] returns 'false'</returns>
-        public bool UpdateProductExt(int _customer_id, ProductExtension _source) {
+        public async Task<bool> UpdateProductExt(int _customer_id, ProductExtension _source) {
             try {
-                if (state != System.Data.ConnectionState.Open)
-                    connection.Open();
-
-                int val = 0;
-                string _query = "UPDATE products_ext SET brand_id=@brand_id,category_ids=@category_ids,barcode=@barcode,is_xml_enabled=@is_xml_enabled,xml_sources=@xml_sources,update_date=@update_date,weight=@weight,volume=@volume,description=@description,is_enabled=@is_enabled " +
-                    "WHERE sku=@sku AND customer_id=@customer_id;";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("sku", _source.sku));
-                cmd.Parameters.Add(new MySqlParameter("brand_id", _source.brand_id));
-                cmd.Parameters.Add(new MySqlParameter("category_ids", _source.category_ids));
-                cmd.Parameters.Add(new MySqlParameter("barcode", _source.barcode));
-                cmd.Parameters.Add(new MySqlParameter("xml_sources", (_source.xml_sources is not null && _source.xml_sources.Length > 0) ? string.Join(",", _source.xml_sources) : string.Empty));
-                cmd.Parameters.Add(new MySqlParameter("is_xml_enabled", _source.is_xml_enabled));
-                cmd.Parameters.Add(new MySqlParameter("weight", _source.weight));
-                cmd.Parameters.Add(new MySqlParameter("volume", _source.volume));
-                cmd.Parameters.Add(new MySqlParameter("description", _source.description));
-                cmd.Parameters.Add(new MySqlParameter("is_enabled", _source.is_enabled));
-                cmd.Parameters.Add(new MySqlParameter("update_date", DateTime.Now));
-                val = cmd.ExecuteNonQuery();
-
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
-
-                if (val > 0)
-                    return true;
-                else return false;
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    int val = 0;
+                    string _query = "UPDATE products_ext SET brand_id=@brand_id,category_ids=@category_ids,barcode=@barcode,is_xml_enabled=@is_xml_enabled,xml_sources=@xml_sources,update_date=@update_date,weight=@weight,volume=@volume,description=@description,is_enabled=@is_enabled " +
+                        "WHERE sku=@sku AND customer_id=@customer_id;";
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    cmd.Parameters.Add(new MySqlParameter("sku", _source.sku));
+                    cmd.Parameters.Add(new MySqlParameter("brand_id", _source.brand_id));
+                    cmd.Parameters.Add(new MySqlParameter("category_ids", _source.category_ids));
+                    cmd.Parameters.Add(new MySqlParameter("barcode", _source.barcode));
+                    cmd.Parameters.Add(new MySqlParameter("xml_sources", (_source.xml_sources is not null && _source.xml_sources.Length > 0) ? string.Join(",", _source.xml_sources) : string.Empty));
+                    cmd.Parameters.Add(new MySqlParameter("is_xml_enabled", _source.is_xml_enabled));
+                    cmd.Parameters.Add(new MySqlParameter("weight", _source.weight));
+                    cmd.Parameters.Add(new MySqlParameter("volume", _source.volume));
+                    cmd.Parameters.Add(new MySqlParameter("description", _source.description));
+                    cmd.Parameters.Add(new MySqlParameter("is_enabled", _source.is_enabled));
+                    cmd.Parameters.Add(new MySqlParameter("update_date", DateTime.Now));
+                    val = await cmd.ExecuteNonQueryAsync();
+                    if (state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return val > 0;
+                }
+                return false;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -3857,24 +3190,19 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_sku">SKU</param>
         /// <returns>[No change] or [Error] returns 'false'</returns>
-        public bool DeleteProductExt(int _customer_id, string _sku) {
+        public async Task<bool> DeleteProductExt(int _customer_id, string _sku) {
             try {
-                if (state != System.Data.ConnectionState.Open)
-                    connection.Open();
-
-                int val = 0;
-                string _query = "DELETE FROM products_ext WHERE sku=@sku AND customer_id=@customer_id";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("sku", _sku));
-                val = cmd.ExecuteNonQuery();
-
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
-
-                if (val > 0)
-                    return true;
-                else return false;
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    int val = 0;
+                    string _query = "DELETE FROM products_ext WHERE sku=@sku AND customer_id=@customer_id;";
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    cmd.Parameters.Add(new MySqlParameter("sku", _sku));
+                    val = await cmd.ExecuteNonQueryAsync();
+                    if (state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return val > 0;
+                }
+                return false;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -3890,16 +3218,16 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_sources">Product Sources</param>
         /// <returns>[No change] or [Error] returns 'false'</returns>
-        public bool UpdateProductSources(int _customer_id, List<ProductSource> _sources, string _sku) {
+        public async Task<bool> UpdateProductSources(int _customer_id, List<ProductSource> _sources, string _sku) {
             try {
                 if (_sources.Count == 0) {
                     OnError("UpdateProductSources: No sources found");
                     return false;
                 }
-                UInt64 val = 0;
-                var existed_sources = GetProductSources(_customer_id, _sku);
+                ulong val = 0;
+                var existed_sources = await GetProductSources(_customer_id, _sku);
                 foreach (var item in _sources) {
-                    var existed_source = existed_sources.FirstOrDefault(x => x.name == item.name && x.sku == item.sku);
+                    var existed_source = existed_sources?.FirstOrDefault(x => x.name == item.name && x.sku == item.sku);
                     if (existed_source is not null) {
                         if (existed_source.qty != item.qty || existed_source.is_active != item.is_active || existed_source.barcode != item.barcode) {
                             string _query = "UPDATE product_sources SET barcode=@barcode,qty=@qty,is_active=@is_active,update_date=@update_date WHERE sku=@sku AND name=@name AND customer_id=@customer_id;";
@@ -3911,9 +3239,9 @@ namespace Merchanter {
                             cmd.Parameters.Add(new MySqlParameter("qty", item.qty));
                             cmd.Parameters.Add(new MySqlParameter("is_active", item.is_active));
                             cmd.Parameters.Add(new MySqlParameter("update_date", DateTime.Now));
-                            if (state != System.Data.ConnectionState.Open) connection.Open();
-                            val = (UInt64)cmd.ExecuteNonQuery();
-                            if (state == System.Data.ConnectionState.Open) connection.Close();
+                            if (state != System.Data.ConnectionState.Open) await OpenConnection();
+                            val = (ulong)await cmd.ExecuteNonQueryAsync();
+                            if (state == System.Data.ConnectionState.Open) await CloseConnection();
                         }
                         else val++;
                     }
@@ -3926,9 +3254,9 @@ namespace Merchanter {
                         cmd.Parameters.Add(new MySqlParameter("barcode", item.barcode));
                         cmd.Parameters.Add(new MySqlParameter("qty", item.qty));
                         cmd.Parameters.Add(new MySqlParameter("is_active", item.is_active));
-                        if (state != System.Data.ConnectionState.Open) connection.Open();
-                        val = (UInt64)cmd.ExecuteNonQuery();
-                        if (state == System.Data.ConnectionState.Open) connection.Close();
+                        if (state != System.Data.ConnectionState.Open) await OpenConnection();
+                        val = (ulong)await cmd.ExecuteNonQueryAsync();
+                        if (state == System.Data.ConnectionState.Open) await CloseConnection();
                     }
                 }
 
@@ -3947,33 +3275,33 @@ namespace Merchanter {
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public List<ProductSource>? GetProductSources(int _customer_id) {
+        public async Task<List<ProductSource>?> GetProductSources(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open)
-                    connection.Open();
-                string _query = "SELECT * FROM product_sources WHERE customer_id=@customer_id";
-                List<ProductSource> list = [];
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                MySqlDataReader dataReader = cmd.ExecuteReader();
-                while (dataReader.Read()) {
-                    ProductSource s = new ProductSource(
-                        _customer_id,
-                        Convert.ToInt32(dataReader["id"].ToString()),
-                        dataReader["name"].ToString(),
-                        dataReader["sku"].ToString(),
-                        dataReader["barcode"].ToString(),
-                        Convert.ToInt32(dataReader["qty"].ToString()),
-                        Convert.ToBoolean(Convert.ToInt32(dataReader["is_active"].ToString())),
-                        Convert.ToDateTime(dataReader["update_date"].ToString())
-                    );
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM product_sources WHERE customer_id=@customer_id;";
+                    List<ProductSource> list = [];
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    while (await dataReader.ReadAsync()) {
+                        ProductSource s = new ProductSource(
+                            _customer_id,
+                            Convert.ToInt32(dataReader["id"].ToString()),
+                            dataReader["name"].ToString(),
+                            dataReader["sku"].ToString(),
+                            dataReader["barcode"].ToString(),
+                            Convert.ToInt32(dataReader["qty"].ToString()),
+                            Convert.ToBoolean(Convert.ToInt32(dataReader["is_active"].ToString())),
+                            Convert.ToDateTime(dataReader["update_date"].ToString())
+                        );
 
-                    list.Add(s);
+                        list.Add(s);
+                    }
+                    await dataReader.CloseAsync();
+                    if (state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return list;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
-                return list;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -3986,33 +3314,34 @@ namespace Merchanter {
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public List<ProductSource>? GetProductOtherSources(int _customer_id, string _main_source) {
+        public async Task<List<ProductSource>?> GetProductOtherSources(int _customer_id, string _main_source) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM product_sources WHERE name <> @name AND customer_id=@customer_id;";
-                List<ProductSource> list = [];
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("name", _main_source));
-                MySqlDataReader dataReader = cmd.ExecuteReader();
-                while (dataReader.Read()) {
-                    ProductSource s = new ProductSource(
-                        _customer_id,
-                        Convert.ToInt32(dataReader["id"].ToString()),
-                        dataReader["name"].ToString(),
-                        dataReader["sku"].ToString(),
-                        dataReader["barcode"].ToString(),
-                        Convert.ToInt32(dataReader["qty"].ToString()),
-                        Convert.ToBoolean(Convert.ToInt32(dataReader["is_active"].ToString())),
-                        Convert.ToDateTime(dataReader["update_date"].ToString())
-                    );
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM product_sources WHERE name <> @name AND customer_id=@customer_id;";
+                    List<ProductSource> list = [];
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    cmd.Parameters.Add(new MySqlParameter("name", _main_source));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    while (await dataReader.ReadAsync()) {
+                        ProductSource s = new ProductSource(
+                            _customer_id,
+                            Convert.ToInt32(dataReader["id"].ToString()),
+                            dataReader["name"].ToString(),
+                            dataReader["sku"].ToString(),
+                            dataReader["barcode"].ToString(),
+                            Convert.ToInt32(dataReader["qty"].ToString()),
+                            Convert.ToBoolean(Convert.ToInt32(dataReader["is_active"].ToString())),
+                            Convert.ToDateTime(dataReader["update_date"].ToString())
+                        );
 
-                    list.Add(s);
+                        list.Add(s);
+                    }
+                    await dataReader.CloseAsync();
+                    if (state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return list;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
-                return list;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -4026,33 +3355,33 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_sku">SKU</param>
         /// <returns>[Error] returns 'null'</returns>
-        public List<ProductSource> GetProductSources(int _customer_id, string _sku) {
+        public async Task<List<ProductSource>?> GetProductSources(int _customer_id, string _sku) {
             try {
-                if (state != System.Data.ConnectionState.Open)
-                    connection.Open();
-                string _query = "SELECT * FROM product_sources WHERE sku=@sku AND customer_id=@customer_id";
-                List<ProductSource> list = [];
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("sku", _sku));
-                MySqlDataReader dataReader = cmd.ExecuteReader();
-                while (dataReader.Read()) {
-                    ProductSource s = new ProductSource(
-                        _customer_id,
-                        Convert.ToInt32(dataReader["id"].ToString()),
-                        dataReader["name"].ToString(),
-                        dataReader["sku"].ToString(),
-                        dataReader["barcode"].ToString(),
-                        Convert.ToInt32(dataReader["qty"].ToString()),
-                        Convert.ToBoolean(Convert.ToInt32(dataReader["is_active"].ToString())),
-                        Convert.ToDateTime(dataReader["update_date"].ToString())
-                    );
-                    list.Add(s);
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM product_sources WHERE sku=@sku AND customer_id=@customer_id";
+                    List<ProductSource> list = [];
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    cmd.Parameters.Add(new MySqlParameter("sku", _sku));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    while (await dataReader.ReadAsync()) {
+                        ProductSource s = new ProductSource(
+                            _customer_id,
+                            Convert.ToInt32(dataReader["id"].ToString()),
+                            dataReader["name"].ToString(),
+                            dataReader["sku"].ToString(),
+                            dataReader["barcode"].ToString(),
+                            Convert.ToInt32(dataReader["qty"].ToString()),
+                            Convert.ToBoolean(Convert.ToInt32(dataReader["is_active"].ToString())),
+                            Convert.ToDateTime(dataReader["update_date"].ToString())
+                        );
+                        list.Add(s);
+                    }
+                    await dataReader.CloseAsync();
+                    if (state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return list;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
-                return list;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -4068,7 +3397,6 @@ namespace Merchanter {
         /// <returns>[No change] or [Error] returns 'false'</returns>
         public bool InsertProductSource(int _customer_id, ProductSource _source) {
             try {
-                int val = 0;
                 string _query = "INSERT INTO product_sources (customer_id,name,sku,barcode,qty,is_active) VALUES (@customer_id,@name,@sku,@barcode,@qty,@is_active)";
                 MySqlCommand cmd = new MySqlCommand(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
@@ -4078,12 +3406,9 @@ namespace Merchanter {
                 cmd.Parameters.Add(new MySqlParameter("qty", _source.qty));
                 cmd.Parameters.Add(new MySqlParameter("is_active", _source.is_active));
                 if (state != System.Data.ConnectionState.Open) connection.Open();
-                val = cmd.ExecuteNonQuery();
+                int val = cmd.ExecuteNonQuery();
                 if (state == System.Data.ConnectionState.Open) connection.Close();
-
-                if (val > 0)
-                    return true;
-                else return false;
+                return val > 0;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -4097,20 +3422,18 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_product_source">ProductSource</param>
         /// <returns>[No change] or [Error] returns 'false'</returns>
-        public bool DeleteProductSource(int _customer_id, ProductSource _product_source) {
+        public async Task<bool> DeleteProductSource(int _customer_id, ProductSource _product_source) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                int val = 0;
-                string _query = "DELETE FROM product_sources WHERE id=@id AND customer_id=@customer_id;";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("id", _product_source.id));
-                val = cmd.ExecuteNonQuery();
-
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                if (val > 0)
-                    return true;
-                else return false;
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "DELETE FROM product_sources WHERE id=@id AND customer_id=@customer_id;";
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    cmd.Parameters.Add(new MySqlParameter("id", _product_source.id));
+                    int val = await cmd.ExecuteNonQueryAsync();
+                    if (state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return val > 0;
+                }
+                return false;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -4157,31 +3480,33 @@ namespace Merchanter {
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public List<ProductPrice> GetProductPrices(int _customer_id) {
+        public async Task<List<ProductPrice>?> GetProductPrices(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM product_prices WHERE customer_id=@customer_id;";
-                List<ProductPrice> list = [];
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                MySqlDataReader dataReader = cmd.ExecuteReader();
-                while (dataReader.Read()) {
-                    ProductPrice s = new ProductPrice() {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        product_id = Convert.ToInt32(dataReader["product_id"].ToString()),
-                        sku = dataReader["sku"].ToString(),
-                        platform_name = dataReader["platform_name"].ToString(),
-                        price1 = decimal.Parse(dataReader["price1"].ToString()),
-                        price2 = decimal.Parse(dataReader["price2"].ToString()),
-                        update_currency_as = Currency.GetCurrency(dataReader["update_currency_as"].ToString()),
-                        update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
-                    };
-                    list.Add(s);
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM product_prices WHERE customer_id=@customer_id;";
+                    List<ProductPrice> list = [];
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    while (await dataReader.ReadAsync()) {
+                        ProductPrice s = new ProductPrice() {
+                            id = Convert.ToInt32(dataReader["id"].ToString()),
+                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            product_id = Convert.ToInt32(dataReader["product_id"].ToString()),
+                            sku = dataReader["sku"].ToString(),
+                            platform_name = dataReader["platform_name"].ToString(),
+                            price1 = decimal.Parse(dataReader["price1"].ToString()),
+                            price2 = decimal.Parse(dataReader["price2"].ToString()),
+                            update_currency_as = Currency.GetCurrency(dataReader["update_currency_as"].ToString()),
+                            update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
+                        };
+                        list.Add(s);
+                    }
+                    await dataReader.CloseAsync();
+                    if (state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return list;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return list;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -4194,14 +3519,14 @@ namespace Merchanter {
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <returns>Error returns 'int:0'</returns>
-        public int InsertProductPrice(int _customer_id, ProductPrice _price) {
+        public async Task<int> InsertProductPrice(int _customer_id, ProductPrice _price) {
             try {
-                object val;
+                object? val;
                 string _query = "START TRANSACTION;" +
                     "INSERT INTO product_prices (customer_id,product_id,sku,platform_name,price1,price2,update_currency_as) VALUES (@customer_id,@product_id,@sku,@platform_name,@price1,@price2,@update_currency_as);" +
                     "SELECT LAST_INSERT_ID();" +
                     "COMMIT;";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                MySqlCommand cmd = new(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("product_id", _price.product_id));
                 cmd.Parameters.Add(new MySqlParameter("sku", _price.sku));
@@ -4209,9 +3534,9 @@ namespace Merchanter {
                 cmd.Parameters.Add(new MySqlParameter("price1", _price.price1));
                 cmd.Parameters.Add(new MySqlParameter("price2", _price.price2));
                 cmd.Parameters.Add(new MySqlParameter("update_currency_as", _price.update_currency_as.ToString()));
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                val = cmd.ExecuteScalar();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
+                if (state != System.Data.ConnectionState.Open) await OpenConnection();
+                val = await cmd.ExecuteScalarAsync();
+                if (state == System.Data.ConnectionState.Open) await CloseConnection();
                 if (val is not null) {
                     if (int.TryParse(val.ToString(), out int PPID))
                         return PPID;
@@ -4220,7 +3545,7 @@ namespace Merchanter {
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
-                return 0;
+                return -1;
             }
         }
 
@@ -4230,16 +3555,16 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_prices">ProductPrice</param>
         /// <returns>[No change] or [Error] returns 'null'</returns>
-        public bool UpdateProductPrices(int _customer_id, List<ProductPrice> _prices, int _product_id) {
+        public async Task<bool> UpdateProductPrices(int _customer_id, List<ProductPrice> _prices, int _product_id) {
             try {
-                UInt64 val = 0;
-                var existed_prices = GetProductPrices(_customer_id, _product_id);
+                ulong val = 0;
+                var existed_prices = await GetProductPrices(_customer_id, _product_id);
                 foreach (var item in _prices) {
-                    var existed_price = existed_prices.FirstOrDefault(x => x.platform_name == item.platform_name && x.product_id == item.product_id);
+                    var existed_price = existed_prices?.FirstOrDefault(x => x.platform_name == item.platform_name && x.product_id == item.product_id);
                     if (existed_price is not null) {
                         if (existed_price.price1 != item.price1 || existed_price.price2 != item.price2 || existed_price.update_currency_as != item.update_currency_as) {
                             string _query = "UPDATE product_prices SET price1=@price1,price2=@price2,update_currency_as=@update_currency_as WHERE product_id=@product_id AND platform_name=@platform_name AND customer_id=@customer_id;";
-                            MySqlCommand cmd = new MySqlCommand(_query, connection);
+                            MySqlCommand cmd = new(_query, connection);
                             cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                             cmd.Parameters.Add(new MySqlParameter("product_id", _product_id));
                             cmd.Parameters.Add(new MySqlParameter("platform_name", item.platform_name));
@@ -4247,9 +3572,9 @@ namespace Merchanter {
                             cmd.Parameters.Add(new MySqlParameter("price2", item.price2));
                             cmd.Parameters.Add(new MySqlParameter("update_currency_as", item.update_currency_as.code));
                             cmd.Parameters.Add(new MySqlParameter("update_date", DateTime.Now));
-                            if (state != System.Data.ConnectionState.Open) connection.Open();
-                            val += (UInt64)cmd.ExecuteNonQuery();
-                            if (state == System.Data.ConnectionState.Open) connection.Close();
+                            if (state != System.Data.ConnectionState.Open) await OpenConnection();
+                            val += (ulong)await cmd.ExecuteNonQueryAsync();
+                            if (state == System.Data.ConnectionState.Open) await CloseConnection();
                         }
                         else val++;
                     }
@@ -4258,7 +3583,7 @@ namespace Merchanter {
                             "INSERT INTO product_prices (customer_id,product_id,sku,platform_name,price1,price2,update_currency_as) VALUES (@customer_id,@product_id,@sku,@platform_name,@price1,@price2,@update_currency_as);" +
                             "SELECT LAST_INSERT_ID();" +
                             "COMMIT;";
-                        MySqlCommand cmd = new MySqlCommand(_query, connection);
+                        MySqlCommand cmd = new(_query, connection);
                         cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                         cmd.Parameters.Add(new MySqlParameter("product_id", _product_id));
                         cmd.Parameters.Add(new MySqlParameter("sku", item.sku));
@@ -4266,14 +3591,12 @@ namespace Merchanter {
                         cmd.Parameters.Add(new MySqlParameter("price1", item.price1));
                         cmd.Parameters.Add(new MySqlParameter("price2", item.price2));
                         cmd.Parameters.Add(new MySqlParameter("update_currency_as", item.update_currency_as.code));
-                        if (state != System.Data.ConnectionState.Open) connection.Open();
-                        val += (UInt64)cmd.ExecuteScalar();
-                        if (state == System.Data.ConnectionState.Open) connection.Close();
+                        if (state != System.Data.ConnectionState.Open) await OpenConnection();
+                        val += (ulong)await cmd.ExecuteScalarAsync();
+                        if (state == System.Data.ConnectionState.Open) await CloseConnection();
                     }
                 }
-                if (val > 0)
-                    return true;
-                else return false;
+                return val > 0;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -4287,32 +3610,34 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_product_id">Product ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public List<ProductPrice> GetProductPrices(int _customer_id, int _product_id) {
+        public async Task<List<ProductPrice>?> GetProductPrices(int _customer_id, int _product_id) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM product_prices WHERE customer_id=@customer_id AND product_id=@product_id;";
-                List<ProductPrice> list = new List<ProductPrice>();
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("product_id", _product_id));
-                MySqlDataReader dataReader = cmd.ExecuteReader();
-                while (dataReader.Read()) {
-                    ProductPrice pp = new ProductPrice {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        product_id = Convert.ToInt32(dataReader["product_id"].ToString()),
-                        sku = dataReader["sku"].ToString(),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        platform_name = dataReader["platform_name"].ToString(),
-                        price1 = decimal.Parse(dataReader["price1"].ToString()),
-                        price2 = decimal.Parse(dataReader["price2"].ToString()),
-                        update_currency_as = Currency.GetCurrency(dataReader["update_currency_as"].ToString()),
-                        update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
-                    };
-                    list.Add(pp);
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM product_prices WHERE customer_id=@customer_id AND product_id=@product_id;";
+                    List<ProductPrice> list = [];
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    cmd.Parameters.Add(new MySqlParameter("product_id", _product_id));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    while (await dataReader.ReadAsync()) {
+                        ProductPrice pp = new ProductPrice {
+                            id = Convert.ToInt32(dataReader["id"].ToString()),
+                            product_id = Convert.ToInt32(dataReader["product_id"].ToString()),
+                            sku = dataReader["sku"].ToString(),
+                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            platform_name = dataReader["platform_name"].ToString(),
+                            price1 = decimal.Parse(dataReader["price1"].ToString()),
+                            price2 = decimal.Parse(dataReader["price2"].ToString()),
+                            update_currency_as = Currency.GetCurrency(dataReader["update_currency_as"].ToString()),
+                            update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
+                        };
+                        list.Add(pp);
+                    }
+                    await dataReader.CloseAsync();
+                    if (state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return list;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return list;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -4326,20 +3651,18 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_product_price">ProductPrice</param>
         /// <returns>[No change] or [Error] returns 'false'</returns>
-        public bool DeleteProductPrice(int _customer_id, ProductPrice _product_price) {
+        public async Task<bool> DeleteProductPrice(int _customer_id, ProductPrice _product_price) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                int val = 0;
-                string _query = "DELETE FROM product_prices WHERE id=@id AND customer_id=@customer_id;";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("id", _product_price.id));
-                val = cmd.ExecuteNonQuery();
-
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                if (val > 0)
-                    return true;
-                else return false;
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "DELETE FROM product_prices WHERE id=@id AND customer_id=@customer_id;";
+                    MySqlCommand cmd = new MySqlCommand(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    cmd.Parameters.Add(new MySqlParameter("id", _product_price.id));
+                    int val = await cmd.ExecuteNonQueryAsync();
+                    if (state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return val > 0;
+                }
+                return false;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -4355,9 +3678,9 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_image">ProductImage</param>
         /// <returns>Error returns 'int:0'</returns>
-        public int InsertProductImage(int _customer_id, ProductImage _image) {
+        public async Task<int> InsertProductImage(int _customer_id, ProductImage _image) {
             try {
-                object val;
+                object? val;
                 string _query = "START TRANSACTION;" +
                     "INSERT INTO product_images (customer_id,product_id,sku,type,image_name,image_url,image_base64,is_default) VALUES (@customer_id,@product_id,@sku,@type,@image_name,@image_url,@image_base64,@is_default);" +
                     "SELECT LAST_INSERT_ID();" +
@@ -4372,9 +3695,9 @@ namespace Merchanter {
                 cmd.Parameters.Add(new MySqlParameter("image_base64", _image.image_base64));
                 cmd.Parameters.Add(new MySqlParameter("is_default", _image.is_default ? 1 : 0));
 
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                val = cmd.ExecuteScalar();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
+                if (state != System.Data.ConnectionState.Open) await OpenConnection();
+                val = await cmd.ExecuteScalarAsync();
+                if (state == System.Data.ConnectionState.Open) await CloseConnection();
                 if (val is not null) {
                     if (int.TryParse(val.ToString(), out int PIID))
                         return PIID;
@@ -4383,7 +3706,7 @@ namespace Merchanter {
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
-                return 0;
+                return -1;
             }
         }
 
@@ -4393,16 +3716,16 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_images">ProductImages</param>
         /// <returns>[No change] or [Error] returns 'null'</returns>
-        public bool UpdateProductImages(int _customer_id, List<ProductImage> _images, int _product_id) {
+        public async Task<bool> UpdateProductImages(int _customer_id, List<ProductImage> _images, int _product_id) {
             try {
-                UInt64 val = 0;
-                var existed_images = GetProductImages(_customer_id, _product_id);
+                ulong val = 0;
+                var existed_images = await GetProductImages(_customer_id, _product_id);
                 foreach (var item in _images) {
-                    var existed_image = existed_images.FirstOrDefault(x => x.image_name == item.image_name && x.sku == item.sku);
+                    var existed_image = existed_images?.FirstOrDefault(x => x.image_name == item.image_name && x.sku == item.sku);
                     if (existed_image is not null) {
                         if (existed_image.image_url != item.image_url || existed_image.is_default != item.is_default || existed_image.type != item.type) {
                             string _query = "UPDATE product_images SET type=@type,image_url=@image_url,image_base64=@image_base64,is_default=@is_default,update_date=@update_date WHERE sku=@sku AND product_id=@product_id AND image_name=@image_name AND customer_id=@customer_id;";
-                            MySqlCommand cmd = new MySqlCommand(_query, connection);
+                            MySqlCommand cmd = new(_query, connection);
                             cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                             cmd.Parameters.Add(new MySqlParameter("product_id", _product_id));
                             cmd.Parameters.Add(new MySqlParameter("sku", item.sku));
@@ -4412,9 +3735,9 @@ namespace Merchanter {
                             cmd.Parameters.Add(new MySqlParameter("image_base64", item.image_base64));
                             cmd.Parameters.Add(new MySqlParameter("is_default", item.is_default));
                             cmd.Parameters.Add(new MySqlParameter("update_date", DateTime.Now));
-                            if (state != System.Data.ConnectionState.Open) connection.Open();
-                            val += (UInt64)cmd.ExecuteNonQuery();
-                            if (state == System.Data.ConnectionState.Open) connection.Close();
+                            if (state != System.Data.ConnectionState.Open) await OpenConnection();
+                            val += (ulong)await cmd.ExecuteNonQueryAsync();
+                            if (state == System.Data.ConnectionState.Open) await CloseConnection();
                         }
                         else val++;
                     }
@@ -4423,7 +3746,7 @@ namespace Merchanter {
                             "INSERT INTO product_images (customer_id,product_id,sku,type,image_name,image_url,image_base64,is_default) VALUES (@customer_id,@product_id,@sku,@type,@image_name,@image_url,@image_base64,@is_default);" +
                             "SELECT LAST_INSERT_ID();" +
                             "COMMIT;";
-                        MySqlCommand cmd = new MySqlCommand(_query, connection);
+                        MySqlCommand cmd = new(_query, connection);
                         cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                         cmd.Parameters.Add(new MySqlParameter("product_id", _product_id));
                         cmd.Parameters.Add(new MySqlParameter("sku", item.sku));
@@ -4432,14 +3755,12 @@ namespace Merchanter {
                         cmd.Parameters.Add(new MySqlParameter("image_url", item.image_url));
                         cmd.Parameters.Add(new MySqlParameter("image_base64", item.image_base64));
                         cmd.Parameters.Add(new MySqlParameter("is_default", item.is_default));
-                        if (state != System.Data.ConnectionState.Open) connection.Open();
-                        val += (UInt64)cmd.ExecuteScalar();
-                        if (state == System.Data.ConnectionState.Open) connection.Close();
+                        if (state != System.Data.ConnectionState.Open) await OpenConnection();
+                        val += (ulong)await cmd.ExecuteScalarAsync();
+                        if (state == System.Data.ConnectionState.Open) await CloseConnection();
                     }
                 }
-                if (val > 0)
-                    return true;
-                else return false;
+                return val > 0;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -4452,33 +3773,36 @@ namespace Merchanter {
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public List<ProductImage> GetProductImages(int _customer_id) {
+        public async Task<List<ProductImage>?> GetProductImages(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM product_images WHERE customer_id=@customer_id;";
-                List<ProductImage> list = new List<ProductImage>();
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.CommandTimeout = 600;
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                MySqlDataReader dataReader = cmd.ExecuteReader();
-                while (dataReader.Read()) {
-                    ProductImage pi = new ProductImage {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        product_id = Convert.ToInt32(dataReader["product_id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        sku = dataReader["sku"].ToString(),
-                        type = (ImageTypes)Convert.ToInt32(dataReader["type"].ToString()),
-                        image_name = dataReader["image_name"].ToString(),
-                        image_url = dataReader["image_url"].ToString(),
-                        image_base64 = dataReader["image_base64"].ToString(),
-                        is_default = dataReader["is_default"] is not null && dataReader["is_default"].ToString() == "1",
-                        update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM product_images WHERE customer_id=@customer_id;";
+                    List<ProductImage> list = [];
+                    MySqlCommand cmd = new(_query, connection) {
+                        CommandTimeout = 600
                     };
-                    list.Add(pi);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    while (await dataReader.ReadAsync()) {
+                        ProductImage pi = new ProductImage {
+                            id = Convert.ToInt32(dataReader["id"].ToString()),
+                            product_id = Convert.ToInt32(dataReader["product_id"].ToString()),
+                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            sku = dataReader["sku"].ToString(),
+                            type = (ImageTypes)Convert.ToInt32(dataReader["type"].ToString()),
+                            image_name = dataReader["image_name"].ToString(),
+                            image_url = dataReader["image_url"].ToString(),
+                            image_base64 = dataReader["image_base64"].ToString(),
+                            is_default = dataReader["is_default"] is not null && dataReader["is_default"].ToString() == "1",
+                            update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
+                        };
+                        list.Add(pi);
+                    }
+                    await dataReader.CloseAsync();
+                    if (state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return list;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                return list;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -4492,34 +3816,35 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_sku">SKU</param>
         /// <returns>[Error] returns 'null'</returns>
-        public List<ProductImage> GetProductImages(int _customer_id, string _sku) {
+        public async Task<List<ProductImage>?> GetProductImages(int _customer_id, string _sku) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM product_images WHERE customer_id=@customer_id AND sku=@sku;";
-                List<ProductImage> list = new List<ProductImage>();
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("sku", _sku));
-                MySqlDataReader dataReader = cmd.ExecuteReader();
-                while (dataReader.Read()) {
-                    ProductImage pi = new ProductImage {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        product_id = Convert.ToInt32(dataReader["product_id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        sku = dataReader["sku"].ToString(),
-                        type = (ImageTypes)Convert.ToInt32(dataReader["type"].ToString()),
-                        image_name = dataReader["image_name"].ToString(),
-                        image_url = dataReader["image_url"].ToString(),
-                        image_base64 = dataReader["image_base64"].ToString(),
-                        is_default = dataReader["is_default"] is not null && dataReader["is_default"].ToString() == "1",
-                        update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
-                    };
-                    list.Add(pi);
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM product_images WHERE customer_id=@customer_id AND sku=@sku;";
+                    List<ProductImage> list = [];
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    cmd.Parameters.Add(new MySqlParameter("sku", _sku));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    while (await dataReader.ReadAsync()) {
+                        ProductImage pi = new ProductImage {
+                            id = Convert.ToInt32(dataReader["id"].ToString()),
+                            product_id = Convert.ToInt32(dataReader["product_id"].ToString()),
+                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            sku = dataReader["sku"].ToString(),
+                            type = (ImageTypes)Convert.ToInt32(dataReader["type"].ToString()),
+                            image_name = dataReader["image_name"].ToString(),
+                            image_url = dataReader["image_url"].ToString(),
+                            image_base64 = dataReader["image_base64"].ToString(),
+                            is_default = dataReader["is_default"] is not null && dataReader["is_default"].ToString() == "1",
+                            update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
+                        };
+                        list.Add(pi);
+                    }
+                    await dataReader.CloseAsync();
+                    if (state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return list;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
-                return list;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -4533,34 +3858,35 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_product_id">Product ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public List<ProductImage> GetProductImages(int _customer_id, int _product_id) {
+        public async Task<List<ProductImage>?> GetProductImages(int _customer_id, int _product_id) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM product_images WHERE customer_id=@customer_id AND product_id=@product_id;";
-                List<ProductImage> list = new List<ProductImage>();
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("product_id", _product_id));
-                MySqlDataReader dataReader = cmd.ExecuteReader();
-                while (dataReader.Read()) {
-                    ProductImage pi = new ProductImage {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        product_id = Convert.ToInt32(dataReader["product_id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        sku = dataReader["sku"].ToString(),
-                        type = (ImageTypes)Convert.ToInt32(dataReader["type"].ToString()),
-                        image_name = dataReader["image_name"].ToString(),
-                        image_url = dataReader["image_url"].ToString(),
-                        image_base64 = dataReader["image_base64"].ToString(),
-                        is_default = dataReader["is_default"] is not null && dataReader["is_default"].ToString() == "1",
-                        update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
-                    };
-                    list.Add(pi);
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM product_images WHERE customer_id=@customer_id AND product_id=@product_id;";
+                    List<ProductImage> list = [];
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    cmd.Parameters.Add(new MySqlParameter("product_id", _product_id));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    while (await dataReader.ReadAsync()) {
+                        ProductImage pi = new ProductImage {
+                            id = Convert.ToInt32(dataReader["id"].ToString()),
+                            product_id = Convert.ToInt32(dataReader["product_id"].ToString()),
+                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            sku = dataReader["sku"].ToString(),
+                            type = (ImageTypes)Convert.ToInt32(dataReader["type"].ToString()),
+                            image_name = dataReader["image_name"].ToString(),
+                            image_url = dataReader["image_url"].ToString(),
+                            image_base64 = dataReader["image_base64"].ToString(),
+                            is_default = dataReader["is_default"] is not null && dataReader["is_default"].ToString() == "1",
+                            update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
+                        };
+                        list.Add(pi);
+                    }
+                    await dataReader.CloseAsync();
+                    if (state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return list;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
-                return list;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -4574,20 +3900,19 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_product_image">Product Image</param>
         /// <returns>[No change] or [Error] returns 'false'</returns>
-        public bool DeleteProductImage(int _customer_id, ProductImage _product_image) {
+        public async Task<bool> DeleteProductImage(int _customer_id, ProductImage _product_image) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                int val = 0;
-                string _query = "DELETE FROM product_images WHERE id=@id AND customer_id=@customer_id;";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("id", _product_image.id));
-                val = cmd.ExecuteNonQuery();
-
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                if (val > 0)
-                    return true;
-                else return false;
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    int val = 0;
+                    string _query = "DELETE FROM product_images WHERE id=@id AND customer_id=@customer_id;";
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    cmd.Parameters.Add(new MySqlParameter("id", _product_image.id));
+                    val = await cmd.ExecuteNonQueryAsync();
+                    if (state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return val > 0;
+                }
+                return false;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -4602,30 +3927,31 @@ namespace Merchanter {
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public List<CategoryTarget> GetCategoryTargets(int _customer_id) {
+        public async Task<List<CategoryTarget>?> GetCategoryTargets(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM category_targets WHERE customer_id=@customer_id;";
-                List<CategoryTarget> list = new List<CategoryTarget>();
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                MySqlDataReader dataReader = cmd.ExecuteReader();
-                while (dataReader.Read()) {
-                    CategoryTarget ct = new CategoryTarget {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        category_id = Convert.ToInt32(dataReader["category_id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        target_id = Convert.ToInt32(dataReader["target_id"].ToString()),
-                        target_name = dataReader["target_name"].ToString(),
-                        sync_status = Enum.TryParse<Target.SyncStatus>(dataReader["sync_status"].ToString(), out var status) ? status : Target.SyncStatus.Error,
-                        update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
-                    };
-                    list.Add(ct);
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM category_targets WHERE customer_id=@customer_id;";
+                    List<CategoryTarget> list = [];
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    while (await dataReader.ReadAsync()) {
+                        CategoryTarget ct = new CategoryTarget {
+                            id = Convert.ToInt32(dataReader["id"].ToString()),
+                            category_id = Convert.ToInt32(dataReader["category_id"].ToString()),
+                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            target_id = Convert.ToInt32(dataReader["target_id"].ToString()),
+                            target_name = dataReader["target_name"].ToString(),
+                            sync_status = Enum.TryParse<Target.SyncStatus>(dataReader["sync_status"].ToString(), out var status) ? status : Target.SyncStatus.Error,
+                            update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
+                        };
+                        list.Add(ct);
+                    }
+                    await dataReader.CloseAsync();
+                    if (state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return list;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
-                return list;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -4639,31 +3965,32 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_category_id">Category ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public List<CategoryTarget> GetCategoryTargets(int _customer_id, int _category_id) {
+        public async Task<List<CategoryTarget>?> GetCategoryTargets(int _customer_id, int _category_id) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM category_targets WHERE category_id=@category_id AND customer_id=@customer_id;";
-                List<CategoryTarget> list = new List<CategoryTarget>();
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("category_id", _category_id));
-                MySqlDataReader dataReader = cmd.ExecuteReader();
-                while (dataReader.Read()) {
-                    CategoryTarget ct = new CategoryTarget {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        category_id = Convert.ToInt32(dataReader["category_id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        target_id = Convert.ToInt32(dataReader["target_id"].ToString()),
-                        target_name = dataReader["target_name"].ToString(),
-                        sync_status = Enum.TryParse<Target.SyncStatus>(dataReader["sync_status"].ToString(), out var status) ? status : Target.SyncStatus.Error,
-                        update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
-                    };
-                    list.Add(ct);
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM category_targets WHERE category_id=@category_id AND customer_id=@customer_id;";
+                    List<CategoryTarget> list = [];
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    cmd.Parameters.Add(new MySqlParameter("category_id", _category_id));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    while (await dataReader.ReadAsync()) {
+                        CategoryTarget ct = new CategoryTarget {
+                            id = Convert.ToInt32(dataReader["id"].ToString()),
+                            category_id = Convert.ToInt32(dataReader["category_id"].ToString()),
+                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            target_id = Convert.ToInt32(dataReader["target_id"].ToString()),
+                            target_name = dataReader["target_name"].ToString(),
+                            sync_status = Enum.TryParse<Target.SyncStatus>(dataReader["sync_status"].ToString(), out var status) ? status : Target.SyncStatus.Error,
+                            update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
+                        };
+                        list.Add(ct);
+                    }
+                    await dataReader.CloseAsync();
+                    if (state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return list;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
-                return list;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -4676,30 +4003,31 @@ namespace Merchanter {
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public List<ProductTarget> GetProductTargets(int _customer_id) {
+        public async Task<List<ProductTarget>?> GetProductTargets(int _customer_id) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM product_targets WHERE customer_id=@customer_id;";
-                List<ProductTarget> list = new List<ProductTarget>();
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                MySqlDataReader dataReader = cmd.ExecuteReader();
-                while (dataReader.Read()) {
-                    ProductTarget pt = new ProductTarget {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        product_id = Convert.ToInt32(dataReader["product_id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        target_id = Convert.ToInt32(dataReader["target_id"].ToString()),
-                        target_name = dataReader["target_name"].ToString(),
-                        sync_status = Enum.TryParse<Target.SyncStatus>(dataReader["sync_status"].ToString(), out var status) ? status : Target.SyncStatus.Error,
-                        update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
-                    };
-                    list.Add(pt);
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM product_targets WHERE customer_id=@customer_id;";
+                    List<ProductTarget> list = [];
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    while (await dataReader.ReadAsync()) {
+                        ProductTarget pt = new ProductTarget {
+                            id = Convert.ToInt32(dataReader["id"].ToString()),
+                            product_id = Convert.ToInt32(dataReader["product_id"].ToString()),
+                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            target_id = Convert.ToInt32(dataReader["target_id"].ToString()),
+                            target_name = dataReader["target_name"].ToString(),
+                            sync_status = Enum.TryParse<Target.SyncStatus>(dataReader["sync_status"].ToString(), out var status) ? status : Target.SyncStatus.Error,
+                            update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
+                        };
+                        list.Add(pt);
+                    }
+                    await dataReader.CloseAsync();
+                    if (state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return list;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
-                return list;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -4713,31 +4041,32 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_product_id">Product ID</param>
         /// <returns>[Error] returns 'null'</returns>
-        public List<ProductTarget> GetProductTargets(int _customer_id, int _product_id) {
+        public async Task<List<ProductTarget>?> GetProductTargets(int _customer_id, int _product_id) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                string _query = "SELECT * FROM product_targets WHERE product_id=@product_id AND customer_id=@customer_id;";
-                List<ProductTarget> list = new List<ProductTarget>();
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("product_id", _product_id));
-                MySqlDataReader dataReader = cmd.ExecuteReader();
-                while (dataReader.Read()) {
-                    ProductTarget pt = new ProductTarget {
-                        id = Convert.ToInt32(dataReader["id"].ToString()),
-                        product_id = Convert.ToInt32(dataReader["product_id"].ToString()),
-                        customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                        target_id = Convert.ToInt32(dataReader["target_id"].ToString()),
-                        target_name = dataReader["target_name"].ToString(),
-                        sync_status = Enum.TryParse<Target.SyncStatus>(dataReader["sync_status"].ToString(), out var status) ? status : Target.SyncStatus.Error,
-                        update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
-                    };
-                    list.Add(pt);
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM product_targets WHERE product_id=@product_id AND customer_id=@customer_id;";
+                    List<ProductTarget> list = [];
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    cmd.Parameters.Add(new MySqlParameter("product_id", _product_id));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    while (await dataReader.ReadAsync()) {
+                        ProductTarget pt = new ProductTarget {
+                            id = Convert.ToInt32(dataReader["id"].ToString()),
+                            product_id = Convert.ToInt32(dataReader["product_id"].ToString()),
+                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            target_id = Convert.ToInt32(dataReader["target_id"].ToString()),
+                            target_name = dataReader["target_name"].ToString(),
+                            sync_status = Enum.TryParse<Target.SyncStatus>(dataReader["sync_status"].ToString(), out var status) ? status : Target.SyncStatus.Error,
+                            update_date = Convert.ToDateTime(dataReader["update_date"].ToString())
+                        };
+                        list.Add(pt);
+                    }
+                    await dataReader.CloseAsync();
+                    if (state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return list;
                 }
-                dataReader.Close();
-                if (state == System.Data.ConnectionState.Open)
-                    connection.Close();
-                return list;
+                return null;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -4751,23 +4080,22 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_target">CategoryTarget</param>
         /// <returns>Error returns 'int:0'</returns>
-        public int InsertCategoryTarget(int _customer_id, CategoryTarget _target) {
+        public async Task<int> InsertCategoryTarget(int _customer_id, CategoryTarget _target) {
             try {
-                object val;
                 string _query = "START TRANSACTION;" +
                     "INSERT INTO category_targets (customer_id,category_id,target_id,target_name,sync_status) VALUES (@customer_id,@category_id,@target_id,@target_name,@sync_status);" +
                     "SELECT LAST_INSERT_ID();" +
                     "COMMIT;";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                MySqlCommand cmd = new(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("category_id", _target.category_id));
                 cmd.Parameters.Add(new MySqlParameter("target_id", _target.target_id));
                 cmd.Parameters.Add(new MySqlParameter("target_name", _target.target_name));
                 cmd.Parameters.Add(new MySqlParameter("sync_status", (int)_target.sync_status));
 
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                val = cmd.ExecuteScalar();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
+                if (state != System.Data.ConnectionState.Open) await OpenConnection();
+                object? val = await cmd.ExecuteScalarAsync();
+                if (state == System.Data.ConnectionState.Open) await CloseConnection();
                 if (val is not null) {
                     if (int.TryParse(val.ToString(), out int CTID))
                         return CTID;
@@ -4776,7 +4104,7 @@ namespace Merchanter {
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
-                return 0;
+                return -1;
             }
         }
 
@@ -4786,23 +4114,22 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_target">ProductTarget</param>
         /// <returns>Error returns 'int:0'</returns>
-        public int InsertProductTarget(int _customer_id, ProductTarget _target) {
+        public async Task<int> InsertProductTarget(int _customer_id, ProductTarget _target) {
             try {
-                object val;
                 string _query = "START TRANSACTION;" +
                     "INSERT INTO product_targets (customer_id,product_id,target_id,target_name,sync_status) VALUES (@customer_id,@product_id,@target_id,@target_name,@sync_status);" +
                     "SELECT LAST_INSERT_ID();" +
                     "COMMIT;";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                MySqlCommand cmd = new(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("product_id", _target.product_id));
                 cmd.Parameters.Add(new MySqlParameter("target_id", _target.target_id));
                 cmd.Parameters.Add(new MySqlParameter("target_name", _target.target_name));
                 cmd.Parameters.Add(new MySqlParameter("sync_status", (int)_target.sync_status));
 
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                val = cmd.ExecuteScalar();
-                if (state == System.Data.ConnectionState.Open) connection.Close();
+                if (state != System.Data.ConnectionState.Open) await OpenConnection();
+                object? val = await cmd.ExecuteScalarAsync();
+                if (state == System.Data.ConnectionState.Open) await CloseConnection();
                 if (val is not null) {
                     if (int.TryParse(val.ToString(), out int PTID))
                         return PTID;
@@ -4811,7 +4138,7 @@ namespace Merchanter {
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
-                return 0;
+                return -1;
             }
         }
 
@@ -4821,26 +4148,24 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_target">CategoryTarget</param>
         /// <returns>[No change] or [Error] returns 'null'</returns>
-        public bool UpdateCategoryTarget(int _customer_id, CategoryTarget _target) {
+        public async Task<bool> UpdateCategoryTarget(int _customer_id, CategoryTarget _target) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                int val = 0;
-                string _query = "UPDATE category_targets SET category_id=@category_id,target_id=@target_id,target_name=@target_name,update_date=@update_date,sync_status=@sync_status " +
-                    "WHERE id=@id AND customer_id=@customer_id";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("id", _target.id));
-                cmd.Parameters.Add(new MySqlParameter("category_id", _target.category_id));
-                cmd.Parameters.Add(new MySqlParameter("target_id", _target.target_id));
-                cmd.Parameters.Add(new MySqlParameter("target_name", _target.target_name));
-                cmd.Parameters.Add(new MySqlParameter("update_date", DateTime.Now));
-                cmd.Parameters.Add(new MySqlParameter("sync_status", (int)_target.sync_status));
-                val = cmd.ExecuteNonQuery();
-
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                if (val > 0)
-                    return true;
-                else return false;
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "UPDATE category_targets SET category_id=@category_id,target_id=@target_id,target_name=@target_name,update_date=@update_date,sync_status=@sync_status " +
+                        "WHERE id=@id AND customer_id=@customer_id;";
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    cmd.Parameters.Add(new MySqlParameter("id", _target.id));
+                    cmd.Parameters.Add(new MySqlParameter("category_id", _target.category_id));
+                    cmd.Parameters.Add(new MySqlParameter("target_id", _target.target_id));
+                    cmd.Parameters.Add(new MySqlParameter("target_name", _target.target_name));
+                    cmd.Parameters.Add(new MySqlParameter("update_date", DateTime.Now));
+                    cmd.Parameters.Add(new MySqlParameter("sync_status", (int)_target.sync_status));
+                    int val = await cmd.ExecuteNonQueryAsync();
+                    if (state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return val > 0;
+                }
+                return false;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -4854,26 +4179,24 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_target">ProductTarget</param>
         /// <returns>[No change] or [Error] returns 'null'</returns>
-        public bool UpdateProductTarget(int _customer_id, ProductTarget _target) {
+        public async Task<bool> UpdateProductTarget(int _customer_id, ProductTarget _target) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                int val = 0;
-                string _query = "UPDATE product_targets SET product_id=@product_id,target_id=@target_id,target_name=@target_name,update_date=@update_date,sync_status=@sync_status " +
-                    "WHERE id=@id AND customer_id=@customer_id";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("id", _target.id));
-                cmd.Parameters.Add(new MySqlParameter("product_id", _target.product_id));
-                cmd.Parameters.Add(new MySqlParameter("target_id", _target.target_id));
-                cmd.Parameters.Add(new MySqlParameter("target_name", _target.target_name));
-                cmd.Parameters.Add(new MySqlParameter("update_date", DateTime.Now));
-                cmd.Parameters.Add(new MySqlParameter("sync_status", (int)_target.sync_status));
-                val = cmd.ExecuteNonQuery();
-
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                if (val > 0)
-                    return true;
-                else return false;
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "UPDATE product_targets SET product_id=@product_id,target_id=@target_id,target_name=@target_name,update_date=@update_date,sync_status=@sync_status " +
+                        "WHERE id=@id AND customer_id=@customer_id;";
+                    MySqlCommand cmd = new MySqlCommand(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    cmd.Parameters.Add(new MySqlParameter("id", _target.id));
+                    cmd.Parameters.Add(new MySqlParameter("product_id", _target.product_id));
+                    cmd.Parameters.Add(new MySqlParameter("target_id", _target.target_id));
+                    cmd.Parameters.Add(new MySqlParameter("target_name", _target.target_name));
+                    cmd.Parameters.Add(new MySqlParameter("update_date", DateTime.Now));
+                    cmd.Parameters.Add(new MySqlParameter("sync_status", (int)_target.sync_status));
+                    int val = await cmd.ExecuteNonQueryAsync();
+                    if (state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return val > 0;
+                }
+                return false;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -4887,20 +4210,18 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_product_id">Product ID</param>
         /// <returns>[No change] or [Error] returns 'false'</returns>
-        public bool DeleteProductTarget(int _customer_id, int _product_id) {
+        public async Task<bool> DeleteProductTarget(int _customer_id, int _product_id) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                int val = 0;
-                string _query = "DELETE FROM product_targets WHERE product_id=@product_id AND customer_id=@customer_id;";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("product_id", _product_id));
-                val = cmd.ExecuteNonQuery();
-
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                if (val > 0)
-                    return true;
-                else return false;
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "DELETE FROM product_targets WHERE product_id=@product_id AND customer_id=@customer_id;";
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    cmd.Parameters.Add(new MySqlParameter("product_id", _product_id));
+                    int val = await cmd.ExecuteNonQueryAsync();
+                    if (state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return val > 0;
+                }
+                return false;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -4914,20 +4235,18 @@ namespace Merchanter {
         /// <param name="_customer_id">Customer ID</param>
         /// <param name="_category_id">Category ID</param>
         /// <returns>[No change] or [Error] returns 'false'</returns>
-        public bool DeleteCategoryTarget(int _customer_id, int _category_id) {
+        public async Task<bool> DeleteCategoryTarget(int _customer_id, int _category_id) {
             try {
-                if (state != System.Data.ConnectionState.Open) connection.Open();
-                int val = 0;
-                string _query = "DELETE FROM category_targets WHERE category_id=@category_id AND customer_id=@customer_id;";
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
-                cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
-                cmd.Parameters.Add(new MySqlParameter("category_id", _category_id));
-                val = cmd.ExecuteNonQuery();
-
-                if (state == System.Data.ConnectionState.Open) connection.Close();
-                if (val > 0)
-                    return true;
-                else return false;
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "DELETE FROM category_targets WHERE category_id=@category_id AND customer_id=@customer_id;";
+                    MySqlCommand cmd = new(_query, connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
+                    cmd.Parameters.Add(new MySqlParameter("category_id", _category_id));
+                    int val = await cmd.ExecuteNonQueryAsync();
+                    if (state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return val > 0;
+                }
+                return false;
             }
             catch (Exception ex) {
                 OnError(ex.ToString());
@@ -5299,7 +4618,7 @@ namespace Merchanter {
         /// <returns>[Error] returns 'null'</returns>
         public Brand GetDefaultBrand(int _customer_id) {
             try {
-                var test = GetProductSettings(_customer_id);
+                var test = GetProductSettings(_customer_id).Result;
                 if (test is null) {
                     OnError("GetDefaultBrand: Product Settings Not Found for Customer ID: " + _customer_id);
                     return null;

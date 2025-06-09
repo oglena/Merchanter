@@ -7,7 +7,6 @@ namespace ApiService.Repositories {
         Task<List<Log>> GetCustomerLogsById(int _customer_id, ApiFilter _filters);
         Task<List<Notification>> GetCustomerNotificationsById(int _customer_id, ApiFilter _filters);
         Task<List<Customer>> GetAllCustomers();
-        Task<int> GetCustomerLogCount(int _customer_id);
         Task<int> GetCustomerLogCount(int _customer_id, ApiFilter _filters);
         Task<Customer?> SaveCustomer(int _customer_id, Customer _customer);
         MerchanterService merchanterService { get; set; }
@@ -45,28 +44,24 @@ namespace ApiService.Repositories {
             return await GetCustomers();
         }
 
-        public async Task<int> GetCustomerLogCount(int _customer_id) {
-            return await Task.Run(() => merchanterService.helper.GetLogsCount(_customer_id));
-        }
-
         public async Task<int> GetCustomerLogCount(int _customer_id, ApiFilter _filters) {
             return await Task.Run(() => merchanterService.helper.GetLogsCount(_customer_id, _filters));
         }
 
         private async Task<Customer> GetCustomer(int _customer_id) {
-            return await Task.Run(() => customer = merchanterService.helper.GetCustomer(_customer_id) ?? new Customer() { customer_id = _customer_id });
+            return await merchanterService.helper.GetCustomer(_customer_id) ?? new Customer() { customer_id = _customer_id };
         }
 
         private async Task<List<Log>> GetCustomerLogs(int _customer_id, ApiFilter _filters) {
-            return await Task.Run(() => customer_logs = merchanterService.helper.GetLastLogs(_customer_id, _filters));
+            return await merchanterService.helper.GetLastLogs(_customer_id, _filters);
         }
 
         private async Task<List<Notification>> GetCustomerNotifications(int _customer_id, ApiFilter _filters) {
-            return await Task.Run(() => customer_notifications = merchanterService.helper.GetNotifications(_customer_id, null));
+            return await merchanterService.helper.GetNotifications(_customer_id, null, _filters);
         }
 
         private async Task<List<Customer>> GetCustomers() {
-            return await Task.Run(() => customers = merchanterService.helper.GetCustomers());
+            return await merchanterService.helper.GetCustomers();
         }
     }
 }

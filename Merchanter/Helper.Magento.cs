@@ -5,6 +5,14 @@ using Newtonsoft.Json;
 using Order = Merchanter.Classes.Order;
 
 namespace Merchanter {
+    /// <summary>
+    /// Provides utility methods for interacting with Magento 2 APIs, including operations for products, categories,
+    /// attributes, orders, and customers.
+    /// </summary>
+    /// <remarks>This class contains a collection of static methods designed to facilitate communication with
+    /// Magento 2 APIs.  It includes methods for retrieving and managing product data, categories, attributes, orders,
+    /// customers, and other Magento-related entities. The methods in this class are intended to simplify integration
+    /// with Magento 2 by abstracting API calls and handling common operations.</remarks>
     public static partial class Helper {
         #region MAGENTO2
         public static M2_ProductStocks? GetProductStocks(int _scope = 0, int _max_qty = 99999) {

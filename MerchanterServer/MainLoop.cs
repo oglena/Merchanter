@@ -27,17 +27,17 @@ internal class MainLoop {
     /// <summary>
     /// Gets or sets the unique identifier for the thread.
     /// </summary>
-    private string thread_id { get; set; }
+    private string thread_id { get; }
 
     /// <summary>
     /// Gets or sets the customer associated with the current operation.
     /// </summary>
-    private Customer customer { get; set; }
+    private Customer customer { get; }
 
     /// <summary>
     /// Provides access to the database helper instance for performing database operations.
     /// </summary>
-    private DbHelper db_helper { get; set; }
+    private DbHelper db_helper { get; }
 
     /// <summary>
     /// Gets or sets the primary source identifier for the product.
@@ -74,7 +74,7 @@ internal class MainLoop {
     /// <summary>
     /// Indicates whether the XML processing encountered an error.
     /// </summary>
-    private bool xml_has_error;
+    private bool xml_has_error = false;
 
     /// <summary>
     /// Represents a collection of currency exchange rates.
@@ -271,7 +271,7 @@ internal class MainLoop {
         Console.WriteLine("All settings and integrations initiated...");
         #endregion
     }
-    
+
     /// <summary>
     /// Executes a series of synchronization and processing tasks for the customer,  including XML synchronization,
     /// product synchronization, order synchronization,  invoice synchronization, and notification processing.
@@ -287,7 +287,7 @@ internal class MainLoop {
     /// unsuccessful execution.</remarks>
     /// <returns><see langword="true"/> if all synchronization and processing tasks complete successfully;  otherwise, <see
     /// langword="false"/>.</returns>
-    public bool DoWork() {
+    public async Task<bool> DoWorkAsync() {
         bool health = true;
 
         #region Xml LOOP
@@ -297,7 +297,7 @@ internal class MainLoop {
             #endregion
             if (customer.xml_sync_status && !customer.is_xmlsync_working) {
                 db_helper.xml_clone.SetXmlSyncWorking(customer.customer_id, true);
-                if (health) { this.XmlLoop(Helper.global); }
+                if (health) { await this.XmlLoopAsync(Helper.global); }
                 //Task task = Task.Run(() => this.XmlLoop(Helper.global));
             }
         }
@@ -325,18 +325,19 @@ internal class MainLoop {
             products = db_helper.GetProducts(customer.customer_id, out brands, out categories, out product_attributes, out product_images, out product_target_prices);
             Console.WriteLine("Products:" + products.Count + "; Brands:" + brands.Count + "; Categories:" + categories.Count);
             Console.WriteLine("Attributes:" + product_attributes.Count + "; Images:" + product_images.Count + "; TargetPrices:" + product_target_prices.Count);
-            product_target_relation = db_helper.GetProductTargets(customer.customer_id);
+            // Fixed the line to ensure proper handling of the asynchronous call and null safety.
+            product_target_relation = await db_helper.GetProductTargets(customer.customer_id) ?? [];
             Console.Write("ProductTargets:" + product_target_relation.Count);
-            category_target_relation = db_helper.GetCategoryTargets(customer.customer_id);
+            category_target_relation = await db_helper.GetCategoryTargets(customer.customer_id) ?? [];
             Console.Write("; CategoryTargets:" + category_target_relation.Count + Environment.NewLine);
             if (products is null) { health = false; }
             #endregion
 
-            if (health) { this.ProductLoop(out health); }
+            if (health) { health = await this.ProductLoopAsync(); }
 
-            if (health) { this.ProductSourceLoop(out health); }
+            if (health) { health = await this.ProductSourceLoopAsync(); }
 
-            if (health) { this.ProductSync(out health); }
+            if (health) { health = await this.ProductSyncAsync(); }
 
             if (customer.product_sync_status) {
                 db_helper.SetProductSyncDate(customer.customer_id);
@@ -373,11 +374,10 @@ internal class MainLoop {
 
         //INFO: Need to be last executed 
         #region Notification LOOP
-        notifications = db_helper.notification_clone.GetNotifications(customer.customer_id, false);
+        notifications = await db_helper.notification_clone.GetNotifications(customer.customer_id, false, null) ?? [];
         if (customer.notification_sync_status && !customer.is_notificationsync_working) {
             db_helper.notification_clone.SetNotificationSyncWorking(customer.customer_id, true);
-            //Task task = Task.Run( this.NotificationLoop );
-            if (health) { this.NotificationLoop(); }
+            if (health) { await this.NotificationLoopAsync(); }
         }
         #endregion
 
@@ -386,19 +386,23 @@ internal class MainLoop {
 
     #region Individual Threads - XML, Invoice, Notification
     /// <summary>
-    /// Synchronizes XML-based product data for a specific customer by integrating with various external sources.
+    /// Synchronizes XML-based product data for a customer by retrieving, updating, and managing product information 
+    /// from various XML sources. This method handles product additions, updates, removals, and notifications based  on
+    /// the customer's configuration and enabled XML sources.
     /// </summary>
     /// <remarks>This method performs the following operations: <list type="bullet"> <item>Retrieves
-    /// XML-enabled products for the customer from the database.</item> <item>Integrates with multiple external XML
-    /// sources (e.g., FSP, PENTA, KOYUNCU) to fetch product data.</item> <item>Updates the database with new, modified,
-    /// or removed product information based on the fetched data.</item> <item>Generates notifications for significant
-    /// changes, such as product additions, removals, price changes, or stock changes.</item> </list> Exceptions and
-    /// errors encountered during the process are logged, and notifications are created for critical failures.</remarks>
-    /// <param name="_global">The global settings object containing configuration and credentials for external XML sources.</param>
-    private void XmlLoop(SettingsMerchanter _global) {
+    /// XML-enabled products for the customer.</item> <item>Processes product data from multiple XML sources, including
+    /// validation and updates.</item> <item>Generates notifications for product changes, such as additions, removals,
+    /// price changes, and quantity changes.</item> <item>Logs errors and updates synchronization status for the
+    /// customer.</item> </list> The method ensures that the customer's product data remains consistent with the latest
+    /// information from XML sources.</remarks>
+    /// <param name="_global">The global settings object containing configuration and connection details for XML sources.</param>
+    /// <returns></returns>
+    private async Task XmlLoopAsync(SettingsMerchanter _global) {
         List<Notification> notifications = [];
         List<XProduct> live_xproducts = [];
-        List<Product>? xml_enabled_products = db_helper.xml_clone.GetXMLEnabledProducts(customer.customer_id);
+        List<Product>? xml_enabled_products = await db_helper.xml_clone.GetProducts(customer.customer_id,
+            new ApiFilter() { Filters = [new Filter<dynamic>() { Field = "is_xml_enabled", Value = true }] });
 
         try {
             PrintConsole("XML sync started.");
@@ -440,19 +444,20 @@ internal class MainLoop {
                                 db_helper.xml_clone.UpdateXMLStatusByProductBarcode(customer.customer_id, item.barcode, false, null);
 
                                 #region Notification of XML_PRODUCT_REMOVED_BY_USER
-                                db_helper.xml_clone.LogToServer(thread_id, "xml_product_removed_by_user", item.barcode, customer.customer_id, "xml");
+                                _ = await db_helper.xml_clone.LogToServer(thread_id, "xml_product_removed_by_user", item.barcode, customer.customer_id, "xml");
                                 notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_PRODUCT_REMOVED_BY_USER, xproduct_barcode = item.barcode });
                                 #endregion
                             }
                         }
 
-                        xml_enabled_products = db_helper.xml_clone.GetXMLEnabledProducts(customer.customer_id);
+                        xml_enabled_products = await db_helper.xml_clone.GetProducts(customer.customer_id,
+                            new ApiFilter() { Filters = [new Filter<dynamic>() { Field = "is_xml_enabled", Value = true }] });
                     }
                     PrintConsole("Injecting XML Sources for " + customer.user_name + " Done.");
                 }
                 catch (Exception _ex) {
-                    db_helper.xml_clone.LogToServer(thread_id, "error", _ex.ToString(), customer.customer_id, "xml");
-                    db_helper.xml_clone.InsertNotifications(customer.customer_id, [new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_SYNC_ERROR, notification_content = _ex.ToString() }]);
+                    _ = await db_helper.xml_clone.LogToServer(thread_id, "error", _ex.ToString(), customer.customer_id, "xml");
+                    _ = await db_helper.xml_clone.InsertNotification(customer.customer_id, new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_SYNC_ERROR, notification_content = _ex.ToString() });
                 }
             }
             #endregion
@@ -488,10 +493,10 @@ internal class MainLoop {
                 }
                 else {
                     #region Notify - XML_SOURCE_FAILED
-                    db_helper.xml_clone.InsertNotifications(customer.customer_id, [new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_SOURCE_FAILED, notification_content = Constants.FSP }]);
+                    await db_helper.xml_clone.InsertNotification(customer.customer_id, new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_SOURCE_FAILED, notification_content = Constants.FSP });
                     #endregion
 
-                    db_helper.xml_clone.LogToServer(thread_id, "source_error", Constants.FSP, customer.customer_id, "xml");
+                    await db_helper.xml_clone.LogToServer(thread_id, "source_error", Constants.FSP, customer.customer_id, "xml");
                     PrintConsole(Constants.FSP + " xproducts load failed");
                     xml_has_error = true;
                     return;
@@ -530,10 +535,10 @@ internal class MainLoop {
                 }
                 else {
                     #region Notify - XML_SOURCE_FAILED
-                    db_helper.xml_clone.InsertNotifications(customer.customer_id, [new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_SOURCE_FAILED, notification_content = Constants.PENTA }]);
+                    await db_helper.xml_clone.InsertNotification(customer.customer_id, new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_SOURCE_FAILED, notification_content = Constants.PENTA });
                     #endregion
 
-                    db_helper.xml_clone.LogToServer(thread_id, "source_error", Constants.PENTA, customer.customer_id, "xml");
+                    await db_helper.xml_clone.LogToServer(thread_id, "source_error", Constants.PENTA, customer.customer_id, "xml");
                     PrintConsole(Constants.PENTA + " xproducts load failed");
                     xml_has_error = true;
                     return;
@@ -571,10 +576,10 @@ internal class MainLoop {
                 }
                 else {
                     #region Notify - XML_SOURCE_FAILED
-                    db_helper.xml_clone.InsertNotifications(customer.customer_id, [new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_SOURCE_FAILED, notification_content = Constants.KOYUNCU }]);
+                    await db_helper.xml_clone.InsertNotification(customer.customer_id, new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_SOURCE_FAILED, notification_content = Constants.KOYUNCU });
                     #endregion
 
-                    db_helper.xml_clone.LogToServer(thread_id, "source_error", Constants.KOYUNCU, customer.customer_id, "xml");
+                    await db_helper.xml_clone.LogToServer(thread_id, "source_error", Constants.KOYUNCU, customer.customer_id, "xml");
                     PrintConsole(Constants.KOYUNCU + " xproducts load failed");
                     xml_has_error = true;
                     return;
@@ -612,10 +617,10 @@ internal class MainLoop {
                 }
                 else {
                     #region Notify - XML_SOURCE_FAILED
-                    db_helper.xml_clone.InsertNotifications(customer.customer_id, [new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_SOURCE_FAILED, notification_content = Constants.OKSID }]);
+                    await db_helper.xml_clone.InsertNotification(customer.customer_id, new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_SOURCE_FAILED, notification_content = Constants.OKSID });
                     #endregion
 
-                    db_helper.xml_clone.LogToServer(thread_id, "source_error", Constants.OKSID, customer.customer_id, "xml");
+                    await db_helper.xml_clone.LogToServer(thread_id, "source_error", Constants.OKSID, customer.customer_id, "xml");
                     PrintConsole(Constants.OKSID + " xproducts load failed");
                     xml_has_error = true;
                     return;
@@ -654,10 +659,10 @@ internal class MainLoop {
                 }
                 else {
                     #region Notify - XML_SOURCE_FAILED
-                    db_helper.xml_clone.InsertNotifications(customer.customer_id, [new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_SOURCE_FAILED, notification_content = Constants.BOGAZICI }]);
+                    await db_helper.xml_clone.InsertNotification(customer.customer_id, new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_SOURCE_FAILED, notification_content = Constants.BOGAZICI });
                     #endregion
 
-                    db_helper.xml_clone.LogToServer(thread_id, "source_error", Constants.BOGAZICI, customer.customer_id, "xml");
+                    await db_helper.xml_clone.LogToServer(thread_id, "source_error", Constants.BOGAZICI, customer.customer_id, "xml");
                     PrintConsole(Constants.BOGAZICI + " xproducts load failed");
                     xml_has_error = true;
                     return;
@@ -674,7 +679,7 @@ internal class MainLoop {
                         PrintConsole(item.barcode + " source=" + item.xml_source + " " + " xproduct removed.");
 
                         #region Notify - XML_PRODUCT_REMOVED
-                        db_helper.xml_clone.LogToServer(thread_id, "xml_product_removed", item.xml_source + ":" + item.barcode + ": " + item.qty, customer.customer_id, "xml");
+                        await db_helper.xml_clone.LogToServer(thread_id, "xml_product_removed", item.xml_source + ":" + item.barcode + ": " + item.qty, customer.customer_id, "xml");
                         if (xml_enabled_products?.Where(x => x.barcode == item.barcode).ToList().Count == 0) {
                             notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_PRODUCT_REMOVED, xproduct_barcode = item.barcode, notification_content = item.xml_source });
                         }
@@ -692,7 +697,7 @@ internal class MainLoop {
                         #region Notify - XML_PRICE_CHANGED
                         if (xml_enabled_products?.Where(x => x.barcode == item.barcode).ToList().Count > 0) {
                             if (item.price2 != tempx.price2) {
-                                db_helper.xml_clone.LogToServer(thread_id, "xml_price_changed", item.xml_source + ":" + item.barcode + "=>" + item.price2 + "|" + tempx.price2, customer.customer_id, "xml");
+                                await db_helper.xml_clone.LogToServer(thread_id, "xml_price_changed", item.xml_source + ":" + item.barcode + "=>" + item.price2 + "|" + tempx.price2, customer.customer_id, "xml");
                                 notifications.Add(new Notification() {
                                     customer_id = customer.customer_id,
                                     type = Notification.NotificationTypes.XML_PRICE_CHANGED,
@@ -706,7 +711,7 @@ internal class MainLoop {
                         #region Notify - XML_QTY_CHANGED
                         if (xml_enabled_products?.Where(x => x.barcode == item.barcode).ToList().Count > 0) {
                             if (item.qty != tempx.qty) {
-                                db_helper.xml_clone.LogToServer(thread_id, "xml_qty_changed", item.xml_source + ":" + item.barcode + "=>" + item.qty + "|" + tempx.qty, customer.customer_id, "xml");
+                                await db_helper.xml_clone.LogToServer(thread_id, "xml_qty_changed", item.xml_source + ":" + item.barcode + "=>" + item.qty + "|" + tempx.qty, customer.customer_id, "xml");
                                 notifications.Add(new Notification() {
                                     customer_id = customer.customer_id,
                                     type = Notification.NotificationTypes.XML_QTY_CHANGED,
@@ -720,7 +725,7 @@ internal class MainLoop {
                     else {
                         #region Notify - XML_PRODUCT_ADDED
                         if (xml_enabled_products?.Where(x => x.barcode == item.barcode).ToList().Count > 0) {
-                            db_helper.xml_clone.LogToServer(thread_id, "xml_product_added", item.xml_source + ":" + item.barcode + ": " + item.qty, customer.customer_id, "xml");
+                            await db_helper.xml_clone.LogToServer(thread_id, "xml_product_added", item.xml_source + ":" + item.barcode + ": " + item.qty, customer.customer_id, "xml");
                             notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_PRODUCT_ADDED, xproduct_barcode = item.barcode });
                         }
                         #endregion
@@ -738,12 +743,14 @@ internal class MainLoop {
             }
 
             if (notifications.Count > 0) {
-                db_helper.xml_clone.InsertNotifications(customer.customer_id, notifications);
+                foreach (var item in notifications) {
+                    await db_helper.xml_clone.InsertNotification(customer.customer_id, item);
+                }
             }
         }
         catch (Exception _ex) {
-            db_helper.xml_clone.LogToServer(thread_id, "error", _ex.ToString(), customer.customer_id, "xml");
-            db_helper.xml_clone.InsertNotifications(customer.customer_id, [new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_SYNC_ERROR, is_notification_sent = true, notification_content = _ex.ToString() }]);
+            await db_helper.xml_clone.LogToServer(thread_id, "error", _ex.ToString(), customer.customer_id, "xml");
+            await db_helper.xml_clone.InsertNotification(customer.customer_id, new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.XML_SYNC_ERROR, is_notification_sent = true, notification_content = _ex.ToString() });
             PrintConsole(xproducts.Count + " xproducts loaded from old cache");
         }
         finally {
@@ -813,9 +820,9 @@ internal class MainLoop {
                                             if (selected_invoice.erp_customer_group == "WEB" || selected_invoice.erp_customer_group == "WEBM2") {
                                                 Helper.UploadFileToFtp(Helper.global.erp_invoice_ftp_url, fullpath,
                                                     Helper.global.erp_invoice_ftp_username, Helper.global.erp_invoice_ftp_password);
-                                                db_helper.invoice_clone.LogToServer(thread_id, "ftpupload", fullpath + " => " + Helper.global.erp_invoice_ftp_url, customer.customer_id, "invoice");
+                                                _ = db_helper.invoice_clone.LogToServer(thread_id, "ftpupload", fullpath + " => " + Helper.global.erp_invoice_ftp_url, customer.customer_id, "invoice").Result;
                                                 if (QP_MySQLHelper.QP_UpdateInvoiceNo(selected_invoice.order_label, invoice.gib_fatura_no)) {
-                                                    db_helper.invoice_clone.LogToServer(thread_id, "qp_mysqlupdate", selected_invoice.order_label + " => " + invoice.gib_fatura_no, customer.customer_id, "invoice");
+                                                    _ = db_helper.invoice_clone.LogToServer(thread_id, "qp_mysqlupdate", selected_invoice.order_label + " => " + invoice.gib_fatura_no, customer.customer_id, "invoice").Result;
                                                 }
                                             }
                                         }
@@ -843,7 +850,7 @@ internal class MainLoop {
                                         }); //TODO: this gonna change
                                         #endregion
                                         PrintConsole(Constants.NETSIS + " " + invoice.invoice_no + " created at [" + fullpath + "]");
-                                        db_helper.invoice_clone.LogToServer(thread_id, "info", selected_invoice.order_label + " => " + invoice.gib_fatura_no, customer.customer_id, "invoice");
+                                        _ = db_helper.invoice_clone.LogToServer(thread_id, "info", selected_invoice.order_label + " => " + invoice.gib_fatura_no, customer.customer_id, "invoice").Result;
                                     }
                                 }
                                 if (db_helper.invoice_clone.UpdateInvoices(customer.customer_id, [invoice])) {
@@ -863,11 +870,13 @@ internal class MainLoop {
             }
 
             if (notifications.Count > 0) {
-                db_helper.invoice_clone.InsertNotifications(customer.customer_id, notifications);
+                foreach (var item in notifications) {
+                    _ = db_helper.invoice_clone.InsertNotification(customer.customer_id, item).Result;
+                }
             }
         }
         catch (Exception _ex) {
-            db_helper.invoice_clone.LogToServer(thread_id, "error", _ex.ToString(), customer.customer_id, "invoice");
+            _ = db_helper.invoice_clone.LogToServer(thread_id, "error", _ex.ToString(), customer.customer_id, "invoice").Result;
         }
         finally {
             if (customer.invoice_sync_status) {
@@ -879,13 +888,16 @@ internal class MainLoop {
     }
 
     /// <summary>
-    /// Processes a collection of notifications and performs the appropriate actions based on their types.
+    /// Processes a collection of notifications asynchronously, sending emails and updating notification statuses based
+    /// on their types.
     /// </summary>
-    /// <remarks>This method iterates through a list of notifications and handles each notification according
-    /// to its type. Actions may include sending emails, updating notification statuses, logging events, or performing
-    /// other operations specific to the notification type. The method ensures that notifications are marked as sent and
-    /// their content is updated in the database when applicable.</remarks>
-    private void NotificationLoop() {
+    /// <remarks>This method iterates through a list of notifications and performs actions based on the
+    /// notification type, such as sending emails, updating notification statuses, and logging events. Supported
+    /// notification types include general notifications, order-related updates, product stock changes, XML
+    /// synchronization errors, and more. Exceptions are logged to the server, and notification synchronization status
+    /// is updated upon completion.</remarks>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    private async Task NotificationLoopAsync() {
         try {
             if (notifications is null) return;
             if (notifications.Count == 0) return;
@@ -905,9 +917,9 @@ internal class MainLoop {
 
                             item.is_notification_sent = true;
                             item.notification_content = mail_title;
-                            if (db_helper.notification_clone.UpdateNotifications(customer.customer_id, [item])) {
+                            if (await db_helper.notification_clone.UpdateNotification(customer.customer_id, item)) {
                                 PrintConsole("ID: " + item.id.ToString() + " notification sent[" + mail_title + "]");
-                                db_helper.notification_clone.LogToServer(thread_id, "new_order", mail_title + " => " + mail_body, customer.customer_id, "notification");
+                                await db_helper.notification_clone.LogToServer(thread_id, "new_order", mail_title + " => " + mail_body, customer.customer_id, "notification");
                             }
                         }
                         break;
@@ -960,9 +972,9 @@ internal class MainLoop {
                                 mail_body)) {
                                 item.is_notification_sent = true;
                                 item.notification_content = mail_body;
-                                if (db_helper.notification_clone.UpdateNotifications(customer.customer_id, [item])) {
+                                if (await db_helper.notification_clone.UpdateNotification(customer.customer_id, item)) {
                                     PrintConsole("ID: " + item.id.ToString() + " notification sent[" + mail_title + "]");
-                                    db_helper.notification_clone.LogToServer(thread_id, "out_of_stock_product_sold", mail_title + " => " + mail_body, customer.customer_id, "notification");
+                                    await db_helper.notification_clone.LogToServer(thread_id, "out_of_stock_product_sold", mail_title + " => " + mail_body, customer.customer_id, "notification");
                                 }
                             }
                             selected_product = null;
@@ -1013,9 +1025,9 @@ internal class MainLoop {
                                 mail_body)) {
                                 item.is_notification_sent = true;
                                 item.notification_content = mail_body;
-                                if (db_helper.notification_clone.UpdateNotifications(customer.customer_id, [item])) {
+                                if (await db_helper.notification_clone.UpdateNotification(customer.customer_id, item)) {
                                     PrintConsole("ID: " + item.id.ToString() + " notification sent[" + mail_title + "]");
-                                    db_helper.notification_clone.LogToServer(thread_id, "product_in_stock", mail_title + " => " + mail_body, customer.customer_id, "notification");
+                                    await db_helper.notification_clone.LogToServer(thread_id, "product_in_stock", mail_title + " => " + mail_body, customer.customer_id, "notification");
                                 }
                             }
                             selected_product = null;
@@ -1066,9 +1078,9 @@ internal class MainLoop {
                                 mail_body)) {
                                 item.is_notification_sent = true;
                                 item.notification_content = mail_body;
-                                if (db_helper.notification_clone.UpdateNotifications(customer.customer_id, [item])) {
+                                if (await db_helper.notification_clone.UpdateNotification(customer.customer_id, item)) {
                                     PrintConsole("ID: " + item.id.ToString() + " notification sent[" + mail_title + "]");
-                                    db_helper.notification_clone.LogToServer(thread_id, "product_out_of_stock", mail_title + " => " + mail_body, customer.customer_id, "notification");
+                                    await db_helper.notification_clone.LogToServer(thread_id, "product_out_of_stock", mail_title + " => " + mail_body, customer.customer_id, "notification");
                                 }
                             }
                             selected_product = null;
@@ -1078,9 +1090,9 @@ internal class MainLoop {
                     case Notification.NotificationTypes.XML_PRODUCT_ADDED:
                         item.is_notification_sent = true;
                         item.notification_content = string.Format("XML_PRODUCT_ADDED {0}", item.xproduct_barcode);
-                        if (db_helper.notification_clone.UpdateNotifications(customer.customer_id, [item])) {
+                        if (await db_helper.notification_clone.UpdateNotification(customer.customer_id, item)) {
                             PrintConsole("ID:" + item.id.ToString() + " notification sent [" + item.xproduct_barcode + "]");
-                            db_helper.notification_clone.LogToServer(thread_id, "xml_product_added", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification");
+                            await db_helper.notification_clone.LogToServer(thread_id, "xml_product_added", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification");
                         }
                         break;
 
@@ -1090,9 +1102,9 @@ internal class MainLoop {
 
                         item.is_notification_sent = true;
                         item.notification_content = mail_title1;
-                        if (db_helper.notification_clone.UpdateNotifications(customer.customer_id, [item])) {
+                        if (await db_helper.notification_clone.UpdateNotification(customer.customer_id, item)) {
                             PrintConsole("ID: " + item.id.ToString() + " notification sent[" + mail_title1 + "]");
-                            db_helper.notification_clone.LogToServer(thread_id, "xml_product_removed", mail_title1 + " => " + mail_title1, customer.customer_id, "notification");
+                            await db_helper.notification_clone.LogToServer(thread_id, "xml_product_removed", mail_title1 + " => " + mail_title1, customer.customer_id, "notification");
                         }
                         break;
 
@@ -1135,9 +1147,9 @@ internal class MainLoop {
                                    mail_body)) {
                                     item.is_notification_sent = true;
                                     item.notification_content = mail_body;
-                                    if (db_helper.notification_clone.UpdateNotifications(customer.customer_id, [item])) {
+                                    if (await db_helper.notification_clone.UpdateNotification(customer.customer_id, item)) {
                                         PrintConsole("ID: " + item.id.ToString() + " notification sent[" + mail_title + "]");
-                                        db_helper.notification_clone.LogToServer(thread_id, "xml_price_changed", mail_title + " => " + mail_body, customer.customer_id, "notification");
+                                        await db_helper.notification_clone.LogToServer(thread_id, "xml_price_changed", mail_title + " => " + mail_body, customer.customer_id, "notification");
                                     }
                                 }
                                 selected_product = null;
@@ -1148,90 +1160,90 @@ internal class MainLoop {
                     case Notification.NotificationTypes.PRODUCT_PRICE_UPDATE_ERROR:
                         item.is_notification_sent = true;
                         item.notification_content = string.Format("PRODUCT_PRICE_UPDATE_ERROR {0}", item.product_sku);
-                        if (db_helper.notification_clone.UpdateNotifications(customer.customer_id, [item])) {
+                        if (await db_helper.notification_clone.UpdateNotification(customer.customer_id, item)) {
                             PrintConsole("ID:" + item.id.ToString() + " notification sent [" + item.product_sku + "]");
-                            db_helper.notification_clone.LogToServer(thread_id, "product_price_update_error", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification");
+                            await db_helper.notification_clone.LogToServer(thread_id, "product_price_update_error", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification");
                         }
                         break;
 
                     case Notification.NotificationTypes.PRODUCT_SPECIAL_PRICE_UPDATE_ERROR:
                         item.is_notification_sent = true;
                         item.notification_content = string.Format("PRODUCT_SPECIAL_PRICE_UPDATE_ERROR {0}", item.product_sku);
-                        if (db_helper.notification_clone.UpdateNotifications(customer.customer_id, [item])) {
+                        if (await db_helper.notification_clone.UpdateNotification(customer.customer_id, item)) {
                             PrintConsole("ID:" + item.id.ToString() + " notification sent [" + item.product_sku + "]");
-                            db_helper.notification_clone.LogToServer(thread_id, "product_special_price_update_error", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification");
+                            await db_helper.notification_clone.LogToServer(thread_id, "product_special_price_update_error", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification");
                         }
                         break;
 
                     case Notification.NotificationTypes.PRODUCT_CUSTOM_PRICE_UPDATE_ERROR:
                         item.is_notification_sent = true;
                         item.notification_content = string.Format("PRODUCT_CUSTOM_PRICE_UPDATE_ERROR {0}", item.product_sku);
-                        if (db_helper.notification_clone.UpdateNotifications(customer.customer_id, [item])) {
+                        if (await db_helper.notification_clone.UpdateNotification(customer.customer_id, item)) {
                             PrintConsole("ID:" + item.id.ToString() + " notification sent [" + item.product_sku + "]");
-                            db_helper.notification_clone.LogToServer(thread_id, "product_custom_price_update_error", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification");
+                            await db_helper.notification_clone.LogToServer(thread_id, "product_custom_price_update_error", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification");
                         }
                         break;
 
                     case Notification.NotificationTypes.PRODUCT_QTY_UPDATE_ERROR:
                         item.is_notification_sent = true;
                         item.notification_content = string.Format("PRODUCT_QTY_UPDATE_ERROR {0}", item.product_sku);
-                        if (db_helper.notification_clone.UpdateNotifications(customer.customer_id, [item])) {
+                        if (await db_helper.notification_clone.UpdateNotification(customer.customer_id, item)) {
                             PrintConsole("ID:" + item.id.ToString() + " notification sent [" + item.product_sku + "]");
-                            db_helper.notification_clone.LogToServer(thread_id, "product_qty_update_error", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification");
+                            await db_helper.notification_clone.LogToServer(thread_id, "product_qty_update_error", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification");
                         }
                         break;
 
                     case Notification.NotificationTypes.PRODUCT_UPDATE_ERROR:
                         item.is_notification_sent = true;
                         item.notification_content = string.Format("PRODUCT_UPDATE_ERROR {0}", item.product_sku);
-                        if (db_helper.notification_clone.UpdateNotifications(customer.customer_id, [item])) {
+                        if (await db_helper.notification_clone.UpdateNotification(customer.customer_id, item)) {
                             PrintConsole("ID:" + item.id.ToString() + " notification sent [" + item.product_sku + "]");
-                            db_helper.notification_clone.LogToServer(thread_id, "product_update_error", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification");
+                            await db_helper.notification_clone.LogToServer(thread_id, "product_update_error", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification");
                         }
                         break;
 
                     case Notification.NotificationTypes.XML_SYNC_ERROR:
                         item.is_notification_sent = true;
                         item.notification_content = string.Format("XML SYNC ERROR {0}", item.xproduct_barcode);
-                        if (db_helper.notification_clone.UpdateNotifications(customer.customer_id, [item])) {
+                        if (await db_helper.notification_clone.UpdateNotification(customer.customer_id, item)) {
                             PrintConsole("ID:" + item.id.ToString() + " notification sent [" + item.xproduct_barcode + "]");
-                            db_helper.notification_clone.LogToServer(thread_id, "xml_sync_error", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification");
+                            await db_helper.notification_clone.LogToServer(thread_id, "xml_sync_error", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification");
                         }
                         break;
 
                     case Notification.NotificationTypes.XML_QTY_CHANGED:
                         item.is_notification_sent = true;
                         item.notification_content = string.Format("XML QTY CHANGED {0}", item.xproduct_barcode);
-                        if (db_helper.notification_clone.UpdateNotifications(customer.customer_id, [item])) {
+                        if (await db_helper.notification_clone.UpdateNotification(customer.customer_id, item)) {
                             PrintConsole("ID:" + item.id.ToString() + " notification sent [" + item.xproduct_barcode + "]");
-                            db_helper.notification_clone.LogToServer(thread_id, "xml_qty_changed", item.notification_content, customer.customer_id, "notification");
+                            await db_helper.notification_clone.LogToServer(thread_id, "xml_qty_changed", item.notification_content, customer.customer_id, "notification");
                         }
                         break;
 
                     case Notification.NotificationTypes.XML_PRODUCT_REMOVED_BY_USER:
                         item.is_notification_sent = true;
                         item.notification_content = string.Format("XML PRODUCT REMOVED BY USER {0}", item.xproduct_barcode);
-                        if (db_helper.notification_clone.UpdateNotifications(customer.customer_id, [item])) {
+                        if (await db_helper.notification_clone.UpdateNotification(customer.customer_id, item)) {
                             PrintConsole("ID:" + item.id.ToString() + " notification sent [" + item.xproduct_barcode + "]");
-                            db_helper.notification_clone.LogToServer(thread_id, "xml_product_removed_by_user", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification");
+                            await db_helper.notification_clone.LogToServer(thread_id, "xml_product_removed_by_user", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification");
                         }
                         break;
 
                     case Notification.NotificationTypes.XML_SOURCE_FAILED:
                         item.is_notification_sent = true;
                         item.notification_content = string.Format("XML PRODUCT REMOVED {0}", item.xproduct_barcode);
-                        if (db_helper.notification_clone.UpdateNotifications(customer.customer_id, [item])) {
+                        if (await db_helper.notification_clone.UpdateNotification(customer.customer_id, item)) {
                             PrintConsole("ID:" + item.id.ToString() + " notification sent [" + item.xproduct_barcode + "]");
-                            db_helper.notification_clone.LogToServer(thread_id, "xml_product_removed", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification");
+                            await db_helper.notification_clone.LogToServer(thread_id, "xml_product_removed", item.notification_content + " => " + item.xproduct_barcode, customer.customer_id, "notification");
                         }
                         break;
 
                     case Notification.NotificationTypes.NEW_INVOICE:
                         item.is_notification_sent = true;
                         item.notification_content = string.Format("NEW INVOICE {0}", item.invoice_no);
-                        if (db_helper.notification_clone.UpdateNotifications(customer.customer_id, [item])) {
+                        if (await db_helper.notification_clone.UpdateNotification(customer.customer_id, item)) {
                             PrintConsole("ID: " + item.id.ToString() + " notification sent[" + item.xproduct_barcode + "]");
-                            db_helper.notification_clone.LogToServer(thread_id, "new_invoice", item.notification_content + " => " + item.invoice_no, customer.customer_id, "notification");
+                            await db_helper.notification_clone.LogToServer(thread_id, "new_invoice", item.notification_content + " => " + item.invoice_no, customer.customer_id, "notification");
                         }
                         break;
 
@@ -1244,9 +1256,9 @@ internal class MainLoop {
 
                             item.is_notification_sent = true;
                             item.notification_content = mail_title;
-                            if (db_helper.notification_clone.UpdateNotifications(customer.customer_id, [item])) {
+                            if (await db_helper.notification_clone.UpdateNotification(customer.customer_id, item)) {
                                 PrintConsole("ID: " + item.id.ToString() + " notification sent[" + mail_title + "]");
-                                db_helper.notification_clone.LogToServer(thread_id, "order_complete", mail_title + " => " + mail_body, customer.customer_id, "notification");
+                                await db_helper.notification_clone.LogToServer(thread_id, "order_complete", mail_title + " => " + mail_body, customer.customer_id, "notification");
                             }
                         }
                         break;
@@ -1260,9 +1272,9 @@ internal class MainLoop {
 
                             item.is_notification_sent = true;
                             item.notification_content = mail_title;
-                            if (db_helper.notification_clone.UpdateNotifications(customer.customer_id, [item])) {
+                            if (await db_helper.notification_clone.UpdateNotification(customer.customer_id, item)) {
                                 PrintConsole("ID: " + item.id.ToString() + " notification sent[" + mail_title + "]");
-                                db_helper.notification_clone.LogToServer(thread_id, "order_process", mail_title + " => " + mail_body, customer.customer_id, "notification");
+                                await db_helper.notification_clone.LogToServer(thread_id, "order_process", mail_title + " => " + mail_body, customer.customer_id, "notification");
                             }
                         }
                         break;
@@ -1276,25 +1288,25 @@ internal class MainLoop {
 
                             item.is_notification_sent = true;
                             item.notification_content = mail_title;
-                            if (db_helper.notification_clone.UpdateNotifications(customer.customer_id, [item])) {
+                            if (await db_helper.notification_clone.UpdateNotification(customer.customer_id, item)) {
                                 PrintConsole("ID: " + item.id.ToString() + " notification sent[" + mail_title + "]");
-                                db_helper.notification_clone.LogToServer(thread_id, "order_shipped", mail_title + " => " + mail_body, customer.customer_id, "notification");
+                                await db_helper.notification_clone.LogToServer(thread_id, "order_shipped", mail_title + " => " + mail_body, customer.customer_id, "notification");
                             }
                         }
                         break;
                     case Notification.NotificationTypes.NEW_ORDER_ERROR:
                         item.is_notification_sent = true;
                         item.notification_content = string.Format("NEW_ORDER_ERROR {0}", item.order_label);
-                        if (db_helper.notification_clone.UpdateNotifications(customer.customer_id, [item])) {
+                        if (await db_helper.notification_clone.UpdateNotification(customer.customer_id, item)) {
                             PrintConsole("ID:" + item.id.ToString() + " notification sent [" + item.order_label + "]");
-                            db_helper.notification_clone.LogToServer(thread_id, "new_order_error", item.notification_content, customer.customer_id, "notification");
+                            await db_helper.notification_clone.LogToServer(thread_id, "new_order_error", item.notification_content, customer.customer_id, "notification");
                         }
                         break;
                 }
             }
         }
         catch (Exception _ex) {
-            db_helper.notification_clone.LogToServer(thread_id, "error", _ex.ToString(), customer.customer_id, "notification");
+            await db_helper.notification_clone.LogToServer(thread_id, "error", _ex.ToString(), customer.customer_id, "notification");
         }
         finally {
             if (customer.notification_sync_status) {
@@ -1321,91 +1333,10 @@ internal class MainLoop {
     /// initialized.</remarks>
     /// <param name="_health">When the method returns, contains a value indicating whether the operation completed successfully. A value of
     /// <see langword="true"/> indicates success; <see langword="false"/> indicates failure.</param>
-    private void ProductLoop(out bool _health) {
-        _health = true;
+    private async Task<bool> ProductLoopAsync() {
+        bool _health = true;
         try {
             #region Main Product Source
-            if (product_main_source is not null && product_main_source == Constants.ENTEGRA) {
-                PrintConsole("Started loading " + Constants.ENTEGRA + " sources.");
-                var ent_products = Helper.GetENTProducts();
-                if (ent_products is not null && ent_products.Count > 0) {
-                    foreach (var item in ent_products) {
-                        if (Helper.global.product.is_barcode_required) {
-                            if (string.IsNullOrWhiteSpace(item.Barcode)) {
-                                PrintConsole(Constants.ENTEGRA + " " + item.Sku + " barcode missing, not sync.", false);
-                                continue;
-                            }
-                        }
-
-                        if (item.Sku != string.Empty) {
-                            #region Checking Product Extension If exist
-                            //Brand? existed_brand = brands.Where(x => x.brand_name.Trim().Equals(item.BrandName?.Trim().ToLower(), StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
-                            Brand existed_brand = !string.IsNullOrWhiteSpace(item.BrandName?.Trim()) ? brands.FirstOrDefault(x => x.brand_name == item.BrandName.Trim()) ?? default_brand : default_brand;
-                            ProductExtension? existed_p_ext = products.Where(x => x.sku == item.Sku).FirstOrDefault()?.extension;
-                            if (existed_p_ext is not null) existed_p_ext.brand = existed_brand;
-                            List<Category>? existed_p_cats = existed_p_ext is not null ? categories?.Where(x => existed_p_ext.category_ids.Split(",").Contains(x.id.ToString())).ToList() : null;
-                            if (existed_p_ext is not null) existed_p_ext.categories = existed_p_cats;
-                            #endregion
-
-                            //TODO: Product attribute source mapping condition will be here
-                            var p = new Product() {
-                                customer_id = customer.customer_id,
-                                source_product_id = item.ProductId,
-                                barcode = item.Barcode,
-                                currency = Currency.GetCurrency(item.Currency),
-                                name = item.Name,
-                                sku = item.Sku,
-                                price = item.Price,
-                                special_price = item.Special_Price,
-                                custom_price = item.Custom_Price,
-                                tax = item.Tax,
-
-                                tax_included = item.TaxIncluded,
-                                sources = [ new ProductSource( customer.customer_id, 0,
-                                        Constants.ENTEGRA,
-                                        item.Sku,
-                                        item.Barcode,
-                                        item.Qty,
-                                        true, DateTime.Now) ],
-                                extension = new ProductExtension() {
-                                    sku = item.Sku,
-                                    barcode = item.Barcode,
-                                    customer_id = customer.customer_id,
-                                    brand_id = existed_brand is not null ? existed_brand.id : (string.IsNullOrEmpty(item.BrandName) ? default_brand.id : 0),
-                                    is_xml_enabled = existed_p_ext is not null && existed_p_ext.is_xml_enabled,
-                                    xml_sources = existed_p_ext is not null ? existed_p_ext.xml_sources : [],
-                                    category_ids = existed_p_ext is not null ? existed_p_ext.category_ids : Helper.global.product.customer_root_category_id.ToString(),
-                                    categories = existed_p_cats ?? ([root_category]),
-                                    brand = existed_brand is not null ? existed_brand : (string.IsNullOrEmpty(item.BrandName) ?
-                                    default_brand
-                                    : new Brand() {
-                                        customer_id = customer.customer_id,
-                                        brand_name = item.BrandName,
-                                        status = true,
-                                        id = 0
-                                    }),
-                                    is_enabled = true,
-                                    volume = 0,
-                                    weight = 0,
-                                    description = null
-                                },
-                                type = Product.ProductTypes.SIMPLE,
-                                attributes = [],
-                                images = []
-                            };
-
-                            live_products.Add(p);
-                        }
-                        else {
-                            PrintConsole(Constants.ENTEGRA + " " + item.Barcode + " sku missing, not sync.", false);
-                        }
-                    }
-                }
-                else {
-                    PrintConsole("MAIN_SOURCE:" + Constants.ENTEGRA + " connection:products failed");
-                }
-            }
-
             if (product_main_source is not null && product_main_source == Constants.MERCHANTER) {
                 live_products = products ?? [];
             }
@@ -1488,8 +1419,8 @@ internal class MainLoop {
                     PrintConsole("Started loading " + Constants.ANK_ERP + " sources.");
 
                     #region Category Pre-Sync
-                    var ank_categories = ank_erp.GetCategoriesFromFolder("""C:\Users\caqn_\OneDrive\Masaüstü\otoahmet_categories""")?.DokumanPaketKategori.Eleman.ElemanListe.KategoriItem;
-                    //var ank_categories = ank_erp.GetCategories()?.Result?.DokumanPaketKategori.Eleman.ElemanListe.KategoriItem;
+                    //var ank_categories = ank_erp.GetCategoriesFromFolder("""C:\Users\caqn_\OneDrive\Masaüstü\otoahmet_categories""")?.DokumanPaketKategori.Eleman.ElemanListe.KategoriItem;
+                    var ank_categories = ank_erp.GetCategories()?.Result?.DokumanPaketKategori.Eleman.ElemanListe.KategoriItem;
                     PrintConsole(Constants.ANK_ERP + " total " + ank_categories?.Count + " categories found.");
                     if (ank_categories is not null && ank_categories.Count > 0) {
                         foreach (var item in ank_categories) {
@@ -1524,7 +1455,7 @@ internal class MainLoop {
                                 }
                                 if (need_update) {
                                     if (db_helper.UpdateCategory(customer.customer_id, existed_category) is not null) {
-                                        db_helper.LogToServer(thread_id, "product_category_updated", existed_category.category_name, customer.customer_id, "product");
+                                        await db_helper.LogToServer(thread_id, "product_category_updated", existed_category.category_name, customer.customer_id, "product");
                                         PrintConsole(Constants.ANK_ERP + " " + existed_category.category_name + " category updated.", false);
                                     }
                                     else {
@@ -1543,7 +1474,7 @@ internal class MainLoop {
                                 var inserted_category = db_helper.InsertCategory(customer.customer_id, c);
                                 if (inserted_category is not null) {
                                     categories?.Add(inserted_category);
-                                    db_helper.LogToServer(thread_id, "product_category_inserted", inserted_category.category_name, customer.customer_id, "product");
+                                    await db_helper.LogToServer(thread_id, "product_category_inserted", inserted_category.category_name, customer.customer_id, "product");
                                     PrintConsole(Constants.ANK_ERP + " " + inserted_category.category_name + " category inserted.", false);
                                 }
                                 else {
@@ -1562,8 +1493,8 @@ internal class MainLoop {
 
                     #region Product Memory Take
                     PrintConsole(Constants.ANK_ERP + " product api take started.");
-                    //var ank_products_zip = ank_erp.GetProducts().Result;
-                    var ank_products_zip = ank_erp.GetProductsFromFolder("""C:\Users\caqn_\OneDrive\Masaüstü\otoahmet_products_2""");
+                    var ank_products_zip = ank_erp.GetProducts().Result;
+                    //var ank_products_zip = ank_erp.GetProductsFromFolder("""C:\Users\caqn_\OneDrive\Masaüstü\otoahmet_products_2""");
                     List<UrunSicil> ank_products = [];
                     if (ank_products_zip is not null && ank_products_zip.Count > 0) {
                         foreach (var zip_item in ank_products_zip) {
@@ -1761,11 +1692,14 @@ internal class MainLoop {
                     _health = false;
                 }
             }
+
+
+            return _health;
             #endregion
         }
         catch (Exception _ex) {
-            db_helper.LogToServer(thread_id, "product_source_error", _ex.Message + newline + _ex.ToString(), customer.customer_id, "product");
-            _health = false;
+            await db_helper.LogToServer(thread_id, "product_source_error", _ex.Message + newline + _ex.ToString(), customer.customer_id, "product");
+            return false;
         }
         finally {
             PrintConsole(product_main_source + " " + live_products.Count + " products initialized.");
@@ -1783,8 +1717,8 @@ internal class MainLoop {
     /// necessary product and source data are preloaded and available in the relevant collections.</remarks>
     /// <param name="_health">An output parameter that indicates the health status of the operation.  Set to <see langword="true"/> if the
     /// operation completes successfully; otherwise, <see langword="false"/>.</param>
-    private void ProductSourceLoop(out bool _health) {
-        _health = true;
+    private async Task<bool> ProductSourceLoopAsync() {
+        bool _health = true;
         try {
             #region XML [qty] Sources
             if (!string.IsNullOrWhiteSpace(product_main_source) && other_product_sources.Length > 0) {
@@ -1817,10 +1751,12 @@ internal class MainLoop {
             #region Offline Storage
 
             #endregion
+
+            return _health;
         }
         catch (Exception _ex) {
-            db_helper.LogToServer(thread_id, "product_source_error", _ex.ToString(), customer.customer_id, "product");
-            _health = false;
+            await db_helper.LogToServer(thread_id, "product_source_error", _ex.ToString(), customer.customer_id, "product");
+            return false;
         }
         finally {
             #region Calculate [total_qty] for Sources
@@ -1865,8 +1801,8 @@ internal class MainLoop {
     /// the overall success or failure of the synchronization.</remarks>
     /// <param name="_health">An output parameter that indicates the health status of the synchronization process.  Set to <see
     /// langword="true"/> if the process completes successfully; otherwise, <see langword="false"/>.</param>
-    private void ProductSync(out bool _health) {
-        _health = true;
+    private async Task<bool> ProductSyncAsync() {
+        bool _health = true;
         try {
             if (products is not null) {
                 var notifications = new List<Notification>();
@@ -1922,7 +1858,7 @@ internal class MainLoop {
                                 }
                             }
                             catch (Exception ex) {
-                                db_helper.LogToServer(thread_id, "prepare_product_core_mappings_error", ex.Message + newline + ex.ToString(), customer.customer_id, "product");
+                                await db_helper.LogToServer(thread_id, "prepare_product_core_mappings_error", ex.Message + newline + ex.ToString(), customer.customer_id, "product");
                                 PrintConsole("Error preparing product core mappings for MerchanterDB: " + ex.Message);
                                 continue; //skip this product
                             }
@@ -1971,7 +1907,7 @@ internal class MainLoop {
                                 }
                             }
                             catch (Exception ex) {
-                                db_helper.LogToServer(thread_id, "prepare_product_extension_mappings_error", ex.Message + newline + ex.ToString(), customer.customer_id, "product");
+                                await db_helper.LogToServer(thread_id, "prepare_product_extension_mappings_error", ex.Message + newline + ex.ToString(), customer.customer_id, "product");
                                 PrintConsole("Error preparing product extension mappings for MerchanterDB: " + ex.Message);
                                 continue; //skip this product
                             }
@@ -2014,7 +1950,7 @@ internal class MainLoop {
                             #endregion
                         }
                         catch (Exception ex) {
-                            db_helper.LogToServer(thread_id, "prepare_existing_product_error", ex.Message + newline + ex.ToString(), customer.customer_id, "product");
+                            await db_helper.LogToServer(thread_id, "prepare_existing_product_error", ex.Message + newline + ex.ToString(), customer.customer_id, "product");
                             PrintConsole("Error preparing existing product for MerchanterDB: " + ex.Message);
                             continue; //skip this product
                         }
@@ -2063,7 +1999,7 @@ internal class MainLoop {
                                 }
                             }
                             catch (Exception ex) {
-                                db_helper.LogToServer(thread_id, "prepare_new_product_core_mappings_error", ex.Message + newline + ex.ToString(), customer.customer_id, "product");
+                                await db_helper.LogToServer(thread_id, "prepare_new_product_core_mappings_error", ex.Message + newline + ex.ToString(), customer.customer_id, "product");
                                 PrintConsole("Error preparing new product core mappings for MerchanterDB: " + ex.Message);
                                 continue; //skip this product
                             }
@@ -2091,7 +2027,7 @@ internal class MainLoop {
                                 }
                             }
                             catch (Exception ex) {
-                                db_helper.LogToServer(thread_id, "prepare_new_product_extension_mappings_error", ex.Message + newline + ex.ToString(), customer.customer_id, "product");
+                                await db_helper.LogToServer(thread_id, "prepare_new_product_extension_mappings_error", ex.Message + newline + ex.ToString(), customer.customer_id, "product");
                                 PrintConsole("Error preparing new product extension mappings for MerchanterDB: " + ex.Message);
                                 continue; //skip this product
                             }
@@ -2100,7 +2036,7 @@ internal class MainLoop {
                             is_insert = true;
                         }
                         catch (Exception ex) {
-                            db_helper.LogToServer(thread_id, "prepare_new_product_error", ex.Message + newline + ex.ToString(), customer.customer_id, "product");
+                            await db_helper.LogToServer(thread_id, "prepare_new_product_error", ex.Message + newline + ex.ToString(), customer.customer_id, "product");
                             PrintConsole("Error preparing new product for MerchanterDB: " + ex.Message, false);
                             continue; //skip this product
                         }
@@ -2155,7 +2091,7 @@ internal class MainLoop {
                                 if (is_update) {  //insert magento product and update product
                                     var product_relation = product_target_relation.FirstOrDefault(x => x.product_id == item.id && x.target_name == Constants.MAGENTO2);
                                     if (product_relation is not null) {
-                                        if (db_helper.DeleteProductTarget(customer.customer_id, item.id)) {
+                                        if (await db_helper.DeleteProductTarget(customer.customer_id, item.id)) {
                                             PrintConsole("Product relation removed:" + item.sku + " deleted" + ", " + Constants.MAGENTO2);
                                         }
                                         goto SAVEDPRODUCT;
@@ -2191,6 +2127,13 @@ internal class MainLoop {
                             #region Ideasoft Category and Brand Live Data Take
                             if (live_idea_categories is null && live_idea_brands is null) {
                                 PrintConsole(Constants.IDEASOFT + " brands and categories started loading...");
+                                #region Ideasoft Refresh Token
+                                var temp_idea_settings = Helper.global.ideasoft;
+                                if (Helper.RefreshIdeaToken(ref temp_idea_settings).GetValueOrDefault()) {
+                                    db_helper.SaveIdeasoftSettings(customer.customer_id, temp_idea_settings);
+                                    Helper.global.ideasoft = temp_idea_settings;
+                                }
+                                #endregion
                                 live_idea_categories = Helper.GetIdeaCategories(); PrintConsole(Constants.IDEASOFT + " total " + live_idea_categories?.Count + " categories found.");
                                 live_idea_brands = Helper.GetIdeaBrands(); PrintConsole(Constants.IDEASOFT + " total " + live_idea_brands?.Count + " brands found.");
                             }
@@ -2210,12 +2153,12 @@ internal class MainLoop {
                                 if (idea_product_id > 0) {
                                     is_processed = true;
                                     PrintConsole("Sku:" + item.sku + " updated and sync to Id:" + idea_product_id.ToString() + " ," + Constants.IDEASOFT, ConsoleColor.Green);
-                                    db_helper.LogToServer(thread_id, "product_updated", Helper.global.settings.company_name + " Sku:" + item.sku + ", " + Constants.IDEASOFT, customer.customer_id, "product");
+                                    await db_helper.LogToServer(thread_id, "product_updated", Helper.global.settings.company_name + " Sku:" + item.sku + ", " + Constants.IDEASOFT, customer.customer_id, "product");
                                 }
                                 else {
                                     notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.PRODUCT_UPDATE_ERROR, product_sku = item.sku, notification_content = Constants.IDEASOFT });
                                     PrintConsole("Sku:" + item.sku + " update error" + " ," + Constants.IDEASOFT, ConsoleColor.Red);
-                                    db_helper.LogToServer(thread_id, "product_update_error", Helper.global.settings.company_name + " Sku:" + item.sku, customer.customer_id, "product");
+                                    await db_helper.LogToServer(thread_id, "product_update_error", Helper.global.settings.company_name + " Sku:" + item.sku, customer.customer_id, "product");
                                 }
                                 #endregion
                             }
@@ -2223,7 +2166,7 @@ internal class MainLoop {
                                 if (is_update) {  //insert ideasoft product and update product
                                     var product_relation = product_target_relation.FirstOrDefault(x => x.product_id == item.id && x.target_name == Constants.IDEASOFT);
                                     if (product_relation is not null) {
-                                        if (db_helper.DeleteProductTarget(customer.customer_id, item.id)) {
+                                        if (await db_helper.DeleteProductTarget(customer.customer_id, item.id)) {
                                             PrintConsole("Product relation removed:" + item.sku + " deleted" + ", " + Constants.IDEASOFT);
                                         }
                                         goto SAVEDPRODUCT;
@@ -2243,11 +2186,11 @@ internal class MainLoop {
                                     if (idea_product_id > 0) {
                                         is_processed = true;
                                         PrintConsole("Sku:" + (prepared_product.sku) + " inserted and sync to Id:" + idea_product_id.ToString() + ", " + Constants.IDEASOFT);
-                                        db_helper.LogToServer(thread_id, "product_inserted", Helper.global.settings.company_name + " Sku:" + prepared_product.sku + ", " + Constants.IDEASOFT, customer.customer_id, "product");
+                                        await db_helper.LogToServer(thread_id, "product_inserted", Helper.global.settings.company_name + " Sku:" + prepared_product.sku + ", " + Constants.IDEASOFT, customer.customer_id, "product");
                                     }
                                     else {
                                         PrintConsole("Sku:" + prepared_product.sku + " insert failed." + " ," + Constants.IDEASOFT);
-                                        db_helper.LogToServer(thread_id, "product_insert_error", Helper.global.settings.company_name + " Sku:" + prepared_product.sku + ", " + Constants.IDEASOFT, customer.customer_id, "product");
+                                        await db_helper.LogToServer(thread_id, "product_insert_error", Helper.global.settings.company_name + " Sku:" + prepared_product.sku + ", " + Constants.IDEASOFT, customer.customer_id, "product");
                                     }
                                     #endregion
                                 }
@@ -2263,33 +2206,33 @@ internal class MainLoop {
                         if (is_processed.HasValue) {
                             int processes_product_id = 0;
                             if (is_update) {
-                                var updated_product = db_helper.UpdateProduct(customer.customer_id, item, true);
+                                var updated_product = await db_helper.UpdateProduct(customer.customer_id, item, true);
                                 if (updated_product is not null) {
                                     processes_product_id = updated_product.id;
-                                    db_helper.LogToServer(thread_id, "product_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " updated.", customer.customer_id, "product");
+                                    await db_helper.LogToServer(thread_id, "product_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " updated.", customer.customer_id, "product");
                                     PrintConsole("Sku:" + item.sku + " updated on MerchanterDB." + (updated_attrs_new.Count > 0 ? string.Join(",", updated_attrs_new) : ""));
                                 }
                                 else {
-                                    db_helper.LogToServer(thread_id, "product_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " update error.", customer.customer_id, "product");
+                                    await db_helper.LogToServer(thread_id, "product_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " update error.", customer.customer_id, "product");
                                     PrintConsole("Sku:" + item.sku + " update error in database.");
                                 }
                             }
 
                             if (is_insert && prepared_product is not null) {
-                                var inserted_product = db_helper.InsertProduct(customer.customer_id, prepared_product);
+                                var inserted_product = await db_helper.InsertProduct(customer.customer_id, prepared_product);
                                 if (inserted_product is not null) {
                                     processes_product_id = inserted_product.id;
-                                    db_helper.LogToServer(thread_id, "product_inserted", Helper.global.settings.company_name + " Sku:" + item.sku + " inserted.", customer.customer_id, "product");
+                                    await db_helper.LogToServer(thread_id, "product_inserted", Helper.global.settings.company_name + " Sku:" + item.sku + " inserted.", customer.customer_id, "product");
                                     PrintConsole("Sku:" + inserted_product.sku + " inserted on MerchanterDB.");
                                 }
                                 else {
-                                    db_helper.LogToServer(thread_id, "product_insert_error", Helper.global.settings.company_name + " Sku:" + item.sku + " insert error.", customer.customer_id, "product");
+                                    await db_helper.LogToServer(thread_id, "product_insert_error", Helper.global.settings.company_name + " Sku:" + item.sku + " insert error.", customer.customer_id, "product");
                                     PrintConsole("Sku:" + item.sku + " insert error in database.");
                                 }
                             }
 
                             if (processes_product_id <= 0) {
-                                db_helper.LogToServer(thread_id, "product_process_error", Helper.global.settings.company_name + " Sku:" + item.sku + " process error.", customer.customer_id, "product");
+                                await db_helper.LogToServer(thread_id, "product_process_error", Helper.global.settings.company_name + " Sku:" + item.sku + " process error.", customer.customer_id, "product");
                                 PrintConsole("Sku:" + item.sku + " process error in database.");
                                 continue; //skip this product
                             }
@@ -2302,11 +2245,11 @@ internal class MainLoop {
                                     if (product_relation.target_id != magento_product_id || product_relation.sync_status != Target.SyncStatus.Synced) {
                                         product_relation.target_id = magento_product_id;
                                         product_relation.sync_status = is_processed.Value ? Target.SyncStatus.Synced : magento_product_id > 0 ? Target.SyncStatus.Synced : Target.SyncStatus.Error;
-                                        db_helper.UpdateProductTarget(customer.customer_id, product_relation);
+                                        await db_helper.UpdateProductTarget(customer.customer_id, product_relation);
                                     }
                                 }
                                 else {
-                                    db_helper.InsertProductTarget(customer.customer_id, new ProductTarget() {
+                                    await db_helper.InsertProductTarget(customer.customer_id, new ProductTarget() {
                                         customer_id = customer.customer_id, sync_status = is_processed.Value ? Target.SyncStatus.Synced : magento_product_id > 0 ? Target.SyncStatus.Synced : Target.SyncStatus.Error,
                                         product_id = processes_product_id, target_id = magento_product_id, target_name = Constants.MAGENTO2
                                     });
@@ -2322,11 +2265,11 @@ internal class MainLoop {
                                     if (product_relation.target_id != idea_product_id || product_relation.sync_status != Target.SyncStatus.Synced) {
                                         product_relation.target_id = idea_product_id;
                                         product_relation.sync_status = is_processed.Value ? Target.SyncStatus.Synced : idea_product_id > 0 ? Target.SyncStatus.Synced : Target.SyncStatus.Error;
-                                        db_helper.UpdateProductTarget(customer.customer_id, product_relation);
+                                        await db_helper.UpdateProductTarget(customer.customer_id, product_relation);
                                     }
                                 }
                                 else {
-                                    db_helper.InsertProductTarget(customer.customer_id, new ProductTarget() {
+                                    await db_helper.InsertProductTarget(customer.customer_id, new ProductTarget() {
                                         customer_id = customer.customer_id, sync_status = is_processed.Value ? Target.SyncStatus.Synced : idea_product_id > 0 ? Target.SyncStatus.Synced : Target.SyncStatus.Error,
                                         product_id = processes_product_id, target_id = idea_product_id, target_name = Constants.IDEASOFT
                                     });
@@ -2349,7 +2292,6 @@ internal class MainLoop {
 
 
 
-                return;
 
                 if (product_targets.Contains(Constants.N11)) {
                     if (Helper.global.n11 is not null && Helper.global.n11.appkey is not null && Helper.global.n11.appsecret is not null) {
@@ -2366,125 +2308,12 @@ internal class MainLoop {
 
 
 
-                #region FOR TESTING
-
-                var ent_products = Helper.GetENTProducts();
-                foreach (var ent_item in ent_products) {
-                    try {
-                        bool up = false;
-                        var found_product = products.FirstOrDefault(x => x.sku == ent_item.Sku);
-                        if (found_product is not null) {
-                            if (!Equals(found_product.price, ent_item.Price)) {
-                                found_product.price = ent_item.Price;
-                                up = true;
-                            }
-                            if (!Equals(found_product.special_price, ent_item.Special_Price)) {
-                                found_product.special_price = ent_item.Special_Price;
-                                up = true;
-                            }
-                            if (!Equals(found_product.custom_price, ent_item.Custom_Price)) {
-                                found_product.custom_price = ent_item.Custom_Price;
-                                up = true;
-                            }
-
-                            if (up) {
-                                var updated_product = db_helper.UpdateProduct(customer.customer_id, found_product);
-                                PrintConsole(updated_product?.sku + " " + updated_product?.price + " " + updated_product?.special_price + " " + updated_product?.custom_price);
-                            }
-                        }
-                    }
-                    catch (Exception ex) {
-                        PrintConsole(ex.ToString(), ConsoleColor.Red);
-                    }
-                }
-
-
-                var m2products = Helper.GetProducts(null, null, null, null);
-
-                foreach (var m2_item in m2products.items) {
-
-                }
-
-                foreach (var m2_item in m2products.items) {
-                    bool up = false;
-                    var found_product = products.FirstOrDefault(x => x.sku == m2_item.sku);
-                    if (found_product is not null) {
-                        //get magento2 categories and save to Product 
-                        //this operation for first time only, after that categories will be updated by product sync
-                        if (m2_item.extension_attributes.category_links is not null) {
-                            foreach (var citem in m2_item.extension_attributes.category_links) {
-                                if (citem.category_id == "2") continue;
-                                var found_target = category_target_relation.FirstOrDefault(x => x.target_id == int.Parse(citem.category_id));
-                                if (found_target is not null) {
-                                    if (!found_product.extension.categories.Contains(categories.FirstOrDefault(x => x.id == found_target.category_id))) {
-                                        found_product.extension.category_ids += "," + found_target.category_id.ToString();
-                                        found_product.extension.categories.Add(categories.FirstOrDefault(x => x.id == found_target.category_id));
-                                        up = true;
-                                    }
-                                }
-                            }
-                            if (up) {
-                                var updated_product = db_helper.UpdateProduct(customer.customer_id, found_product);
-                                PrintConsole(updated_product?.sku + string.Join(",", updated_product?.extension.categories.Select(x => x.category_name)));
-                            }
-                        }
-                    }
-                }
-
-                foreach (var m2_item in m2products.items) {
-                    try {
-                        bool up = false;
-                        var found_product = products.FirstOrDefault(x => x.sku == m2_item.sku);
-                        if (found_product is not null) {
-                            var m2_brand = m2_item.custom_attributes.FirstOrDefault(x => x.attribute_code == "brand")?.value?.ToString();
-                            m2_brand = live_m2_brands?.GetValueOrDefault(int.Parse(m2_brand));
-                            if (!string.IsNullOrWhiteSpace(m2_brand)) {
-                                var found_brand = brands.FirstOrDefault(x => string.Compare(x.brand_name, m2_brand, StringComparison.OrdinalIgnoreCase) == 0);
-                                if (found_brand is not null) {
-                                    if (found_product.extension.brand.brand_name != found_brand.brand_name) {
-                                        found_product.extension.brand_id = found_brand.id;
-                                        found_product.extension.brand = found_brand;
-                                        up = true;
-                                    }
-                                }
-                                else {
-                                    found_brand = new Brand() {
-                                        customer_id = customer.customer_id,
-                                        brand_name = m2_brand,
-                                        status = true,
-                                        id = 0
-                                    };
-                                    var inserted_brand = db_helper.InsertBrand(customer.customer_id, found_brand);
-                                    if (inserted_brand is not null) {
-                                        brands.Add(inserted_brand);
-                                        if (found_product.extension.brand.brand_name != inserted_brand.brand_name) {
-                                            found_product.extension.brand_id = inserted_brand.id;
-                                            found_product.extension.brand = inserted_brand;
-                                            up = true;
-                                        }
-                                        PrintConsole("Brand inserted: " + found_brand.brand_name, ConsoleColor.Green);
-                                    }
-                                    else {
-                                        PrintConsole("Brand insert error: " + found_brand.brand_name, ConsoleColor.Red);
-                                    }
-                                }
-                                if (up) {
-                                    var updated_product = db_helper.UpdateProduct(customer.customer_id, found_product);
-                                    PrintConsole(updated_product?.sku + " " + m2_brand);
-                                }
-                            }
-                        }
-                    }
-                    catch (Exception ex) {
-                        PrintConsole(ex.ToString(), ConsoleColor.Red);
-                    }
-                }
-                #endregion
             }
+            return _health;
         }
         catch (Exception _ex) {
-            db_helper.LogToServer(thread_id, "product_update_error", _ex.Message + newline + _ex.ToString(), customer.customer_id, "product");
-            _health = false;
+            await db_helper.LogToServer(thread_id, "product_update_error", _ex.Message + newline + _ex.ToString(), customer.customer_id, "product");
+            return false;
         }
     }
     #endregion
@@ -2670,7 +2499,7 @@ internal class MainLoop {
             }
         }
         catch (Exception _ex) {
-            db_helper.LogToServer(thread_id, "order_source_error", _ex.Message + newline + _ex.ToString(), customer.customer_id, "order");
+            _ = db_helper.LogToServer(thread_id, "order_source_error", _ex.Message + newline + _ex.ToString(), customer.customer_id, "order").Result;
             _health = false;
         }
         finally {
@@ -2692,7 +2521,7 @@ internal class MainLoop {
     private void OrderSync(out bool _health) {
         _health = true;
         try {
-            if (orders is not null) {
+            if (orders is not null && orders.Count > 0) {
                 List<Notification> notifications = [];
                 foreach (var order_item in live_orders) {
                     var selected_order = orders.Where(x => x.order_id == order_item.order_id && OrderStatus.GetProcessEnabledCodes(order_sources).Contains(x.order_status)).FirstOrDefault();
@@ -2726,7 +2555,7 @@ internal class MainLoop {
                                             }
                                             inserted_musteri_siparis_no = NetOpenXHelper.InsertNetsisMusSiparis(order_item, inserted_cari_kodu, selected_order.order_shipping_barcode);
                                             if (!string.IsNullOrWhiteSpace(inserted_musteri_siparis_no)) {
-                                                db_helper.LogToServer(thread_id, "new_order", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + order_item.grand_total.ToString() + order_item.currency, customer.customer_id, "order");
+                                                _ = db_helper.LogToServer(thread_id, "new_order", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + order_item.grand_total.ToString() + order_item.currency, customer.customer_id, "order").Result;
                                                 #region Notify Order - NEW_ORDER
                                                 notifications.Add(new Notification() {
                                                     customer_id = customer.customer_id,
@@ -2738,7 +2567,7 @@ internal class MainLoop {
                                                 #endregion
                                             }
                                             else {
-                                                db_helper.LogToServer(thread_id, "new_order_error", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + order_item.grand_total.ToString() + order_item.currency, customer.customer_id, "order");
+                                                _ = db_helper.LogToServer(thread_id, "new_order_error", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + order_item.grand_total.ToString() + order_item.currency, customer.customer_id, "order").Result;
                                                 #region Notify Order - NEW_ORDER_ERROR
                                                 notifications.Add(new Notification() {
                                                     customer_id = customer.customer_id,
@@ -2886,7 +2715,7 @@ internal class MainLoop {
 
                                             #region ORDER ITEMS
                                             foreach (var item in order_item.order_items) {
-                                                var sold_product = db_helper.GetProductBySku(customer.customer_id, item.sku);
+                                                var sold_product = db_helper.GetProductBySku(customer.customer_id, item.sku).Result;
                                                 if (sold_product is not null) {
                                                     dokuman.DokumanPaket.Eleman.ElemanListe.BelgeSicil.SatirDetay.Add(new SatirDetaySip() {
                                                         Items = new ItemsSip() {
@@ -2968,7 +2797,7 @@ internal class MainLoop {
                                             if (!string.IsNullOrWhiteSpace(order_xml)) {
                                                 inserted_musteri_siparis_no = ank_erp.SendOrder(guid.ToString(), order_xml).Result;
                                                 if (!string.IsNullOrWhiteSpace(inserted_musteri_siparis_no)) {
-                                                    db_helper.LogToServer(thread_id, "new_order", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + order_item.grand_total.ToString() + order_item.currency, customer.customer_id, "order");
+                                                    _ = db_helper.LogToServer(thread_id, "new_order", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + order_item.grand_total.ToString() + order_item.currency, customer.customer_id, "order").Result;
                                                     #region Notify Order - NEW_ORDER
                                                     notifications.Add(new Notification() {
                                                         customer_id = customer.customer_id,
@@ -2980,7 +2809,7 @@ internal class MainLoop {
                                                     #endregion
                                                 }
                                                 else {
-                                                    db_helper.LogToServer(thread_id, "new_order_error", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + order_item.grand_total.ToString() + order_item.currency, customer.customer_id, "order");
+                                                    _ = db_helper.LogToServer(thread_id, "new_order_error", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + order_item.grand_total.ToString() + order_item.currency, customer.customer_id, "order").Result;
                                                     #region Notify Order - NEW_ORDER_ERROR
                                                     notifications.Add(new Notification() {
                                                         customer_id = customer.customer_id,
@@ -2993,7 +2822,7 @@ internal class MainLoop {
                                                 }
                                             }
                                             else {
-                                                db_helper.LogToServer(thread_id, "order_process_error", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + "XML Serialization Error " + Constants.ANK_ERP, customer.customer_id, "order");
+                                                _ = db_helper.LogToServer(thread_id, "order_process_error", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + "XML Serialization Error " + Constants.ANK_ERP, customer.customer_id, "order").Result;
                                             }
                                         }
                                     }
@@ -3003,7 +2832,7 @@ internal class MainLoop {
                                     if (order_sources.Contains(Constants.MAGENTO2) && order_item.order_status != "HAZIRLANIYOR") { //processed | do order status change => processing
                                         if (!string.IsNullOrWhiteSpace(Helper.CreateOrderInvoice(order_item))) {
                                             Helper.ChangeOrderStatus(order_item, Helper.global.order_statuses.Where(x => x.status_code == "HAZIRLANIYOR" && x.platform == Constants.MAGENTO2).FirstOrDefault()?.platform_status_code);
-                                            db_helper.LogToServer(thread_id, "order_process", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + Helper.global.order_statuses.Where(x => x.status_code == "HAZIRLANIYOR" && x.platform == Constants.MAGENTO2).FirstOrDefault()?.platform_status_code, customer.customer_id, "order");
+                                            _ = db_helper.LogToServer(thread_id, "order_process", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + Helper.global.order_statuses.Where(x => x.status_code == "HAZIRLANIYOR" && x.platform == Constants.MAGENTO2).FirstOrDefault()?.platform_status_code, customer.customer_id, "order").Result;
                                             #region Notify Order - ORDER_PROCESS
                                             notifications.Add(new Notification() {
                                                 customer_id = customer.customer_id,
@@ -3021,18 +2850,18 @@ internal class MainLoop {
                                     }
 
                                     if (db_helper.SetOrderProcess(customer.customer_id, order_item.order_id, inserted_musteri_siparis_no)) {
-                                        db_helper.LogToServer(thread_id, "order_processed", "Order:" + order_item.order_source + ":" + order_item.order_label + ":" + inserted_musteri_siparis_no + " => " + order_item.grand_total.ToString() + order_item.currency, customer.customer_id, "order");
+                                        _ = db_helper.LogToServer(thread_id, "order_processed", "Order:" + order_item.order_source + ":" + order_item.order_label + ":" + inserted_musteri_siparis_no + " => " + order_item.grand_total.ToString() + order_item.currency, customer.customer_id, "order").Result;
                                         #region Notify Order - NEW_ORDER, OUT_OF_STOCK_PRODUCT_SOLD
                                         foreach (var sold_item in order_item.order_items) {
                                             if (live_products.Count > 0) {
                                                 var sold_product = live_products.Where(x => x.sku == sold_item.sku).FirstOrDefault();
                                                 if (sold_product is not null) {
-                                                    var sold_product_sources = db_helper.GetProductSources(customer.customer_id, sold_product.sku);
+                                                    var sold_product_sources = db_helper.GetProductSources(customer.customer_id, sold_product.sku).Result;
                                                     if (sold_product_sources is not null) {
                                                         var sold_product_main_source = sold_product_sources.Where(x => x.name == product_main_source).FirstOrDefault();
                                                         if (sold_product_main_source is not null) {
                                                             if (sold_product_main_source.qty <= 0) {
-                                                                db_helper.LogToServer(thread_id, "out_of_stock_product_sold", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + sold_product.sku, customer.customer_id, "product");
+                                                                _ = db_helper.LogToServer(thread_id, "out_of_stock_product_sold", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + sold_product.sku, customer.customer_id, "product").Result;
                                                                 notifications.Add(new Notification() { customer_id = customer.customer_id, type = Notification.NotificationTypes.OUT_OF_STOCK_PRODUCT_SOLD, order_label = order_item.order_label, product_sku = sold_product.sku, xproduct_barcode = sold_product.barcode });
                                                             }
                                                         }
@@ -3071,7 +2900,7 @@ internal class MainLoop {
                                                         " Detaylı takip için: https://www.yurticikargo.com/tr/online-servisler/gonderi-sorgula?code=" +
                                                         string.Join(",", tracking_codes),
                                                         order_item.shipment_method, ShipmentMethod.GetShipmentName(order_item.shipment_method));
-                                                    db_helper.LogToServer(thread_id, "order_process", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + Helper.global.order_statuses.Where(x => x.status_code == "TAMAMLANDI" && x.platform == Constants.MAGENTO2).FirstOrDefault()?.platform_status_code, customer.customer_id, "order");
+                                                    _ = db_helper.LogToServer(thread_id, "order_process", "Order:" + order_item.order_source + ":" + order_item.order_label + " => " + Helper.global.order_statuses.Where(x => x.status_code == "TAMAMLANDI" && x.platform == Constants.MAGENTO2).FirstOrDefault()?.platform_status_code, customer.customer_id, "order").Result;
                                                     #region Notify Order - ORDER_COMPLETE
                                                     notifications.Add(new Notification() {
                                                         customer_id = customer.customer_id,
@@ -3084,7 +2913,7 @@ internal class MainLoop {
                                                 }
 
                                                 if (db_helper.SetShipped(customer.customer_id, order_item.order_label, string.Join(",", tracking_codes))) {
-                                                    db_helper.LogToServer(thread_id, "order_shipped", order_item.order_source + ":" + order_item.order_label + ":" + shipment.barcode + " => " + string.Join(",", tracking_codes), customer.customer_id, "order");
+                                                    _ = db_helper.LogToServer(thread_id, "order_shipped", order_item.order_source + ":" + order_item.order_label + ":" + shipment.barcode + " => " + string.Join(",", tracking_codes), customer.customer_id, "order").Result;
                                                     #region Notify Order - ORDER_SHIPPED
                                                     notifications.Add(new Notification() {
                                                         customer_id = customer.customer_id,
@@ -3126,13 +2955,13 @@ internal class MainLoop {
                                     if (db_helper.InsertShipments(customer.customer_id, [shipment])) {
                                         if (db_helper.SetOrderShipmentBarcode(customer.customer_id, order_item.order_id, shipment.barcode)) {
                                             PrintConsole(Constants.YURTICI + " ShipmentInserted:" + shipment.order_id + ":" + shipment.order_label + ":" + shipment.order_source + " => " + shipment.barcode);
-                                            db_helper.LogToServer(thread_id, "shipment_inserted", _message: string.Format("{1}-shipment_inserted {0}", shipment.order_id + ":" + shipment.order_label + ":" + shipment.order_source + " => " + shipment.barcode, customer.customer_id), customer.customer_id, "shipment");
+                                            _ = db_helper.LogToServer(thread_id, "shipment_inserted", _message: string.Format("{1}-shipment_inserted {0}", shipment.order_id + ":" + shipment.order_label + ":" + shipment.order_source + " => " + shipment.barcode, customer.customer_id), customer.customer_id, "shipment").Result;
                                         }
                                     }
                                 }
                                 else {
                                     PrintConsole(Constants.YURTICI + " ShipmentError:" + order_item.order_id + ":" + order_item.order_label + ":" + order_item.order_source + " => " + order_item.shipment_method);
-                                    db_helper.LogToServer(thread_id, "shipment_error", string.Format("{1}-shipment_error {0}", order_item.order_id + ":" + order_item.order_label + ":" + order_item.order_source + " => " + order_item.shipment_method, customer.customer_id), customer.customer_id, "shipment");
+                                    _ = db_helper.LogToServer(thread_id, "shipment_error", string.Format("{1}-shipment_error {0}", order_item.order_id + ":" + order_item.order_label + ":" + order_item.order_source + " => " + order_item.shipment_method, customer.customer_id), customer.customer_id, "shipment").Result;
                                 }
                             }
                             else if (Helper.global.shipment.mng_kargo && available_shipments.Contains(Constants.MNG)) { }
@@ -3154,12 +2983,14 @@ internal class MainLoop {
                 }
 
                 if (notifications.Count > 0) {
-                    db_helper.InsertNotifications(customer.customer_id, notifications);
+                    foreach (var item in notifications) {
+                        db_helper.InsertNotification(customer.customer_id, item);
+                    }
                 }
             }
         }
         catch (Exception _ex) {
-            db_helper.LogToServer(thread_id, "order_update_error", _ex.Message + newline + _ex.ToString(), customer.customer_id, "order");
+            _ = db_helper.LogToServer(thread_id, "order_update_error", _ex.Message + newline + _ex.ToString(), customer.customer_id, "order").Result;
             _health = false;
         }
     }

@@ -27,7 +27,7 @@ namespace Merchanter.Classes {
             return
             [
                 new() { id = 0, property = nameof(sku), source = Constants.NETSIS, sync_type = PropertyMapping.SyncType.SKU },
-                new() { id = 1, property = nameof(is_enabled), source = Constants.MERCHANTER, sync_type = PropertyMapping.SyncType.None },
+                new() { id = 1, property = nameof(is_enabled), source = Constants.NETSIS, sync_type = PropertyMapping.SyncType.OnlyInsert },
                 new() { id = 2, property = nameof(brand_id), source = Constants.MERCHANTER, sync_type = PropertyMapping.SyncType.None },
                 new() { id = 3, property = nameof(category_ids), source = Constants.MERCHANTER, sync_type = PropertyMapping.SyncType.None },
                 new() { id = 4, property = nameof(is_xml_enabled), source = Constants.MERCHANTER, sync_type = PropertyMapping.SyncType.None },

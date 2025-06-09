@@ -16,14 +16,5 @@ namespace MerchanterApp.ServerService.Services {
         public MerchanterService() {
             helper = new( Constants.Server, Constants.User, Constants.Password, Constants.Database, Constants.Port );
         }
-
-        public bool ChangeCustomer( int _customer_id ) {
-            if( _customer_id > 0 ) {
-                global ??= helper.LoadSettings( _customer_id );
-                return true;
-            }
-            else
-                return false;
-        }
     }
 }

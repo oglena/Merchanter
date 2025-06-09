@@ -1,5 +1,6 @@
 // See https://aka.ms/new-console-template for more information
 using Merchanter;
+using Merchanter.Classes.Settings;
 using MerchanterServer;
 using System.Reflection;
 using Customer = Merchanter.Classes.Customer;
@@ -11,12 +12,6 @@ const string newline = "\r\n";
 bool first_run = true;
 PrintConsole("Press Ctrl+C to exit.");
 int customer_id = 0;
-
-#region TESTING
-//N11 n11 = new N11("c3e3a738-6015-4b42-b751-1eda1509a8b5", "WBHBnPbJCwAm4Bm0");
-//var merto = n11.GetProducts();
-//var mertocingen = n11.GetN11Categories();
-#endregion
 
 #region Customer Params
 if (args.Length == 0) {
@@ -58,12 +53,12 @@ if (Constants.Server is null || Constants.User is null || Constants.Password is 
 
 DbHelper db_helper = new(Constants.Server, Constants.User, Constants.Password, Constants.Database, Constants.Port);
 PrintConsole("Merchanter Sync | Ceres Software & Consultancy" + " Version: " + Assembly.GetExecutingAssembly().GetName().Version?.ToString() + " DB:[" + db_helper.Database + "]", ConsoleColor.Green);
-db_helper.ErrorOccured += (sender, e) => { Console.WriteLine(e); db_helper.LogToServer("WTF", "helper_error", e, customer_id, "helper_instance"); };
+db_helper.ErrorOccured += async (sender, e) => { Console.WriteLine(e); await db_helper.LogToServer("WTF", "helper_error", e, customer_id, "helper_instance"); };
 
 string thread_id = Guid.NewGuid().ToString();
 Thread.CurrentThread.Name = thread_id + ",main";
 PrintConsole("Thread Started " + thread_id, ConsoleColor.Green);
-if (!db_helper.LogToServer(thread_id, "merchanter", "started " + thread_id, customer_id, "main_thread")) {
+if (!await db_helper.LogToServer(thread_id, "merchanter", "started " + thread_id, customer_id, "main_thread")) {
     PrintConsole("Merchanter Database error.", ConsoleColor.Red);
     PrintConsole("Thread Ended." + thread_id, ConsoleColor.Red);
     //GMail.Send( Constants.mail_sender, Constants.mail_password, Constants.mail_sender_name, Constants.mail_to,
@@ -80,50 +75,58 @@ else {
 }
 #endregion
 
-AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
+AppDomain.CurrentDomain.ProcessExit += async (sender, e) => await CurrentDomain_ProcessExit(sender, e);
 PrintConsole("Welcome! Program starting for " + customer_id, ConsoleColor.Blue);
 
 while (true) {
     try {
         #region Load Customer & Check License
-        Customer? customer = db_helper.GetCustomer(customer_id);
+        Customer? customer = await db_helper.GetCustomer(customer_id);
 
         if (customer is null) {
             PrintConsole("Customer not found. Exiting.", ConsoleColor.Red);
             PrintConsole("Thread Ended." + thread_id, ConsoleColor.Red);
-            db_helper.LogToServer(thread_id, "error", "user not found", customer_id, "customer");
-            db_helper.LogToServer(thread_id, "thread", "ended " + thread_id, customer_id, "customer");
+            await db_helper.LogToServer(thread_id, "error", "user not found", customer_id, "customer");
+            await db_helper.LogToServer(thread_id, "thread", "ended " + thread_id, customer_id, "customer");
             //GMail.Send( Constants.mail_sender, Constants.mail_password, Constants.mail_sender_name, Constants.mail_to,
             //    Assembly.GetCallingAssembly().GetName().Name + "Error  //customer:" + customer_id.ToString(),
             //    "ERROR" + newline + "CustomerID: " + customer_id.ToString() + ". User Not Found." + newline + "exit -2" );
-            PrintConsole("Thread will sleep 1h!"); Thread.Sleep(1000 * 60 * 60); //1h
+            PrintConsole("Thread will sleep 1h!"); await Task.Delay(1000 * 60 * 60); //1h
             continue;
         }
 
         if (!customer.status) {
             PrintConsole(customer_id + "-ID license error.", ConsoleColor.Red);
-            PrintConsole("Thread will sleep 10m!"); Thread.Sleep(1000 * 60 * 10); //10m
+            PrintConsole("Thread will sleep 10m!"); await Task.Delay(1000 * 60 * 10); //10m
             continue;
         }
         #endregion
 
         #region Helper Settings
         try {
-            db_helper.LoadSettings(customer_id);
+            await db_helper.LoadSettings(customer_id);
 
             if (Helper.global is null) {
-                db_helper.LogToServer(thread_id, "friendly_error", "Settings could not load.", customer_id, "helper_settings");
+                await db_helper.LogToServer(thread_id, "friendly_error", "Settings could not load.", customer_id, "helper_settings");
                 PrintConsole("Settings could not load.", ConsoleColor.Red);
-                PrintConsole("Thread will sleep 10m!"); Thread.Sleep(1000 * 60 * 10); //10m
+                PrintConsole("Thread will sleep 10m!"); await Task.Delay(1000 * 60 * 10); //10m
                 continue;
             }
         }
         catch (Exception ex) {
-            db_helper.LogToServer(thread_id, "friendly_error", "Settings could not load.", customer_id, "helper_settings");
+            await db_helper.LogToServer(thread_id, "friendly_error", "Settings could not load.", customer_id, "helper_settings");
             PrintConsole("Settings could not load." + newline + ex.ToString(), ConsoleColor.Red);
-            PrintConsole("Thread will sleep 10m!"); Thread.Sleep(1000 * 60 * 10); //10m
+            PrintConsole("Thread will sleep 10m!"); await Task.Delay(1000 * 60 * 10); //10m
             continue;
         }
+        #endregion
+
+        #region Ideasoft Refresh Token
+        //var temp_idea_settings = Helper.global.ideasoft;
+        //if (Helper.RefreshIdeaToken(ref temp_idea_settings).GetValueOrDefault()) {
+        //    await db_helper.SaveIdeasoftSettings(customer.customer_id, temp_idea_settings);
+        //    Helper.global.ideasoft = temp_idea_settings;
+        //}
         #endregion
 
         #region First Run
@@ -163,13 +166,13 @@ while (true) {
         }
         if (!customer.product_sync_status && !customer.order_sync_status && !customer.xml_sync_status && !customer.invoice_sync_status && !customer.notification_sync_status) {
             //PrintConsole( "Thread will sleep 5secs!" );
-            Thread.Sleep(5 * 1000); //5secs
+            await Task.Delay(5 * 1000); //5secs, await added for asynchronous delay
             continue;
         }
         #endregion
 
         MainLoop main_loop = new(thread_id, customer, db_helper);
-        if (Helper.global is not null && main_loop.DoWork()) {
+        if (Helper.global is not null && await main_loop.DoWorkAsync()) {
             if (customer.product_sync_status && !customer.is_productsync_working) {
                 PrintConsole("Product sync ended.", ConsoleColor.Green);
             }
@@ -188,18 +191,18 @@ while (true) {
         }
     }
     catch (Exception _ex) {
-        db_helper.LogToServer(thread_id, "error", _ex.Message + newline + _ex.ToString(), customer_id, "general");
+        await db_helper.LogToServer(thread_id, "error", _ex.Message + newline + _ex.ToString(), customer_id, "general");
         //GMail.Send( Constants.mail_sender, Constants.mail_password, Constants.mail_sender_name, Constants.mail_to,
         //    Assembly.GetCallingAssembly().GetName().Name + "-Error  //customer:" + customer_id.ToString(),
         //    "ERROR" + newline + "CustomerID: " + customer_id.ToString() + ". " + _ex.Message + newline + _ex.ToString() + newline + "exit -2" );
         PrintConsole(_ex.Message + newline + _ex.ToString(), ConsoleColor.Red);
-        PrintConsole("Thread will sleep 5m!"); Thread.Sleep(1000 * 60 * 5); //5m
+        PrintConsole("Thread will sleep 5m!"); await Task.Delay(1000 * 60 * 5); //5m
         continue;
     }
 }
 
-void CurrentDomain_ProcessExit(object? sender, EventArgs e) {
-    if (db_helper.LogToServer(thread_id, "merchanter", "ended " + thread_id, customer_id, "main_thread")) {
+async Task CurrentDomain_ProcessExit(object? sender, EventArgs e) {
+    if (await db_helper.LogToServer(thread_id, "merchanter", "ended " + thread_id, customer_id, "main_thread")) {
         PrintConsole("exit success", ConsoleColor.Cyan);
     }
 }

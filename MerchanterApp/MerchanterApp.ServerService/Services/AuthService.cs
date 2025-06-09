@@ -27,7 +27,7 @@ namespace MerchanterApp.ServerService.Services {
                 throw new ArgumentNullException( nameof( request ) );
             }
 
-            var admin = merchanterService.helper.GetAdmin( request.UserName, request.Password );
+            var admin = await merchanterService.helper.GetAdmin( request.UserName, request.Password );
             if( admin != null ) {
                 var generatedTokenInformation = await tokenService.GenerateToken( new GenerateTokenRequest { AdminID = admin.id, Name = admin.name } );
 

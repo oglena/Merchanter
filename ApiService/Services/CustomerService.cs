@@ -8,7 +8,6 @@ namespace ApiService.Services {
         Task<List<Notification>> GetCustomerNotifications(int _customer_id, ApiFilter _filters);
         Task<Customer?> SaveCustomer(int _customer_id, Customer _customer);
         Task<List<Customer>> GetCustomers();
-        Task<int> GetCustomerLogCount(int _customer_id);
         Task<int> GetCustomerLogCount(int _customer_id, ApiFilter _filters);
     }
 
@@ -20,10 +19,6 @@ namespace ApiService.Services {
 
         public Task<List<Log>> GetCustomerLogs(int _customer_id, ApiFilter _filters) {
             return customerRepository.GetCustomerLogsById(_customer_id, _filters);
-        }
-
-        public Task<int> GetCustomerLogCount(int _customer_id) {
-            return customerRepository.GetCustomerLogCount(_customer_id);
         }
 
         public Task<int> GetCustomerLogCount(int _customer_id, ApiFilter _filters) {

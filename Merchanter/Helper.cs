@@ -1,12 +1,26 @@
-﻿using Merchanter.Classes;
-using Merchanter.Classes.Settings;
+﻿using Merchanter.Classes.Settings;
 using Merchanter.Responses;
 using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text;
 
 namespace Merchanter {
+    /// <summary>
+    /// Provides a collection of utility methods and properties for common operations,  such as HTTP requests, file
+    /// uploads, string conversions, and more.
+    /// </summary>
+    /// <remarks>This static class contains helper methods for various tasks, including: - HTTP operations
+    /// (e.g., sending requests, uploading files to FTP). - String manipulations (e.g., Base64 encoding/decoding). -
+    /// Price calculations with currency and tax considerations. - Image file processing (e.g., converting images to
+    /// Base64 strings).  The class is designed to simplify repetitive tasks and provide reusable
+    /// functionality.</remarks>
     public static partial class Helper {
+        /// <summary>
+        /// Gets or sets the global instance of <see cref="SettingsMerchanter"/>.
+        /// </summary>
+        /// <remarks>This property provides a shared instance of <see cref="SettingsMerchanter"/> that can
+        /// be accessed  and modified globally. Use this property to manage settings that are intended to be consistent 
+        /// across the entire application.</remarks>
         public static SettingsMerchanter global { get; set; }
 
         #region Helper Functions

@@ -113,6 +113,8 @@ namespace Merchanter {
                     return _column_name;
                 case Type t when t == typeof(Log):
                     return _column_name;
+                case Type t when t == typeof(Notification):
+                    return _column_name;
                 default:
                     break;
             }
@@ -126,18 +128,20 @@ namespace Merchanter {
         /// type, and optional sorting and pagination. It also adds the necessary parameters to the <paramref
         /// name="_cmd"/> object to prevent SQL injection.  The behavior of the query generation depends on the
         /// specified <paramref name="_type"/>: - For <see cref="Product"/>, special handling is applied to prioritize
-        /// "pq" filters. - For other types, filters are applied directly without reordering.  If <paramref
-        /// name="_only_filters_active"/> is <see langword="true"/>, the query will not include sorting or
+        /// product query a.k.a. "pq" filters. - For other types, filters are applied directly without reordering.  If <paramref
+        /// name="_OFA"/> is <see langword="true"/>, the query will not include sorting or
         /// pagination.</remarks>
         /// <param name="_filters">The <see cref="ApiFilter"/> object containing filter, sort, and pagination criteria.</param>
         /// <param name="_query">A reference to the query string that will be modified to include the generated SQL conditions.</param>
         /// <param name="_cmd">A reference to the <see cref="MySqlCommand"/> object that will be populated with parameters for the query.</param>
         /// <param name="_type">The type of the entity (e.g., <see cref="Product"/>, <see cref="Category"/>, etc.) for which the query is
         /// being built.</param>
-        /// <param name="_only_filters_active">A boolean value indicating whether to include only filter conditions in the query.  If <see
+        /// <param name="_OFA">Only filters active. A boolean value indicating whether to include only filter conditions in the query.  If <see
         /// langword="true"/>, sorting and pagination are excluded from the query.</param>
         /// <returns>A string representing the constructed SQL query with the applied filters, sorting, and pagination.</returns>
-        internal static string BuildDBQuery(ApiFilter _filters, ref string _query, ref MySqlCommand _cmd, Type _type, bool _only_filters_active = false) {
+        internal static string BuildDBQuery(ApiFilter _filters, ref string _query, ref MySqlCommand _cmd, Type _type,
+            bool _OFA = false) {
+            if (_query.Length > 0 && _query[^1] == ';') _query = _query[..^1]; // Remove the last semicolon(;) if it exists
             #region Filters
             if (_filters.Filters is not null && _filters.Filters.Count > 0) {
                 int index = 0;
@@ -194,6 +198,18 @@ namespace Merchanter {
                             index++;
                         }
                         break;
+                    case Type t when t == typeof(Brand):
+                        index = 0;
+                        foreach (var filter in _filters.Filters) {
+                            _query += $" AND " + TranslateToDatabase(filter.Field, _type) + " " + GetOperatorString(filter.Operator) + " " +
+                                (filter.Value is not null ? $"@{TranslateToDatabase(filter.Field, _type)}" + "_" + index.ToString() : "NULL");
+
+                            if (filter.Value is not null) {
+                                _cmd.Parameters.Add(CreateFilterParameter(_type, filter, index));
+                            }
+                            index++;
+                        }
+                        break;
                     case Type t when t == typeof(Log):
                         index = 0;
                         foreach (var filter in _filters.Filters) {
@@ -206,7 +222,7 @@ namespace Merchanter {
                             index++;
                         }
                         break;
-                    case Type t when t == typeof(Brand):
+                    case Type t when t == typeof(Notification):
                         index = 0;
                         foreach (var filter in _filters.Filters) {
                             _query += $" AND " + TranslateToDatabase(filter.Field, _type) + " " + GetOperatorString(filter.Operator) + " " +
@@ -221,7 +237,7 @@ namespace Merchanter {
                 }
             }
             #endregion
-            if (!_only_filters_active) {
+            if (!_OFA) {
                 #region Sorting
                 if (_filters.Sort is not null) {
                     _query += " ORDER BY " + TranslateToDatabase(_filters.Sort.Field, _type) + " " + GetDirectionString(_filters.Sort.Direction) + " LIMIT @start,@end;";
@@ -236,13 +252,17 @@ namespace Merchanter {
                             _filters.Sort = new Sort() { Field = "id", Direction = Sort.SortDirection.Descending };
                             _query += " ORDER BY " + "id" + " DESC LIMIT @start,@end;";
                             break;
+                        case Type t when t == typeof(Brand):
+                            _filters.Sort = new Sort() { Field = "id", Direction = Sort.SortDirection.Descending };
+                            _query += " ORDER BY " + "id" + " DESC LIMIT @start,@end;";
+                            break;
                         case Type t when t == typeof(Log):
                             _filters.Sort = new Sort() { Field = "update_date", Direction = Sort.SortDirection.Descending };
                             _query += " ORDER BY " + "update_date" + " DESC LIMIT @start,@end;";
                             break;
-                        case Type t when t == typeof(Brand):
-                            _filters.Sort = new Sort() { Field = "id", Direction = Sort.SortDirection.Descending };
-                            _query += " ORDER BY " + "id" + " DESC LIMIT @start,@end;";
+                        case Type t when t == typeof(Notification):
+                            _filters.Sort = new Sort() { Field = "update_date", Direction = Sort.SortDirection.Descending };
+                            _query += " ORDER BY " + "update_date" + " DESC LIMIT @start,@end;";
                             break;
                     }
                 }

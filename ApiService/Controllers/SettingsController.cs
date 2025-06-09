@@ -20,14 +20,14 @@ namespace ApiService.Controllers {
         /// <returns>Customer settings wrapped in a BaseResponseModel.</returns>
         [HttpGet("GetCustomerSettings")]
         [Authorize]
-        public async Task<ActionResult<BaseResponseModel<SettingsMerchanter>>> GetCustomerSettings() {
+        public async Task<ActionResult<BaseResponseModel<SettingsMerchanter?>>> GetCustomerSettings() {
             if (int.TryParse(HttpContext.User.FindFirst("customerId")?.Value, out int customer_id) && customer_id > 0) {
-                SettingsMerchanter settings = await settingsService.GetCustomerSettings(customer_id);
+                SettingsMerchanter? settings = await settingsService.GetCustomerSettings(customer_id);
                 if (settings != null) {
-                    return Ok(new BaseResponseModel<SettingsMerchanter>() { Success = true, Data = settings, ErrorMessage = "" });
+                    return Ok(new BaseResponseModel<SettingsMerchanter?>() { Success = true, Data = settings, ErrorMessage = "" });
                 }
                 else {
-                    return Ok(new BaseResponseModel<SettingsMerchanter>() { Success = false, Data = null, ErrorMessage = "Error getting settings." });
+                    return Ok(new BaseResponseModel<SettingsMerchanter?>() { Success = false, Data = null, ErrorMessage = "Error getting settings." });
                 }
             }
             return BadRequest("Invalid customer ID.");
