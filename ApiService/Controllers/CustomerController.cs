@@ -46,7 +46,7 @@ namespace ApiService.Controllers {
                 var logs = await customerService.GetCustomerLogs(customer_id, _filters);
                 return Ok(new BaseResponseModel<List<Log>?>() { Success = logs != null, Data = logs ?? [], ApiFilter = _filters, ErrorMessage = logs != null ? "" : "Error -1" });
             }
-            return BadRequest();
+            return BadRequest("Invalid customer ID.");
         }
 
         /// <summary>
