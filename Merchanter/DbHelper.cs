@@ -1005,13 +1005,14 @@ namespace Merchanter {
         public async Task<bool> SaveIdeasoftSettings(int _customer_id, SettingsIdeasoft _settings) {
             try {
                 int val = 0;
-                string _query = "UPDATE settings_ideasoft SET store_url=@store_url,client_id=@client_id,client_secret=@client_secret,refresh_token=@refresh_token WHERE customer_id=@customer_id;";
+                string _query = "UPDATE settings_ideasoft SET store_url=@store_url,client_id=@client_id,client_secret=@client_secret,refresh_token=@refresh_token,access_token=@access_token WHERE customer_id=@customer_id;";
                 MySqlCommand cmd = new(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 cmd.Parameters.Add(new MySqlParameter("store_url", _settings.store_url));
                 cmd.Parameters.Add(new MySqlParameter("client_id", _settings.client_id));
                 cmd.Parameters.Add(new MySqlParameter("client_secret", !string.IsNullOrWhiteSpace(_settings.client_secret) ? DBSetting.Encrypt(_settings.client_secret) : null));
                 cmd.Parameters.Add(new MySqlParameter("refresh_token", !string.IsNullOrWhiteSpace(_settings.refresh_token) ? DBSetting.Encrypt(_settings.refresh_token) : null));
+                cmd.Parameters.Add(new MySqlParameter("access_token", !string.IsNullOrWhiteSpace(_settings.access_token) ? DBSetting.Encrypt(_settings.access_token) : null));
                 if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
                     val = await cmd.ExecuteNonQueryAsync();
                     if (this.state == System.Data.ConnectionState.Open) await CloseConnection();
