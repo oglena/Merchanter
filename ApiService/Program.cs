@@ -1,11 +1,6 @@
 using ApiService.Classes;
-using ApiService.Repositories;
-using ApiService.Services;
+using ApiService.Startup;
 using MerchanterApp.ServiceDefaults;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.OpenApi;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
 using System.Text.Json.Serialization;
 
@@ -16,144 +11,61 @@ builder.WebHost.ConfigureKestrel(options => {
     options.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(60);
 });
 
-builder.Host.UseWindowsService();
-builder.Services.AddWindowsService();
+builder.Host.UseWindowsService(); // Configure the host to run as a Windows Service
+builder.Services.AddWindowsService(); // Add Windows Service support
 
-builder.AddServiceDefaults();
-
-// Add services to the container.
+builder.AddServiceDefaults(); // Add service defaults for the Merchanter application
+builder.Services.AddProblemDetails(); // Add support for problem details in API responses
+builder.Services.AddHealthChecks(); // Add health checks for monitoring application health
 
 builder.Services.AddControllers();
 builder.Services.AddControllersWithViews().AddJsonOptions(options => {
     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-});
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c => {
-    c.SwaggerDoc("merchanter", new OpenApiInfo { Title = "Merchanter API", Version = "v1" });
-    c.AddSecurityDefinition("bearerAuth", new OpenApiSecurityScheme {
-        Name = "Authorization",
-        Type = SecuritySchemeType.Http,
-        Scheme = "bearer",
-        BearerFormat = "JWT",
-        In = ParameterLocation.Header,
-        Description = "JWT Authorization header using the Bearer scheme."
-    });
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement{
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "bearerAuth"
-                }
-            },
-            new string[] { }
-        }
-    });
-    c.EnableAnnotations();
-    c.OperationFilter<IgnorePropertyFilter>();
-    c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, "MerchanterApi.xml"));
-    c.AddScalarFilters();
-});
+}); // Add JSON options to handle enum serialization
+builder.Services.AddEndpointsApiExplorer(); // Add support for API endpoint exploration
 
-#region Merchanter
-var secret = builder.Configuration["AppSettings:Secret"];
-if (string.IsNullOrEmpty(secret)) {
-    throw new ArgumentNullException(nameof(secret), "AppSettings:Secret configuration is missing or empty.");
+builder.Services.ConfigureMerchanterServices(builder.Configuration); // Configure Merchanter services and dependencies
+builder.Services.ConfigureSwaggerAndAuthentication(builder.Configuration); // Configure Swagger and authentication services
+
+var app = builder.Build(); // Build the application pipeline
+
+app.UseMiddleware<AdminSafeListMiddleware>(builder.Configuration["AdminSafeList"]); // Use middleware for admin safelist based on configuration
+app.MapHealthChecks("/health"); // Map health checks endpoint
+app.UseCors(); // Use CORS policy defined in ServiceDefaults
+
+app.MapDefaultEndpoints(); // Map default endpoints for the application
+app.UseSwagger(); // Enable Swagger middleware for API documentation
+app.UseStaticFiles(); // Serve static files from wwwroot
+app.UseRouting(); // Enable routing for the application
+app.UseAuthentication(); // Use authentication middleware to handle JWT tokens
+app.UseAuthorization(); // Use authorization middleware to enforce access control
+app.MapControllers(); // Map controller endpoints for the application
+app.MapSwagger("/swagger/{documentName}.json"); // Map Swagger JSON endpoint for API documentation
+app.UseExceptionHandler(); // Use exception handler middleware for global error handling
+
+if (app.Environment.IsDevelopment()) {
+    //TODO: Enable Swagger UI in development environment
+    app.UseDeveloperExceptionPage(); // Use developer exception page for detailed error information in development
 }
 
-var safelist = builder.Configuration["AdminSafeList"];
-if (string.IsNullOrEmpty(safelist)) {
-    throw new ArgumentNullException(nameof(safelist), "AdminSafeList configuration is missing or empty.");
-}
-
-builder.Services.AddScoped<ClientIpCheckActionFilter>(container => {
-    var loggerFactory = container.GetRequiredService<ILoggerFactory>();
-    var logger = loggerFactory.CreateLogger<ClientIpCheckActionFilter>();
-
-    return new ClientIpCheckActionFilter(safelist, logger);
-});
-
-builder.Services.AddTransient<IAuthService, AuthService>();
-builder.Services.AddTransient<ITokenService, TokenService>();
-builder.Services.AddScoped(x => new MerchanterService());
-builder.Services.AddScoped<ICatalogService, CatalogService>();
-builder.Services.AddScoped<ICatalogRepository, CatalogRepository>();
-builder.Services.AddScoped<ICustomerService, CustomerService>();
-builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
-builder.Services.AddScoped<ISettingsService, SettingsService>();
-builder.Services.AddScoped<ISettingsRepository, SettingsRepository>();
-builder.Services.AddScoped<IProductService, ProductService>();
-builder.Services.AddScoped<IProductRepository, ProductRepository>();
-builder.Services.AddScoped<IBrandService, BrandService>();
-builder.Services.AddScoped<IBrandRepository, BrandRepository>();
-builder.Services.AddScoped<ICategoryService, CategoryService>();
-builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
-#endregion
-
-// Add services to the container.
-builder.Services.AddProblemDetails();
-
-builder.Services.AddAuthentication(options => {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(o => {
-    o.TokenValidationParameters = new TokenValidationParameters {
-        ValidIssuer = builder.Configuration["AppSettings:ValidIssuer"],
-        ValidAudience = builder.Configuration["AppSettings:ValidAudience"],
-        IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(secret)),
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-    };
-    o.SaveToken = true;
-});
-builder.Services.AddAuthorization();
-builder.Services.AddHealthChecks();
-
-var app = builder.Build();
-
-app.UseMiddleware<AdminSafeListMiddleware>(builder.Configuration["AdminSafeList"]);
-app.MapHealthChecks("/health");
-app.UseCors();
-
-app.MapDefaultEndpoints();
-app.UseSwagger();
-app.UseStaticFiles();
-app.UseRouting();
-app.UseAuthentication();
-app.UseAuthorization(); 
-app.MapControllers();
-app.MapSwagger("/swagger/{documentName}.json");
-
-// Configure the HTTP request pipeline.
-//if (app.Environment.IsDevelopment()) {
-    app.UseRouter(routes => {
-        routes.MapGet("/", async context => {
-            context.Response.ContentType = "text/html";
-            await context.Response.WriteAsync("<h1>Merchanter API</h1>");
-            await context.Response.WriteAsync("Welcome to the Merchanter API!<br>");
-            await context.Response.WriteAsync("Use the Scalar UI to explore the API: <a href=\"/scalar\">Scalar UI</a><br>");
-            await context.Response.WriteAsync("Or access the Swagger documentation: <a href=\"/swagger/merchanter.json\">Swagger JSON</a><br>");
-        });
+app.UseRouter(routes => {
+    routes.MapGet("/", async context => {
+        context.Response.ContentType = "text/html";
+        await context.Response.WriteAsync("<h1>Merchanter API</h1>");
+        await context.Response.WriteAsync("Welcome to the Merchanter API!<br>");
+        await context.Response.WriteAsync("Use the Scalar UI to explore the API: <a href=\"/scalar\">Scalar UI</a><br>");
+        await context.Response.WriteAsync("Or access the Swagger documentation: <a href=\"/swagger/merchanter.json\">Swagger JSON</a><br>");
     });
-    app.UseDeveloperExceptionPage();
-    app.MapScalarApiReference(options => {
-        options.WithLayout(ScalarLayout.Modern);
-        options.WithTitle("Merchanter API Reference");
-        options.WithTheme(ScalarTheme.DeepSpace);
-        options.WithDefaultHttpClient(ScalarTarget.Php, ScalarClient.Guzzle);
-        options.AddDocument("merchanter");
-        options.WithOpenApiRoutePattern("/swagger/merchanter.json");
-    });
-//}
-
-// Configure the HTTP request pipeline.
-app.UseExceptionHandler();
+}); // Map a default route for the application
+app.MapScalarApiReference(options => {
+    options.WithClientButton(false);
+    options.WithLayout(ScalarLayout.Modern);
+    options.WithTitle("Merchanter API Reference");
+    options.WithTheme(ScalarTheme.DeepSpace);
+    options.WithDefaultHttpClient(ScalarTarget.Php, ScalarClient.Guzzle);
+    options.AddDocument("merchanter");
+    options.WithOpenApiRoutePattern("/swagger/merchanter.json");
+}); // Configure the Scalar API reference with custom options
 
 
-
-app.Run();
+app.Run(); // Run the application

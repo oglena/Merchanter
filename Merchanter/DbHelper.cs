@@ -292,7 +292,6 @@ namespace Merchanter {
         }
         #endregion
 
-
         #region Is_Working Methods
         /// <summary>
         /// Sets the product sync working status

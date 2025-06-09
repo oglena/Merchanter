@@ -7,161 +7,6 @@ namespace Merchanter {
 
         #region Settings
         /// <summary>
-        /// Loads the settings from the database
-        /// </summary>
-        /// <param name="_customer_id">Customer ID</param>
-        /// <returns>[Error] returns 'null'</returns>
-        public async Task<SettingsMerchanter?> LoadSettings(int _customer_id) {
-            try {
-                this.DbSettings = await GetSettings(_customer_id);
-                Helper.global = new SettingsMerchanter(_customer_id);
-                var customer = await GetCustomer(_customer_id);
-                if (customer is not null) { Helper.global.customer = customer; }
-                else { DbHelperBase.PrintConsole("Customer not found!", ConsoleColor.Red); return null; }
-
-                #region Core Settings
-                Helper.global.platforms = await LoadPlatforms();
-                Helper.global.works = await LoadWorks();
-                Helper.global.integrations = await LoadIntegrations(_customer_id);
-                #endregion
-
-                #region Customer Settings
-                Helper.global.settings = await GetCustomerSettings(_customer_id);
-                Helper.global.product = await GetProductSettings(_customer_id);
-                Helper.global.invoice = await GetInvoiceSettings(_customer_id);
-                Helper.global.order = await GetOrderSettings(_customer_id);
-                Helper.global.shipment = await GetShipmentSettings(_customer_id);
-                Helper.global.order_statuses = await LoadOrderStatuses(_customer_id);
-                Helper.global.payment_methods = await LoadPaymentMethods(_customer_id);
-                Helper.global.shipment_methods = await LoadShipmentMethods(_customer_id);
-                Helper.global.sync_mappings = GetCustomerSyncMappings(_customer_id);
-                #endregion
-
-                #region Integration Settings
-                //TODO: Could check if integration exists
-                Helper.global.entegra = await GetEntegraSettings(_customer_id);
-                Helper.global.netsis = await GetNetsisSettings(_customer_id);
-                Helper.global.magento = await GetMagentoSettings(_customer_id);
-                Helper.global.n11 = await GetN11Settings(_customer_id);
-                Helper.global.hb = await GetHBSettings(_customer_id);
-                Helper.global.ty = await GetTYSettings(_customer_id);
-                Helper.global.ank_erp = await GetAnkERPSettings(_customer_id);
-                Helper.global.ideasoft = await GetIdeasoftSettings(_customer_id);
-                Helper.global.google = await GetGoogleSettings(_customer_id);
-                #endregion
-
-                Helper.global.erp_invoice_ftp_username = DbSettings?.Where(x => x.name == "erp_invoice_ftp_username").FirstOrDefault()?.value ?? string.Empty;
-                Helper.global.erp_invoice_ftp_password = DbSettings?.Where(x => x.name == "erp_invoice_ftp_password").FirstOrDefault()?.value ?? string.Empty;
-                Helper.global.erp_invoice_ftp_url = DbSettings?.Where(x => x.name == "erp_invoice_ftp_url").FirstOrDefault()?.value ?? string.Empty;
-                Helper.global.xml_bogazici_bayikodu = DbSettings?.Where(x => x.name == "xml_bogazici_bayikodu").FirstOrDefault()?.value ?? string.Empty;
-                Helper.global.xml_bogazici_email = DbSettings?.Where(x => x.name == "xml_bogazici_email").FirstOrDefault()?.value ?? string.Empty;
-                Helper.global.xml_bogazici_sifre = DbSettings?.Where(x => x.name == "xml_bogazici_sifre").FirstOrDefault()?.value ?? string.Empty;
-                Helper.global.xml_fsp_url = DbSettings?.Where(x => x.name == "xml_fsp_url").FirstOrDefault()?.value ?? string.Empty;
-                Helper.global.xml_koyuncu_url = DbSettings?.Where(x => x.name == "xml_koyuncu_url").FirstOrDefault()?.value ?? string.Empty;
-                Helper.global.xml_oksid_url = DbSettings?.Where(x => x.name == "xml_oksid_url").FirstOrDefault()?.value ?? string.Empty;
-                Helper.global.xml_penta_base_url = DbSettings?.Where(x => x.name == "xml_penta_base_url").FirstOrDefault()?.value ?? string.Empty;
-                Helper.global.xml_penta_customerid = DbSettings?.Where(x => x.name == "xml_penta_customerid").FirstOrDefault()?.value ?? string.Empty;
-
-
-                #region Decyrption
-                if (Helper.global.shipment is not null && !string.IsNullOrWhiteSpace(Helper.global.shipment.yurtici_kargo_password))
-                    Helper.global.shipment.yurtici_kargo_password = DBSetting.Decrypt(Helper.global.shipment.yurtici_kargo_password);
-                if (Helper.global.shipment is not null && !string.IsNullOrWhiteSpace(Helper.global.shipment.mng_kargo_password))
-                    Helper.global.shipment.mng_kargo_password = DBSetting.Decrypt(Helper.global.shipment.mng_kargo_password);
-                if (Helper.global.shipment is not null && !string.IsNullOrWhiteSpace(Helper.global.shipment.mng_kargo_client_secret))
-                    Helper.global.shipment.mng_kargo_client_secret = DBSetting.Decrypt(Helper.global.shipment.mng_kargo_client_secret);
-                if (Helper.global.magento is not null && !string.IsNullOrWhiteSpace(Helper.global.magento.token))
-                    Helper.global.magento.token = DBSetting.Decrypt(Helper.global.magento.token);
-                if (Helper.global.entegra is not null && !string.IsNullOrWhiteSpace(Helper.global.entegra.api_password))
-                    Helper.global.entegra.api_password = DBSetting.Decrypt(Helper.global.entegra.api_password);
-                if (Helper.global.netsis is not null && !string.IsNullOrWhiteSpace(Helper.global.netsis.netopenx_password))
-                    Helper.global.netsis.netopenx_password = DBSetting.Decrypt(Helper.global.netsis.netopenx_password);
-                if (Helper.global.netsis is not null && !string.IsNullOrWhiteSpace(Helper.global.netsis.dbpassword))
-                    Helper.global.netsis.dbpassword = DBSetting.Decrypt(Helper.global.netsis.dbpassword);
-                if (Helper.global.invoice is not null && !string.IsNullOrWhiteSpace(Helper.global.invoice.erp_invoice_ftp_password))
-                    Helper.global.invoice.erp_invoice_ftp_password = DBSetting.Decrypt(Helper.global.invoice.erp_invoice_ftp_password);
-                if (Helper.global.n11 is not null && !string.IsNullOrWhiteSpace(Helper.global.n11.appsecret))
-                    Helper.global.n11.appsecret = DBSetting.Decrypt(Helper.global.n11.appsecret);
-                if (Helper.global.hb is not null && !string.IsNullOrWhiteSpace(Helper.global.hb.token))
-                    Helper.global.hb.token = DBSetting.Decrypt(Helper.global.hb.token);
-                if (Helper.global.hb is not null && !string.IsNullOrWhiteSpace(Helper.global.hb.password))
-                    Helper.global.hb.password = DBSetting.Decrypt(Helper.global.hb.password);
-                if (Helper.global.ty is not null && !string.IsNullOrWhiteSpace(Helper.global.ty.api_secret))
-                    Helper.global.ty.api_secret = DBSetting.Decrypt(Helper.global.ty.api_secret);
-                if (Helper.global.ank_erp is not null && !string.IsNullOrWhiteSpace(Helper.global.ank_erp.password))
-                    Helper.global.ank_erp.password = DBSetting.Decrypt(Helper.global.ank_erp.password);
-                if (Helper.global.ideasoft is not null && !string.IsNullOrWhiteSpace(Helper.global.ideasoft.client_secret))
-                    Helper.global.ideasoft.client_secret = DBSetting.Decrypt(Helper.global.ideasoft.client_secret);
-                if (Helper.global.ideasoft is not null && !string.IsNullOrWhiteSpace(Helper.global.ideasoft.refresh_token))
-                    Helper.global.ideasoft.refresh_token = DBSetting.Decrypt(Helper.global.ideasoft.refresh_token);
-                if (Helper.global.ideasoft is not null && !string.IsNullOrWhiteSpace(Helper.global.ideasoft.access_token))
-                    Helper.global.ideasoft.access_token = DBSetting.Decrypt(Helper.global.ideasoft.access_token);
-                if (Helper.global.google is not null && !string.IsNullOrWhiteSpace(Helper.global.google.oauth2_clientsecret))
-                    Helper.global.google.oauth2_clientsecret = DBSetting.Decrypt(Helper.global.google.oauth2_clientsecret);
-                #endregion
-
-                if (File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "local"))) {
-                    DbHelperBase.PrintConsole(Helper.global.settings?.company_name + " local enabled!!!", ConsoleColor.Yellow);
-                    //Console.Beep();
-                    if (_customer_id == 1) {
-                        if (Helper.global?.netsis is not null && Helper.global?.entegra is not null) {
-                            Helper.global.netsis.rest_url = "http://85.106.8.239:7070/";
-                            Helper.global.entegra.api_url = "http://85.106.8.239:5421/";
-                        }
-                    }
-                }
-
-                return Helper.global;
-            }
-            catch (Exception ex) {
-                OnError(ex.ToString());
-                Helper.global = null;
-                return null;
-            }
-        }
-
-        public async Task<List<ActiveIntegration>?> LoadActiveIntegrations(int _customer_id) {
-            try {
-                var integrations = await LoadIntegrations(_customer_id);
-                var platforms = await LoadPlatforms();
-                var works = await LoadWorks();
-                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
-                    string _query = "SELECT * FROM active_integrations WHERE customer_id=@customer_id;";
-                    MySqlCommand cmd = new(_query, Connection);
-                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id.ToString()));
-                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
-                    List<ActiveIntegration> list = [];
-                    while (await dataReader.ReadAsync()) {
-                        list.Add(new ActiveIntegration() {
-                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
-                            work = works.Where(x => x.id == Convert.ToInt32(dataReader["WID"].ToString())).FirstOrDefault(),
-                            platform = platforms.Where(x => x.id == Convert.ToInt32(dataReader["PID"].ToString())).FirstOrDefault(),
-                            integration = integrations.Where(x => x.id == Convert.ToInt32(dataReader["IID"].ToString())).FirstOrDefault(),
-                            platform_name = dataReader["platform_name"].ToString(),
-                            work_name = dataReader["work_name"].ToString(),
-                            platform_work_type = dataReader["platform_work_type"] is string workTypeStr && Enum.TryParse(workTypeStr, out Merchanter.Classes.Work.WorkType workType) ? workType : default,
-                            available_platform_types = dataReader["available_platform_types"] is string availableTypesStr ? [.. availableTypesStr.Split(',').Select(type => Enum.TryParse(type, out Merchanter.Classes.Platform.PlatformType platformType) ? platformType : default)] : [],
-                            platform_status = Convert.ToBoolean(Convert.ToInt32(dataReader["platform_status"].ToString())),
-                            work_type = dataReader["work_type"] is string workType1Str && Enum.TryParse(workType1Str, out Merchanter.Classes.Work.WorkType workType1) ? workType1 : default,
-                            work_direction = dataReader["work_direction"] is string workDirectionStr && Enum.TryParse(workDirectionStr, out Merchanter.Classes.Work.WorkDirection workDirection) ? workDirection : default,
-                            work_status = Convert.ToBoolean(Convert.ToInt32(dataReader["work_status"].ToString())),
-                            version = dataReader["version"].ToString(),
-                            integration_status = Convert.ToBoolean(Convert.ToInt32(dataReader["integration_status"].ToString())),
-                        });
-                    }
-                    await dataReader.CloseAsync();
-                    if (state == System.Data.ConnectionState.Open) await CloseConnection();
-                    return list;
-                }
-                return null;
-            }
-            catch (Exception ex) {
-                OnError(ex.ToString());
-                return null;
-            }
-        }
-
-        /// <summary>
         /// Gets DB settings from the database
         /// </summary>
         /// <param name="_customer_id">Customer ID</param>
@@ -1197,6 +1042,160 @@ namespace Merchanter {
         #endregion
 
         #region Load Functions
+        /// <summary>
+        /// Loads the settings from the database
+        /// </summary>
+        /// <param name="_customer_id">Customer ID</param>
+        /// <returns>[Error] returns 'null'</returns>
+        public async Task<SettingsMerchanter?> LoadSettings(int _customer_id) {
+            try {
+                this.DbSettings = await GetSettings(_customer_id);
+                Helper.global = new SettingsMerchanter(_customer_id);
+                var customer = await GetCustomer(_customer_id);
+                if (customer is not null) { Helper.global.customer = customer; }
+                else { DbHelperBase.PrintConsole("Customer not found!", ConsoleColor.Red); return null; }
+
+                #region Core Settings
+                Helper.global.platforms = await LoadPlatforms();
+                Helper.global.works = await LoadWorks();
+                Helper.global.integrations = await LoadIntegrations(_customer_id);
+                #endregion
+
+                #region Customer Settings
+                Helper.global.settings = await GetCustomerSettings(_customer_id);
+                Helper.global.product = await GetProductSettings(_customer_id);
+                Helper.global.invoice = await GetInvoiceSettings(_customer_id);
+                Helper.global.order = await GetOrderSettings(_customer_id);
+                Helper.global.shipment = await GetShipmentSettings(_customer_id);
+                Helper.global.order_statuses = await LoadOrderStatuses(_customer_id);
+                Helper.global.payment_methods = await LoadPaymentMethods(_customer_id);
+                Helper.global.shipment_methods = await LoadShipmentMethods(_customer_id);
+                Helper.global.sync_mappings = GetCustomerSyncMappings(_customer_id);
+                #endregion
+
+                #region Integration Settings
+                //TODO: Could check if integration exists
+                Helper.global.entegra = await GetEntegraSettings(_customer_id);
+                Helper.global.netsis = await GetNetsisSettings(_customer_id);
+                Helper.global.magento = await GetMagentoSettings(_customer_id);
+                Helper.global.n11 = await GetN11Settings(_customer_id);
+                Helper.global.hb = await GetHBSettings(_customer_id);
+                Helper.global.ty = await GetTYSettings(_customer_id);
+                Helper.global.ank_erp = await GetAnkERPSettings(_customer_id);
+                Helper.global.ideasoft = await GetIdeasoftSettings(_customer_id);
+                Helper.global.google = await GetGoogleSettings(_customer_id);
+                #endregion
+
+                Helper.global.erp_invoice_ftp_username = DbSettings?.Where(x => x.name == "erp_invoice_ftp_username").FirstOrDefault()?.value ?? string.Empty;
+                Helper.global.erp_invoice_ftp_password = DbSettings?.Where(x => x.name == "erp_invoice_ftp_password").FirstOrDefault()?.value ?? string.Empty;
+                Helper.global.erp_invoice_ftp_url = DbSettings?.Where(x => x.name == "erp_invoice_ftp_url").FirstOrDefault()?.value ?? string.Empty;
+                Helper.global.xml_bogazici_bayikodu = DbSettings?.Where(x => x.name == "xml_bogazici_bayikodu").FirstOrDefault()?.value ?? string.Empty;
+                Helper.global.xml_bogazici_email = DbSettings?.Where(x => x.name == "xml_bogazici_email").FirstOrDefault()?.value ?? string.Empty;
+                Helper.global.xml_bogazici_sifre = DbSettings?.Where(x => x.name == "xml_bogazici_sifre").FirstOrDefault()?.value ?? string.Empty;
+                Helper.global.xml_fsp_url = DbSettings?.Where(x => x.name == "xml_fsp_url").FirstOrDefault()?.value ?? string.Empty;
+                Helper.global.xml_koyuncu_url = DbSettings?.Where(x => x.name == "xml_koyuncu_url").FirstOrDefault()?.value ?? string.Empty;
+                Helper.global.xml_oksid_url = DbSettings?.Where(x => x.name == "xml_oksid_url").FirstOrDefault()?.value ?? string.Empty;
+                Helper.global.xml_penta_base_url = DbSettings?.Where(x => x.name == "xml_penta_base_url").FirstOrDefault()?.value ?? string.Empty;
+                Helper.global.xml_penta_customerid = DbSettings?.Where(x => x.name == "xml_penta_customerid").FirstOrDefault()?.value ?? string.Empty;
+
+
+                #region Decyrption
+                if (Helper.global.shipment is not null && !string.IsNullOrWhiteSpace(Helper.global.shipment.yurtici_kargo_password))
+                    Helper.global.shipment.yurtici_kargo_password = DBSetting.Decrypt(Helper.global.shipment.yurtici_kargo_password);
+                if (Helper.global.shipment is not null && !string.IsNullOrWhiteSpace(Helper.global.shipment.mng_kargo_password))
+                    Helper.global.shipment.mng_kargo_password = DBSetting.Decrypt(Helper.global.shipment.mng_kargo_password);
+                if (Helper.global.shipment is not null && !string.IsNullOrWhiteSpace(Helper.global.shipment.mng_kargo_client_secret))
+                    Helper.global.shipment.mng_kargo_client_secret = DBSetting.Decrypt(Helper.global.shipment.mng_kargo_client_secret);
+                if (Helper.global.magento is not null && !string.IsNullOrWhiteSpace(Helper.global.magento.token))
+                    Helper.global.magento.token = DBSetting.Decrypt(Helper.global.magento.token);
+                if (Helper.global.entegra is not null && !string.IsNullOrWhiteSpace(Helper.global.entegra.api_password))
+                    Helper.global.entegra.api_password = DBSetting.Decrypt(Helper.global.entegra.api_password);
+                if (Helper.global.netsis is not null && !string.IsNullOrWhiteSpace(Helper.global.netsis.netopenx_password))
+                    Helper.global.netsis.netopenx_password = DBSetting.Decrypt(Helper.global.netsis.netopenx_password);
+                if (Helper.global.netsis is not null && !string.IsNullOrWhiteSpace(Helper.global.netsis.dbpassword))
+                    Helper.global.netsis.dbpassword = DBSetting.Decrypt(Helper.global.netsis.dbpassword);
+                if (Helper.global.invoice is not null && !string.IsNullOrWhiteSpace(Helper.global.invoice.erp_invoice_ftp_password))
+                    Helper.global.invoice.erp_invoice_ftp_password = DBSetting.Decrypt(Helper.global.invoice.erp_invoice_ftp_password);
+                if (Helper.global.n11 is not null && !string.IsNullOrWhiteSpace(Helper.global.n11.appsecret))
+                    Helper.global.n11.appsecret = DBSetting.Decrypt(Helper.global.n11.appsecret);
+                if (Helper.global.hb is not null && !string.IsNullOrWhiteSpace(Helper.global.hb.token))
+                    Helper.global.hb.token = DBSetting.Decrypt(Helper.global.hb.token);
+                if (Helper.global.hb is not null && !string.IsNullOrWhiteSpace(Helper.global.hb.password))
+                    Helper.global.hb.password = DBSetting.Decrypt(Helper.global.hb.password);
+                if (Helper.global.ty is not null && !string.IsNullOrWhiteSpace(Helper.global.ty.api_secret))
+                    Helper.global.ty.api_secret = DBSetting.Decrypt(Helper.global.ty.api_secret);
+                if (Helper.global.ank_erp is not null && !string.IsNullOrWhiteSpace(Helper.global.ank_erp.password))
+                    Helper.global.ank_erp.password = DBSetting.Decrypt(Helper.global.ank_erp.password);
+                if (Helper.global.ideasoft is not null && !string.IsNullOrWhiteSpace(Helper.global.ideasoft.client_secret))
+                    Helper.global.ideasoft.client_secret = DBSetting.Decrypt(Helper.global.ideasoft.client_secret);
+                if (Helper.global.ideasoft is not null && !string.IsNullOrWhiteSpace(Helper.global.ideasoft.refresh_token))
+                    Helper.global.ideasoft.refresh_token = DBSetting.Decrypt(Helper.global.ideasoft.refresh_token);
+                if (Helper.global.ideasoft is not null && !string.IsNullOrWhiteSpace(Helper.global.ideasoft.access_token))
+                    Helper.global.ideasoft.access_token = DBSetting.Decrypt(Helper.global.ideasoft.access_token);
+                if (Helper.global.google is not null && !string.IsNullOrWhiteSpace(Helper.global.google.oauth2_clientsecret))
+                    Helper.global.google.oauth2_clientsecret = DBSetting.Decrypt(Helper.global.google.oauth2_clientsecret);
+                #endregion
+
+                if (File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "local"))) {
+                    DbHelperBase.PrintConsole(Helper.global.settings?.company_name + " local enabled!!!", ConsoleColor.Yellow);
+                    //Console.Beep();
+                    if (_customer_id == 1) {
+                        if (Helper.global?.netsis is not null && Helper.global?.entegra is not null) {
+                            Helper.global.netsis.rest_url = "http://85.106.8.239:7070/";
+                            Helper.global.entegra.api_url = "http://85.106.8.239:5421/";
+                        }
+                    }
+                }
+
+                return Helper.global;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                Helper.global = null;
+                return null;
+            }
+        }
+
+        public async Task<List<ActiveIntegration>?> LoadActiveIntegrations(int _customer_id) {
+            try {
+                var integrations = await LoadIntegrations(_customer_id);
+                var platforms = await LoadPlatforms();
+                var works = await LoadWorks();
+                if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
+                    string _query = "SELECT * FROM active_integrations WHERE customer_id=@customer_id;";
+                    MySqlCommand cmd = new(_query, Connection);
+                    cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id.ToString()));
+                    MySqlDataReader dataReader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
+                    List<ActiveIntegration> list = [];
+                    while (await dataReader.ReadAsync()) {
+                        list.Add(new ActiveIntegration() {
+                            customer_id = Convert.ToInt32(dataReader["customer_id"].ToString()),
+                            work = works.Where(x => x.id == Convert.ToInt32(dataReader["WID"].ToString())).FirstOrDefault(),
+                            platform = platforms.Where(x => x.id == Convert.ToInt32(dataReader["PID"].ToString())).FirstOrDefault(),
+                            integration = integrations.Where(x => x.id == Convert.ToInt32(dataReader["IID"].ToString())).FirstOrDefault(),
+                            platform_name = dataReader["platform_name"].ToString(),
+                            work_name = dataReader["work_name"].ToString(),
+                            platform_work_type = dataReader["platform_work_type"] is string workTypeStr && Enum.TryParse(workTypeStr, out Merchanter.Classes.Work.WorkType workType) ? workType : default,
+                            available_platform_types = dataReader["available_platform_types"] is string availableTypesStr ? [.. availableTypesStr.Split(',').Select(type => Enum.TryParse(type, out Merchanter.Classes.Platform.PlatformType platformType) ? platformType : default)] : [],
+                            platform_status = Convert.ToBoolean(Convert.ToInt32(dataReader["platform_status"].ToString())),
+                            work_type = dataReader["work_type"] is string workType1Str && Enum.TryParse(workType1Str, out Merchanter.Classes.Work.WorkType workType1) ? workType1 : default,
+                            work_direction = dataReader["work_direction"] is string workDirectionStr && Enum.TryParse(workDirectionStr, out Merchanter.Classes.Work.WorkDirection workDirection) ? workDirection : default,
+                            work_status = Convert.ToBoolean(Convert.ToInt32(dataReader["work_status"].ToString())),
+                            version = dataReader["version"].ToString(),
+                            integration_status = Convert.ToBoolean(Convert.ToInt32(dataReader["integration_status"].ToString())),
+                        });
+                    }
+                    await dataReader.CloseAsync();
+                    if (state == System.Data.ConnectionState.Open) await CloseConnection();
+                    return list;
+                }
+                return null;
+            }
+            catch (Exception ex) {
+                OnError(ex.ToString());
+                return null;
+            }
+        }
         /// <summary>
         /// Gets order statuses from the database
         /// </summary>

@@ -5,7 +5,6 @@ using Attribute = Merchanter.Classes.Attribute;
 namespace Merchanter {
     public partial class DbHelper {
         #region Catalog
-
         #region Product
         /// <summary>
         /// Gets product from the database
