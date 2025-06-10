@@ -64,13 +64,10 @@ namespace ApiService.Startup {
         /// </summary>
         /// <param name="services">The <see cref="IServiceCollection"/> to which the services will be added.</param>
         /// <param name="configuration">The <see cref="IConfiguration"/> instance used to retrieve configuration values.</param>
-        public static void ConfigureSwaggerAndAuthentication(this IServiceCollection services, IConfiguration configuration)
-        {
-            services.AddSwaggerGen(c =>
-            {
+        public static void ConfigureSwaggerAndAuthentication(this IServiceCollection services, IConfiguration configuration) {
+            services.AddSwaggerGen(c => {
                 c.SwaggerDoc("merchanter", new OpenApiInfo { Title = "Merchanter API", Version = "v1" });
-                c.AddSecurityDefinition("bearerAuth", new OpenApiSecurityScheme
-                {
+                c.AddSecurityDefinition("bearerAuth", new OpenApiSecurityScheme {
                     Name = "Authorization",
                     Type = SecuritySchemeType.Http,
                     Scheme = "bearer",
@@ -97,15 +94,12 @@ namespace ApiService.Startup {
                 c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, "MerchanterApi.xml"));
             });
 
-            services.AddAuthentication(options =>
-            {
+            services.AddAuthentication(options => {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddJwtBearer(o =>
-            {
-                o.TokenValidationParameters = new TokenValidationParameters
-                {
+            }).AddJwtBearer(o => {
+                o.TokenValidationParameters = new TokenValidationParameters {
                     ValidIssuer = configuration["AppSettings:ValidIssuer"],
                     ValidAudience = configuration["AppSettings:ValidAudience"],
                     IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(configuration["AppSettings:Secret"])),
