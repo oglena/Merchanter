@@ -2,6 +2,13 @@
 using MySql.Data.MySqlClient;
 
 namespace Merchanter {
+    /// <summary>
+    /// Provides helper methods for interacting with the database, specifically for managing invoices and invoice items.
+    /// </summary>
+    /// <remarks>The <see cref="DbHelper"/> class includes methods for retrieving, inserting, updating, and
+    /// managing invoices and their associated items. It is designed to facilitate database operations related to
+    /// invoices, such as fetching invoice data, updating invoice statuses, and handling invoice items. Ensure that the
+    /// database connection is properly configured and open before using these methods.</remarks>
     public partial class DbHelper {
 
         #region Invoice

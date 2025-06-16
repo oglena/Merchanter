@@ -8,7 +8,6 @@ namespace Merchanter {
     /// Includes opening, closing, and handling connection state changes.
     /// </summary>
     public partial class DbHelper {
-
         #region Mapping
         /// <summary>
         /// Gets the sync mappings from the database

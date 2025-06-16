@@ -297,7 +297,7 @@ internal class MainLoop {
             #endregion
             if (Customer.xml_sync_status && !Customer.is_xmlsync_working) {
                 DbHelper.xml_clone.SetXmlSyncWorking(Customer.customer_id, true);
-                Task task = Task.Run(() => this.XmlLoopAsync(Helper.global));
+                Task task = Task.Run(async () => await this.XmlLoopAsync(Helper.global));
                 // INFO: XML Loop is running in a separate thread
             }
         }
@@ -317,27 +317,43 @@ internal class MainLoop {
             DbHelper.SetProductSyncWorking(Customer.customer_id, true);
 
             #region Current Catalog from MerchanterDB
-            default_brand = DbHelper.GetDefaultBrand(Customer.customer_id);
-            root_category = DbHelper.GetRootCategory(Customer.customer_id);
-            Console.WriteLine("DefaultBrand:" + default_brand.brand_name + ", RootCategory:" + root_category?.category_name);
+            #region Default Brand and Root Category
+            default_brand = await DbHelper.GetDefaultBrand(Customer.customer_id);
+            root_category = await DbHelper.GetRootCategory(Customer.customer_id);
+            Console.WriteLine("DefaultBrand:" + default_brand?.brand_name + ", RootCategory:" + root_category?.category_name);
             if (default_brand is null || root_category is null) { health = false; }
-
-            products = DbHelper.GetProducts(Customer.customer_id, out brands, out categories, out product_attributes, out product_images, out product_target_prices);
-            Console.WriteLine("Products:" + products.Count + "; Brands:" + brands.Count + "; Categories:" + categories.Count);
-            Console.WriteLine("Attributes:" + product_attributes.Count + "; Images:" + product_images.Count + "; TargetPrices:" + product_target_prices.Count);
-
-            product_target_relation = await DbHelper.GetProductTargets(Customer.customer_id) ?? [];
-            Console.Write("ProductTargets:" + product_target_relation.Count);
-            category_target_relation = await DbHelper.GetCategoryTargets(Customer.customer_id) ?? [];
-            Console.Write("; CategoryTargets:" + category_target_relation.Count + Environment.NewLine);
-            if (products is null) { health = false; }
-            #endregion
-
             if (!health) {
-                PrintConsole("Product sync failed due to missing data.", ConsoleColor.Red);
+                PrintConsole("Product sync failed due to missing default brand or root category.", ConsoleColor.Red);
                 DbHelper.SetProductSyncWorking(Customer.customer_id, false);
                 return false;
             }
+            #endregion
+
+            #region Prodcuts, Brands, Categories, Attributes, Images and TargetPrices from MerchanterDB
+            products = DbHelper.GetProducts(Customer.customer_id, out brands, out categories, out product_attributes, out product_images, out product_target_prices);
+            Console.WriteLine("Products:" + products.Count + "; Brands:" + brands.Count + "; Categories:" + categories.Count);
+            Console.WriteLine("Attributes:" + product_attributes.Count + "; Images:" + product_images.Count + "; TargetPrices:" + product_target_prices.Count);
+            if (products is null) { health = false; }
+            if (!health) {
+                PrintConsole("Product sync failed due to missing products.", ConsoleColor.Red);
+                DbHelper.SetProductSyncWorking(Customer.customer_id, false);
+                return false;
+            }
+            #endregion
+
+            #region Product Targets and Category Targets from MerchanterDB
+            product_target_relation = await DbHelper.GetProductTargets(Customer.customer_id);
+            Console.Write("ProductTargets:" + product_target_relation?.Count);
+            category_target_relation = await DbHelper.GetCategoryTargets(Customer.customer_id);
+            Console.Write("; CategoryTargets:" + category_target_relation?.Count + Environment.NewLine);
+            if (product_target_relation is null || category_target_relation is null) { health = false; }
+            if(!health) {
+                PrintConsole("Product sync failed due to missing product or category targets.", ConsoleColor.Red);
+                DbHelper.SetProductSyncWorking(Customer.customer_id, false);
+                return false;
+            }
+            #endregion
+            #endregion
 
             PrintConsole("Product sync proceeding...", ConsoleColor.Yellow);
 
@@ -1352,7 +1368,7 @@ internal class MainLoop {
             if (ProductMainSource is not null && ProductMainSource == Constants.NETSIS) {
                 if (Helper.global.netsis is not null && Helper.global.netsis.netopenx_user is not null && Helper.global.netsis.netopenx_password is not null && Helper.global.netsis.dbname is not null && Helper.global.netsis.dbpassword is not null && Helper.global.netsis.dbuser is not null && Helper.global.netsis.rest_url is not null) {
                     PrintConsole("Started loading " + Constants.NETSIS + " sources.");
-                    var netsis_products = Task.Run(() => NetOpenXHelper.GetNetsisStoks()).Result;
+                    var netsis_products = await NetOpenXHelper.GetNetsisStoks();
                     if (netsis_products is not null && netsis_products.Count > 0) {
                         foreach (var item in netsis_products) {
                             var p = new Product { //new product
@@ -1428,7 +1444,7 @@ internal class MainLoop {
 
                     #region Category Pre-Sync
                     //var ank_categories = ank_erp.GetCategoriesFromFolder("""C:\Users\caqn_\OneDrive\Masaüstü\otoahmet_categories""")?.DokumanPaketKategori.Eleman.ElemanListe.KategoriItem;
-                    var ank_categories = ank_erp.GetCategories()?.Result?.DokumanPaketKategori.Eleman.ElemanListe.KategoriItem;
+                    var ank_categories = (await ank_erp.GetCategories())?.DokumanPaketKategori.Eleman.ElemanListe.KategoriItem;
                     PrintConsole(Constants.ANK_ERP + " total " + ank_categories?.Count + " categories found.");
                     if (ank_categories is not null && ank_categories.Count > 0) {
                         foreach (var item in ank_categories) {
@@ -1462,7 +1478,7 @@ internal class MainLoop {
                                     }
                                 }
                                 if (need_update) {
-                                    if (DbHelper.UpdateCategory(Customer.customer_id, existed_category) is not null) {
+                                    if (await DbHelper.UpdateCategory(Customer.customer_id, existed_category) is not null) {
                                         await DbHelper.LogToServer(ThreadId, "product_category_updated", existed_category.category_name, Customer.customer_id, "product");
                                         PrintConsole(Constants.ANK_ERP + " " + existed_category.category_name + " category updated.", false);
                                     }
@@ -1479,7 +1495,7 @@ internal class MainLoop {
                                     parent_id = Helper.global.product.customer_root_category_id,
                                     source_category_id = Convert.ToInt32(item.Kodu),
                                 };
-                                var inserted_category = DbHelper.InsertCategory(Customer.customer_id, c);
+                                var inserted_category = await DbHelper.InsertCategory(Customer.customer_id, c);
                                 if (inserted_category is not null) {
                                     categories?.Add(inserted_category);
                                     await DbHelper.LogToServer(ThreadId, "product_category_inserted", inserted_category.category_name, Customer.customer_id, "product");
@@ -1496,12 +1512,12 @@ internal class MainLoop {
                     }
                     PrintConsole(Constants.ANK_ERP + " category sync ended.");
                     categories?.Clear();
-                    categories = DbHelper.GetCategories(Customer.customer_id);  //Re-take updated categories
+                    categories = await DbHelper.GetCategories(Customer.customer_id);  //Re-take updated categories
                     #endregion
 
                     #region Product Memory Take
                     PrintConsole(Constants.ANK_ERP + " product api take started.");
-                    var ank_products_zip = ank_erp.GetProducts().Result;
+                    var ank_products_zip = await ank_erp.GetProducts();
                     //var ank_products_zip = ank_erp.GetProductsFromFolder("""C:\Users\caqn_\OneDrive\Masaüstü\otoahmet_products_2""");
                     List<UrunSicil> ank_products = [];
                     if (ank_products_zip is not null && ank_products_zip.Count > 0) {
@@ -1813,7 +1829,7 @@ internal class MainLoop {
                     int magento_product_id = 0;
                     int n11_product_id = 0;
 
-                    // Get current version of product If exists in DB
+                    // Get current version of product If exists in MerchanterDB
                     var selected_product = products.FirstOrDefault(x => x.sku == item.sku);
 
                     #region Prepare Product
@@ -2049,7 +2065,7 @@ internal class MainLoop {
                     if (is_update) item.id = selected_product is not null ? selected_product.id : 0;  //important early arrangement
                     if (is_update || is_insert) {
                         #region Product Update on Targets
-                        if (item.extension.is_enabled && ProductTargets.Contains(Constants.MAGENTO2)) {
+                        if (ProductTargets.Contains(Constants.MAGENTO2)) {
                             #region Magento2 Category and Brand Live Data Take
                             if (live_m2_categories is null && live_m2_brands is null) {
                                 PrintConsole(Constants.MAGENTO2 + " categories and brands started loading...");
@@ -2123,7 +2139,7 @@ internal class MainLoop {
                             }
                         }
 
-                        if (item.extension.is_enabled && ProductTargets.Contains(Constants.IDEASOFT)) {
+                        if (ProductTargets.Contains(Constants.IDEASOFT)) {
                             #region Ideasoft Category and Brand Live Data Take
                             if (live_idea_categories is null && live_idea_brands is null) {
                                 PrintConsole(Constants.IDEASOFT + " brands and categories started loading...");
@@ -2197,7 +2213,7 @@ internal class MainLoop {
                             }
                         }
 
-                        if (item.extension.is_enabled && ProductTargets.Contains(Constants.N11)) {
+                        if (ProductTargets.Contains(Constants.N11)) {
 
                         }
                         #endregion
@@ -2238,7 +2254,7 @@ internal class MainLoop {
                             }
 
                             #region Target => Magento2
-                            if (item.extension.is_enabled && ProductTargets.Contains(Constants.MAGENTO2)) {
+                            if (ProductTargets.Contains(Constants.MAGENTO2)) {
                                 var product_relation = product_target_relation.FirstOrDefault(
                                     x => x.product_id == processes_product_id && x.target_name == Constants.MAGENTO2);
                                 if (product_relation is not null) {
@@ -2258,7 +2274,7 @@ internal class MainLoop {
                             #endregion
 
                             #region Target => IdeaSoft
-                            if (item.extension.is_enabled && ProductTargets.Contains(Constants.IDEASOFT)) {
+                            if (ProductTargets.Contains(Constants.IDEASOFT)) {
                                 var product_relation = product_target_relation.FirstOrDefault(
                                     x => x.product_id == processes_product_id && x.target_name == Constants.IDEASOFT);
                                 if (product_relation is not null) {
@@ -2278,7 +2294,7 @@ internal class MainLoop {
                             #endregion
 
                             #region Target => N11
-                            if (item.extension.is_enabled && ProductTargets.Contains(Constants.N11)) {
+                            if (ProductTargets.Contains(Constants.N11)) {
 
                             }
                             #endregion

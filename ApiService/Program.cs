@@ -1,6 +1,9 @@
 using ApiService.Classes;
+using ApiService.Health;
 using ApiService.Startup;
+using HealthChecks.UI.Client;
 using MerchanterApp.ServiceDefaults;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Scalar.AspNetCore;
 using System.Text.Json.Serialization;
 
@@ -16,7 +19,7 @@ builder.Services.AddWindowsService(); // Add Windows Service support
 
 builder.AddServiceDefaults(); // Add service defaults for the Merchanter application
 builder.Services.AddProblemDetails(); // Add support for problem details in API responses
-builder.Services.AddHealthChecks(); // Add health checks for monitoring application health
+builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("Database"); // Add health checks for monitoring application health
 
 builder.Services.AddControllers();
 builder.Services.AddControllersWithViews().AddJsonOptions(options => {
@@ -30,9 +33,6 @@ builder.Services.ConfigureSwaggerAndAuthentication(builder.Configuration); // Co
 var app = builder.Build(); // Build the application pipeline
 
 app.UseMiddleware<AdminSafeListMiddleware>(builder.Configuration["AdminSafeList"]); // Use middleware for admin safelist based on configuration
-app.MapHealthChecks("/health"); // Map health checks endpoint
-app.UseCors(); // Use CORS policy defined in ServiceDefaults
-
 app.MapDefaultEndpoints(); // Map default endpoints for the application
 app.UseSwagger(); // Enable Swagger middleware for API documentation
 app.UseStaticFiles(); // Serve static files from wwwroot
@@ -67,5 +67,9 @@ app.MapScalarApiReference(options => {
     options.WithOpenApiRoutePattern("/swagger/merchanter.json");
 }); // Configure the Scalar API reference with custom options
 
+app.MapHealthChecks("/_health", new HealthCheckOptions {
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse // Custom response writer for health checks
+}); // Map health checks endpoint
+app.UseCors(); // Use CORS policy defined in ServiceDefaults
 
 app.Run(); // Run the application

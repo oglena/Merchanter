@@ -122,12 +122,12 @@ while (true) {
         #endregion
 
         #region Ideasoft Refresh Token
-        var test = Helper.GetIdeaBrands(customer_id);
-        var temp_idea_settings = Helper.global.ideasoft;
-        if (Helper.RefreshIdeaToken(ref temp_idea_settings).GetValueOrDefault()) {
-            await db_helper.SaveIdeasoftSettings(customer.customer_id, temp_idea_settings);
-            Helper.global.ideasoft = temp_idea_settings;
-        }
+        //var test = Helper.GetIdeaBrands(customer_id);
+        //var temp_idea_settings = Helper.global.ideasoft;
+        //if (Helper.RefreshIdeaToken(ref temp_idea_settings).GetValueOrDefault()) {
+        //    await db_helper.SaveIdeasoftSettings(customer.customer_id, temp_idea_settings);
+        //    Helper.global.ideasoft = temp_idea_settings;
+        //}
         #endregion
 
         #region First Run

@@ -2,6 +2,17 @@
 using MySql.Data.MySqlClient;
 
 namespace Merchanter {
+    /// <summary>
+    /// Provides utility methods for interacting with the database, including operations for managing administrators,
+    /// customers, logs, and notifications.
+    /// </summary>
+    /// <remarks>The <see cref="DbHelper"/> class serves as a partial implementation for database-related
+    /// operations, such as retrieving, updating, and inserting records for various entities. It includes methods for
+    /// handling administrators, customers, logs, and notifications, and ensures proper connection management during
+    /// database interactions. This class is designed to work asynchronously to support scalable applications.  <para>
+    /// Common use cases include: <list type="bullet"> <item>Retrieving customer or admin details based on specific
+    /// criteria.</item> <item>Logging messages to the database for auditing or debugging purposes.</item>
+    /// <item>Managing notifications for customers.</item> </list> </para></remarks>
     public partial class DbHelper {
 
         #region Admin

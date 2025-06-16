@@ -2,6 +2,13 @@
 using MySql.Data.MySqlClient;
 
 namespace Merchanter {
+    /// <summary>
+    /// Provides a collection of utility methods for interacting with database-related operations.
+    /// </summary>
+    /// <remarks>This static class serves as a base for common database helper methods, including query
+    /// construction, column name translation, and filter parameter creation. It is designed to simplify database
+    /// interactions by abstracting repetitive tasks such as SQL operator conversion, column mapping, and query
+    /// generation.</remarks>
     public static class DbHelperBase {
         private static readonly string[] pq = ["sku", "barcode", "name", "brand_name", "type"];
 

@@ -2,6 +2,12 @@
 using MySql.Data.MySqlClient;
 
 namespace Merchanter {
+    /// <summary>
+    /// Provides methods for interacting with database records related to category and product targets.
+    /// </summary>
+    /// <remarks>The <see cref="DbHelper"/> class includes methods for retrieving, inserting, updating, and
+    /// deleting category and product target records in the database. These operations are performed asynchronously and
+    /// require an active database connection. The class assumes the use of MySQL as the database engine.</remarks>
     public partial class DbHelper {
 
         #region Target Operations

@@ -43,14 +43,14 @@ namespace Merchanter {
                 if (json is not null) {
                     var response = Newtonsoft.Json.JsonConvert.DeserializeObject<IDEA_Token>(json);
                     if (response is not null && !string.IsNullOrWhiteSpace(response.access_token)) {
-                        if(response.error is not null) {
+                        if (response.error is not null) {
                             PrintConsole("Error refreshing token: " + response.error + " - " + response.error_description);
                             return null;
                         }
                         _settings.access_token = response.access_token;
                         _settings.refresh_token = response.refresh_token;
                         _settings.update_date = DateTime.Now;
-                        
+
                         PrintConsole("Token refreshed successfully for " + DateTime.Now.AddSeconds(response.expires_in).ToString("dd.MM.yyyy HH:mm:ss"));
                         return true;
                     }
@@ -64,7 +64,8 @@ namespace Merchanter {
                     return null;
                 }
             }
-            return false; // Token is still valid, no need to refresh
+            PrintConsole("Token is still valid, no need to refresh.");
+            return true;
         }
 
         /// <summary>
@@ -162,7 +163,7 @@ namespace Merchanter {
             foreach (var citem in _categories) {
                 if (citem.id == global.product.customer_root_category_id) continue;
                 if (citem.id == 0) {
-                    citem.id = db_helper.InsertCategory(customer.customer_id, citem)?.id ?? 0;
+                    citem.id = db_helper.InsertCategory(customer.customer_id, citem).Result?.id ?? 0;
                 }
 
                 var category_relation = category_target_relation.FirstOrDefault(x => x.category_id == citem.id);
@@ -172,12 +173,12 @@ namespace Merchanter {
                 else {
                     int? idea_category_id = live_idea_categories?.FirstOrDefault(x => x.name == citem.category_name)?.id;
                     if (idea_category_id.HasValue) {
-                        db_helper.InsertCategoryTarget(customer.customer_id, new CategoryTarget() {
+                        _ = db_helper.InsertCategoryTarget(customer.customer_id, new CategoryTarget() {
                             customer_id = customer.customer_id,
                             category_id = citem.id,
                             target_id = idea_category_id.Value,
                             target_name = Constants.IDEASOFT
-                        });
+                        }).Result;
                         idea_category_ids.Add(idea_category_id.Value);
                     }
                     else {
@@ -186,25 +187,25 @@ namespace Merchanter {
                             if (idea_category_id.HasValue && idea_category_id > 0) {
                                 live_idea_categories?.Add(new IDEA_Category() { id = idea_category_id.Value, name = citem.category_name });
                                 if (idea_category_id.HasValue && idea_category_id > 0) {
-                                    db_helper.InsertCategoryTarget(customer.customer_id, new CategoryTarget() {
+                                    _ = db_helper.InsertCategoryTarget(customer.customer_id, new CategoryTarget() {
                                         customer_id = customer.customer_id,
                                         category_id = citem.id,
                                         target_id = idea_category_id.Value,
                                         target_name = Constants.IDEASOFT
-                                    });
+                                    }).Result;
                                     idea_category_ids.Add(idea_category_id.Value);
                                     PrintConsole("Category:" + citem.category_name + " inserted and sync to Id:" + idea_category_id.Value.ToString() + " (" + Constants.IDEASOFT + ")");
-                                    db_helper.LogToServer(thread_id, "category_inserted", global.settings.company_name + " Category:" + citem.category_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
+                                    _ = db_helper.LogToServer(thread_id, "category_inserted", global.settings.company_name + " Category:" + citem.category_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product").Result;
                                 }
                                 else {
                                     PrintConsole("Category:" + citem.category_name + " insert failed." + " (" + Constants.IDEASOFT + ")");
-                                    db_helper.LogToServer(thread_id, "category_insert_error", global.settings.company_name + " Category:" + citem.category_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
+                                    _ = db_helper.LogToServer(thread_id, "category_insert_error", global.settings.company_name + " Category:" + citem.category_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product").Result;
                                 }
                             }
                         }
                         else {
                             PrintConsole("Category name is empty for category ID: " + citem.id + ". Skipping insert.");
-                            db_helper.LogToServer(thread_id, "category_insert_error", global.settings.company_name + " Category ID:" + citem.id + " has no name. (" + Constants.IDEASOFT + ")", customer.customer_id, "product");
+                            _ = db_helper.LogToServer(thread_id, "category_insert_error", global.settings.company_name + " Category ID:" + citem.id + " has no name. (" + Constants.IDEASOFT + ")", customer.customer_id, "product").Result;
                         }
                     }
                 }

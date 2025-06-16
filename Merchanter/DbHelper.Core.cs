@@ -1,12 +1,15 @@
 ﻿using Merchanter.Classes.Settings;
 using MySql.Data.MySqlClient;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Merchanter {
+    /// <summary>
+    /// Provides utility methods and properties for managing and interacting with a MySQL database connection.
+    /// </summary>
+    /// <remarks>The <see cref="DbHelper"/> class simplifies database operations by encapsulating connection
+    /// management, event handling, and configuration settings for a MySQL database. It supports asynchronous methods
+    /// for opening and closing connections, and provides properties to configure connection parameters such as server
+    /// address, username, password, database name, and port. <para> This class also raises events for error handling
+    /// and provides mechanisms to monitor connection state changes. </para></remarks>
     public partial class DbHelper {
 
         #region CORE
@@ -152,6 +155,22 @@ namespace Merchanter {
             catch (MySqlException ex) {
                 OnError(ex.ToString());
                 return false;
+            }
+        }
+
+        public async Task<bool> HealthCheck() {
+            try {
+                if (state != System.Data.ConnectionState.Open) await OpenConnection();
+                MySqlCommand cmd = new("SELECT 1", connection);
+                await cmd.ExecuteNonQueryAsync();
+                return true;
+            }
+            catch (MySqlException ex) {
+                OnError(ex.ToString());
+                return false;
+            }
+            finally {
+                if (state == System.Data.ConnectionState.Open) await CloseConnection();
             }
         }
 

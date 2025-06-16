@@ -1471,11 +1471,11 @@ namespace Merchanter {
                 live_m2_brands[m2_brand_id] = _brand.brand_name;
 
                 PrintConsole("Brand:" + _brand.brand_name + " updated. (" + Constants.MAGENTO2 + ")");
-                db_helper.LogToServer(thread_id, "brand_inserted", global.settings.company_name + " Brand:" + _brand.brand_name + " (" + Constants.MAGENTO2 + ")", customer.customer_id, "product");
+                _ = db_helper.LogToServer(thread_id, "brand_inserted", global.settings.company_name + " Brand:" + _brand.brand_name + " (" + Constants.MAGENTO2 + ")", customer.customer_id, "product").Result;
             }
             else {
                 PrintConsole("Brand:" + _brand.brand_name + " insert failed. (" + Constants.MAGENTO2 + ")");
-                db_helper.LogToServer(thread_id, "brand_insert_error", global.settings.company_name + " Brand:" + _brand.brand_name + " (" + Constants.MAGENTO2 + ")", customer.customer_id, "product");
+                _ = db_helper.LogToServer(thread_id, "brand_insert_error", global.settings.company_name + " Brand:" + _brand.brand_name + " (" + Constants.MAGENTO2 + ")", customer.customer_id, "product").Result;
                 m2_brand_id = 0;
             }
 
@@ -1492,7 +1492,7 @@ namespace Merchanter {
                     continue;
                 }
                 if (citem.id == 0) {
-                    citem.id = db_helper.InsertCategory(customer.customer_id, citem)?.id ?? 0;
+                    citem.id = db_helper.InsertCategory(customer.customer_id, citem).Result?.id ?? 0;
                 }
 
                 var category_relation = category_target_relation.FirstOrDefault(x => x.category_id == citem.id);
@@ -1502,37 +1502,37 @@ namespace Merchanter {
                 else {
                     int? magento_category_id = live_m2_categories?.FirstOrDefault(x => x.name == citem.category_name)?.id;
                     if (magento_category_id.HasValue) {
-                        db_helper.InsertCategoryTarget(customer.customer_id, new CategoryTarget() {
+                        _ = db_helper.InsertCategoryTarget(customer.customer_id, new CategoryTarget() {
                             customer_id = customer.customer_id,
                             category_id = citem.id,
                             target_id = magento_category_id.Value,
                             target_name = Constants.MAGENTO2
-                        });
+                        }).Result;
                         magento_category_ids.Add(magento_category_id.Value);
                     }
                     else {
                         if (!string.IsNullOrWhiteSpace(citem.category_name)) {
                             magento_category_id = InsertM2Category(citem.category_name, citem.parent_id, citem.is_active ? 1 : 0, 0);
                             if (magento_category_id.HasValue && magento_category_id.Value > 0) {
-                                db_helper.InsertCategoryTarget(customer.customer_id, new CategoryTarget() {
+                                _ = db_helper.InsertCategoryTarget(customer.customer_id, new CategoryTarget() {
                                     customer_id = customer.customer_id,
                                     category_id = citem.id,
                                     target_id = magento_category_id.Value,
                                     target_name = Constants.MAGENTO2
-                                });
+                                }).Result;
                                 magento_category_ids.Add(magento_category_id.Value);
                                 PrintConsole("Category:" + citem.category_name + " inserted and sync to Id:" + magento_category_id.Value.ToString() + " (" + Constants.MAGENTO2 + ")");
-                                db_helper.LogToServer(thread_id, "category_inserted", global.settings.company_name + " Category:" + citem.category_name + " (" + Constants.MAGENTO2 + ")", customer.customer_id, "product");
+                                _ = db_helper.LogToServer(thread_id, "category_inserted", global.settings.company_name + " Category:" + citem.category_name + " (" + Constants.MAGENTO2 + ")", customer.customer_id, "product").Result;
 
                             }
                             else {
                                 PrintConsole("Category:" + citem.category_name + " insert failed. (" + Constants.MAGENTO2 + ")");
-                                db_helper.LogToServer(thread_id, "category_insert_error", global.settings.company_name + " Category:" + citem.category_name + " (" + Constants.MAGENTO2 + ")", customer.customer_id, "product");
+                                _ = db_helper.LogToServer(thread_id, "category_insert_error", global.settings.company_name + " Category:" + citem.category_name + " (" + Constants.MAGENTO2 + ")", customer.customer_id, "product").Result;
                             }
                         }
                         else {
                             PrintConsole("Category name is empty for category ID: " + citem.id + ". Skipping insert.");
-                            db_helper.LogToServer(thread_id, "category_insert_error", global.settings.company_name + " Category ID:" + citem.id + " has no name. (" + Constants.MAGENTO2 + ")", customer.customer_id, "product");
+                            _ = db_helper.LogToServer(thread_id, "category_insert_error", global.settings.company_name + " Category ID:" + citem.id + " has no name. (" + Constants.MAGENTO2 + ")", customer.customer_id, "product").Result;
                         }
                     }
                 }

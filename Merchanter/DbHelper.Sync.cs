@@ -1,6 +1,15 @@
 ﻿using MySql.Data.MySqlClient;
 
 namespace Merchanter {
+    /// <summary>
+    /// Provides utility methods for managing synchronization statuses and dates for customer data.
+    /// </summary>
+    /// <remarks>The <see cref="DbHelper"/> class includes methods to update synchronization statuses and
+    /// timestamps  for various customer-related operations, such as product sync, order sync, XML sync, invoice sync, 
+    /// and notification sync. These methods interact with a database to update specific fields in the  customer table.
+    /// <para> Each method in this class ensures that the database connection is opened and closed appropriately  during
+    /// execution. If an error occurs during the operation, the error is logged using the  <c>OnError</c> method, and
+    /// the method returns <see langword="false"/>. </para></remarks>
     public partial class DbHelper {
 
         #region Sync Methods

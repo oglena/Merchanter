@@ -140,7 +140,7 @@ else {
                             var item = new TreeViewItem {
                                     Id = child.id.ToString(),
                                     Text = child.category_name + (!child.is_active ? " (pasif)" : ""),
-                                    Expanded = false,
+                                    Expanded = (product_extension.categories.FirstOrDefault(x => x.id.ToString() == child.id.ToString()) != null),
                                 };
                             // Recursively build children
                             item.Items = BuildTree(child.id);

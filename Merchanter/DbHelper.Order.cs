@@ -2,6 +2,13 @@
 using MySql.Data.MySqlClient;
 
 namespace Merchanter {
+    /// <summary>
+    /// Provides helper methods for interacting with the database, specifically for managing orders, order items,
+    /// billing addresses, and shipping addresses.
+    /// </summary>
+    /// <remarks>The <see cref="DbHelper"/> class includes methods for retrieving, inserting, updating, and
+    /// deleting data related to orders and their associated entities. It is designed to facilitate database operations
+    /// for customer orders, including handling order statuses, shipment barcodes, and ERP integration.</remarks>
     public partial class DbHelper {
 
         #region Order
