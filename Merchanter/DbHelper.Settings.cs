@@ -492,8 +492,8 @@ namespace Merchanter {
         /// <returns>[No change] or [Error] returns 'false'</returns>
         public async Task<bool> SaveCustomerIntegration(int _customer_id, Integration _setting) {
             try {
-                int val = 0;
-                string _query = "UPDATE integrations SET work_id=@work_id,is_active=@is_active WHERE id=@id AND customer_id=@customer_id;";
+                int val = 0;  //TODO: Here I am
+                string _query = "UPDATE integrations SET is_active=@is_active WHERE work_id=@work_id AND customer_id=@customer_id;";
                 MySqlCommand cmd = new(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("id", _setting.id));
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));

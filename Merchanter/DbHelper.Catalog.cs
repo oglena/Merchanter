@@ -197,7 +197,7 @@ namespace Merchanter {
                 if (state != System.Data.ConnectionState.Open) connection.Open();
                 string _query = "SELECT * FROM products_with_mainsource WHERE p_customer_id=@customer_id;";
                 List<Product> list = [];
-                MySqlCommand cmd = new MySqlCommand(_query, connection);
+                MySqlCommand cmd = new(_query, connection);
                 cmd.CommandTimeout = 3600;
                 cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                 MySqlDataReader dataReader = cmd.ExecuteReader(System.Data.CommandBehavior.CloseConnection);
@@ -524,6 +524,7 @@ namespace Merchanter {
         /// <returns>The updated <see cref="Product"/> object if the operation is successful; otherwise, <see langword="null"/>.</returns>
         public async Task<Product?> UpdateProduct(int _customer_id, Product _product, bool _INCS = false) {
             try {
+                //TODO: _INCS total quantity update
                 string _query = "UPDATE products SET type=@type,barcode=@barcode,total_qty=@total_qty,price=@price,special_price=@special_price,custom_price=@custom_price,currency=@currency,tax=@tax,tax_included=@tax_included,update_date=@update_date,name=@name,sources=@sources,source_product_id=@source_product_id WHERE id=@id AND sku=@sku AND customer_id=@customer_id;";
                 MySqlCommand cmd = new(_query, connection);
                 cmd.Parameters.Add(new MySqlParameter("id", _product.id));

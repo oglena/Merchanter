@@ -49,7 +49,7 @@ namespace ApiService.Services {
         /// <exception cref="ArgumentException">Thrown if <paramref name="request"/> is null, or if the <see cref="GenerateTokenRequest.Email"/> is null or
         /// empty, or if <see cref="GenerateTokenRequest.CustomerID"/> is less than or equal to 0.</exception>
         public Task<GenerateTokenResponse> GenerateToken(GenerateTokenRequest request) {
-            string secret = configuration["AppSettings:Secret"];
+            string? secret = configuration["AppSettings:Secret"];
             if (string.IsNullOrEmpty(secret)) {
                 throw new InvalidOperationException("AppSettings:Secret is not configured.");
             }
@@ -57,7 +57,7 @@ namespace ApiService.Services {
             SymmetricSecurityKey symmetricSecurityKey = new(Encoding.ASCII.GetBytes(secret));
 
             var dateTimeNow = DateTime.UtcNow;
-            if (string.IsNullOrEmpty(request.Email) || request.CustomerID! <= 0) {
+            if (string.IsNullOrEmpty(request.Email) || request.CustomerID <= 0) {
                 throw new ArgumentException("Email and CustomerID must be provided to generate a token.");
             }
             JwtSecurityToken jwt = new(

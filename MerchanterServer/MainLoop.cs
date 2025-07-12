@@ -292,9 +292,10 @@ internal class MainLoop {
 
         #region Xml LOOP
         if (OtherProductSources?.Length > 0) {
-            #region Currency XProducts from MerchanterDB
+            #region Current XProducts from MerchanterDB
             xproducts = DbHelper.GetXProducts(Customer.customer_id);
             #endregion
+
             if (Customer.xml_sync_status && !Customer.is_xmlsync_working) {
                 DbHelper.xml_clone.SetXmlSyncWorking(Customer.customer_id, true);
                 Task task = Task.Run(async () => await this.XmlLoopAsync(Helper.global));
@@ -347,7 +348,7 @@ internal class MainLoop {
             category_target_relation = await DbHelper.GetCategoryTargets(Customer.customer_id);
             Console.Write("; CategoryTargets:" + category_target_relation?.Count + Environment.NewLine);
             if (product_target_relation is null || category_target_relation is null) { health = false; }
-            if(!health) {
+            if (!health) {
                 PrintConsole("Product sync failed due to missing product or category targets.", ConsoleColor.Red);
                 DbHelper.SetProductSyncWorking(Customer.customer_id, false);
                 return false;
@@ -414,7 +415,8 @@ internal class MainLoop {
 
         //INFO: Need to be last executed 
         #region Notification LOOP
-        notifications = await DbHelper.notification_clone.GetNotifications(Customer.customer_id, false, null) ?? [];
+        notifications = await DbHelper.notification_clone.GetNotifications(Customer.customer_id, false,
+            new ApiFilter() { Filters = null, Pager = new Pager() { CurrentPageIndex = 0, ItemsPerPage = int.MaxValue } }) ?? [];
         if (Customer.notification_sync_status && !Customer.is_notificationsync_working) {
             DbHelper.notification_clone.SetNotificationSyncWorking(Customer.customer_id, true);
             if (health) { await this.NotificationLoopAsync(); }
@@ -1716,6 +1718,142 @@ internal class MainLoop {
                     _health = false;
                 }
             }
+
+            #region FOR TESTING
+            var ent_products = Helper.GetENTProducts();
+            foreach (var ent_item in ent_products) {
+                try {
+                    bool up = false;
+                    var found_product = products.FirstOrDefault(x => x.sku == ent_item.Sku);
+                    if (found_product is not null) {
+                        if (!Equals(found_product.price, ent_item.Price)) {
+                            found_product.price = ent_item.Price;
+                            up = true;
+                        }
+                        if (!Equals(found_product.special_price, ent_item.Special_Price)) {
+                            found_product.special_price = ent_item.Special_Price;
+                            up = true;
+                        }
+                        if (!Equals(found_product.custom_price, ent_item.Custom_Price)) {
+                            found_product.custom_price = ent_item.Custom_Price;
+                            up = true;
+                        }
+
+                        if (up) {
+                            var updated_product = await DbHelper.UpdateProduct(Customer.customer_id, found_product);
+                            PrintConsole(updated_product?.sku + " " + updated_product?.price + " " + updated_product?.special_price + " " + updated_product?.custom_price);
+                        }
+                    }
+                }
+                catch (Exception ex) {
+                    PrintConsole(ex.ToString(), ConsoleColor.Red);
+                }
+            }
+
+
+            //var m2products = Helper.GetProducts(null, null, null, null);
+
+            //foreach (var m2_item in m2products.items) {
+            //    bool up = false;
+            //    var found_product = products.FirstOrDefault(x => x.sku == m2_item.sku);
+            //    if (found_product is not null) {
+            //        //get magento2 categories and save to Product 
+            //        //this operation for first time only, after that categories will be updated by product sync
+            //        if (m2_item.extension_attributes.category_links is not null) {
+            //            foreach (var citem in m2_item.extension_attributes.category_links) {
+            //                if (citem.category_id == "2") continue;
+            //                var found_target = category_target_relation.FirstOrDefault(x => x.target_id == int.Parse(citem.category_id));
+            //                if (found_target is not null) {
+            //                    if (!found_product.extension.categories.Contains(categories.FirstOrDefault(x => x.id == found_target.category_id))) {
+            //                        found_product.extension.category_ids += "," + found_target.category_id.ToString();
+            //                        found_product.extension.categories.Add(categories.FirstOrDefault(x => x.id == found_target.category_id));
+            //                        up = true;
+            //                    }
+            //                }
+            //            }
+            //            if (up) {
+            //                var updated_product = await DbHelper.UpdateProduct(Customer.customer_id, found_product);
+            //                PrintConsole(updated_product?.sku + string.Join(",", updated_product?.extension.categories.Select(x => x.category_name)));
+            //            }
+            //        }
+            //    }
+            //}
+
+            //foreach (var m2_item in m2products.items) {
+            //    try {
+            //        bool up = false;
+            //        var found_product = products.FirstOrDefault(x => x.sku == m2_item.sku);
+            //        if (found_product is not null) {
+            //            var m2_brand = m2_item.custom_attributes.FirstOrDefault(x => x.attribute_code == "brand")?.value?.ToString();
+            //            m2_brand = live_m2_brands?.GetValueOrDefault(int.Parse(m2_brand));
+            //            if (!string.IsNullOrWhiteSpace(m2_brand)) {
+            //                var found_brand = brands.FirstOrDefault(x => string.Compare(x.brand_name, m2_brand, StringComparison.OrdinalIgnoreCase) == 0);
+            //                if (found_brand is not null) {
+            //                    if (found_product.extension.brand.brand_name != found_brand.brand_name) {
+            //                        found_product.extension.brand_id = found_brand.id;
+            //                        found_product.extension.brand = found_brand;
+            //                        up = true;
+            //                    }
+            //                }
+            //                else {
+            //                    found_brand = new Brand() {
+            //                        customer_id = Customer.customer_id,
+            //                        brand_name = m2_brand,
+            //                        status = true,
+            //                        id = 0
+            //                    };
+            //                    var inserted_brand = await DbHelper.InsertBrand(Customer.customer_id, found_brand);
+            //                    if (inserted_brand is not null) {
+            //                        brands.Add(inserted_brand);
+            //                        if (found_product.extension.brand.brand_name != inserted_brand.brand_name) {
+            //                            found_product.extension.brand_id = inserted_brand.id;
+            //                            found_product.extension.brand = inserted_brand;
+            //                            up = true;
+            //                        }
+            //                        PrintConsole("Brand inserted: " + found_brand.brand_name, ConsoleColor.Green);
+            //                    }
+            //                    else {
+            //                        PrintConsole("Brand insert error: " + found_brand.brand_name, ConsoleColor.Red);
+            //                    }
+            //                }
+            //                if (up) {
+            //                    var updated_product = await DbHelper.UpdateProduct(Customer.customer_id, found_product);
+            //                    PrintConsole(updated_product?.sku + " " + m2_brand);
+            //                }
+            //            }
+            //        }
+            //    }
+            //    catch (Exception ex) {
+            //        PrintConsole(ex.ToString(), ConsoleColor.Red);
+            //    }
+            //}
+
+            //var ent_prducts = Helper.GetENTProducts();
+            //int open = 0; int closed = 0;
+            //foreach (var ent_item in ent_prducts) {
+            //    var found_product = products.FirstOrDefault(x => x.sku == ent_item.Sku);
+            //    if (found_product is not null) {
+            //        if (ent_item.Status.HasValue && ent_item.Status.Value) {
+            //            if (!found_product.extension.is_enabled) { //if product is not enabled in MerchanterDB
+            //                found_product.extension.is_enabled = true; //enable product
+            //                if (await DbHelper.UpdateProduct(Customer.customer_id, found_product, false) is not null) {
+            //                    open++;
+            //                    PrintConsole(open.ToString() + ". Product " + ent_item.Sku + " is enabled in ENT, updated in MerchanterDB.", ConsoleColor.Green);
+            //                }
+            //            }
+            //        }
+            //        else {
+            //            if (found_product.extension.is_enabled) { //if product is enabled in MerchanterDB
+            //                found_product.extension.is_enabled = false; //disable product
+            //                if (await DbHelper.UpdateProduct(Customer.customer_id, found_product, false) is not null) {
+            //                    closed++;
+            //                    PrintConsole(closed.ToString() + ". Product " + ent_item.Sku + " is disabled in ENT, updated in MerchanterDB.", ConsoleColor.Yellow);
+            //                }
+            //            }
+            //        }
+            //    }
+            //}
+            #endregion
 
             return _health;
             #endregion

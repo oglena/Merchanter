@@ -268,8 +268,8 @@ namespace Merchanter {
                             _query += " ORDER BY " + "update_date" + " DESC LIMIT @start,@end;";
                             break;
                         case Type t when t == typeof(Notification):
-                            _filters.Sort = new Sort() { Field = "update_date", Direction = Sort.SortDirection.Descending };
-                            _query += " ORDER BY " + "update_date" + " DESC LIMIT @start,@end;";
+                            _filters.Sort = new Sort() { Field = "create_date", Direction = Sort.SortDirection.Descending };
+                            _query += " ORDER BY " + "create_date" + " DESC LIMIT @start,@end;";
                             break;
                     }
                 }
