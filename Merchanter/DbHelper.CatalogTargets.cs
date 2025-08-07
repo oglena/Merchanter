@@ -240,8 +240,8 @@ namespace Merchanter {
         public async Task<bool> UpdateCategoryTarget(int _customer_id, CategoryTarget _target) {
             try {
                 if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
-                    string _query = "UPDATE category_targets SET category_id=@category_id,target_id=@target_id,target_name=@target_name,update_date=@update_date,sync_status=@sync_status " +
-                        "WHERE id=@id AND customer_id=@customer_id;";
+                    string _query = "UPDATE category_targets SET target_id=@target_id,target_name=@target_name,update_date=@update_date,sync_status=@sync_status " +
+                        "WHERE category_id=@category_id AND customer_id=@customer_id;";
                     MySqlCommand cmd = new(_query, connection);
                     cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                     cmd.Parameters.Add(new MySqlParameter("id", _target.id));
@@ -271,9 +271,9 @@ namespace Merchanter {
         public async Task<bool> UpdateProductTarget(int _customer_id, ProductTarget _target) {
             try {
                 if (this.state != System.Data.ConnectionState.Open && await OpenConnection()) {
-                    string _query = "UPDATE product_targets SET product_id=@product_id,target_id=@target_id,target_name=@target_name,update_date=@update_date,sync_status=@sync_status " +
-                        "WHERE id=@id AND customer_id=@customer_id;";
-                    MySqlCommand cmd = new MySqlCommand(_query, connection);
+                    string _query = "UPDATE product_targets SET target_id=@target_id,target_name=@target_name,update_date=@update_date,sync_status=@sync_status " +
+                        "WHERE product_id=@product_id AND customer_id=@customer_id;";
+                    MySqlCommand cmd = new(_query, connection);
                     cmd.Parameters.Add(new MySqlParameter("customer_id", _customer_id));
                     cmd.Parameters.Add(new MySqlParameter("id", _target.id));
                     cmd.Parameters.Add(new MySqlParameter("product_id", _target.product_id));

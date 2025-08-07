@@ -1,6 +1,5 @@
 // See https://aka.ms/new-console-template for more information
 using Merchanter;
-using Merchanter.Classes.Settings;
 using MerchanterServer;
 using System.Reflection;
 using Customer = Merchanter.Classes.Customer;

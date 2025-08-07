@@ -555,7 +555,7 @@ namespace Merchanter {
                         List<M2_Product> m2_products = new List<M2_Product>();
                         _current_page = 1; _page_size = 250;
                     START:
-                        url_product = global.magento.base_url + "index.php/rest/all/V1/products?" +
+                        url_product = global.magento.base_url + "rest/all/V1/products?" +
                             "&searchCriteria[filterGroups][0][filters][0][field]=" + _attribute_code +
                             "&searchCriteria[filterGroups][0][filters][0][value]=" + _attribute_value +
                             "&searchCriteria[filterGroups][0][filters][0][conditionType]=" + "eq" +
@@ -582,7 +582,7 @@ namespace Merchanter {
                         }
                     }
                     else {
-                        url_product = global.magento.base_url + "index.php/rest/all/V1/products?" +
+                        url_product = global.magento.base_url + "rest/all/V1/products?" +
                             "&searchCriteria[filterGroups][0][filters][0][field]=" + _attribute_code +
                             "&searchCriteria[filterGroups][0][filters][0][value]=" + _attribute_value +
                             "&searchCriteria[filterGroups][0][filters][0][conditionType]=" + "eq" +
@@ -978,7 +978,7 @@ namespace Merchanter {
                 };
 
                 using (Executioner executioner = new Executioner()) {
-                    var json_order = executioner.Execute(global.magento.base_url + "/index.php/rest/all/V1/order/" + _order_id.ToString() + "/ship", RestSharp.Method.Post, ship, global.magento.token);
+                    var json_order = executioner.Execute(global.magento.base_url + "rest/all/V1/order/" + _order_id.ToString() + "/ship", RestSharp.Method.Post, ship, global.magento.token);
                     if (json_order is not null) {
                         PrintConsole(_order_label + ":" + _carrier_title + " => " + _tracking_numbers + " magento order shipped.");
                         return json_order;
@@ -1178,15 +1178,15 @@ namespace Merchanter {
                 }
 
                 using (Executioner executioner = new Executioner()) {
-                    var json_price_bulk = executioner.Execute(global.magento.base_url + "/index.php/rest/all/V1/products/base-prices", RestSharp.Method.Post, prices, global.magento.token);
-                    var json_special_prices_bulk = executioner.Execute(global.magento.base_url + "/index.php/rest/all/V1/products/special-price", RestSharp.Method.Post, special_prices, global.magento.token);
-                    var json_special_prices_delete_bulk = executioner.Execute(global.magento.base_url + "/index.php/rest/all/V1/products/special-price-delete", RestSharp.Method.Post, special_prices_delete, global.magento.token);
+                    var json_price_bulk = executioner.Execute(global.magento.base_url + "rest/all/V1/products/base-prices", RestSharp.Method.Post, prices, global.magento.token);
+                    var json_special_prices_bulk = executioner.Execute(global.magento.base_url + "rest/all/V1/products/special-price", RestSharp.Method.Post, special_prices, global.magento.token);
+                    var json_special_prices_delete_bulk = executioner.Execute(global.magento.base_url + "rest/all/V1/products/special-price-delete", RestSharp.Method.Post, special_prices_delete, global.magento.token);
                 }
                 PrintConsole("BULK update prices completed.");
 
                 foreach (var item in _products) {
                     if (item.custom_price > 0) {
-                        UpdateProductCustomPrice(item, _currency_rate);
+                        //UpdateProductCustomPrice(item.sku, item.price, item.special_price, item.custom_price, item.tax, _currency_rate);
                     }
                 }
                 PrintConsole("Bulk update custom prices completed.");
@@ -1207,28 +1207,28 @@ namespace Merchanter {
         /// <param name="_product">Product</param>
         /// <param name="_currency_rate">Currency Rates</param>
         /// <returns>[Error] returns 'false'</returns>
-        public static bool UpdateProductPrice(Product _product, CurrencyRate _currency_rate) {
+        public static bool UpdateProductPrice(string _sku, decimal _price, int _tax, CurrencyRate _currency_rate) {
             try {
                 var prices = new {
                     prices = new M2_PriceRequest[] {
                         new M2_PriceRequest(){
                             price = Math.Round(
-                                _product.price *
-                                (_product.tax_included ? 1 : (1 + ( (decimal)_product.tax / 100m))) * _currency_rate.rate
+                                _price *
+                                (_tax > 0 ? (1 + ((decimal)_tax / 100m)) : 1) * _currency_rate.rate
                             , 2, MidpointRounding.AwayFromZero ),
                             store_id = 0,
-                            sku = _product.sku,
+                            sku = _sku,
                             extension_attributes = []
                     } }
                 };
                 using (Executioner executioner = new Executioner()) {
-                    var json_price = executioner.Execute(global.magento.base_url + "index.php/rest/all/V1/products/base-prices", RestSharp.Method.Post, prices, global.magento.token);
+                    var json_price = executioner.Execute(global.magento.base_url + "rest/all/V1/products/base-prices", RestSharp.Method.Post, prices, global.magento.token);
                     if (json_price is not null) {
-                        PrintConsole("Sku:" + _product.sku + " updated => [price=" + _product.price.ToString() + "]");
+                        PrintConsole("Sku:" + _sku + " updated => [price=" + prices.prices[0].price.ToString() + "]");
                         return true;
                     }
                     else {
-                        PrintConsole("Sku:" + _product.sku + " updated => [price=" + _product.price.ToString() + "] failed.");
+                        PrintConsole("Sku:" + _sku + " updated => [price=" + prices.prices[0].price.ToString() + "] failed.");
                         return false;
                     }
                 }
@@ -1245,31 +1245,31 @@ namespace Merchanter {
         /// <param name="_product">Product</param>
         /// <param name="_currency_rate">Currency Rates</param>
         /// <returns>[Error] returns 'false'</returns>
-        public static bool UpdateProductSpecialPrice(Product _product, CurrencyRate _currency_rate) {
+        public static bool UpdateProductSpecialPrice(string _sku, decimal _special_price, int _tax, CurrencyRate _currency_rate) {
             try {
-                if (_product.special_price > 0) {
+                if (_special_price > 0) {
                     var special_prices = new {
                         prices = new M2_SpecialPriceRequest[]{
                             new M2_SpecialPriceRequest(){
                                 price = Math.Round(
-                                    _product.special_price *
-                                    (_product.tax_included ? 1 : (1 + ((decimal)_product.tax / 100m))) * _currency_rate.rate
+                                    _special_price *
+                                    (_tax > 0 ? (1 + ((decimal)_tax / 100m)) : 1) * _currency_rate.rate
                                 , 2, MidpointRounding.AwayFromZero ),
                                 store_id = 0,
-                                sku = _product.sku,
+                                sku = _sku,
                                 price_from = DateTime.Now.AddDays( -2 ).ToString( "yyyy-MM-dd 00:00:00" ),
                                 price_to = "",
                                 extension_attributes = []
                         } }
                     };
                     using (Executioner executioner = new Executioner()) {
-                        var json_special_prices = executioner.Execute(global.magento.base_url + "index.php/rest/all/V1/products/special-price", RestSharp.Method.Post, special_prices, global.magento.token);
+                        var json_special_prices = executioner.Execute(global.magento.base_url + "rest/all/V1/products/special-price", RestSharp.Method.Post, special_prices, global.magento.token);
                         if (json_special_prices is not null) {
-                            PrintConsole("Sku:" + _product.sku + " updated => [special_price=" + _product.special_price.ToString() + "]");
+                            PrintConsole("Sku:" + _sku + " updated => [special_price=" + special_prices.prices[0].price.ToString() + "]");
                             return true;
                         }
                         else {
-                            PrintConsole("Sku:" + _product.sku + " updated => [special_price=" + _product.special_price.ToString() + "] failed.");
+                            PrintConsole("Sku:" + _sku + " updated => [special_price=" + special_prices.prices[0].price.ToString() + "] failed.");
                             return false;
                         }
                     }
@@ -1280,20 +1280,20 @@ namespace Merchanter {
                             new M2_SpecialPriceDeleteRequest(){
                             price = 0,
                             store_id = 0,
-                            sku = _product.sku,
+                            sku = _sku,
                             price_from = "",
                             price_to = "",
                             extension_attributes = []
                         } }
                     };
                     using (Executioner executioner = new Executioner()) {
-                        var json_special_prices_delete = executioner.Execute(global.magento.base_url + "index.php/rest/all/V1/products/special-price-delete", RestSharp.Method.Post, special_prices_delete, global.magento.token);
+                        var json_special_prices_delete = executioner.Execute(global.magento.base_url + "rest/all/V1/products/special-price-delete", RestSharp.Method.Post, special_prices_delete, global.magento.token);
                         if (json_special_prices_delete is not null) {
-                            PrintConsole("Sku:" + _product.sku + " updated => [special_price=" + _product.special_price.ToString() + "] deleted.");
+                            PrintConsole("Sku:" + _sku + " updated => [special_price=" + _special_price.ToString() + "] deleted.");
                             return true;
                         }
                         else {
-                            PrintConsole("Sku:" + _product.sku + " updated => [special_price=" + _product.special_price.ToString() + "] delete failed.");
+                            PrintConsole("Sku:" + _sku + " updated => [special_price=" + _special_price.ToString() + "] delete failed.");
                             return false;
                         }
                     }
@@ -1311,31 +1311,29 @@ namespace Merchanter {
         /// <param name="_product">Product</param>
         /// <param name="_currency_rate">Currency Rates</param>
         /// <returns>[Error] returns 'false'</returns>
-        public static bool? UpdateProductCustomPrice(Product _product, CurrencyRate _currency_rate) {
-            int? product_id = QP_MySQLHelper.GetM2ProductId(_product.sku);
+        public static bool? UpdateProductCustomPrice(int _product_id, string _sku, decimal _price, decimal _special_price, decimal _custom_price, int _tax, CurrencyRate _currency_rate) {
+            int? product_id = _product_id;
             if (product_id.HasValue) {
-                if (_product.custom_price > 0) {
+                if (_custom_price > 0) {
+                    _custom_price = Math.Round(_custom_price * (_tax > 0 ? (1 + ((decimal)_tax / 100m)) : 1) * _currency_rate.rate, 2, MidpointRounding.AwayFromZero);
                 }
                 else {
-                    if (_product.special_price > 0)
-                        _product.custom_price = _product.special_price;
+                    if (_special_price > 0)
+                        _custom_price = _special_price;
                     else
-                        _product.custom_price = _product.price;
+                        _custom_price = _price;
                 }
-                bool? temp = QP_MySQLHelper.QP_UpdateCustomBundlePC(product_id.Value.ToString(), Math.Round(
-                                    _product.custom_price *
-                                    (_product.tax_included ? 1 : (1 + ((decimal)_product.tax / 100m))) * _currency_rate.rate
-                                , 2, MidpointRounding.AwayFromZero));
+                bool? temp = QP_MySQLHelper.QP_UpdateCustomBundlePC(product_id.Value.ToString(), _custom_price);
                 if (temp.HasValue && temp.Value) {
-                    PrintConsole("Sku:" + _product.sku + " updated => [custom_price=" + _product.custom_price.ToString() + "] (true)");
+                    PrintConsole("Sku:" + _sku + " updated => [custom_price=" + _custom_price.ToString() + "] (true)");
                     return true;
                 }
                 else if (temp.HasValue && !temp.Value) {
-                    PrintConsole("Sku:" + _product.sku + " updated => [custom_price=" + _product.custom_price.ToString() + "] failed. (false)");
+                    PrintConsole("Sku:" + _sku + " updated => [custom_price=" + _custom_price.ToString() + "] failed. (false)");
                     return false;
                 }
                 else {
-                    PrintConsole("Sku:" + _product.sku + " updated => [custom_price=" + _product.custom_price.ToString() + "] failed (null).");
+                    PrintConsole("Sku:" + _sku + " updated => [custom_price=" + _custom_price.ToString() + "] failed (null).");
                     return null;
                 }
             }
@@ -1426,14 +1424,14 @@ namespace Merchanter {
         public static bool UpdateProductQty(string _sku, int _qty) {
             try {
                 var stock_item = new {
-                    stockItem = new M2_StockItemRequest() {
+                    stockItem = new {
                         qty = _qty,
                         is_in_stock = (_qty > 0) ? true : false
                     }
                 };
 
                 using (Executioner executioner = new Executioner()) {
-                    var json_qty = executioner.Execute(global.magento.base_url + "index.php/rest/all/V1/products/" + ConvertFriendly(_sku) + "/stockItems/1", RestSharp.Method.Put, stock_item, global.magento.token);
+                    var json_qty = executioner.Execute(global.magento.base_url + "rest/all/V1/products/" + ConvertFriendly(_sku) + "/stockItems/1", RestSharp.Method.Put, stock_item, global.magento.token);
                     if (json_qty is not null) {
                         PrintConsole("Sku:" + _sku + " updated => [qty=" + _qty.ToString() + "]");
                         return true;

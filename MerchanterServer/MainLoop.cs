@@ -298,8 +298,7 @@ internal class MainLoop {
 
             if (Customer.xml_sync_status && !Customer.is_xmlsync_working) {
                 DbHelper.xml_clone.SetXmlSyncWorking(Customer.customer_id, true);
-                Task task = Task.Run(async () => await this.XmlLoopAsync(Helper.global));
-                // INFO: XML Loop is running in a separate thread
+                await XmlLoopAsync(Helper.global);
             }
         }
         #endregion
@@ -367,16 +366,22 @@ internal class MainLoop {
                     }
                     else {
                         PrintConsole("Product sync encountered an error.", ConsoleColor.Red);
+                        DbHelper.SetProductSyncDate(Customer.customer_id);
+                        DbHelper.SetProductSyncWorking(Customer.customer_id, false);
                         health = false;
                     }
                 }
                 else {
                     PrintConsole("Product source loop encountered an error.", ConsoleColor.Red);
+                    DbHelper.SetProductSyncDate(Customer.customer_id);
+                    DbHelper.SetProductSyncWorking(Customer.customer_id, false);
                     return false;
                 }
             }
             else {
                 PrintConsole("Product loop encountered an error.", ConsoleColor.Red);
+                DbHelper.SetProductSyncDate(Customer.customer_id);
+                DbHelper.SetProductSyncWorking(Customer.customer_id, false);
                 return false;
             }
 
@@ -1371,7 +1376,12 @@ internal class MainLoop {
                 if (Helper.global.netsis is not null && Helper.global.netsis.netopenx_user is not null && Helper.global.netsis.netopenx_password is not null && Helper.global.netsis.dbname is not null && Helper.global.netsis.dbpassword is not null && Helper.global.netsis.dbuser is not null && Helper.global.netsis.rest_url is not null) {
                     PrintConsole("Started loading " + Constants.NETSIS + " sources.");
                     var netsis_products = await NetOpenXHelper.GetNetsisStoks();
-                    if (netsis_products is not null && netsis_products.Count > 0) {
+                    if (netsis_products is null) {
+                        PrintConsole(Constants.NETSIS + " connection:products failed.");
+                        _health = false;
+                        return _health;
+                    }
+                    if (netsis_products.Count > 0) {
                         foreach (var item in netsis_products) {
                             var p = new Product { //new product
                                 customer_id = Customer.customer_id,
@@ -1435,10 +1445,11 @@ internal class MainLoop {
                 else {
                     PrintConsole("Netsis connection settings are not set.");
                     _health = false;
+                    return _health;
                 }
             }
 
-            if (ProductMainSource is not null && ProductMainSource == Constants.ANK_ERP) {  //new
+            if (ProductMainSource is not null && ProductMainSource == Constants.ANK_ERP) {
                 if (Helper.global.ank_erp is not null && Helper.global.ank_erp.company_code is not null && Helper.global.ank_erp.user_name is not null && Helper.global.ank_erp.password is not null && Helper.global.ank_erp.work_year is not null && Helper.global.ank_erp.url is not null) {
                     ANKERP ank_erp = new(Helper.global.ank_erp.company_code, Helper.global.ank_erp.user_name, Helper.global.ank_erp.password, Helper.global.ank_erp.work_year, Helper.global.ank_erp.url,
                         """C:\MerchanterServer\ankaraerp""");
@@ -1447,8 +1458,15 @@ internal class MainLoop {
                     #region Category Pre-Sync
                     //var ank_categories = ank_erp.GetCategoriesFromFolder("""C:\Users\caqn_\OneDrive\Masaüstü\otoahmet_categories""")?.DokumanPaketKategori.Eleman.ElemanListe.KategoriItem;
                     var ank_categories = (await ank_erp.GetCategories())?.DokumanPaketKategori.Eleman.ElemanListe.KategoriItem;
-                    PrintConsole(Constants.ANK_ERP + " total " + ank_categories?.Count + " categories found.");
-                    if (ank_categories is not null && ank_categories.Count > 0) {
+                    if (ank_categories is null) {
+                        PrintConsole(Constants.ANK_ERP + " connection:categories failed.");
+                        _health = false;
+                        return _health;
+                    }
+                    PrintConsole(Constants.ANK_ERP + " total " + ank_categories.Count + " categories found in api.", false);
+                    ank_categories = [.. ank_categories.DistinctBy(x => x.Kodu)];  //Remove duplicates
+                    PrintConsole(Constants.ANK_ERP + " " + ank_categories.Count + " categories found in api. --Duplicates removed by Kodu !!!");
+                    if (ank_categories.Count > 0) {
                         foreach (var item in ank_categories) {
                             if (item.Kodu == "0" || !int.TryParse(item.Kodu, out int category_code) || !int.TryParse(item.UstBaslik, out int parent_code))
                                 continue;
@@ -1479,13 +1497,20 @@ internal class MainLoop {
                                         existed_category.parent_id = Helper.global.product.customer_root_category_id;
                                     }
                                 }
+
                                 if (need_update) {
-                                    if (await DbHelper.UpdateCategory(Customer.customer_id, existed_category) is not null) {
-                                        await DbHelper.LogToServer(ThreadId, "product_category_updated", existed_category.category_name, Customer.customer_id, "product");
-                                        PrintConsole(Constants.ANK_ERP + " " + existed_category.category_name + " category updated.", false);
+                                    var updated_category = await DbHelper.UpdateCategory(Customer.customer_id, existed_category);
+                                    if (updated_category is not null) {
+                                        await DbHelper.LogToServer(ThreadId, "product_category_updated", updated_category.category_name, Customer.customer_id, "product");
+                                        PrintConsole(Constants.ANK_ERP + " " + updated_category.category_name + " category updated.");
+                                        var existed_category_target = category_target_relation.FirstOrDefault(x => x.category_id == updated_category.id);
+                                        if (existed_category_target is not null) {
+                                            existed_category_target.sync_status = Target.SyncStatus.NotSynced;
+                                        }
                                     }
                                     else {
-                                        PrintConsole(Constants.ANK_ERP + " " + item.Kodu + "-" + item.Adi + " category update error.", false);
+                                        await DbHelper.LogToServer(ThreadId, "product_category_update_error", item.Kodu + "-" + item.Adi, Customer.customer_id, "product");
+                                        PrintConsole(Constants.ANK_ERP + " " + item.Kodu + "-" + item.Adi + " category update error.");
                                     }
                                 }
                             }
@@ -1499,22 +1524,20 @@ internal class MainLoop {
                                 };
                                 var inserted_category = await DbHelper.InsertCategory(Customer.customer_id, c);
                                 if (inserted_category is not null) {
-                                    categories?.Add(inserted_category);
                                     await DbHelper.LogToServer(ThreadId, "product_category_inserted", inserted_category.category_name, Customer.customer_id, "product");
-                                    PrintConsole(Constants.ANK_ERP + " " + inserted_category.category_name + " category inserted.", false);
+                                    PrintConsole(Constants.ANK_ERP + " " + inserted_category.category_name + " category inserted.");
                                 }
                                 else {
-                                    PrintConsole(Constants.ANK_ERP + " " + item.Kodu + "-" + item.Adi + " category insert error.", false);
+                                    await DbHelper.LogToServer(ThreadId, "product_category_insert_error", item.Kodu + "-" + item.Adi, Customer.customer_id, "product");
+                                    PrintConsole(Constants.ANK_ERP + " " + item.Kodu + "-" + item.Adi + " category insert error.");
                                 }
                             }
                         }
                     }
-                    else {
-                        PrintConsole(Constants.ANK_ERP + " connection:categories failed");
-                    }
                     PrintConsole(Constants.ANK_ERP + " category sync ended.");
-                    categories?.Clear();
-                    categories = await DbHelper.GetCategories(Customer.customer_id);  //Re-take updated categories
+                    categories?.Clear(); category_target_relation.Clear();
+                    categories = await DbHelper.GetCategories(Customer.customer_id) ?? [];  //Re-take updated categories
+                    category_target_relation = await DbHelper.GetCategoryTargets(Customer.customer_id) ?? []; //Re-take updated category targets
                     #endregion
 
                     #region Product Memory Take
@@ -1622,7 +1645,7 @@ internal class MainLoop {
                                     }
                                     else if (property_item.property == "category_ids") {
                                         List<Category> existed_p_cats = [root_category];
-                                        foreach (var citem in item.UrunTanim.KategoriKodu.Split(",")) {
+                                        foreach (var citem in item.UrunTanim.KategoriKodu?.Split(",") ?? []) {
                                             if (int.TryParse(citem, out int cat_code) && ank_categories is not null) {
                                                 var existed_cat = categories.FirstOrDefault(x => x.source_category_id == cat_code);
                                                 if (existed_cat is not null) existed_p_cats.Add(existed_cat); //existing category
@@ -1720,36 +1743,53 @@ internal class MainLoop {
             }
 
             #region FOR TESTING
-            var ent_products = Helper.GetENTProducts();
-            foreach (var ent_item in ent_products) {
-                try {
-                    bool up = false;
-                    var found_product = products.FirstOrDefault(x => x.sku == ent_item.Sku);
-                    if (found_product is not null) {
-                        if (!Equals(found_product.price, ent_item.Price)) {
-                            found_product.price = ent_item.Price;
-                            up = true;
-                        }
-                        if (!Equals(found_product.special_price, ent_item.Special_Price)) {
-                            found_product.special_price = ent_item.Special_Price;
-                            up = true;
-                        }
-                        if (!Equals(found_product.custom_price, ent_item.Custom_Price)) {
-                            found_product.custom_price = ent_item.Custom_Price;
-                            up = true;
-                        }
+            //var ent_products = Helper.GetENTProducts();
+            //foreach (var ent_item in ent_products) {
+            //    try {
+            //        bool up = false;
+            //        var found_product = products.FirstOrDefault(x => x.sku == ent_item.Sku);
+            //        if (found_product is not null) {
+            //            if (!Equals(found_product.price, ent_item.Price)) {
+            //                found_product.price = ent_item.Price;
+            //                up = true;
+            //            }
+            //            if (!Equals(found_product.special_price, ent_item.Special_Price)) {
+            //                found_product.special_price = ent_item.Special_Price;
+            //                up = true;
+            //            }
+            //            if (!Equals(found_product.custom_price, ent_item.Custom_Price)) {
+            //                found_product.custom_price = ent_item.Custom_Price;
+            //                up = true;
+            //            }
 
-                        if (up) {
-                            var updated_product = await DbHelper.UpdateProduct(Customer.customer_id, found_product);
-                            PrintConsole(updated_product?.sku + " " + updated_product?.price + " " + updated_product?.special_price + " " + updated_product?.custom_price);
-                        }
-                    }
-                }
-                catch (Exception ex) {
-                    PrintConsole(ex.ToString(), ConsoleColor.Red);
-                }
-            }
-
+            //            if (up) {
+            //                var updated_product = await DbHelper.UpdateProduct(Customer.customer_id, found_product);
+            //                if (updated_product is not null) {
+            //                    var product_target = product_target_relation.FirstOrDefault(x => x.product_id == updated_product.id);
+            //                    if (product_target is not null) {
+            //                        product_target.sync_status = Target.SyncStatus.NotSynced;
+            //                        await DbHelper.UpdateProductTarget(Customer.customer_id, product_target);
+            //                        PrintConsole(updated_product.sku + " " + updated_product.price + " " + updated_product.special_price + " " + updated_product.custom_price);
+            //                    }
+            //                    else {
+            //                        await DbHelper.InsertProductTarget(Customer.customer_id, new ProductTarget() {
+            //                            customer_id = Customer.customer_id,
+            //                            product_id = updated_product.id,
+            //                            target_id = 0,
+            //                            target_name = "MAGENTO2",
+            //                            sync_status = Target.SyncStatus.NotSynced
+            //                        });
+            //                        PrintConsole(updated_product.sku + " " + updated_product.price + " " + updated_product.special_price + " " + updated_product.custom_price);
+            //                    }
+            //                }
+            //            }
+            //        }
+            //    }
+            //    catch (Exception ex) {
+            //        PrintConsole(ex.ToString(), ConsoleColor.Red);
+            //    }
+            //}
+            //Console.WriteLine("DONE");
 
             //var m2products = Helper.GetProducts(null, null, null, null);
 
@@ -1960,6 +2000,65 @@ internal class MainLoop {
         try {
             if (products is not null) {
                 var notifications = new List<Notification>();
+                PrintConsole("Category synchronization started.");
+                foreach (var item in categories) {
+                    var relation = category_target_relation.FirstOrDefault(x => x.category_id == item.id);
+                    if (relation is not null && (relation.sync_status is Target.SyncStatus.NotSynced)) {
+                        if (ProductTargets.Contains(Constants.IDEASOFT)) {
+                            if (!relation.target_name.Equals(Constants.IDEASOFT)) continue;
+                            if (relation.target_id is not 0) {
+                                #region Ideasoft Refresh Token
+                                var idea_settings = Helper.global.ideasoft;
+                                if (Helper.RefreshIdeaToken(ref idea_settings).GetValueOrDefault()) {
+                                    await DbHelper.SaveIdeasoftSettings(Customer.customer_id, idea_settings);
+                                    Helper.global.ideasoft = idea_settings;
+                                }
+                                #endregion
+
+                                #region Ideasoft Category Live Data Take
+                                if (live_idea_categories is null) {
+                                    PrintConsole(Constants.IDEASOFT + " categories started loading...");
+                                    live_idea_categories = Helper.GetIdeaCategories(); PrintConsole(Constants.IDEASOFT + " total " + live_idea_categories?.Count + " categories found.");
+                                }
+                                #endregion
+
+                                if (live_idea_categories is null) {
+                                    PrintConsole(Constants.IDEASOFT + " categories not found, please check your connection settings.", ConsoleColor.Red);
+                                    continue;
+                                }
+
+                                var selected_idea_category = live_idea_categories?.FirstOrDefault(x => x.id == relation.target_id);
+                                if (selected_idea_category is not null) {
+                                    int? updated_category_id = Helper.UpdateIdeaCategory(relation.target_id, item.category_name, category_target_relation.FirstOrDefault(x => x.category_id == item.parent_id)?.target_id ?? null);
+                                    if (updated_category_id is not null) {
+                                        relation.target_id = updated_category_id.Value;
+                                        relation.sync_status = Target.SyncStatus.Synced;
+                                        await DbHelper.UpdateCategoryTarget(Customer.customer_id, relation);
+                                        PrintConsole("Category " + item.category_name + " updated in " + Constants.IDEASOFT + " with ID: " + updated_category_id);
+                                        await DbHelper.LogToServer(ThreadId, "category_update_success", "Category " + item.category_name + " updated in " + Constants.IDEASOFT + " with ID: " + updated_category_id, Customer.customer_id, "category");
+                                    }
+                                    else {
+                                        PrintConsole("Category " + item.category_name + " update failed in " + Constants.IDEASOFT, ConsoleColor.Red);
+                                        await DbHelper.LogToServer(ThreadId, "category_update_error", "Category " + item.category_name + " update failed in " + Constants.IDEASOFT, Customer.customer_id, "category");
+                                        continue;
+                                    }
+                                }
+                                else {
+                                    PrintConsole("Category " + item.category_name + " not found in " + Constants.IDEASOFT, ConsoleColor.Red);
+
+                                }
+                            }
+                            else {
+
+                            }
+                        }
+                    }
+                    else {
+
+                    }
+                }
+                PrintConsole("Category synchronization completed.");
+
                 foreach (var item in live_products) {
                     bool is_update = false; bool is_insert = false; bool? is_processed = false;
                     Product? prepared_product = null; var updated_attrs_new = new List<string>();
@@ -1976,6 +2075,7 @@ internal class MainLoop {
                             var relation = product_target_relation.FirstOrDefault(x => x.product_id == selected_product.id);
                             if (relation is not null && (relation.sync_status is Target.SyncStatus.NotSynced)) {
                                 is_update = true;
+                                updated_attrs_new.Add("fullsync");
                                 goto SAVEDPRODUCT; //this product saved on webpanel
                             }
 
@@ -2223,20 +2323,83 @@ internal class MainLoop {
                                 magento_product_id = selected_live_magento_product.id;
 
                                 #region Magento2 Product Update
-                                if (updated_attrs_new.Contains("total_qty")) {
-                                    if (Helper.UpdateProductQty(item.sku, item.total_qty)) {
-                                        is_processed = true;
+                                if (updated_attrs_new.Contains("fullsync")) {
+                                    if (selected_product != null) {
+                                        var currency_rate = rates.FirstOrDefault(x => x.currency.code == selected_product.currency.code);
+                                        if (Helper.UpdateProductQty(selected_product.sku, selected_product.total_qty)) {
+                                            if (selected_product.price > 0 && currency_rate is not null) {
+                                                if (Helper.UpdateProductPrice(selected_product.sku, selected_product.price, !selected_product.tax_included ? selected_product.tax : 0, currency_rate)) {
+                                                    if (Helper.UpdateProductSpecialPrice(selected_product.sku, selected_product.special_price, !selected_product.tax_included ? selected_product.tax : 0, currency_rate)) {
+                                                        is_processed = true;
+                                                    }
+                                                    Helper.UpdateProductCustomPrice(magento_product_id, selected_product.sku, selected_product.price, selected_product.special_price, selected_product.custom_price, !selected_product.tax_included ? selected_product.tax : 0, currency_rate);
+                                                }
+                                                else {
+                                                    is_processed = null;
+                                                }
+                                            }
+                                            else {
+                                                is_processed = null;
+                                            }
+                                        }
+                                        else {
+                                            is_processed = null;
+                                        }
                                     }
                                     else {
+                                        PrintConsole("Selected product is null for Magento2 update: " + item.sku, ConsoleColor.Red);
                                         is_processed = null;
                                     }
                                 }
-                                if (updated_attrs_new.Contains("is_enabled")) {
-                                    if (Helper.UpdateProductAttribute(item.sku, "status", item.extension.is_enabled ? "1" : "0")) {
-                                        is_processed = true;
+                                else {
+                                    if (updated_attrs_new.Contains("total_qty")) {
+                                        if (Helper.UpdateProductQty(item.sku, item.total_qty)) {
+                                            is_processed = true;
+                                        }
+                                        else {
+                                            is_processed = null;
+                                        }
                                     }
-                                    else {
-                                        is_processed = null;
+                                    if (updated_attrs_new.Contains("price")) {
+                                        var currency_rate = rates.FirstOrDefault(x => x.currency.code == item.currency.code);
+                                        if (currency_rate is not null && item.price > 0) { //item.price > 0
+                                            if (Helper.UpdateProductPrice(item.sku, item.price, !item.tax_included ? item.tax : 0, currency_rate)) {
+                                                is_processed = true;
+                                            }
+                                            else {
+                                                is_processed = null;
+                                            }
+                                        }
+                                    }
+                                    if (updated_attrs_new.Contains("special_price")) {
+                                        var currency_rate = rates.FirstOrDefault(x => x.currency.code == item.currency.code);
+                                        if (currency_rate is not null && item.special_price > 0) { //item.special_price > 0
+                                            if (Helper.UpdateProductSpecialPrice(item.sku, item.special_price, !item.tax_included ? item.tax : 0, currency_rate)) {
+                                                is_processed = true;
+                                            }
+                                            else {
+                                                is_processed = null;
+                                            }
+                                        }
+                                    }
+                                    if (updated_attrs_new.Contains("custom_price")) {
+                                        var currency_rate = rates.FirstOrDefault(x => x.currency.code == item.currency.code);
+                                        if (currency_rate is not null && item.custom_price > 0) { //item.custom_price > 0
+                                            if (Helper.UpdateProductCustomPrice(magento_product_id, item.sku, item.price, item.special_price, item.custom_price, !item.tax_included ? item.tax : 0, currency_rate).GetValueOrDefault()) {
+                                                is_processed = true;
+                                            }
+                                            else {
+                                                is_processed = null;
+                                            }
+                                        }
+                                    }
+                                    if (updated_attrs_new.Contains("is_enabled")) {
+                                        if (Helper.UpdateProductAttribute(item.sku, "status", item.extension.is_enabled ? "1" : "0")) {
+                                            is_processed = true;
+                                        }
+                                        else {
+                                            is_processed = null;
+                                        }
                                     }
                                 }
                                 #endregion
@@ -2247,6 +2410,7 @@ internal class MainLoop {
                                     if (product_relation is not null) {
                                         if (await DbHelper.DeleteProductTarget(Customer.customer_id, item.id)) {
                                             PrintConsole("Product relation removed:" + item.sku + " deleted" + ", " + Constants.MAGENTO2);
+                                            product_target_relation.Remove(product_relation);
                                         }
                                         goto SAVEDPRODUCT;
                                     }
@@ -2278,27 +2442,38 @@ internal class MainLoop {
                         }
 
                         if (ProductTargets.Contains(Constants.IDEASOFT)) {
+                            #region Ideasoft Refresh Token
+                            var idea_settings = Helper.global.ideasoft;
+                            if (Helper.RefreshIdeaToken(ref idea_settings).GetValueOrDefault()) {
+                                await DbHelper.SaveIdeasoftSettings(Customer.customer_id, idea_settings);
+                                Helper.global.ideasoft = idea_settings;
+                            }
+                            #endregion
+
                             #region Ideasoft Category and Brand Live Data Take
                             if (live_idea_categories is null && live_idea_brands is null) {
                                 PrintConsole(Constants.IDEASOFT + " brands and categories started loading...");
-                                #region Ideasoft Refresh Token
-                                var temp_idea_settings = Helper.global.ideasoft;
-                                if (Helper.RefreshIdeaToken(ref temp_idea_settings).GetValueOrDefault()) {
-                                    await DbHelper.SaveIdeasoftSettings(Customer.customer_id, temp_idea_settings);
-                                    Helper.global.ideasoft = temp_idea_settings;
-                                }
-                                #endregion
                                 live_idea_categories = Helper.GetIdeaCategories(); PrintConsole(Constants.IDEASOFT + " total " + live_idea_categories?.Count + " categories found.");
                                 live_idea_brands = Helper.GetIdeaBrands(); PrintConsole(Constants.IDEASOFT + " total " + live_idea_brands?.Count + " brands found.");
                             }
                             #endregion
 
+                            if (live_idea_categories is null || live_idea_categories.Count == 0) {
+                                PrintConsole(Constants.IDEASOFT + " categories not found, please check your connection settings.", ConsoleColor.Red);
+                                continue;
+                            }
+                            if (live_idea_brands is null || live_idea_brands.Count == 0) {
+                                PrintConsole(Constants.IDEASOFT + " brands not found, please check your connection settings.", ConsoleColor.Red);
+                                continue;
+                            }
+
                             var selected_live_idea_product = Helper.GetIdeaProduct(item.sku);
                             if (selected_live_idea_product is not null) { //update ideasoft product
                                 idea_product_id = selected_live_idea_product.id;
+
                                 #region Ideasoft Category and Brand Sync
                                 List<int> idea_category_ids = Helper.GetIdeaCategoryIds(ThreadId, DbHelper, Customer, ref live_idea_categories,
-                                    category_target_relation, item.extension.categories);
+                                    ref category_target_relation, item.extension.categories);
                                 var idea_brand_id = Helper.GetIdeaBrandId(ThreadId, DbHelper, Customer, ref live_idea_brands, item.extension.brand);
                                 #endregion
 
@@ -2331,7 +2506,7 @@ internal class MainLoop {
                                 if (prepared_product is not null) {
                                     #region Ideasoft Category and Brand Sync
                                     List<int> idea_category_ids = Helper.GetIdeaCategoryIds(ThreadId, DbHelper, Customer, ref live_idea_categories,
-                                        [.. category_target_relation.Where(x => x.target_name == Constants.IDEASOFT)], prepared_product.extension.categories);
+                                        ref category_target_relation, prepared_product.extension.categories);
                                     var idea_brand_id = Helper.GetIdeaBrandId(ThreadId, DbHelper, Customer, ref live_idea_brands, prepared_product.extension.brand);
                                     #endregion
 
@@ -2359,16 +2534,27 @@ internal class MainLoop {
                         #region Product Update on MerchanterDB
                         if (is_processed.HasValue) {
                             int processes_product_id = 0;
-                            if (is_update) {
-                                var updated_product = await DbHelper.UpdateProduct(Customer.customer_id, item, true);
-                                if (updated_product is not null) {
-                                    processes_product_id = updated_product.id;
-                                    await DbHelper.LogToServer(ThreadId, "product_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " updated.", Customer.customer_id, "product");
-                                    PrintConsole("Sku:" + item.sku + " updated on MerchanterDB." + (updated_attrs_new.Count > 0 ? string.Join(",", updated_attrs_new) : ""));
+                            if (updated_attrs_new.Contains("fullsync")) {
+                                if (selected_product != null) {
+                                    processes_product_id = selected_product.id;
+                                    PrintConsole("Sku:" + item.sku + " fullsync update success.", ConsoleColor.Green);
                                 }
                                 else {
-                                    await DbHelper.LogToServer(ThreadId, "product_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " update error.", Customer.customer_id, "product");
-                                    PrintConsole("Sku:" + item.sku + " update error in database.");
+                                    PrintConsole("Sku:" + item.sku + " fullsync update failed.", ConsoleColor.Red);
+                                }
+                            }
+                            else {
+                                if (is_update) {
+                                    var updated_product = await DbHelper.UpdateProduct(Customer.customer_id, item, true);
+                                    if (updated_product is not null) {
+                                        processes_product_id = updated_product.id;
+                                        await DbHelper.LogToServer(ThreadId, "product_updated", Helper.global.settings.company_name + " Sku:" + item.sku + " updated.", Customer.customer_id, "product");
+                                        PrintConsole("Sku:" + item.sku + " updated on MerchanterDB." + (updated_attrs_new.Count > 0 ? string.Join(",", updated_attrs_new) : ""));
+                                    }
+                                    else {
+                                        await DbHelper.LogToServer(ThreadId, "product_update_error", Helper.global.settings.company_name + " Sku:" + item.sku + " update error.", Customer.customer_id, "product");
+                                        PrintConsole("Sku:" + item.sku + " update error in database.");
+                                    }
                                 }
                             }
 
@@ -2442,6 +2628,8 @@ internal class MainLoop {
                     #endregion
                 }
 
+                live_idea_categories = null;
+                live_idea_brands = null;
 
 
 

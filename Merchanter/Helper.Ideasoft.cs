@@ -64,7 +64,6 @@ namespace Merchanter {
                     return null;
                 }
             }
-            PrintConsole("Token is still valid, no need to refresh.");
             return true;
         }
 
@@ -158,54 +157,71 @@ namespace Merchanter {
         /// <returns>A list of IDEA category IDs corresponding to the provided categories. If a category does not already have an
         /// associated IDEA category, it will be created and added to the returned list.</returns>
         public static List<int> GetIdeaCategoryIds(string thread_id, DbHelper db_helper, Customer customer, ref List<IDEA_Category>? live_idea_categories,
-            List<CategoryTarget> category_target_relation, List<Category> _categories) {
+            ref List<CategoryTarget> category_target_relation, List<Category> _categories) {
             List<int> idea_category_ids = [];
-            foreach (var citem in _categories) {
-                if (citem.id == global.product.customer_root_category_id) continue;
-                if (citem.id == 0) {
-                    citem.id = db_helper.InsertCategory(customer.customer_id, citem).Result?.id ?? 0;
+            foreach (var item in _categories) {
+                if (item.id == global.product.customer_root_category_id) continue;
+                if (item.id == 0) {
+                    item.id = db_helper.InsertCategory(customer.customer_id, item).Result?.id ?? 0;
                 }
 
-                var category_relation = category_target_relation.FirstOrDefault(x => x.category_id == citem.id);
+                var category_relation = category_target_relation.FirstOrDefault(x => x.category_id == item.id && x.target_name == Constants.IDEASOFT);
                 if (category_relation is not null) {
-                    idea_category_ids.Add(category_relation.target_id);
+                    if (category_relation.sync_status != Target.SyncStatus.Synced) {
+                        int? idea_category_id = UpdateIdeaCategory(category_relation.target_id, item.category_name, category_target_relation.FirstOrDefault(x => x.category_id == item.parent_id && x.target_name == Constants.IDEASOFT)?.target_id).GetValueOrDefault();
+                        if (idea_category_id.HasValue && idea_category_id.Value > 0) {
+                            PrintConsole("Category:" + item.category_name + " updated and re-sync to Id:" + idea_category_id.Value.ToString() + " (" + Constants.IDEASOFT + ")");
+                            _ = db_helper.LogToServer(thread_id, "category_updated", global.settings.company_name + " Category:" + item.category_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product").Result;
+                            category_relation.target_id = idea_category_id.Value;
+                            category_relation.sync_status = Target.SyncStatus.Synced;
+                            if (db_helper.UpdateCategoryTarget(customer.customer_id, category_relation).Result) {
+                                idea_category_ids.Add(category_relation.target_id);
+                            }
+                        }
+                        else {
+                            PrintConsole("Category:" + item.category_name + " update failed." + " (" + Constants.IDEASOFT + ")");
+                            _ = db_helper.LogToServer(thread_id, "category_update_error", global.settings.company_name + " Category:" + item.category_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product").Result;
+                        }
+                    }
+                    else {
+                        idea_category_ids.Add(category_relation.target_id);
+                    }
                 }
                 else {
-                    int? idea_category_id = live_idea_categories?.FirstOrDefault(x => x.name == citem.category_name)?.id;
+                    int? idea_category_id = live_idea_categories?.FirstOrDefault(x => x.name == item.category_name)?.id;
                     if (idea_category_id.HasValue) {
                         _ = db_helper.InsertCategoryTarget(customer.customer_id, new CategoryTarget() {
                             customer_id = customer.customer_id,
-                            category_id = citem.id,
+                            category_id = item.id,
                             target_id = idea_category_id.Value,
                             target_name = Constants.IDEASOFT
                         }).Result;
                         idea_category_ids.Add(idea_category_id.Value);
                     }
                     else {
-                        if (!string.IsNullOrWhiteSpace(citem.category_name)) {
-                            idea_category_id = InsertIdeaCategory(citem.category_name, category_target_relation.FirstOrDefault(x => x.category_id == citem.parent_id)?.target_id);
+                        if (!string.IsNullOrWhiteSpace(item.category_name)) {
+                            idea_category_id = InsertIdeaCategory(item.category_name, category_target_relation.FirstOrDefault(x => x.category_id == item.parent_id && x.target_name == Constants.IDEASOFT)?.target_id);
                             if (idea_category_id.HasValue && idea_category_id > 0) {
-                                live_idea_categories?.Add(new IDEA_Category() { id = idea_category_id.Value, name = citem.category_name });
-                                if (idea_category_id.HasValue && idea_category_id > 0) {
-                                    _ = db_helper.InsertCategoryTarget(customer.customer_id, new CategoryTarget() {
-                                        customer_id = customer.customer_id,
-                                        category_id = citem.id,
-                                        target_id = idea_category_id.Value,
-                                        target_name = Constants.IDEASOFT
-                                    }).Result;
-                                    idea_category_ids.Add(idea_category_id.Value);
-                                    PrintConsole("Category:" + citem.category_name + " inserted and sync to Id:" + idea_category_id.Value.ToString() + " (" + Constants.IDEASOFT + ")");
-                                    _ = db_helper.LogToServer(thread_id, "category_inserted", global.settings.company_name + " Category:" + citem.category_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product").Result;
-                                }
-                                else {
-                                    PrintConsole("Category:" + citem.category_name + " insert failed." + " (" + Constants.IDEASOFT + ")");
-                                    _ = db_helper.LogToServer(thread_id, "category_insert_error", global.settings.company_name + " Category:" + citem.category_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product").Result;
-                                }
+                                live_idea_categories?.Add(new IDEA_Category() { id = idea_category_id.Value, name = item.category_name });
+                                _ = db_helper.InsertCategoryTarget(customer.customer_id, new CategoryTarget() {
+                                    customer_id = customer.customer_id,
+                                    category_id = item.id,
+                                    target_id = idea_category_id.Value,
+                                    target_name = Constants.IDEASOFT
+                                }).Result;
+                                idea_category_ids.Add(idea_category_id.Value);
+                                PrintConsole("Category:" + item.category_name + " inserted and sync to Id:" + idea_category_id.Value.ToString() + " (" + Constants.IDEASOFT + ")");
+                                _ = db_helper.LogToServer(thread_id, "category_inserted", global.settings.company_name + " Category:" + item.category_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product").Result;
+
+                            }
+                            else {
+                                PrintConsole("Category:" + item.category_name + " insert failed." + " (" + Constants.IDEASOFT + ")");
+                                _ = db_helper.LogToServer(thread_id, "category_insert_error", global.settings.company_name + " Category:" + item.category_name + " (" + Constants.IDEASOFT + ")", customer.customer_id, "product").Result;
                             }
                         }
                         else {
-                            PrintConsole("Category name is empty for category ID: " + citem.id + ". Skipping insert.");
-                            _ = db_helper.LogToServer(thread_id, "category_insert_error", global.settings.company_name + " Category ID:" + citem.id + " has no name. (" + Constants.IDEASOFT + ")", customer.customer_id, "product").Result;
+                            PrintConsole("Category name is empty for category ID: " + item.id + ". Skipping insert.");
+                            _ = db_helper.LogToServer(thread_id, "category_insert_error", global.settings.company_name + " Category ID:" + item.id + " has no name. (" + Constants.IDEASOFT + ")", customer.customer_id, "product").Result;
                         }
                     }
                 }
@@ -339,6 +355,33 @@ namespace Merchanter {
             if (json_cat is not null) {
                 var idea_category = Newtonsoft.Json.JsonConvert.DeserializeObject<IDEA_Category>(json_cat);
                 PrintConsole("Category Inserted: " + idea_category?.id.ToString() + " - " + idea_category?.name);
+                return idea_category?.id;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Updates the category of an idea with the specified identifier.
+        /// </summary>
+        /// <remarks>This method sends a PUT request to update the category details on the server. Ensure
+        /// that the provided access token is valid and that the server URL is correctly configured.</remarks>
+        /// <param name="_id">The unique identifier of the category to update. Must be a positive integer.</param>
+        /// <param name="_name">The new name for the category. Cannot be null or empty.</param>
+        /// <param name="_parent_id">The identifier of the parent category. If specified, must be a positive integer. If null or less than or
+        /// equal to zero, the category will have no parent.</param>
+        /// <returns>The identifier of the updated category if the update is successful; otherwise, <see langword="null"/>.</returns>
+        public static int? UpdateIdeaCategory(int _id, string _name, int? _parent_id) {
+            var cat_json = new {
+                name = _name,
+                status = 1,
+                sortOrder = 999,
+                parent = _parent_id.HasValue ? _parent_id > 0 ? new { id = _parent_id } : null : null
+            };
+            using Executioner executioner = new();
+            var json_cat = executioner.Execute(global.ideasoft.store_url + "/admin-api/categories/" + _id.ToString(), RestSharp.Method.Put, cat_json, global.ideasoft.access_token);
+            if (json_cat is not null) {
+                var idea_category = Newtonsoft.Json.JsonConvert.DeserializeObject<IDEA_Category>(json_cat);
+                PrintConsole("Category Updated: " + idea_category?.id.ToString() + " - " + idea_category?.name);
                 return idea_category?.id;
             }
             return null;
